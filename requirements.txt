@@ -1,0 +1,10 @@
+Jinja2
+MarkupSafe
+Werkzeug
+keen
+redis
+coverage
+nose
+wsgiref
+webob
+git+git://github.com/keenlabs/hamlish-jinja.git#egg=hamlish_jinja

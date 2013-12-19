@@ -1,0 +1,30 @@
+{
+    "name": "fatcatmap"
+  , "description": "coming soon to a riot near you"
+  , "version": "1.0"
+  , "keywords": ["politics", "transparency", "opendata", "opensource"]
+  , "homepage": "https://fatcatmap.org"
+  , "author": "momentum labs"
+  , "scripts": {}
+  , "repository": {
+      "type": "git"
+    , "url": "https://github.com/sgammon/fatcatmap.git"
+  }
+  , "bugs": {
+      "url": "https://github.com/sgammon/fatcatmap/issues"
+  }
+  , "licenses": [
+    {
+        "type": "Private"
+      , "url": "https://fatcatmap.org/license"
+    }
+  ]
+  , "devDependencies": {
+      "btoa": "~1.1.1"
+    , "grunt": "~0.4.1"
+    , "uglify-js": "2.4.8"
+    , "coffee-script": "1.6.3"
+    , "wrench": "1.5.4"
+    , "less": "1.5.1"
+  }
+}
