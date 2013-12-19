@@ -1,7 +1,7 @@
 {
     "name": "fatcatmap"
   , "description": "coming soon to a riot near you"
-  , "version": "1.0"
+  , "version": "1.0.0"
   , "keywords": ["politics", "transparency", "opendata", "opensource"]
   , "homepage": "https://fatcatmap.org"
   , "author": "momentum labs"
