@@ -34,11 +34,11 @@ config = cfg.Config(app={
   # App paths
   'paths': {
 
-    'assets': os.path.join(project, 'assets'),
-    'favicon': os.path.join(project, 'assets', 'img', 'branding', 'favicon.ico'),
+    'assets': os.path.join(app, 'assets'),
+    'favicon': os.path.join(app, 'assets', 'img', 'favicon.ico'),
 
     'templates': {
-      'source': os.path.join(project, 'templates/source')
+      'source': os.path.join(app, 'templates/source')
     }
 
   }
