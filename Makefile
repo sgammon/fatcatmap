@@ -12,8 +12,8 @@ PORT=9000
 
 ## == optionals == ##
 extensions=on
-gevent=on
-logbook=on
+gevent=off
+logbook=off
 compass=on
 redis=on
 
