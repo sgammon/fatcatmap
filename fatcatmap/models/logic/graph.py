@@ -6,11 +6,12 @@
 
 from canteen import model
 from fatcatmap import models
+from models import AppModel
 
 
-class Graph(model.Model):
+class Graph(AppModel):
 
 	""" """
 
-	nodes = list {}
-	edges = list {}
+	nodes = list, {}
+	edges = list, {}
