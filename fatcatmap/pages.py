@@ -18,4 +18,4 @@ class Landing(Page):
 
     '''  '''
 
-    return self.render('landing.html')
+    return self.render('landing.haml')

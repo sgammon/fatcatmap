@@ -234,4 +234,4 @@ class FCM(cli.Tool):
 
 
 if __name__ == '__main__':
-  Web(autorun=True)  # initialize and run :)
+  FCM(autorun=True)  # initialize and run :)

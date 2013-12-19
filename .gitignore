@@ -1,3 +1,7 @@
+*.pyc
+*.pyo
+__pycache__/*
+__jinja_cache__/*
 .DS_Store
 .Thumbs
 node_modules/
