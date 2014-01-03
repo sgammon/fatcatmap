@@ -6,7 +6,7 @@
 
 from canteen, import Logic, decorators
 
-
+@decorators.bind('ImagePlatform')
 class Image(Logic):
 
 	""" """
@@ -17,4 +17,4 @@ class Image(Logic):
 
 		url = "http://someurl.com/" + key_id
 
-		pass
+		return url
