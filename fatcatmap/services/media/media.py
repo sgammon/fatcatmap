@@ -2,13 +2,14 @@
 
 """
 
-from canteen import Sessions, decorators
+from canteen import remote, Service, decorators, model
 
-@Sessions.platform
+@remote.public('media')
 class MediaSession(Service):
 
 	''' '''
 
+  @remote.public(messages.ImageRequest, messages.ImageResponse)
 	def get_image(key):
 
 		image = ImagePlatform.get_image(key)

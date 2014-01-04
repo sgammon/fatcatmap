@@ -8,3 +8,4 @@ nose
 wsgiref
 webob
 git+git://github.com/keenlabs/hamlish-jinja.git#egg=hamlish_jinja
+git+git://github.com/keenlabs/protobuf.git#egg=protobuf

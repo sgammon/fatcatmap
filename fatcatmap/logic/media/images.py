@@ -6,7 +6,7 @@
 
 from canteen, import Logic, decorators
 
-@decorators.bind('ImagePlatform')
+@decorators.bind('media')
 class Image(Logic):
 
 	""" """

@@ -8,7 +8,8 @@ from canteen import Logic, decorators
 
 from fatcatmap import models
 
-@decorators.bind('DataPlatform')
+
+@decorators.bind('data')
 class Data(Logic):
 
 	""" """

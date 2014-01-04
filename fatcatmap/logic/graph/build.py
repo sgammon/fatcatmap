@@ -9,7 +9,7 @@ from canteen import model
 
 from fatcatmap.models.logic import graph
 
-@decorators.bind('GraphFactory')
+@decorators.bind('graph')
 class Graph(Logic):
 
 	""" """
