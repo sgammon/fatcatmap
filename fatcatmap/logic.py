@@ -14,10 +14,4 @@ class Sample(Logic):
 
 	''' I do logic stuff '''
 
-	def say_hello(self):
-
-		''' '''
-
-		return "whatup, nuggets"
-
-
+  pass

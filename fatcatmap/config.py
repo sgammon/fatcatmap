@@ -69,9 +69,9 @@ config = cfg.Config(app={
     },
 
     'syntax': {
-      'variable': ('[[', ']]'),
-      'block': ('[%', '%]'),
-      'comment': ('[#', '#]')
+      'variable': ('{{', '}}'),
+      'block': ('{%', '%}'),
+      'comment': ('{#', '#}')
     },
 
     'jinja2': {
@@ -84,11 +84,22 @@ config = cfg.Config(app={
       ] + _custom_jinja2_extensions,
 
     }
+  },
+
+  'RedisAdapter': {
+    'debug': True,
+
+    'servers': {
+
+      'default': 'local',
+
+      # Redis Instances
+      'local': {'host': '127.0.0.1', 'port': 6379}
+    }
   }
 
 
 }, assets={
-
 
   # Asset API config
   'config': {
@@ -113,6 +124,5 @@ config = cfg.Config(app={
     'fonts': {}
 
   }
-
 
 })

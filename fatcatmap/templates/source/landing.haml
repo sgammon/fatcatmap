@@ -8,6 +8,20 @@
   %head
     %title << Hello, fatcatmap! ^.^
     %link rel="stylesheet" href="[[ asset.style('sample.css') ]]"
+
+
+  %body
+
+    %b 
+      [[ message ]]
+
+    %p 
+      paragraph action
+
+      multiple lines
+
+      cool stuff
+
     %script type="text/javascript" src="[[ asset.script('core/d3/d3.v3.js')]]"
     %script type="text/javascript" src="[[ asset.script('core/jacked/jacked.js')]]"
     %script type="text/javascript" src="[[ asset.script('core/lawnchair/lawnchair-0.6.1.js')]]"
@@ -23,15 +37,3 @@
       //  writeKey: "your_write_key", // required for sending events
       //  readKey: "your_read_key"    // required for doing analysis
       });
-
-  %body
-
-    %b 
-      [[ message ]]
-
-    %p 
-      paragraph action
-
-      multiple lines
-
-      cool stuff
