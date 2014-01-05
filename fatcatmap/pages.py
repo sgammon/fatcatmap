@@ -18,4 +18,4 @@ class Landing(Page):
 
     '''  '''
 
-    return self.render('landing.haml')
+    return self.render('landing.haml', message=self.sample.sayhello())
