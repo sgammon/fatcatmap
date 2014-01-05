@@ -3,8 +3,9 @@
 
 """
 
+# canteen
+from canteen import Logic, decorators
 
-from canteen, import Logic, decorators
 
 @decorators.bind('media')
 class Image(Logic):

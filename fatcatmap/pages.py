@@ -18,5 +18,5 @@ class Landing(Page):
 
     '''  '''
 
-    graph = self.data.get_native('blab')
+    graph = self.graph.serve()
     return self.render('landing.haml', message=graph)
