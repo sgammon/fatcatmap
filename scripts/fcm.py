@@ -23,9 +23,9 @@ sys.path.insert(0, os.path.join(project_root, 'fatcatmap/lib'))
 
 # keen web :)
 import fatcatmap
+from fatcatmap import config
 from fatcatmap import logic
 from fatcatmap import pages
-from fatcatmap import config
 from fatcatmap import services
 from fatcatmap import templates
 from fatcatmap import companion
@@ -94,7 +94,7 @@ class FCM(cli.Tool):
       canteen.run(fatcatmap, **{
         'port': arguments.port or 5000,
         'interface': arguments.ip or '0.0.0.0',
-        'config': fatcatmap.config.config or {}
+        'config': fatcatmap.config or {}
       })
 
 
