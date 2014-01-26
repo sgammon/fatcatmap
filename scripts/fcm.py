@@ -21,7 +21,7 @@ sys.path.insert(0, os.path.join(project_root, 'lib/canteen'))
 sys.path.insert(0, os.path.join(project_root, 'fatcatmap'))
 sys.path.insert(0, os.path.join(project_root, 'fatcatmap/lib'))
 
-# keen web :)
+# fatcatmap :)
 import fatcatmap
 from fatcatmap import config
 from fatcatmap import logic
@@ -86,7 +86,7 @@ class FCM(cli.Tool):
           result of the call. ``Falsy`` return values will be passed to
           :py:meth:`sys.exit` and converted into Unix-style return codes. '''
 
-      import fatcatmap, fatcatmap.config, canteen, multiprocessing
+      import fatcatmap, fatcatmap.config, canteen
 
       if arguments.companion:
         dev_companion = companion.go()

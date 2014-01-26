@@ -18,4 +18,5 @@ class Landing(Page):
 
     '''  '''
 
-    return self.render('landing.haml', message=self.sample.sayhello())
+    graph = self.graph.serve()
+    return self.render('landing.haml', message=graph)
