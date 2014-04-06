@@ -190,11 +190,15 @@ logbook:
 	@echo "Installing Logbook..."
 	@-bin/pip install "git+git://github.com/keenlabs/logbook.git#egg=logbook"
 
-node_modules:
+ifeq ($(DEBUG),1)
+node_modules/:
 	@echo "Installing NPM dependencies..."
 	@-npm install
+else
+node_modules/:
+endif
 
-npm: node_modules
+npm: node_modules/
 
 grunt:
 	@echo "Installing Grunt..."
