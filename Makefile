@@ -12,6 +12,7 @@ PORT?=9000
 DEBUG?=1
 USER?=`whoami`
 SANDBOX_GIT?=$(USER)@sandbox
+CANTEEN_BRANCH?=master
 
 ifeq ($(DEBUG),0)
 LESS_ARGS=--no-ie-compat --include-path=fatcatmap/assets/less:fatcatmap/assets/bootstrap --compress --clean-css -O2
@@ -60,11 +61,16 @@ package: develop
 
 	@echo "=== fcm distribution built. ==="
 
+ifeq ($(DEBUG),1)
 develop: .develop styles scripts templates bootstrap
 	@echo "Updating source dependencies..."
-	@echo "Cloning as user `whoami`..."
-	@git clone git@bitbucket.org:momentumlabs/canteen-py.git $(PWD)/lib/canteen -b sgammon/workspace
-	@git submodule update --init
+	@echo "Cloning as user $(USER)..."
+	@git clone $(SANDBOX_GIT):sources/dependencies/canteen.git $(PWD)/lib/canteen -b $(CANTEEN_BRANCH)
+else
+develop: .develop styles scripts templates bootstrap
+	@echo "Updating source dependencies..."
+	@git clone /base/sources/dependencies/canteen.git .lib/canteen -b $(CANTEEN_BRANCH)
+endif
 
 test:
 	@pip install nose
