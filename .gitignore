@@ -5,6 +5,7 @@ __jinja_cache__/*
 .DS_Store
 .Thumbs
 node_modules/
+.env
 .Python
 lib/
 include/
@@ -13,3 +14,4 @@ requirements.log
 npm-debug.log
 .develop/
 man/
+compiler-latest.zip

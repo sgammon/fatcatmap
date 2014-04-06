@@ -7,8 +7,17 @@
 ### === VARS === ###
 
 ## == defaults == ##
-HOST=127.0.0.1
-PORT=9000
+HOST?=127.0.0.1
+PORT?=9000
+DEBUG?=1
+USER?=`whoami`
+SANDBOX_GIT?=$(USER)@sandbox
+
+ifeq ($(DEBUG),0)
+LESS_ARGS=--no-ie-compat --include-path=fatcatmap/assets/less:fatcatmap/assets/bootstrap --compress --clean-css
+else
+LESS_ARGS=--no-ie-compat --include-path=fatcatmap/assets/less:fatcatmap/assets/bootstrap
+endif
 
 ## == optionals == ##
 extensions=on
@@ -28,10 +37,6 @@ endif
 ifeq ($(logbook),on)
 OPTIONALS+=logbook
 endif
-endif
-
-ifeq ($(redis),on)
-OPTIONALS+=redis
 endif
 
 
@@ -55,7 +60,7 @@ package: develop
 
 	@echo "=== fcm distribution built. ==="
 
-develop: .develop styles scripts templates
+develop: .develop styles scripts templates bootstrap
 	@echo "Updating source dependencies..."
 	@echo "Cloning as user `whoami`..."
 	@git clone git@bitbucket.org:momentumlabs/canteen-py.git $(PWD)/lib/canteen -b sgammon/workspace
@@ -114,6 +119,10 @@ lib: .env
 ### === resources === ###
 styles: npm .develop
 	@echo "Building fcm styles..."
+	@lessc $(LESS_ARGS) fatcatmap/assets/less/core/common.less > fatcatmap/assets/style/common.css
+	@lessc $(LESS_ARGS) fatcatmap/assets/less/site/home.less > fatcatmap/assets/style/site/home.css
+	@lessc $(LESS_ARGS) fatcatmap/assets/less/themes/fcm-dark.less > fatcatmap/assets/style/themes/fcm-dark.css
+	@lessc $(LESS_ARGS) fatcatmap/assets/less/themes/fcm-light.less > fatcatmap/assets/style/themes/fcm-light.css
 
 scripts: npm .develop
 	@echo "Building fcm scripts..."
@@ -122,11 +131,12 @@ templates: npm .develop
 	@echo "Building fcm templates..."
 
 ### === defs === ###
-.develop: bin lib .env closure $(OPTIONALS)
+.develop/: bin lib .env closure $(OPTIONALS)
 	@echo "Installing Pip dependencies (this may take awhile)..."
 	@-bin/pip install -r ./requirements.txt --log requirements.log
 	@mkdir .develop
 	@chmod -R 775 .develop
+	@touch .env
 
 .env:
 	@echo "Initializing virtualenv..."
@@ -151,14 +161,6 @@ devserver:
 ### === dependencies === ###
 ifeq ($(OS),Mac)
 
-redis:
-	@echo "Installing Redis..."
-	@-brew install redis
-
-openssl:
-	@echo "Installing OpenSSL..."
-	@-brew install openssl
-
 gevent: cython
 	@echo "Installing Gevent..."
 	@-brew install libev
@@ -169,14 +171,6 @@ endif
 ifeq ($(OS),Linux)
 
 ifeq ($(PLAT),RHEL)
-redis:
-	@echo "Installing Redis..."
-	@-yum install redis
-
-openssl:
-	@echo "Installing OpenSSL..."
-	@-yum install openssl
-
 gevent: cython
 	@echo "Installing Gevent..."
 	@-yum install libev-dev
@@ -184,14 +178,6 @@ gevent: cython
 endif
 
 ifeq ($(PLAT),Debian)
-redis:
-	@echo "Installing Redis..."
-	@-apt-get install redis
-
-openssl:
-	@echo "Installing OpenSSL..."
-	@-apt-get install openssl
-
 gevent: cython
 	@echo "Installing Gevent..."
 	@-apt-get install libev
@@ -204,9 +190,11 @@ logbook:
 	@echo "Installing Logbook..."
 	@-bin/pip install "git+git://github.com/keenlabs/logbook.git#egg=logbook"
 
-npm:
+node_modules:
 	@echo "Installing NPM dependencies..."
 	@-npm install
+
+npm: node_modules
 
 grunt:
 	@echo "Installing Grunt..."
@@ -216,7 +204,7 @@ jekyll:
 	@echo "Installing Jekyll..."
 	@-gem install jekyll --install-dir ./.Gems --no-document
 
-closure:
+$(PWD)/lib/closure/compiler.jar:
 	@echo "Downloading Closure Compiler..."
 	@-wget http://dl.google.com/closure-compiler/compiler-latest.zip
 	@-mkdir -p $(PWD)/lib/closure
@@ -224,7 +212,22 @@ closure:
 	@echo "Extracting Closure Compiler..."
 	@-unzip compiler-latest.zip -d $(PWD)/lib/closure
 	@-mv compiler-latest.zip $(PWD)/lib/closure
+	@-rm -f compiler-latest.zip
+
+closure: $(PWD)/lib/closure/compiler.jar
 
 cython:
 	@echo "Installing Cython..."
 	@-bin/pip install cython
+
+fatcatmap/assets/bootstrap:
+	@echo "Cloning Bootstrap sources..."
+	@git clone $(SANDBOX_GIT):twbs/bootstrap.git ./fatcatmap/assets/bootstrap
+
+	@echo "Building Bootstrap..."
+	@cd fatcatmap/assets/bootstrap; \
+		npm install; \
+		grunt;
+
+bootstrap: fatcatmap/assets/bootstrap
+	@echo "Bootstrap is ready."

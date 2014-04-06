@@ -93,7 +93,7 @@ class FCM(cli.Tool):
 
       canteen.run(fatcatmap, **{
         'port': arguments.port or 5000,
-        'interface': arguments.ip or '0.0.0.0',
+        'interface': arguments.ip or '127.0.0.1',
         'config': fatcatmap.config or {}
       })
 

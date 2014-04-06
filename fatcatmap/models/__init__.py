@@ -17,4 +17,3 @@ class AppModel(model.Model):
   ''' Application model that specifies proper adapter settings. '''
 
   __adapter__ = "RedisAdapter"
-  

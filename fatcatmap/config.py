@@ -6,7 +6,7 @@
 
 '''
 
-__version__ = ((0, 0, 1), (20131219, 'alpha'))
+__version__ = ((0, 0, 1), (20130401, 'alpha'))
 
 
 import os
