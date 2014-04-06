@@ -1,7 +1,6 @@
 Jinja2
 MarkupSafe
 Werkzeug
-keen
 redis
 coverage
 nose

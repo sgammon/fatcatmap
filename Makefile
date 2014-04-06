@@ -119,9 +119,17 @@ lib: .env
 ### === resources === ###
 styles: npm .develop
 	@echo "Building fcm styles..."
+
+	@echo "Building common.css..."
 	@lessc $(LESS_ARGS) fatcatmap/assets/less/core/common.less > fatcatmap/assets/style/common.css
+
+	@echo "Building home.css..."
 	@lessc $(LESS_ARGS) fatcatmap/assets/less/site/home.less > fatcatmap/assets/style/site/home.css
+
+	@echo "Building fcm-dark.css..."
 	@lessc $(LESS_ARGS) fatcatmap/assets/less/themes/fcm-dark.less > fatcatmap/assets/style/themes/fcm-dark.css
+
+	@echo "Building fcm-light.css..."
 	@lessc $(LESS_ARGS) fatcatmap/assets/less/themes/fcm-light.less > fatcatmap/assets/style/themes/fcm-light.css
 
 scripts: npm .develop
