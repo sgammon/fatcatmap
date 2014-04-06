@@ -199,11 +199,11 @@ logbook:
 	@-bin/pip install "git+git://github.com/keenlabs/logbook.git#egg=logbook"
 
 ifeq ($(DEBUG),1)
-node_modules/:
+node_modules/: bootstrap
 	@echo "Installing NPM dependencies..."
 	@-npm install
 else
-node_modules/:
+node_modules/: bootstrap
 endif
 
 npm: node_modules/
@@ -244,7 +244,7 @@ fatcatmap/assets/bootstrap/config.json:
 else
 fatcatmap/assets/bootstrap/config.json:
 	@echo "Cloning Bootstrap sources..."
-	@git clone $(SANDBOX_GIT):sources/dependencies/bootstrap.git ./fatcatmap/assets/bootstrap
+	@git clone /base/sources/dependencies/bootstrap.git ./fatcatmap/assets/bootstrap
 
 	@echo "Building Bootstrap..."
 	@cd fatcatmap/assets/bootstrap; \
