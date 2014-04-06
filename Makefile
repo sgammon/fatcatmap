@@ -224,14 +224,24 @@ cython:
 	@echo "Installing Cython..."
 	@-bin/pip install cython
 
-fatcatmap/assets/bootstrap:
+ifeq ($(DEBUG),1)
+fatcatmap/assets/bootstrap/config.json:
 	@echo "Cloning Bootstrap sources..."
-	@git clone $(SANDBOX_GIT):twbs/bootstrap.git ./fatcatmap/assets/bootstrap
+	@git clone $(SANDBOX_GIT):sources/dependencies/bootstrap.git ./fatcatmap/assets/bootstrap
 
 	@echo "Building Bootstrap..."
 	@cd fatcatmap/assets/bootstrap; \
 		npm install; \
 		grunt;
+else
+fatcatmap/assets/bootstrap/config.json:
+	@echo "Cloning Bootstrap sources..."
+	@git clone $(SANDBOX_GIT):sources/dependencies/bootstrap.git ./fatcatmap/assets/bootstrap
 
-bootstrap: fatcatmap/assets/bootstrap
+	@echo "Building Bootstrap..."
+	@cd fatcatmap/assets/bootstrap; \
+		grunt;
+endif
+
+bootstrap: fatcatmap/assets/bootstrap/config.json
 	@echo "Bootstrap is ready."
