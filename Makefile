@@ -245,10 +245,6 @@ else
 fatcatmap/assets/bootstrap/config.json:
 	@echo "Cloning Bootstrap sources..."
 	@git clone /base/sources/dependencies/bootstrap.git ./fatcatmap/assets/bootstrap
-
-	@echo "Building Bootstrap..."
-	@cd fatcatmap/assets/bootstrap; \
-		grunt;
 endif
 
 bootstrap: fatcatmap/assets/bootstrap/config.json
