@@ -14,7 +14,7 @@ USER?=`whoami`
 SANDBOX_GIT?=$(USER)@sandbox
 
 ifeq ($(DEBUG),0)
-LESS_ARGS=--no-ie-compat --include-path=fatcatmap/assets/less:fatcatmap/assets/bootstrap --compress --clean-css
+LESS_ARGS=--no-ie-compat --include-path=fatcatmap/assets/less:fatcatmap/assets/bootstrap --compress --clean-css -O2
 else
 LESS_ARGS=--no-ie-compat --include-path=fatcatmap/assets/less:fatcatmap/assets/bootstrap
 endif
