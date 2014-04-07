@@ -3,6 +3,7 @@ uwsgi:
 
   # ~ app settings ~ #
   app: fatcatmap
+  workers: 3
 
   # ~ hostnames ~ #
   host: fatcatmap.org
