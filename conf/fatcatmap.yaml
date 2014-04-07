@@ -10,3 +10,16 @@ uwsgi:
 
   # ~ python ~ #
   module: dispatch:application
+
+  # ~ static files ~ #
+  static: /humans.txt fatcatmap/ext/humans.txt
+  static: /robots.txt fatcatmap/ext/robots.txt
+  static: /favicon.ico fatcatmap/ext/img/favicon.ico
+  static: /favicon.png fatcatmap/ext/img/favicon.png
+  static: /crossdomain.xml fatcatmap/ext/crossdomain.xml
+
+  # ~ static assets ~ #
+  static: /assets/js fatcatmap/assets/js
+  static: /assets/img fatcatmap/assets/img
+  static: /assets/ext fatcatmap/assets/ext
+  static: /assets/style fatcatmap/assets/style
