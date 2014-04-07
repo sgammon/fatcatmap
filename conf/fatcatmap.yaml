@@ -1,0 +1,12 @@
+
+uwsgi:
+
+  # ~ app settings ~ #
+  app: fatcatmap
+
+  # ~ hostnames ~ #
+  host: fatcatmap.org
+  host: beta.fatcatmap.org
+
+  # ~ python ~ #
+  module: dispatch:application
