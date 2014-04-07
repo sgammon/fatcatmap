@@ -69,7 +69,7 @@ develop: .develop styles scripts templates bootstrap
 else
 develop: .develop styles scripts templates bootstrap
 	@echo "Updating source dependencies..."
-	@git clone /base/sources/dependencies/canteen.git .lib/canteen -b $(CANTEEN_BRANCH)
+	@git clone /base/sources/dependencies/canteen.git ./lib/canteen -b $(CANTEEN_BRANCH)
 endif
 
 test:
