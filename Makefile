@@ -108,6 +108,9 @@ distclean: clean
 	@echo "Cleaning virtualenv..."
 	@rm -fr .Python bin/ include/ lib/ config.rb .env .develop .sass-cache .less-cache
 
+	@echo "Cleaning Bootstrap..."
+	@rm -fr fatcatmap/assets/bootstrap;
+
 forceclean: distclean
 	@echo "Resetting codebase..."
 	@git reset --hard
@@ -145,7 +148,7 @@ templates: npm .develop
 	@echo "Building fcm templates..."
 
 ### === defs === ###
-.develop/: bin lib .env closure $(OPTIONALS)
+.develop: bin lib .env closure $(OPTIONALS)
 	@echo "Installing Pip dependencies (this may take awhile)..."
 	@-bin/pip install -r ./requirements.txt --log requirements.log
 	@mkdir .develop
@@ -244,7 +247,7 @@ fatcatmap/assets/bootstrap/config.json:
 	@git clone $(SANDBOX_GIT):sources/dependencies/bootstrap.git ./fatcatmap/assets/bootstrap
 
 	@echo "Building Bootstrap..."
-	@cd fatcatmap/assets/bootstrap; \
+	@-cd fatcatmap/assets/bootstrap; \
 		npm install; \
 		grunt;
 else
