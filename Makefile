@@ -150,9 +150,6 @@ templates: $(PWD)/.develop
 	@echo "Building fcm templates..."
 
 ### === defs === ###
-.develop: bin lib $(PWD)/.env closure $(OPTIONALS)
-	@touch ./.env
-
 $(PWD)/bin/fcm:
 	@echo "Symlinking toolchain..."
 	@-ln -s $(PWD)/scripts/fcm.py $(PWD)/bin/fcm
@@ -160,7 +157,10 @@ $(PWD)/bin/fcm:
 $(PWD)/lib/python2.7/site-packages/canteen.pth:
 	@echo "$(PWD)/lib/canteen" > lib/python2.7/site-packages/canteen.pth
 
-$(PWD)/.env: npm $(PWD)/bin/fcm $(PWD)/lib/python2.7/site-packages/canteen.pth
+.develop: bin lib $(PWD)/.env $(PWD)/bin/fcm $(PWD)/lib/python2.7/site-packages/canteen.pth closure $(OPTIONALS)
+	@touch ./.env
+
+$(PWD)/.env: npm
 	@echo "Initializing virtualenv..."
 	@pip install virtualenv
 	@virtualenv . --prompt="(fcm)" -q
@@ -221,7 +221,7 @@ else
 $(PWD)/node_modules: bootstrap
 endif
 
-npm: node_modules
+npm: $(PWD)/node_modules
 
 grunt:
 	@echo "Installing Grunt..."
