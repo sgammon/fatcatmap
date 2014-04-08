@@ -21,10 +21,16 @@
   ]
   , "devDependencies": {
       "btoa": "~1.1.1"
-    , "grunt": "~0.4.1"
     , "uglify-js": "2.4.8"
     , "coffee-script": "1.6.3"
     , "wrench": "1.5.4"
     , "less": "1.5.1"
+    , "grunt": "~0.4.1"
+    , "grunt-cli": "~0.1.13"
+    , "grunt-ziti": "~0.0.4"
+    , "grunt-uncss": "~0.3.3"
+    , "grunt-svgmin": "~0.4.0"
+    , "grunt-contrib-watch": "~0.6.1"
+    , "grunt-closure-compiler": "~0.0.21"
   }
 }
