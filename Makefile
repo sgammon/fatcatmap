@@ -17,7 +17,7 @@ CANTEEN_BRANCH?=master
 ifeq ($(DEBUG),0)
 LESS_ARGS=--no-ie-compat --include-path=fatcatmap/assets/less:fatcatmap/assets/bootstrap --compress --clean-css -O2
 else
-LESS_ARGS=--no-ie-compat --include-path=fatcatmap/assets/less:fatcatmap/assets/bootstrap
+LESS_ARGS=--no-ie-compat --include-path=fatcatmap/assets/less:fatcatmap/assets/bootstrap --source-map-basepath=.develop/maps
 endif
 
 ## == optionals == ##
@@ -126,8 +126,10 @@ bin: .env
 lib: .env
 
 ### === resources === ###
-styles: npm .develop
+styles: .develop
 	@echo "Building fcm styles..."
+
+	@-mkdir -p .develop/maps
 
 	@echo "Building common.css..."
 	@lessc $(LESS_ARGS) fatcatmap/assets/less/core/common.less > fatcatmap/assets/style/common.css
@@ -149,13 +151,8 @@ templates: npm .develop
 
 ### === defs === ###
 .develop: bin lib .env closure $(OPTIONALS)
-	@echo "Installing Pip dependencies (this may take awhile)..."
-	@-bin/pip install -r ./requirements.txt --log requirements.log
-	@mkdir .develop
-	@chmod -R 775 .develop
-	@touch .env
 
-.env:
+.env: npm
 	@echo "Initializing virtualenv..."
 	@pip install virtualenv
 	@virtualenv . --prompt="(fcm)" -q
@@ -169,6 +166,12 @@ templates: npm .develop
 
 	@echo "Overriding standard Google paths..."
 	@-echo "" > lib/python2.7/site-packages/protobuf-2.5.0-py2.7-nspkg.pth
+
+	@echo "Installing Pip dependencies (this may take awhile)..."
+	@-bin/pip install -r ./requirements.txt --log requirements.log
+	@-mkdir -p .develop
+	@-chmod -R 775 .develop
+	@-touch .env
 
 devserver:
 	@echo "Running development server..."
@@ -242,7 +245,7 @@ cython:
 	@-bin/pip install cython
 
 ifeq ($(DEBUG),1)
-fatcatmap/assets/bootstrap/config.json:
+fatcatmap/assets/bootstrap/package.json:
 	@echo "Cloning Bootstrap sources..."
 	@git clone $(SANDBOX_GIT):sources/dependencies/bootstrap.git ./fatcatmap/assets/bootstrap
 
@@ -251,10 +254,10 @@ fatcatmap/assets/bootstrap/config.json:
 		npm install; \
 		grunt;
 else
-fatcatmap/assets/bootstrap/config.json:
+fatcatmap/assets/bootstrap/package.json:
 	@echo "Cloning Bootstrap sources..."
 	@git clone /base/sources/dependencies/bootstrap.git ./fatcatmap/assets/bootstrap
 endif
 
-bootstrap: fatcatmap/assets/bootstrap/config.json
+bootstrap: fatcatmap/assets/bootstrap/package.json
 	@echo "Bootstrap is ready."
