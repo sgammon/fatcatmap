@@ -106,7 +106,7 @@ distclean: clean
 	@rm -fr .Gems
 
 	@echo "Cleaning virtualenv..."
-	@rm -fr .Python bin/ include/ lib/ config.rb .env .develop .sass-cache .less-cache
+	@rm -fr .Python bin/ include/ lib/ config.rb ./.env .develop .sass-cache .less-cache
 
 	@echo "Cleaning Bootstrap..."
 	@rm -fr fatcatmap/assets/bootstrap;
@@ -122,11 +122,11 @@ forceclean: distclean
 	@git clean -df
 
 ### === dirs === ###
-bin: .env
-lib: .env
+bin: $(PWD)/.env
+lib: $(PWD)/.env
 
 ### === resources === ###
-styles: .develop
+styles: $(PWD)/.develop
 	@echo "Building fcm styles..."
 
 	@-mkdir -p .develop/maps
@@ -143,26 +143,30 @@ styles: .develop
 	@echo "Building fcm-light.css..."
 	@lessc $(LESS_ARGS) fatcatmap/assets/less/themes/fcm-light.less > fatcatmap/assets/style/themes/fcm-light.css
 
-scripts: npm .develop
+scripts: $(PWD)/.develop
 	@echo "Building fcm scripts..."
 
-templates: npm .develop
+templates: $(PWD)/.develop
 	@echo "Building fcm templates..."
 
 ### === defs === ###
-.develop: bin lib .env closure $(OPTIONALS)
+.develop: bin lib $(PWD)/.env closure $(OPTIONALS)
+	@touch ./.env
 
-.env: npm
+$(PWD)/bin/fcm:
+	@echo "Symlinking toolchain..."
+	@-ln -s $(PWD)/scripts/fcm.py $(PWD)/bin/fcm
+
+$(PWD)/lib/python2.7/site-packages/canteen.pth:
+	@echo "$(PWD)/lib/canteen" > lib/python2.7/site-packages/canteen.pth
+
+$(PWD)/.env: npm $(PWD)/bin/fcm $(PWD)/lib/python2.7/site-packages/canteen.pth
 	@echo "Initializing virtualenv..."
 	@pip install virtualenv
 	@virtualenv . --prompt="(fcm)" -q
 	@-sed -e 's/printf "%s%s%s" "(fcm)" (set_color normal) (_old_fish_prompt)/printf " %s ^.^ %s %s(fcm)%s  %s " (set_color -b green black) (set_color normal) (set_color -b white black) (set_color normal) (_old_fish_prompt)/g' bin/activate.fish > bin/activate_color.fish
 	@-mv bin/activate.fish bin/activate_lame.fish
 	@-mv bin/activate_color.fish bin/activate.fish
-
-	@echo "Symlinking toolchain..."
-	@-ln -s $(PWD)/scripts/fcm.py $(PWD)/bin/fcm
-	@echo "$(PWD)/lib/canteen" > lib/python2.7/site-packages/canteen.pth
 
 	@echo "Overriding standard Google paths..."
 	@-echo "" > lib/python2.7/site-packages/protobuf-2.5.0-py2.7-nspkg.pth
@@ -171,7 +175,6 @@ templates: npm .develop
 	@-bin/pip install -r ./requirements.txt --log requirements.log
 	@-mkdir -p .develop
 	@-chmod -R 775 .develop
-	@-touch .env
 
 devserver:
 	@echo "Running development server..."
@@ -211,14 +214,14 @@ logbook:
 	@-bin/pip install "git+git://github.com/keenlabs/logbook.git#egg=logbook"
 
 ifeq ($(DEBUG),1)
-node_modules/: bootstrap
+$(PWD)/node_modules: bootstrap
 	@echo "Installing NPM dependencies..."
 	@-npm install
 else
-node_modules/: bootstrap
+$(PWD)/node_modules: bootstrap
 endif
 
-npm: node_modules/
+npm: node_modules
 
 grunt:
 	@echo "Installing Grunt..."
