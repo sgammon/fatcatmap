@@ -5,16 +5,15 @@ module.exports = (grunt) ->
   grunt.loadNpmTasks 'grunt-shell'
   grunt.loadNpmTasks 'grunt-svgmin'
   grunt.loadNpmTasks 'grunt-contrib-less'
-  grunt.loadNpmTasks 'grunt-contrib-watch'
   grunt.loadNpmTasks 'grunt-contrib-coffee'
   grunt.loadNpmTasks 'grunt-closure-compiler'
 
   ## ~~ stylesheets ~~ ##
   stylemap = {
-    "style/common.css": "less/core/common.less"
-    "style/site/home.css": "less/site/home.less"
-    "style/themes/fcm-dark.css": "less/themes/fcm-dark.less"
-    "style/themes/fcm-light.css": "less/themes/fcm-light.less"
+    "fatcatmap/assets/style/common.css": "fatcatmap/assets/less/core/common.less"
+    "fatcatmap/assets/style/site/home.css": "fatcatmap/assets/less/site/home.less"
+    "fatcatmap/assets/style/themes/fcm-dark.css": "fatcatmap/assets/less/themes/fcm-dark.less"
+    "fatcatmap/assets/style/themes/fcm-light.css": "fatcatmap/assets/less/themes/fcm-light.less"
   }
 
   ## ~~ configure stuffs ~~ ##
@@ -30,11 +29,10 @@ module.exports = (grunt) ->
           cleancss: false
           ieCompat: false
           optimization: 2
-          rootpath: "fatcatmap/assets"
-          paths: ["less", "bootstrap"]
+          paths: ["fatcatmap/assets/less", "fatcatmap/assets/bootstrap"]
           sourceMap: true
           sourceMapBasepath: ".develop/maps"
-          files: stylemap
+        files: stylemap
 
       production:
         options:
@@ -42,9 +40,8 @@ module.exports = (grunt) ->
           cleancss: true
           ieCompat: false
           optimization: 2
-          rootpath: "fatcatmap/assets"
-          paths: ["less", "bootstrap"]
-          files: stylemap
+          paths: ["fatcatmap/assets/less", "fatcatmap/assets/bootstrap"]
+        files: stylemap
 
     # - CoffeeScript - #
     coffee:
@@ -55,7 +52,7 @@ module.exports = (grunt) ->
           'fatcatmap/assets/js/common.js': ['fatcatmap/assets/coffee/common/*.coffee']
         options:
           sourceMap: true
-          sourceMapDir: '.develop/maps'
+          sourceMapDir: '.develop/maps/fatcatmap/assets/coffee'
 
       # `home.js`
       home:
@@ -63,7 +60,7 @@ module.exports = (grunt) ->
           'fatcatmap/assets/js/site/home.js': ['fatcatmap/assets/coffee/home/*.coffee']
         options:
           sourceMap: true
-          sourceMapDir: '.develop/maps'
+          sourceMapDir: '.develop/maps/fatcatmap/assets/coffee/site'
 
 
     # - Closure Compiler - #
@@ -75,9 +72,30 @@ module.exports = (grunt) ->
         jsOutputFile: "fatcatmap/assets/js/common.min.js"
         js: "fatcatmap/assets/js/common.js"
         options:
-          debug: false,
+          debug: false
+          summary_detail_level: 3
+          use_types_for_optimization: undefined
           language_in: 'ECMASCRIPT5_STRICT'
           compilation_level: 'SIMPLE_OPTIMIZATIONS'
+          define: [
+            '"DEBUG=false"'
+          ]
+
+      # DEBUG: `common.min.js`
+      common_debug:
+        closurePath: "lib/closure"
+        jsOutputFile: "fatcatmap/assets/js/common.min.js"
+        js: "fatcatmap/assets/js/common.js"
+        options:
+          debug: true
+          summary_detail_level: 3
+          language_in: 'ECMASCRIPT5_STRICT'
+          compilation_level: 'SIMPLE_OPTIMIZATIONS'
+          formatting: 'PRETTY_PRINT'
+          create_source_map: ".develop/maps/fatcatmap/assets/js/common.min.js.map"
+          define: [
+            '"DEBUG=true"'
+          ]
 
       # `home.min.js`
       home:
@@ -88,13 +106,33 @@ module.exports = (grunt) ->
           "fatcatmap/assets/js/site/home.js"
         ]
         options:
-          debug: false,
-          language_in: 'ECMASCRIPT5_STRICT'
+          debug: false
+          summary_detail_level: 3
+          use_types_for_optimization: undefined
+          language_in: 'ECMASCRIPT5'
           compilation_level: 'SIMPLE_OPTIMIZATIONS'
+          define: [
+            '"DEBUG=false"'
+          ]
 
-    'watch':
-      scripts:
-        files: "fatcatmap/assets/"
+      # DEBUG: `home.min.js`
+      home_debug:
+        closurePath: "lib/closure"
+        jsOutputFile: "fatcatmap/assets/js/site/home.min.js"
+        js: [
+          "fatcatmap/assets/js/common.js",
+          "fatcatmap/assets/js/site/home.js"
+        ]
+        options:
+          debug: true
+          summary_detail_level: 3
+          language_in: 'ECMASCRIPT5'
+          compilation_level: 'SIMPLE_OPTIMIZATIONS'
+          formatting: 'PRETTY_PRINT'
+          create_source_map: ".develop/maps/fatcatmap/assets/js/site/home.min.js.map"
+          define: [
+            '"DEBUG=true"'
+          ]
 
     'svgmin': {}
 
@@ -109,7 +147,27 @@ module.exports = (grunt) ->
         command: "bin/fcm clean --templates"
 
   ## ~~ register tasks: `default` ~~ ##
-  grunt.registerTask('default', ['less:development', 'coffee:common', 'coffee:home', 'closure-compiler:common', 'closure-compiler:home']);
+  grunt.registerTask 'default', [
+    'less:development',
+    'coffee',
+    'closure-compiler:common_debug',
+    'closure-compiler:home_debug'
+  ]
 
-  ## ~~ register tasks: `watch` ~~ ##
-  grunt.registerTask('watch', ['less:development', 'coffee:common', 'coffee:home', 'closure-compiler:common', 'closure-compiler:home', 'watch', 'shell:runServer']);
+  ## ~~ register tasks: `develop` ~~ ##
+  grunt.registerTask 'develop', [
+    'less:development',
+    'coffee',
+    'closure-compiler:common_debug',
+    'closure-compiler:home_debug',
+    'watch',
+    'shell:runServer'
+  ]
+
+  ## ~~ register tasks: `release` ~~ ##
+  grunt.registerTask 'release', [
+    'less:production',
+    'coffee',
+    'closure-compiler:common',
+    'closure-compiler:home'
+  ]

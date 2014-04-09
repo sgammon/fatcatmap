@@ -223,10 +223,6 @@ endif
 
 npm: $(PWD)/node_modules
 
-grunt:
-	@echo "Installing Grunt..."
-	@-npm install grunt
-
 jekyll:
 	@echo "Installing Jekyll..."
 	@-gem install jekyll --install-dir ./.Gems --no-document
@@ -267,3 +263,14 @@ endif
 
 bootstrap: fatcatmap/assets/bootstrap/package.json
 	@echo "Bootstrap is ready."
+
+ifeq ($(DEBUG),1)
+grunt:
+	@-mkdir -p .develop/maps/fatcatmap/assets/js/site
+	@-mkdir -p .develop/maps/fatcatmap/assets/coffee/site
+	@grunt
+endif
+ifeq ($(DEBUG),0)
+grunt:
+	@grunt release
+endif
