@@ -15,5 +15,7 @@ npm-debug.log
 .develop/
 man/
 compiler-latest.zip
-fatcatmap/assets/style/common.css
+fatcatmap/assets/js/site/*
+fatcatmap/assets/js/common*
+fatcatmap/assets/style/common*
 fatcatmap/assets/style/site/*
