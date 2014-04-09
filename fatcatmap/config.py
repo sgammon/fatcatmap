@@ -69,9 +69,9 @@ config = cfg.Config(app={
     },
 
     'syntax': {
-      'variable': ('[[', ']]'),
-      'block': ('[%', '%]'),
-      'comment': ('[#', '#]')
+      'variable': ('{{', '}}'),
+      'block': ('{%', '%}'),
+      'comment': ('{#', '#}')
     },
 
     'jinja2': {

@@ -3,22 +3,5 @@
 ; landing :)
 ;
 
-%html lang="en"
-  %head
-    %title << Hello, fatcatmap! ^.^
-    %link rel="stylesheet" href="[[ asset.style('common.css') ]]" type="text/css"
-    %link rel="stylesheet" href="[[ asset.style('site/home.css') ]]" type="text/css"
-    %link rel="stylesheet" href="//cloud.typography.com/6717292/775624/css/fonts.css" type="text/css"
-    %meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no"
-  %body
-    %h1 << something witty
-    %b
-      [[ message ]]
-    %p
-      paragraph action
-      multiple lines
-      cool stuff
-
-    %div << hi
-
-    %script type="text/javascript" src="[[ asset.script('core/ext-bundle.min.js')]]" async defer
+-extends "layouts/mapper.html"
+-block page_js << {{ asset.script("site/home.min.js") }}

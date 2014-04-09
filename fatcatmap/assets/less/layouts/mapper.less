@@ -1,0 +1,85 @@
+
+
+@import (reference) "core/base.less";
+
+
+/*
+ *
+ * Layout Elements
+ *
+ */
+
+#appframe {
+
+  // snap layout to all sides
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  right: 0;
+
+}
+
+#appheader {
+
+  height: @header_height;
+
+  //snap header to top
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+
+  // logotext
+  h1 {
+    position: absolute;
+    left: @appstage_margin;
+  }
+
+}
+
+#appfooter {
+
+  height: @footer_height;
+
+  // snap footer to bottom
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+
+  // both footer labels
+  small {
+    display: inline-block;
+  }
+
+}
+
+#appstage {
+
+  // margins
+  margin-top: @header_height;
+  margin-bottom: @footer_height;
+  margin-left: @appstage_margin;
+  margin-right: @appstage_margin;
+
+}
+
+
+/*
+ *
+ * Accoutrements
+ *
+ */
+
+// only the branch
+#brand {
+  position: absolute;
+  left: @appstage_margin+1em;
+}
+
+// only the copyright
+#copyright {
+  position: absolute;
+  right: @appstage_margin+1em;
+}

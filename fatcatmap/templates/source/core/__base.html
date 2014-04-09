@@ -1,0 +1,70 @@
+<!doctype html>
+<html class="no-js" lang="en" prefix="og: http://ogp.me/ns# fb: http://ogp.me/ns/fb fcm: http://ogp.me/ns/fb/fatcatmap#">
+  <head>
+    {% block head %}
+    {%- block meta %}
+    <!-- meta -->
+    <meta charset="utf-8">
+    <meta http-equiv="x-dns-prefetch-control" content="on">
+
+    <!-- info -->
+    <meta name="author" content="momentum labs">
+    <meta name="keywords" content="politics, transparency">
+    {%- endblock meta %}
+
+    <!-- DNS prefetch -->
+    <link rel="dns-prefetch" href="api.fatcatmap.org">
+    <link rel="dns-prefetch" href="cloud.typography.com">
+    <link rel="dns-prefetch" href="deliver.fcm-static.com">
+
+    <!-- icons -->
+    <link rel="icon" href="/assets/img/favicon.png" type="image/png">
+    <link rel="icon" href="/assets/img/favicon.ico" type="image/x-icon">
+
+    <!-- stylesheets -->
+    {%- block stylesheets %}
+    <link rel="stylesheet" href="{{ asset.style('common.css') }}" type="text/css">
+    <link rel="stylesheet" href="{{ asset.style('site/home.css') }}" type="text/css">
+    <link rel="stylesheet" href="//cloud.typography.com/6717292/775624/css/fonts.css" type="text/css">
+    {% endblock %}
+
+    {%- if handler.agent.mobile %}
+    <!-- mobile -->
+    {%- block mobile %}
+    <meta name="MobileOptimized" content="640">
+    <meta name="HandheldFriendly" content="True">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    {%- endblock -%}{%- endif %}
+    <!-- timing -->
+    <script id="js-init" type="text/javascript">var __pn=function(){return(+new Date())},deferred=_gaq=[],_gac=_gac={},__clock={pn:__pn,ts:[__pn()],clockpoint:function(c,v,s,l,o){this.ts.push(this.track([window.__pn(),[c,v,s,l,o]]))},track:function(t){return t;}};if(window.location.hash=="#_=_"){window.location.hash="";};</script>
+
+    <!-- north async -->
+    <div id="js-async-north" style="display:none;"></div>
+    {% endblock head %}
+  </head>
+  <body class="{{ theme|default('fcm-dark') }} alpha">
+
+    <!-- appframe -->
+    <div id="appframe">
+        {% block appframe %}<h1>appframe</h1>{% endblock %}
+    </div><!-- end #appframe -->
+
+    <!-- appstage -->
+    <div id="appstage" class="container">
+      {% block appstage %}<h2>appstage</h2>{% endblock %}
+    </div><!-- end #appstage -->
+
+    <!-- JS -->
+    <div id="js-south" style="display:none;">
+
+      <!-- bundle/page JS -->
+      <script id="js-ext" defer type="text/javascript" src="{{ asset.script("core/ext-bundle.min.js") }}"></script>
+      <script id="js-page" defer type="text/javascript" src="{%- block page_js -%}{%- endblock -%}"></script>
+
+      <!-- context -->
+      <script id="js-context" type="application/json">{}</script>
+
+    </div><!-- end #js-south -->
+  </body>
+</html>
