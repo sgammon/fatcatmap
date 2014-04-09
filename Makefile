@@ -129,7 +129,7 @@ lib: $(PWD)/.env
 styles: $(PWD)/.develop
 	@echo "Building fcm styles..."
 
-	@-mkdir -p .develop/maps
+	@-mkdir -p .develop/maps fatcatmap/assets/style/site
 
 	@echo "Building common.css..."
 	@lessc $(LESS_ARGS) fatcatmap/assets/less/core/common.less > fatcatmap/assets/style/common.css
