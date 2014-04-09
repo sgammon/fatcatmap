@@ -241,6 +241,9 @@ $(PWD)/lib/closure/compiler.jar:
 	@-mv compiler-latest.zip $(PWD)/lib/closure
 	@-rm -f compiler-latest.zip
 
+	@-mkdir -p $(PWD)/lib/closure/build;
+	@-mv $(PWD)/lib/closure/compiler.jar $(PWD)/lib/closure/build/compiler.jar;
+
 closure: $(PWD)/lib/closure/compiler.jar
 
 cython:
