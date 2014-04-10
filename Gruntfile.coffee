@@ -75,7 +75,7 @@ module.exports = (grunt) ->
           debug: false
           summary_detail_level: 3
           use_types_for_optimization: undefined
-          language_in: 'ECMASCRIPT5_STRICT'
+          language_in: 'ECMASCRIPT5'
           compilation_level: 'SIMPLE_OPTIMIZATIONS'
           define: [
             '"DEBUG=false"'
@@ -89,9 +89,8 @@ module.exports = (grunt) ->
         options:
           debug: true
           summary_detail_level: 3
-          language_in: 'ECMASCRIPT5_STRICT'
+          language_in: 'ECMASCRIPT5'
           compilation_level: 'SIMPLE_OPTIMIZATIONS'
-          formatting: 'PRETTY_PRINT'
           create_source_map: ".develop/maps/fatcatmap/assets/js/common.min.js.map"
           define: [
             '"DEBUG=true"'
@@ -128,7 +127,6 @@ module.exports = (grunt) ->
           summary_detail_level: 3
           language_in: 'ECMASCRIPT5'
           compilation_level: 'SIMPLE_OPTIMIZATIONS'
-          formatting: 'PRETTY_PRINT'
           create_source_map: ".develop/maps/fatcatmap/assets/js/site/home.min.js.map"
           define: [
             '"DEBUG=true"'

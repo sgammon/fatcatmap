@@ -1,22 +1,17 @@
 
 @import "less/normalize.less";
 @import "less/scaffolding.less";
+@import "less/grid.less";
 @import "core/base.less";
 
-// FCM core styles
-body {
-  background-color: #BADA55;
-  background-attachment: static;
+// Utility classes
+.hidden {
+  display: none;
 }
 
-h1, h2, h3, .h1, .h2, .h3 {
-  font-family: @heading_font_family;
-  font-weight: @heading_font_weight;
+.transparent {
+  opacity: 0 !important;
 }
 
-p, div, section, i, strong, b, aside, article, span, small, caption, abbr {
-  font-family: @text_font_family;
-  font-weight: @text_font_weight;
-}
 
 @import "layouts/mapper.less";

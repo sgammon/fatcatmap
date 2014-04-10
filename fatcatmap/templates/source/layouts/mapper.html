@@ -15,4 +15,39 @@
         </footer><!-- end footer -->
 {% endblock %}
 
-{% block appstage %}{% endblock %}
+{% block appstage %}
+    <section>
+        <!-- leftbar -->
+        <section id='leftbar collapsed'>
+            {% block left -%}
+            {%- endblock left %}
+        </section><!-- end #leftbar -->
+
+        <!-- rightbar -->
+        <section id='rightbar collapsed'>
+            {% block right -%}
+            {%- endblock right %}
+        </section><!-- end #rightbar -->
+    </section>
+
+    <section>
+        <!-- upper thirds -->
+        <section class='upper-thirds collapsed'>
+            {% block upper_thirds -%}
+            {%- endblock %}
+        </section>
+
+        <!-- lower thirds -->
+        <section class='lower-thirds collapsed'>
+            {% block lower_thirds -%}
+            {%- endblock %}
+        </section>
+    </section>
+
+    <!-- mapper -->
+    <section id='mapper'>
+        {% block mapper -%}
+        {% include "partials/mappers/svg.html" with context %}
+        {%- endblock mapper %}
+    </section><!-- end #mapper -->
+{% endblock %}

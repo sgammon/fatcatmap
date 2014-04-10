@@ -10,6 +10,7 @@
     <!-- info -->
     <meta name="author" content="momentum labs">
     <meta name="keywords" content="politics, transparency">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
     {%- endblock meta %}
 
     <!-- DNS prefetch -->
@@ -36,9 +37,6 @@
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     {%- endblock -%}{%- endif %}
-    <!-- timing -->
-    <script id="js-init" type="text/javascript">var __pn=function(){return(+new Date())},deferred=_gaq=[],_gac=_gac={},__clock={pn:__pn,ts:[__pn()],clockpoint:function(c,v,s,l,o){this.ts.push(this.track([window.__pn(),[c,v,s,l,o]]))},track:function(t){return t;}};if(window.location.hash=="#_=_"){window.location.hash="";};</script>
-
     <!-- north async -->
     <div id="js-async-north" style="display:none;"></div>
     {% endblock head %}
@@ -51,7 +49,7 @@
     </div><!-- end #appframe -->
 
     <!-- appstage -->
-    <div id="appstage" class="container">
+    <div id="appstage" class="container-fluid">
       {% block appstage %}<h2>appstage</h2>{% endblock %}
     </div><!-- end #appstage -->
 

@@ -1,0 +1,114 @@
+
+@import (reference) "core/base.less";
+
+
+// ~~ mapper ~~ //
+
+#mapper {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 500;
+}
+
+
+// ~~ sidebars ~~ //
+
+#leftbar {
+  position: absolute;
+  top: 0;
+  left: 0;
+  bottom: 0;
+  max-width: 20em;
+  min-width: 195px;
+  z-index: 900;
+
+  &.collapsed {
+
+  }
+}
+
+#rightbar {
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  max-width: 20em;
+  min-width: 265px;
+  z-index: 900;
+
+  &.collapsed {
+
+  }
+}
+
+
+// ~~ upper/lower thirds ~~ //
+
+.lower-thirds {
+  position: absolute;
+  bottom: 5em;
+  left: 0;
+  right: 0;
+  height: 5em;
+  z-index: 700;
+
+  &.collapsed {
+
+  }
+}
+
+.upper-thirds {
+  position: absolute;
+  top: 5.5em;
+  left: 0;
+  right: 0;
+  max-height: 10em;
+  min-height: 5em;
+  z-index: 700;
+
+  &.collapsed {
+
+  }
+}
+
+
+// ~~ default nodes/edges ~~ //
+circle {
+  stroke-linecap: butt;
+  stroke-rendering: crispEdges;
+}
+
+svg svg {
+  cursor: pointer;
+}
+
+.node {
+  stroke: #ddd;
+  stroke-opacity: .8;
+  cursor: pointer;
+  fill: transparent;
+}
+
+.link {
+  stroke-opacity: .6;
+  cursor: pointer;
+}
+
+.republican {
+  stroke: hsla(344, 82%, 49%, 0.9);
+}
+
+.democrat {
+  stroke: hsla(213, 79%, 51%, 0.9);
+}
+
+.congress {
+  stroke-width: 7px;
+}
+
+.senate {
+  stroke-width: 9px;
+}
