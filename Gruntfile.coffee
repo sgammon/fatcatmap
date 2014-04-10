@@ -196,7 +196,7 @@ module.exports = (grunt) ->
 
   ## ~~ register tasks: `develop` ~~ ##
   grunt.registerTask 'develop', [
-    'less:development',
+    'less',
     'coffee',
     'closure-compiler:common_debug',
     'closure-compiler:home_debug',
@@ -206,7 +206,7 @@ module.exports = (grunt) ->
 
   ## ~~ register tasks: `release` ~~ ##
   grunt.registerTask 'release', [
-    'less:production',
+    'less',
     'coffee',
     'closure-compiler:common',
     'closure-compiler:home'
