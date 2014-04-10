@@ -317,7 +317,7 @@
     color = this.d3.scale.category20();
     force = this.d3.layout.force().linkDistance(_gr_c.force.distance).linkStrength(_gr_c.force.strength).friction(_gr_c.force.friction).charge(_gr_c.force.charge).theta(_gr_c.force.theta).gravity(_gr_c.force.gravity).size([_gr_c.width, _gr_c.height]);
     _load = function(g) {
-      var edge_group, group, image, link, node, sprite, svg, title;
+      var edge_group, group, image, link, node, sprite, svg;
       svg = d3.select(map);
       edge_group = svg.selectAll('.link').data(g.edges).enter().append('svg').attr('id', function(d) {
         return 'edge-' + d.id.toString();
@@ -341,9 +341,6 @@
       });
       image = group.append('image').attr('width', _gr_c.sprite.width).attr('height', _gr_c.sprite.height).attr('clip-path', 'url(#node-circle-mask)').attr('xlink:href', function(d) {
         return image_prefix + d.id.toString() + '-' + '100px.jpeg';
-      });
-      title = group.append('title').text(function(d) {
-        return d.name;
       });
       this.d3.select('#appstage').on('click', function(d) {
         return force.alpha(.4);

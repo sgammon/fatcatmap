@@ -114,9 +114,6 @@ draw = @draw = (graph) ->
       .attr('clip-path', 'url(#node-circle-mask)')
       .attr('xlink:href', (d) -> image_prefix + d.id.toString() + '-' + '100px.jpeg')
 
-    title = group.append('title')
-      .text((d) -> d.name)
-
     @d3.select('#appstage').on('click', (d) -> force.alpha(.4))
 
     force.on 'tick', (d) ->
