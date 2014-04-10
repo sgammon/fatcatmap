@@ -25,8 +25,7 @@
 
     <!-- stylesheets -->
     {%- block stylesheets %}
-    <link rel="stylesheet" href="{{ asset.style('common.css') }}" type="text/css">
-    <link rel="stylesheet" href="{{ asset.style('site/home.css') }}" type="text/css">
+    <link rel="stylesheet" href="{{ asset.style('themes/' + (theme or 'fcm-scaffold') + '/home.css') }}" type="text/css">
     <link rel="stylesheet" href="//cloud.typography.com/6717292/775624/css/fonts.css" type="text/css">
     {% endblock %}
 

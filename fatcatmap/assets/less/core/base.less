@@ -1,12 +1,9 @@
 
 // Core variables and mixins
 @import "less/variables.less";
-
-// Overrides from FCM
-@import "fcm.less";
+@import (reference) "less/mixins.less";
 
 // Bootstrap imports
-@import (reference) "less/mixins.less";
 @import (reference) "less/type.less";
 @import (reference) "less/grid.less";
 @import (reference) "less/buttons.less";
@@ -36,3 +33,8 @@
 @import (reference) "less/close.less";
 @import (reference) "less/utilities.less";
 @import (reference) "less/responsive-utilities.less";
+
+// Overrides from FCM
+@import "fcm.less";
+@import "themes/fcm-@{theme}.less";
+@import (reference) "fcm-mixins.less";

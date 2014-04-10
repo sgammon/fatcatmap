@@ -1,47 +1,90 @@
 
+_ = require('underscore')
+
 module.exports = (grunt) ->
 
   ## ~~ load plugins ~~ ##
+  grunt.loadNpmTasks 'grunt-webp'
   grunt.loadNpmTasks 'grunt-shell'
   grunt.loadNpmTasks 'grunt-svgmin'
   grunt.loadNpmTasks 'grunt-contrib-less'
   grunt.loadNpmTasks 'grunt-contrib-coffee'
+  grunt.loadNpmTasks 'grunt-contrib-imagemin'
   grunt.loadNpmTasks 'grunt-closure-compiler'
 
   ## ~~ stylesheets ~~ ##
   stylemap = {
+    # - top-level stylesheets - #
     "fatcatmap/assets/style/common.css": "fatcatmap/assets/less/core/common.less"
-    "fatcatmap/assets/style/site/home.css": "fatcatmap/assets/less/site/home.less"
-    "fatcatmap/assets/style/themes/fcm-dark.css": "fatcatmap/assets/less/themes/fcm-dark.less"
-    "fatcatmap/assets/style/themes/fcm-light.css": "fatcatmap/assets/less/themes/fcm-light.less"
   }
+
+  # - themed stylesheets - #
+  themes =
+    scaffold:
+      files: {}
+      options:
+        modifyVars:
+          theme: 'scaffold'
+    dark:
+      files: {}
+      options:
+        modifyVars:
+          theme: 'scaffold'
+    light:
+      files: {}
+      options:
+        modifyVars:
+          theme: 'scaffold'
+
+  less_options =
+    compress: true
+    cleancss: true
+    ieCompat: false
+    report: 'min'
+    optimization: 2
+    paths: ["fatcatmap/assets/less", "fatcatmap/assets/bootstrap"]
+    sourceMap: true
+    sourceMapBasepath: ".develop/maps"
+
+  for name in ['home']
+    for theme in ['scaffold', 'dark', 'light']
+      themes[theme].files["fatcatmap/assets/style/themes/fcm-" + theme + "/" + name + ".css"] = "fatcatmap/assets/less/site/" + name + ".less"
 
   ## ~~ configure stuffs ~~ ##
   grunt.initConfig
 
     pkg: grunt.file.readJSON('package.json')
 
+    # - Images - #
+    imagemin:
+      optimizationLevel: 7
+      progressive: true
+      interlaced: true
+      pngquant: true
+      files: [
+        expand: true
+        src: ['**/*.{png,jpg,gif}']
+        cwd: 'fatcatmap/assets/img/'
+        dest: 'fatcatmap/assets/img/'
+      ]
+
     # - LESS - #
     less:
-      development:
-        options:
-          compress: false
-          cleancss: false
-          ieCompat: false
-          optimization: 2
-          paths: ["fatcatmap/assets/less", "fatcatmap/assets/bootstrap"]
-          sourceMap: true
-          sourceMapBasepath: ".develop/maps"
+      base:
         files: stylemap
+        options: less_options
 
-      production:
-        options:
-          compress: true
-          cleancss: true
-          ieCompat: false
-          optimization: 2
-          paths: ["fatcatmap/assets/less", "fatcatmap/assets/bootstrap"]
-        files: stylemap
+      dark:
+        files: themes.dark.files
+        options: _.extend less_options, themes.dark.options
+
+      light:
+        files: themes.light.files
+        options: _.extend less_options, themes.dark.light
+
+      scaffold:
+        files: themes.scaffold.files
+        options: _.extend less_options, themes.scaffold.options
 
     # - CoffeeScript - #
     coffee:
@@ -61,7 +104,6 @@ module.exports = (grunt) ->
         options:
           sourceMap: true
           sourceMapDir: '.develop/maps/fatcatmap/assets/coffee/site'
-
 
     # - Closure Compiler - #
     'closure-compiler':
@@ -146,7 +188,7 @@ module.exports = (grunt) ->
 
   ## ~~ register tasks: `default` ~~ ##
   grunt.registerTask 'default', [
-    'less:development',
+    'less',
     'coffee',
     'closure-compiler:common_debug',
     'closure-compiler:home_debug'

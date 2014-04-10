@@ -30,10 +30,11 @@ footer = _get 'appfooter'
 header = _get 'appheader'
 mapper = _get _vz_id
 map = _get _mp_id
+frame = _get 'appframe'
 
 _gr_c =
-  width: screen.width
-  height: screen.height
+  width: frame.offsetWidth
+  height: frame.offsetHeight
   force:
     strength: 0.8
     friction: 0.7

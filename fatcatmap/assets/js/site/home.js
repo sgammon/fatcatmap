@@ -1,5 +1,5 @@
 (function() {
-  var data, deferred, demo_data, draw, footer, ga_debug, header, image_prefix, map, mapper, spinner, stage, _cf_id, _d, _df_id, _fcm_name, _fcm_v, _fd, _fd_id, _fd_tm, _ga_cfg, _ga_dm, _ga_gd, _ga_id, _get, _gr_c, _js_config, _mp_id, _pd_id, _ref, _st_id, _vz_id;
+  var data, deferred, demo_data, draw, footer, frame, ga_debug, header, image_prefix, map, mapper, spinner, stage, _cf_id, _d, _df_id, _fcm_name, _fcm_v, _fd, _fd_id, _fd_tm, _ga_cfg, _ga_dm, _ga_gd, _ga_id, _get, _gr_c, _js_config, _mp_id, _pd_id, _ref, _st_id, _vz_id;
 
   image_prefix = "//storage.googleapis.com/providence-clarity/warehouse/raw/govtrack/photos/";
 
@@ -280,9 +280,11 @@
 
   map = _get(_mp_id);
 
+  frame = _get('appframe');
+
   _gr_c = {
-    width: screen.width,
-    height: screen.height,
+    width: frame.offsetWidth,
+    height: frame.offsetHeight,
     force: {
       strength: 0.8,
       friction: 0.7,
