@@ -5,31 +5,19 @@
 
 '''
 
-# submodules
+# messages and RPC
 from . import messages
-
-# canteen imports
-from canteen import remote, Service, decorators, model
+from canteen import remote, Service
 
 
-@remote.public('graphservice')
+@remote.public('graph')
 class GraphService(Service):
 
 	''' '''
-	
+
 	@remote.public(messages.GraphRequest, messages.GraphResponse)
-	def build_graph():
+	def construct(self, request):
 
 		''' '''
 
-		## create a graph and use the GraphFactory platform to get a key
-		graph = self.graph.build()
-		return self.graph.serve(graph)
-
-	@remote.public(messages.NativeRequest, messages.NativeResponse)
-	def get_native(native_key):
-
-		''' '''
-
-		native = self.data.get_native(native_key)
-		return native
+		return messages.GraphResponse()

@@ -20,17 +20,3 @@ class GraphResponse(model.Model):
   '''  '''
 
   pass
-
-
-class NativeRequest(model.Model):
-
-  '''  '''
-
-  pass
-
-
-class NativeResponse(model.Model):
-
-  '''  '''
-
-  pass
