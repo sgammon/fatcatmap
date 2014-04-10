@@ -62,12 +62,12 @@ package: develop
 	@echo "=== fcm distribution built. ==="
 
 ifeq ($(DEBUG),1)
-develop: .develop styles scripts templates bootstrap
+develop: .develop templates bootstrap
 	@echo "Updating source dependencies..."
 	@echo "Cloning as user $(USER)..."
 	@git clone $(SANDBOX_GIT):sources/dependencies/canteen.git $(PWD)/lib/canteen -b $(CANTEEN_BRANCH)
 else
-develop: .develop styles scripts templates bootstrap
+develop: .develop templates bootstrap
 	@echo "Updating source dependencies..."
 	@git clone /base/sources/dependencies/canteen.git ./lib/canteen -b $(CANTEEN_BRANCH)
 endif
@@ -126,26 +126,6 @@ bin: $(PWD)/.env
 lib: $(PWD)/.env
 
 ### === resources === ###
-styles: $(PWD)/.develop
-	@echo "Building fcm styles..."
-
-	@-mkdir -p .develop/maps fatcatmap/assets/style/site
-
-	@echo "Building common.css..."
-	@lessc $(LESS_ARGS) fatcatmap/assets/less/core/common.less > fatcatmap/assets/style/common.css
-
-	@echo "Building home.css..."
-	@lessc $(LESS_ARGS) fatcatmap/assets/less/site/home.less > fatcatmap/assets/style/site/home.css
-
-	@echo "Building fcm-dark.css..."
-	@lessc $(LESS_ARGS) fatcatmap/assets/less/themes/fcm-dark.less > fatcatmap/assets/style/themes/fcm-dark.css
-
-	@echo "Building fcm-light.css..."
-	@lessc $(LESS_ARGS) fatcatmap/assets/less/themes/fcm-light.less > fatcatmap/assets/style/themes/fcm-light.css
-
-scripts: $(PWD)/.develop
-	@echo "Building fcm scripts..."
-
 templates: $(PWD)/.develop
 	@echo "Building fcm templates..."
 
