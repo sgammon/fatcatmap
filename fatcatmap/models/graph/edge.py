@@ -30,7 +30,7 @@ class Edge(AppModel):
     label = basestring, {'indexed': True, 'required': False, 'verbose_name': 'Label'}
     node = basestring, {'indexed': True, 'repeated': True, 'verbose_name':'Nodes'}
     native = basestring, {'indexed': True, 'required': False, 'verbose_name':'Native'}
-    # data = model.BlobKey, {'indexed': True, 'required': False, 'verbose_name': 'Data'}
-    #Timestamps
-    #modified = DateTimeProperty, {'indexed':True, 'auto_now': True}
-    #created = DateTimeProperty, {'indexed': True, 'auto_now_add':True}
+
+    # Timestamps
+    modified = datetime.datetime, {'indexed':True, 'auto_now': True}
+    created = datetime.datetime, {'indexed': True, 'auto_now_add':True}

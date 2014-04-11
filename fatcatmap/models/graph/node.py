@@ -36,8 +36,7 @@ class Node(AppModel):
     # Node Data
     label = basestring, {'indexed': True, 'required': True, 'verbose_name': 'Label'}
     native = basestring, {'indexed' : True, 'required': False, 'default' : None, 'verbose_name':'Native'}
-    # data = model.BlobKey,{ 'indexed': True, 'required':False, 'verbose_name':'Data'}
 
     # Timestamps
-    modified = datetime, {'indexed': True, 'auto_now':True }
-    created = datetime, { 'indexed': True, 'auto_now_add':True }
+    modified = datetime.datetime, {'indexed': True, 'auto_now':True }
+    created = datetime.datetime, { 'indexed': True, 'auto_now_add':True }

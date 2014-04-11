@@ -8,7 +8,7 @@
 
 '''
 
-
+# canteen model API
 from canteen import model
 
 
@@ -17,3 +17,10 @@ class AppModel(model.Model):
   ''' Application model that specifies proper adapter settings. '''
 
   __adapter__ = "RedisAdapter"
+
+
+__all__ = (
+  'graph',
+  'gov',
+  'finance'
+)
