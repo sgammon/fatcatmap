@@ -56,6 +56,7 @@
     <!-- JS -->
     <div id="js-south" style="display:none;">
 
+      {% block south -%}
       <!-- bundle/page JS -->
       <script id="js-ext" type="text/javascript" src="{{ asset.script("core/ext-bundle.min.js") }}"></script>
       <script id="js-page" type="text/javascript" src="{%- block page_js -%}{%- endblock -%}"></script>
@@ -63,6 +64,7 @@
       <!-- context -->
       <script id="js-struct" type="text/javascript">(function(apptools){ {{- services.describe(javascript=True).replace(' ', '')|safe -}} })(window.apptools);</script>
       <script id="js-context" type="application/json">{}</script>
+      {%- endblock south %}
 
     </div><!-- end #js-south -->
   </body>

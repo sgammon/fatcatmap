@@ -8,6 +8,7 @@ module.exports = (grunt) ->
   grunt.loadNpmTasks 'grunt-shell'
   grunt.loadNpmTasks 'grunt-svgmin'
   grunt.loadNpmTasks 'grunt-contrib-less'
+  grunt.loadNpmTasks 'grunt-contrib-watch'
   grunt.loadNpmTasks 'grunt-contrib-coffee'
   grunt.loadNpmTasks 'grunt-contrib-imagemin'
   grunt.loadNpmTasks 'grunt-closure-compiler'
@@ -15,7 +16,7 @@ module.exports = (grunt) ->
   ## ~~ stylesheets ~~ ##
   stylemap = {
     # - top-level stylesheets - #
-    "fatcatmap/assets/style/common.css": "fatcatmap/assets/less/core/common.less"
+    #"fatcatmap/assets/style/common.css": "fatcatmap/assets/less/core/common.less"
   }
 
   # - themed stylesheets - #
@@ -29,22 +30,23 @@ module.exports = (grunt) ->
       files: {}
       options:
         modifyVars:
-          theme: 'scaffold'
+          theme: 'dark'
     light:
       files: {}
       options:
         modifyVars:
-          theme: 'scaffold'
+          theme: 'light'
 
   less_options =
-    compress: true
-    cleancss: true
+    compress: false
+    cleancss: false
     ieCompat: false
     report: 'min'
     optimization: 2
     paths: ["fatcatmap/assets/less", "fatcatmap/assets/bootstrap"]
     sourceMap: true
     sourceMapBasepath: ".develop/maps"
+    sourceMapRootpath: "/.develop/maps/"
 
   for name in ['home']
     for theme in ['scaffold', 'dark', 'light']
@@ -95,7 +97,7 @@ module.exports = (grunt) ->
           'fatcatmap/assets/js/common.js': ['fatcatmap/assets/coffee/common/*.coffee']
         options:
           sourceMap: true
-          sourceMapDir: '.develop/maps/fatcatmap/assets/coffee'
+          sourceMapDir: '.develop/maps/fatcatmap/assets/coffee/'
 
       # `home.js`
       home:
@@ -103,7 +105,7 @@ module.exports = (grunt) ->
           'fatcatmap/assets/js/site/home.js': ['fatcatmap/assets/coffee/home/*.coffee']
         options:
           sourceMap: true
-          sourceMapDir: '.develop/maps/fatcatmap/assets/coffee/site'
+          sourceMapDir: '.develop/maps/fatcatmap/assets/coffee/site/'
 
     # - Closure Compiler - #
     'closure-compiler':
@@ -174,9 +176,24 @@ module.exports = (grunt) ->
             '"DEBUG=true"'
           ]
 
-    'svgmin': {}
+    watch:
+      less:
+        files: ['fatcatmap/assets/less/**/*.less']
+        tasks: ['less']
+        options:
+          spawn: false
+          interrupt: true
 
-    'shell':
+      coffee:
+        files: ['fatcatmap/assets/coffee/**/*.coffee']
+        tasks: ['coffee']
+        options:
+          spawn: false
+          interrupt: true
+
+    svgmin: {}
+
+    shell:
       runServer:
         command: "bin/fcm run"
 

@@ -16,30 +16,21 @@ class GraphService(Service):
 
   ''' '''
 
-  @remote.public(messages.GraphRequest, messages.GraphResponse)
+  @remote.public(messages.GraphRequest, messages.CompiledGraph)
   def construct(self, request):
 
     ''' '''
 
-    # construct graph, then optionally fulfill, then extract
-    meta, data = self.graph.construct(request.origin, **{
-      'fulfill': request.natives or True,
-      'depth': request.depth or 1,
-      'limit': request.limit or 5
-    }).to_struct()
+    # construct graph
+    meta, data, graph = self.graph.construct(request.origin, **{
+      'fulfill': (request.options.natives or True) if request.options else True,
+      'depth': (request.options.depth or 1) if request.options else 1,
+      'limit': (request.options.limit or 5) if request.options else 5
+    }).extract(flatten=True)
 
-    # serialize response
-    return messages.GraphResponse(**{
-
-      'meta': messages.GraphMeta(**meta).to_message(),
-      'data': messages.GraphData(**{
-        'nodes': [node.to_message() for node in data['nodes']],
-        'edges': [edge.to_message() for edge in data['edges']],
-        'natives': [messages.NativeObject(
-          data=native.to_message()
-        ).to_message() for native in data['natives']],
-        'origin': data['origin'].to_message(),
-        'adjacency': data['adjacency']
-      }).to_message()
-
+    # then optionally fulfill, then extract
+    return messages.CompiledGraph(**{
+      'meta': messages.Metadata(**meta).to_message(),
+      'data': messages.RawData(**data).to_message(),
+      'graph': messages.GraphData(**graph).to_message()
     })

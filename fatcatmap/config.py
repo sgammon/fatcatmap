@@ -91,7 +91,7 @@ config = cfg.Config(app={
 
     'servers': {
 
-      'default': 'sandbox' if __debug__ else 'local',
+      'default': 'local',
 
       # Redis Instances
       'local': {'host': '127.0.0.1', 'port': 6379},
@@ -108,11 +108,19 @@ config = cfg.Config(app={
     'minified': False,
     'serving_mode': 'local',
     'cdn_prefix': [''],
+
     'asset_prefix': {
       'style': 'assets/style',
       'image': 'assets/img',
       'script': 'assets/js',
-      'font': 'assets/fonts'
+      'font': 'assets/fonts',
+    },
+
+    'extra_assets': {
+      'develop-less': ('/assets/less', os.path.join(app, 'assets', 'less')),
+      'develop-sources': ('/.develop', os.path.join(os.path.dirname(app), '.develop')),
+      'less-sourcs': ('/.develop/maps/fatcatmap/assets/less', os.path.join(app, 'assets', 'less')),
+      'develop-coffee': ('/.develop/maps/fatcatmap/assets/coffee', os.path.join(app, 'assets', 'coffee'))
     }
 
   },

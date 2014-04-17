@@ -1,5 +1,6 @@
 (function() {
-  var data, deferred, demo_data, draw, footer, frame, ga_debug, header, image_prefix, map, mapper, spinner, stage, _cf_id, _d, _df_id, _fcm_name, _fcm_v, _fd, _fd_id, _fd_tm, _ga_cfg, _ga_dm, _ga_gd, _ga_id, _get, _gr_c, _js_config, _mp_id, _pd_id, _ref, _st_id, _vz_id;
+  var demo_data, draw, frame, graph_config, image_prefix, map, receive, stage, _get,
+    __slice = [].slice;
 
   image_prefix = "//storage.googleapis.com/providence-clarity/warehouse/raw/govtrack/photos/";
 
@@ -222,67 +223,17 @@
     ]
   };
 
-  _d = true;
-
-  _fd_tm = 1500;
-
-  _fd_id = 'appspinner';
-
-  _st_id = 'appstage';
-
-  _vz_id = 'visualizer';
-
-  _ga_id = 'UA-25133943-10';
-
-  _fcm_name = 'fatcatmap: staging';
-
-  _mp_id = 'map';
-
-  _fcm_v = 'v0.0.1-alpha';
-
-  _ga_gd = 'fatcatmap.apps.momentum.io';
-
-  _ga_dm = '//deliver.fatcatmap.org/' + ((_ref = _d === true) != null ? _ref : {
-    'analytics_debug.js': 'analytics.js'
-  });
-
-  _df_id = 'js-deferred';
-
-  _cf_id = 'js-config';
-
-  _pd_id = 'pagedata';
-
   _get = function(d) {
     return document.getElementById(d);
   };
 
-  _fd = function() {
-    return spinner.classList.add('transparent');
-  };
+  stage = _get('appstage');
 
-  ga_debug = _d;
-
-  spinner = _get(_fd_id);
-
-  stage = _get(_st_id);
-
-  deferred = _get(_df_id);
-
-  _js_config = _get(_cf_id);
-
-  data = _get(_pd_id);
-
-  footer = _get('appfooter');
-
-  header = _get('appheader');
-
-  mapper = _get(_vz_id);
-
-  map = _get(_mp_id);
+  map = _get('map');
 
   frame = _get('appframe');
 
-  _gr_c = {
+  graph_config = {
     width: frame.offsetWidth,
     height: frame.offsetHeight,
     force: {
@@ -290,10 +241,7 @@
       friction: 0.7,
       theta: 0.6,
       gravity: 0.075,
-      charge: -80,
-      distance: function(e) {
-        return e.value + 125;
-      }
+      charge: -80
     },
     node: {
       radius: 20
@@ -304,71 +252,75 @@
     }
   };
 
-  _ga_cfg = {
-    domain: _ga_gd,
-    siteSpeedSampleRate: 100,
-    cookieDomain: 'none',
-    forceSSL: true,
-    anonymizeIp: true
+  receive = this.receive = function(data) {
+    var edge_i, graph, index, payload, source, source_i, target_spec, targets, _ref;
+    payload = JSON.parse(data);
+    index = {
+      map: {},
+      nodes_to_edges: {},
+      objects_to_natives: {}
+    };
+    graph = {
+      nodes: [],
+      edges: []
+    };
+    _ref = payload.data.index.map;
+    for (source_i in _ref) {
+      target_spec = _ref[source_i];
+      edge_i = target_spec[0], targets = 2 <= target_spec.length ? __slice.call(target_spec, 1) : [];
+      source = {
+        node: {
+          key: payload.data.keys[source_i],
+          object: payload.data.objects[source_i]
+        },
+        "native": payload.data.objects[payload.data.index]
+      };
+    }
+    return draw(interpreted.graph);
   };
 
   draw = this.draw = function(graph) {
     var color, force, height, width, _load;
+    console.log('graph', graph);
     width = stage.offsetWidth;
     height = stage.offsetHeight;
     color = this.d3.scale.category20();
-    force = this.d3.layout.force().linkDistance(_gr_c.force.distance).linkStrength(_gr_c.force.strength).friction(_gr_c.force.friction).charge(_gr_c.force.charge).theta(_gr_c.force.theta).gravity(_gr_c.force.gravity).size([_gr_c.width, _gr_c.height]);
+    force = this.d3.layout.force().linkDistance(graph_config.force.distance).linkStrength(graph_config.force.strength).friction(graph_config.force.friction).charge(graph_config.force.charge).theta(graph_config.force.theta).gravity(graph_config.force.gravity).size([graph_config.width, graph_config.height]);
     _load = function(g) {
-      var edge_group, group, image, link, node, sprite, svg;
+      var edge_group, group, link, node, sprite, svg;
       svg = d3.select(map);
-      edge_group = svg.selectAll('.link').data(g.edges).enter().append('svg').attr('id', function(d) {
-        return 'edge-' + d.id.toString();
-      }).attr('data-id', function(d) {
-        return d.id.toString();
-      }).attr('data-type', 'edge').attr('data-kind', 'comembership');
-      link = edge_group.append('line').attr('stroke', '#999').attr('class', 'link').style('stroke-width', function(d) {
-        var _ref1;
-        return (_ref1 = Math.sqrt(d.value) > 5) != null ? _ref1 : {
-          1: 2
-        };
+      edge_group = svg.selectAll('.edge').data(g.edges).enter().append('svg').attr('id', function(e) {
+        return 'edge-' + e.edge.id;
       });
-      sprite = svg.selectAll('.node').data(g.nodes).enter().append('svg').attr('id', function(d) {
-        return 'group-' + d.id;
-      }).attr('width', _gr_c.sprite.width).attr('height', _gr_c.sprite.height).attr('data-id', function(d) {
-        return d.id.toString();
-      }).attr('data-type', 'node').attr('data-kind', 'legislator').call(force.drag);
-      group = sprite.append('g').attr('width', _gr_c.sprite.width).attr('height', _gr_c.sprite.height);
-      node = group.append('circle').attr('r', _gr_c.node.radius).attr('cx', _gr_c.sprite.width / 2).attr('cy', _gr_c.sprite.height / 2).attr('class', function(d) {
-        return [d.party === 'Republican' ? 'republican' : 'democrat', d.type === 'sen' ? 'senate' : 'congress', 'node'].join(' ');
-      });
-      image = group.append('image').attr('width', _gr_c.sprite.width).attr('height', _gr_c.sprite.height).attr('clip-path', 'url(#node-circle-mask)').attr('xlink:href', function(d) {
-        return image_prefix + d.id.toString() + '-' + '100px.jpeg';
-      });
-      this.d3.select('#appstage').on('click', function(d) {
+      link = edge_group.append('line').attr('stroke', '#999').attr('class', 'link').style('stroke-width', 2);
+      sprite = svg.selectAll('.node').data(g.nodes).enter().append('svg').attr('id', function(n) {
+        return 'group-' + n.node.encoded;
+      }).attr('width', graph_config.sprite.width).attr('height', graph_config.sprite.height).call(force.drag);
+      group = sprite.append('g').attr('width', graph_config.sprite.width).attr('height', graph_config.sprite.height);
+      node = group.append('circle').attr('r', graph_config.node.radius).attr('cx', graph_config.sprite.width / 2).attr('cy', graph_config.sprite.height / 2).attr('class', 'node');
+      this.d3.select('#appstage').on('click', function(n) {
         return force.alpha(.4);
       });
-      force.on('tick', function(d) {
+      force.on('tick', function(f) {
         link.attr('x1', function(d) {
-          return d.source.x + (_gr_c.node.radius / 2);
+          return d.source.x + (graph_config.node.radius / 2);
         }).attr('y1', function(d) {
-          return d.source.y + (_gr_c.node.radius / 2);
+          return d.source.y + (graph_config.node.radius / 2);
         }).attr('x2', function(d) {
-          return d.target.x + (_gr_c.node.radius / 2);
+          return d.target.x + (graph_config.node.radius / 2);
         }).attr('y2', function(d) {
-          return d.target.y + (_gr_c.node.radius / 2);
+          return d.target.y + (graph_config.node.radius / 2);
         });
         return sprite.attr('x', function(d) {
-          return d.x - _gr_c.node.radius;
+          return d.x - graph_config.node.radius;
         }).attr('y', function(d) {
-          return d.y - _gr_c.node.radius;
+          return d.y - graph_config.node.radius;
         });
       });
       return force.nodes(g.nodes).links(g.edges).start();
     };
     return _load(graph);
   };
-
-  draw(demo_data);
 
 }).call(this);
 

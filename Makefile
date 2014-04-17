@@ -152,7 +152,7 @@ $(PWD)/.env: npm
 	@-echo "" > lib/python2.7/site-packages/protobuf-2.5.0-py2.7-nspkg.pth
 
 	@echo "Installing Pip dependencies (this may take awhile)..."
-	@-bin/pip install -r ./requirements.txt --log requirements.log
+	@-bin/pip install -r ./requirements.txt
 	@-mkdir -p .develop
 	@-chmod -R 775 .develop
 

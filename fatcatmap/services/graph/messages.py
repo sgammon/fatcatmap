@@ -6,54 +6,60 @@
 
 # model API
 from canteen import model
-from fatcatmap import models
-from fatcatmap.models.graph import node, edge
-
-
-class NativeObject(model.Model):
-
-  '''  '''
-
-  data = dict, {'required': True}
 
 
 class GraphRequest(model.Model):
 
   '''  '''
 
+  class Options(model.Model):
+
+    '''  '''
+
+    depth = int, {'default': 1}
+    limit = int, {'default': 5}
+    indexes = bool, {'default': True}
+    natives = bool, {'default': True}
+
   origin = basestring
-  depth = int, {'default': 1}
-  limit = int, {'default': 5}
-  natives = bool, {'default': False}
+  options = Options
 
 
-class GraphMeta(model.Model):
+class Metadata(model.Model):
 
   '''  '''
 
-  node_count = int, {'default': 0}
-  edge_count = int, {'default': 0}
-  native_count = int, {'default': 0}
-  node_kinds = basestring, {'repeated': True}
-  edge_kinds = basestring, {'repeated': True}
+  kinds = dict
+  counts = int, {'repeated': True}
+  errors = int, {'repeated': True}
   natives = bool, {'default': True}
   options = dict
+
+
+class RawData(model.Model):
+
+  '''  '''
+
+  keys = basestring, {'repeated': True}
+  objects = dict
+  index = dict
 
 
 class GraphData(model.Model):
 
   '''  '''
 
-  nodes = node.Node, {'repeated': True}
-  edges = edge.Edge, {'repeated': True}
-  origin = node.Node, {'required': True}
-  natives = NativeObject, {'repeated': True}
-  adjacency = dict
+  nodes = int, {'repeated': True}
+  edges = int, {'repeated': True}
+  origin = int, {'required': True}
+  natives = int, {'repeated': True}
+  origin = int
 
 
-class GraphResponse(model.Model):
+class CompiledGraph(model.Model):
 
   '''  '''
 
-  meta = GraphMeta, {'required': True}
-  data = GraphData, {'required': False}
+  data = RawData, {'required': False}
+  meta = Metadata, {'required': True}
+  graph = GraphData, {'required': False}

@@ -6,6 +6,9 @@
 
 '''
 
+# stdlib
+import collections
+
 # local
 from . import options
 
@@ -177,8 +180,8 @@ class Graph(object):
         if node_key_right not in self.__adjacency__:
           self.__adjacency__[node_key_right] = set()
 
-        self.__adjacency__[node_key_left].add(node_key_right)
-        self.__adjacency__[node_key_right].add(node_key_left)
+        self.__adjacency__[node_key_left].add('::'.join((node_key_right, edge_key.urlsafe())))
+        self.__adjacency__[node_key_right].add('::'.join((node_key_left, edge_key.urlsafe())))
 
       node_key = node_key_left  # switch contexts: done with comparison
 
@@ -245,28 +248,161 @@ class Graph(object):
     if not isinstance(edge, model.Key): raise TypeError('')
 
   ## == Output == ##
-  def to_struct(self):
+  def extract(self, flatten=False):
 
     '''  '''
 
-    return (
-      { # = meta = #
-        'node_count': self.node_count,  # count of unique nodes
-        'edge_count': self.edge_count,  # count of unique edges
-        'native_count': self.native_count,  # count of unique native objects
-        'node_kinds': tuple(self.node_native_kinds) or tuple(),  # list of mentioned node native kinds
-        'edge_kinds': tuple(self.edge_native_kinds) or tuple(),  # list of mentioned edge native kinds
-        'natives': self.fulfilled,  # bool: are natives included?
-        'options': self.options.to_struct()  # dictionary: options for this graph query
-      },
-      { # = data = #
-        'nodes': self.nodes,  # iterator to full node list
-        'edges': self.edges,  # iterator to full edge list
-        'origin': self.origin,  # origin model object
-        'natives': self.natives,  # native objects (both edges + nodes)
-        'adjacency': dict(((k, list(v)) for k, v in self.adjacency.iteritems()))  # adjacency matrix
-      }
+    # create lookup sets
+    _seen_nodes, _seen_edges, _seen_natives = set(), set(), set()
+    _bound_natives, _bound_nodes, _bound_edges = set(), set(), set()
+    _invalid_edges = set()
+
+    # create empty local data containers and indexes
+    _keys, _nodes, _edges, _natives, _origin_i = [], [], [], [], None
+    _edges_to_nodes, _nodes_to_edges, _nodes_to_nodes, _keys_to_indexes, _keys_to_objects, _objects_to_natives, _natives_to_objects = (
+      collections.defaultdict(lambda: set()) for x in xrange(0, 7)
     )
+
+    # utility routines
+    _flatten_index = lambda index: list((([k] + list(v)) if isinstance(v, set) else (k, v)) for k, v in index.iteritems())
+
+    # populate data containers and indexes
+    for iterator in (self.nodes, self.edges, self.natives):
+
+      for artifact in iterator:
+
+        encoded_key = artifact.key.urlsafe()
+
+        # handle nodes...
+        if isinstance(artifact, self.__node_model__):
+
+          if encoded_key in _seen_nodes:
+            continue
+
+          _key_i = _keys.append(encoded_key) or (len(_keys) - 1)  # provision key
+          _keys_to_indexes[encoded_key] = _key_i  # map encoded key to key index
+          _keys_to_objects[_key_i] = artifact.to_dict() if flatten else artifact  # map key index to serialized object
+          _node_i = (_nodes.append(_key_i) or len(_nodes) - 1)  # map to node index
+
+          # lookin' for the origin
+          if (not _origin_i) and self.origin.key.urlsafe() == encoded_key:
+            _origin_i = _node_i
+
+          # leave ourselves a hint about the native
+          _natives_to_objects[artifact.native] = _key_i
+
+          # add to seen lists
+          _seen_nodes.add(encoded_key)
+          _bound_nodes.add(encoded_key)
+          _seen_natives.add(artifact.native)
+
+        # handle edges...
+        elif isinstance(artifact, self.__edge_model__):
+
+          if encoded_key in _seen_edges:
+            continue
+
+          # add to seen lists
+          _seen_edges.add(encoded_key)
+
+          if any((node not in _keys_to_indexes for node in artifact.node)):
+            _invalid_edges.add(encoded_key)
+            continue  # cancel processing for this edge: it is invalid
+
+          # provision edge
+          _key_i = _keys.append(encoded_key) or (len(_keys) - 1)  # provision key
+          _keys_to_indexes[encoded_key] = _key_i  # map encoded key to key index
+          _keys_to_objects[_key_i] = artifact.to_dict() if flatten else artifact  # map key index to serialized object
+          _edge_i = (_edges.append(_key_i) or len(_edges) - 1)  # map to node index
+
+          # leave ourselves a hint about the native
+          _natives_to_objects[artifact.native] = _key_i
+
+          # add to seen lists
+          _seen_natives.add(artifact.native)
+          _bound_edges.add(encoded_key)  # this edge is A-OK
+
+          for node in artifact.node:
+
+            _seen_nodes.add(node)
+
+            # resolve node index
+            _node_i = _nodes.index(_keys_to_indexes[node])
+
+            _nodes_to_edges[_node_i].add(_edge_i)  # node -> edge
+            _edges_to_nodes[_edge_i].add(_node_i)  # edge -> node
+
+            _node_to_node_map = set()
+            for node_right in artifact.node:
+
+              # don't ever map to self
+              if node == node_right:
+                continue
+
+              if (node, node_right) not in _node_to_node_map:
+
+                # resolve right node's index and map (node -> node)
+                _nodes_to_nodes[_node_i].add(_nodes.index(_keys_to_indexes[node_right]))
+                _node_to_node_map.add((node, node_right))
+
+        # handle natives...
+        else:
+          # did we keep this native's edge/node? if not, don't send it
+          if (encoded_key not in _natives_to_objects):
+            continue
+
+          # perhaps we already bound this native?
+          elif encoded_key in _bound_natives:
+            _objects_to_natives[_key_i] = _natives.index(_keys.index(encoded_key))  # artifact -> existing native
+            continue
+
+          # provision native
+          _key_i = _keys.append(encoded_key) or (len(_keys) - 1)  # provision key
+          _keys_to_indexes[encoded_key] = _key_i  # map encoded key to key index
+          _keys_to_objects[_key_i] = artifact.to_dict() if flatten else artifact  # map key index to serialized object
+          _native_i = (_natives.append(_key_i) or len(_natives) - 1)  # map to node index
+
+          _bound_natives.add(encoded_key)
+          _objects_to_natives[_key_i] = _native_i  # artifact -> native
+
+    # generate error summary
+    _missing_nodes, _missing_natives = (
+      _seen_nodes - _bound_nodes,
+      _seen_natives - _bound_natives
+    )
+
+    return {
+
+      ## == metadata == ##
+      'counts': [len(_nodes), len(_edges), len(_natives)],  # compact counts
+      'errors': [len(_missing_nodes), len(_invalid_edges), len(_missing_natives)],  # compact error stats
+      'natives': self.fulfilled,  # bool: are natives included?
+      'options': self.options.to_struct(),  # dictionary: options for this graph query
+      'kinds': {
+        'node': tuple(self.node_native_kinds) or tuple(),
+        'edge': tuple(self.edge_native_kinds) or tuple()
+       }  # list of mentioned node native kinds
+
+    }, {
+
+      ## == raw data == ##
+      'keys': _keys,
+      'objects': _keys_to_objects,
+      'index': {
+        'node_edges': _flatten_index(_nodes_to_edges),
+        'object_natives': _objects_to_natives,
+        'map': _flatten_index(_nodes_to_nodes)
+      }
+
+    }, {
+
+      ## == graph == ##
+      'nodes': _nodes,
+      'edges': _edges,
+      'natives': _natives,
+      'origin': _origin_i
+
+    }
 
   ## == Top-level == ##
   def build(self, fulfill=True, iter=False):
@@ -297,6 +433,9 @@ class Graph(object):
       continue  # guess nobody cares... :(
 
     return self  # non-streaming return
+
+  ## == Overrides == ##
+  __call__ = extract
 
   ## == Properties == ##
 
