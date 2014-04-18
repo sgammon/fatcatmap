@@ -237,17 +237,17 @@
     width: frame.offsetWidth,
     height: frame.offsetHeight,
     force: {
-      strength: 0.7,
+      strength: 0.4,
       friction: 0.5,
-      theta: 0.5,
-      gravity: 0.08,
-      charge: -100,
+      theta: 0.6,
+      gravity: 0.06,
+      charge: -50,
       distance: function(e) {
         var _ref;
         if (((_ref = e["native"]) != null ? _ref.data : void 0) != null) {
           return e["native"].data.total;
         }
-        return 50;
+        return 500;
       }
     },
     node: {
@@ -256,6 +256,11 @@
     sprite: {
       width: 60,
       height: 60
+    },
+    events: {
+      click: {
+        warmup: .4
+      }
     }
   };
 
@@ -342,7 +347,7 @@
     color = this.d3.scale.category20();
     force = this.d3.layout.force().linkDistance(graph_config.force.distance).linkStrength(graph_config.force.strength).friction(graph_config.force.friction).charge(graph_config.force.charge).theta(graph_config.force.theta).gravity(graph_config.force.gravity).size([graph_config.width, graph_config.height]);
     _load = function(g) {
-      var container, edge, edge_wrap, legislator_image, line, node, node_wrap, svg;
+      var container, edge, edge_wrap, legislator_image, line, node, node_wrap, shape, svg;
       svg = d3.select(map);
       edge_wrap = svg.selectAll('.edge').data(g.edges).enter();
       edge = edge_wrap.append('svg').attr('id', function(e) {
@@ -354,14 +359,14 @@
         return 'group-' + n.node.key;
       }).attr('width', graph_config.sprite.width).attr('height', graph_config.sprite.height).call(force.drag);
       node = container.append('g').attr('width', graph_config.sprite.width).attr('height', graph_config.sprite.height);
-      node = node.append('circle').attr('r', graph_config.node.radius).attr('cx', graph_config.sprite.width / 2).attr('cy', graph_config.sprite.height / 2).attr('class', 'node');
+      shape = node.append('circle').attr('r', graph_config.node.radius).attr('cx', graph_config.sprite.width / 2).attr('cy', graph_config.sprite.height / 2).attr('class', 'node');
       legislator_image = node.append('image').filter(function(n) {
-        return n["native"].data.fecid != null;
+        return n["native"].data.govtrack_id != null;
       }).attr('width', graph_config.sprite.width).attr('height', graph_config.sprite.height).attr('clip-path', 'url(#node-circle-mask)').attr('xlink:href', function(n) {
-        return image_prefix + n["native"].data.govtrackid.toString() + '-' + '100px.jpeg';
+        return image_prefix + n["native"].data.govtrack_id.toString() + '-' + '100px.jpeg';
       });
       this.d3.select(stage).on('click', function(n) {
-        return force.alpha(.5);
+        return force.alpha(graph_config.events.click.warmup);
       });
       force.on('tick', function(f) {
         line.attr('x1', function(d) {
