@@ -17,10 +17,11 @@ graph_config =
   height: frame.offsetHeight
 
   force:
+    alpha: 1
     strength: 0.4
     friction: 0.5
-    theta: 0.6
-    gravity: 0.06
+    theta: 0.3
+    gravity: 0.05
     charge: -50
     distance: (e) ->
       if e.native?.data?
@@ -67,47 +68,52 @@ receive = @receive = (data) ->
     data[key] = payload.data.objects[key_i]
 
   ## 2) natives
-  for native_i in payload.graph.natives
+  for _, native_suboffset in Array(payload.graph.natives)
+    native_i = (payload.graph.edges + 1 + native_suboffset)
     _i = index.natives_by_key[payload.data.keys[native_i]] = (graph.natives.push
       key: payload.data.keys[native_i]
       data: data[payload.data.keys[native_i]]
     ) - 1
 
   ## == inflate graph structure == ##
+  _key_iter = -1
 
-  ## 1) nodes
-  for node_i in payload.graph.nodes
-    _i = index.nodes_by_key[payload.data.keys[node_i]] = (graph.nodes.push
-      node:
-        key: payload.data.keys[node_i]
-        data: data[payload.data.keys[node_i]]
-      native: graph.natives[index.natives_by_key[data[payload.data.keys[node_i]].native]]
-    ) - 1
+  while _key_iter < payload.data.keys.length
+    _key_iter++
 
-  ## 2) edges
-  for edge_i in payload.graph.edges
+    if _key_iter <= payload.graph.nodes
 
-    # extract source and targets from edge
-    [source_k, targets...] = payload.data.objects[edge_i].node
-
-    for target_k in targets
-      if not index.edges_by_key[payload.data.keys[edge_i]]?
-        index.edges_by_key[payload.data.keys[edge_i]] = []
-
-      _i = (graph.edges.push
-        edge:
-          key: payload.data.keys[edge_i]
-          data: data[payload.data.keys[edge_i]]
-        native: graph.natives[index.natives_by_key[data[payload.data.keys[edge_i]].native]]
-        source:
-          index: index.nodes_by_key[source_k]
-          object: graph.nodes[index.nodes_by_key[source_k]]
-        target:
-          index: index.nodes_by_key[target_k]
-          object: graph.nodes[index.nodes_by_key[target_k]]
+      ## 1) nodes
+      _i = index.nodes_by_key[payload.data.keys[_key_iter]] = (graph.nodes.push
+        node:
+          key: payload.data.keys[_key_iter]
+          data: data[payload.data.keys[_key_iter]]
+        native: graph.natives[index.natives_by_key[data[payload.data.keys[_key_iter]].native]]
       ) - 1
 
-      index.edges_by_key[payload.data.keys[edge_i]].push _i
+    else if _key_iter <= payload.graph.edges
+
+      ## 2) edges
+      [source_k, targets...] = payload.data.objects[_key_iter].node
+
+      for target_k in targets
+        if not index.edges_by_key[payload.data.keys[_key_iter]]?
+          index.edges_by_key[payload.data.keys[_key_iter]] = []
+
+        _i = (graph.edges.push
+          edge:
+            key: payload.data.keys[_key_iter]
+            data: data[payload.data.keys[_key_iter]]
+          native: graph.natives[index.natives_by_key[data[payload.data.keys[_key_iter]].native]]
+          source:
+            index: index.nodes_by_key[source_k]
+            object: graph.nodes[index.nodes_by_key[source_k]]
+          target:
+            index: index.nodes_by_key[target_k]
+            object: graph.nodes[index.nodes_by_key[target_k]]
+        ) - 1
+
+      index.edges_by_key[payload.data.keys[_key_iter]].push _i
 
   return setTimeout (-> draw(graph)), 0
 
@@ -129,6 +135,7 @@ draw = @draw = (graph) ->
                     .theta(graph_config.force.theta)
                     .gravity(graph_config.force.gravity)
                     .size([graph_config.width, graph_config.height])
+                    .alpha(graph_config.force.alpha)
 
   _load = (g) ->
 

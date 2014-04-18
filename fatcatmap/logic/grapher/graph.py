@@ -397,9 +397,9 @@ class Graph(object):
     }, {
 
       ## == graph == ##
-      'nodes': _nodes,
-      'edges': _edges,
-      'natives': _natives,
+      'nodes': max(_nodes),
+      'edges': max(_edges),
+      'natives': max(_natives),
       'origin': _origin_i
 
     }

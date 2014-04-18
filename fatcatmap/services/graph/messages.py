@@ -49,10 +49,10 @@ class GraphData(model.Model):
 
   '''  '''
 
-  nodes = int, {'repeated': True}
-  edges = int, {'repeated': True}
-  origin = int, {'required': True}
-  natives = int, {'repeated': True}
+  nodes = int
+  edges = int
+  origin = int
+  natives = int
   origin = int
 
 

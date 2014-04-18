@@ -237,10 +237,11 @@
     width: frame.offsetWidth,
     height: frame.offsetHeight,
     force: {
+      alpha: 1,
       strength: 0.4,
       friction: 0.5,
-      theta: 0.6,
-      gravity: 0.06,
+      theta: 0.3,
+      gravity: 0.05,
       charge: -50,
       distance: function(e) {
         var _ref;
@@ -265,7 +266,7 @@
   };
 
   receive = this.receive = function(data) {
-    var edge_i, graph, index, key, key_i, native_i, node_i, payload, source_k, target_k, targets, _i, _j, _k, _l, _len, _len1, _len2, _len3, _len4, _m, _ref, _ref1, _ref2, _ref3, _ref4;
+    var graph, index, key, key_i, native_i, native_suboffset, payload, source_k, target_k, targets, _, _i, _j, _k, _key_iter, _len, _len1, _len2, _ref, _ref1, _ref2;
     if (typeof data === 'string') {
       payload = this.payload = JSON.parse(data);
     } else {
@@ -288,50 +289,50 @@
       key = _ref[key_i];
       data[key] = payload.data.objects[key_i];
     }
-    _ref1 = payload.graph.natives;
-    for (_j = 0, _len1 = _ref1.length; _j < _len1; _j++) {
-      native_i = _ref1[_j];
+    _ref1 = Array(payload.graph.natives);
+    for (native_suboffset = _j = 0, _len1 = _ref1.length; _j < _len1; native_suboffset = ++_j) {
+      _ = _ref1[native_suboffset];
+      native_i = payload.graph.edges + 1 + native_suboffset;
       _i = index.natives_by_key[payload.data.keys[native_i]] = (graph.natives.push({
         key: payload.data.keys[native_i],
         data: data[payload.data.keys[native_i]]
       })) - 1;
     }
-    _ref2 = payload.graph.nodes;
-    for (_k = 0, _len2 = _ref2.length; _k < _len2; _k++) {
-      node_i = _ref2[_k];
-      _i = index.nodes_by_key[payload.data.keys[node_i]] = (graph.nodes.push({
-        node: {
-          key: payload.data.keys[node_i],
-          data: data[payload.data.keys[node_i]]
-        },
-        "native": graph.natives[index.natives_by_key[data[payload.data.keys[node_i]]["native"]]]
-      })) - 1;
-    }
-    _ref3 = payload.graph.edges;
-    for (_l = 0, _len3 = _ref3.length; _l < _len3; _l++) {
-      edge_i = _ref3[_l];
-      _ref4 = payload.data.objects[edge_i].node, source_k = _ref4[0], targets = 2 <= _ref4.length ? __slice.call(_ref4, 1) : [];
-      for (_m = 0, _len4 = targets.length; _m < _len4; _m++) {
-        target_k = targets[_m];
-        if (index.edges_by_key[payload.data.keys[edge_i]] == null) {
-          index.edges_by_key[payload.data.keys[edge_i]] = [];
-        }
-        _i = (graph.edges.push({
-          edge: {
-            key: payload.data.keys[edge_i],
-            data: data[payload.data.keys[edge_i]]
+    _key_iter = -1;
+    while (_key_iter < payload.data.keys.length) {
+      _key_iter++;
+      if (_key_iter <= payload.graph.nodes) {
+        _i = index.nodes_by_key[payload.data.keys[_key_iter]] = (graph.nodes.push({
+          node: {
+            key: payload.data.keys[_key_iter],
+            data: data[payload.data.keys[_key_iter]]
           },
-          "native": graph.natives[index.natives_by_key[data[payload.data.keys[edge_i]]["native"]]],
-          source: {
-            index: index.nodes_by_key[source_k],
-            object: graph.nodes[index.nodes_by_key[source_k]]
-          },
-          target: {
-            index: index.nodes_by_key[target_k],
-            object: graph.nodes[index.nodes_by_key[target_k]]
-          }
+          "native": graph.natives[index.natives_by_key[data[payload.data.keys[_key_iter]]["native"]]]
         })) - 1;
-        index.edges_by_key[payload.data.keys[edge_i]].push(_i);
+      } else if (_key_iter <= payload.graph.edges) {
+        _ref2 = payload.data.objects[_key_iter].node, source_k = _ref2[0], targets = 2 <= _ref2.length ? __slice.call(_ref2, 1) : [];
+        for (_k = 0, _len2 = targets.length; _k < _len2; _k++) {
+          target_k = targets[_k];
+          if (index.edges_by_key[payload.data.keys[_key_iter]] == null) {
+            index.edges_by_key[payload.data.keys[_key_iter]] = [];
+          }
+          _i = (graph.edges.push({
+            edge: {
+              key: payload.data.keys[_key_iter],
+              data: data[payload.data.keys[_key_iter]]
+            },
+            "native": graph.natives[index.natives_by_key[data[payload.data.keys[_key_iter]]["native"]]],
+            source: {
+              index: index.nodes_by_key[source_k],
+              object: graph.nodes[index.nodes_by_key[source_k]]
+            },
+            target: {
+              index: index.nodes_by_key[target_k],
+              object: graph.nodes[index.nodes_by_key[target_k]]
+            }
+          })) - 1;
+        }
+        index.edges_by_key[payload.data.keys[_key_iter]].push(_i);
       }
     }
     return setTimeout((function() {
@@ -345,7 +346,7 @@
     width = stage.offsetWidth;
     height = stage.offsetHeight;
     color = this.d3.scale.category20();
-    force = this.d3.layout.force().linkDistance(graph_config.force.distance).linkStrength(graph_config.force.strength).friction(graph_config.force.friction).charge(graph_config.force.charge).theta(graph_config.force.theta).gravity(graph_config.force.gravity).size([graph_config.width, graph_config.height]);
+    force = this.d3.layout.force().linkDistance(graph_config.force.distance).linkStrength(graph_config.force.strength).friction(graph_config.force.friction).charge(graph_config.force.charge).theta(graph_config.force.theta).gravity(graph_config.force.gravity).size([graph_config.width, graph_config.height]).alpha(graph_config.force.alpha);
     _load = function(g) {
       var container, edge, edge_wrap, legislator_image, line, node, node_wrap, shape, svg;
       svg = d3.select(map);
