@@ -2,7 +2,7 @@
   var demo_data, draw, frame, graph_config, image_prefix, map, receive, stage, _get,
     __slice = [].slice;
 
-  image_prefix = "//storage.googleapis.com/providence-clarity/warehouse/raw/govtrack/photos/";
+  image_prefix = "//fatcatmap.org/image-proxy/providence-clarity/warehouse/raw/govtrack/photos/";
 
   demo_data = this.demo_data = {
     "nodes": [
