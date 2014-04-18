@@ -20,7 +20,7 @@ class Landing(Page):
 
   default_graph = {
     'depth': 1,
-    'limit': 5
+    'limit': 20
   }
 
   def GET(self):

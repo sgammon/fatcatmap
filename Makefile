@@ -154,6 +154,7 @@ $(PWD)/.env: npm
 	@echo "Installing Pip dependencies (this may take awhile)..."
 	@-bin/pip install -r ./requirements.txt
 	@-mkdir -p .develop
+	@-mkdir -p .develop/maps/fatcatmap/assets/{js,less,style,coffee}/site
 	@-chmod -R 775 .develop
 
 devserver:

@@ -17,12 +17,15 @@ graph_config =
   height: frame.offsetHeight
 
   force:
-    strength: 0.8
-    friction: 0.7
-    theta: 0.6
-    gravity: 0.075
-    charge: -80
-    #distance: (e) -> e.value + 125
+    strength: 0.7
+    friction: 0.5
+    theta: 0.5
+    gravity: 0.08
+    charge: -100
+    distance: (e) ->
+      if e.native?.data?
+        return e.native.data.total
+      return 50
 
   node:
     radius: 20
@@ -35,32 +38,74 @@ graph_config =
 receive = @receive = (data) ->
 
   # parse data
-  payload = JSON.parse data
+  if typeof data == 'string'
+    payload = @payload = JSON.parse data
+  else
+    payload = @payload = data
 
-  index =
-    map: {}
-    nodes_to_edges: {}
-    objects_to_natives: {}
+  data = @data = {}
 
-  graph =
+  index = @index =
+    nodes_by_key: {}
+    edges_by_key: {}
+    natives_by_key: {}
+    object_natives: {}
+
+  graph = @graph =
     nodes: []
     edges: []
+    natives: []
 
-  for source_i, target_spec of payload.data.index.map
+  ## == inflate data objects == ##
 
-    # extract edge (always first item) and targets
-    [edge_i, targets...] = target_spec
+  ## 1) keys & objects
+  for key, key_i in payload.data.keys
+    data[key] = payload.data.objects[key_i]
 
-    # make source node
-    source =
+  ## 2) natives
+  for native_i in payload.graph.natives
+    _i = index.natives_by_key[payload.data.keys[native_i]] = (graph.natives.push
+      key: payload.data.keys[native_i]
+      data: data[payload.data.keys[native_i]]
+    ) - 1
+
+  ## == inflate graph structure == ##
+
+  ## 1) nodes
+  for node_i in payload.graph.nodes
+    _i = index.nodes_by_key[payload.data.keys[node_i]] = (graph.nodes.push
       node:
-        key: payload.data.keys[source_i]
-        object: payload.data.objects[source_i]
-      native: payload.data.objects[payload.data.index]
+        key: payload.data.keys[node_i]
+        data: data[payload.data.keys[node_i]]
+      native: graph.natives[index.natives_by_key[data[payload.data.keys[node_i]].native]]
+    ) - 1
 
+  ## 2) edges
+  for edge_i in payload.graph.edges
 
+    # extract source and targets from edge
+    [source_k, targets...] = payload.data.objects[edge_i].node
 
-  return draw(interpreted.graph)
+    for target_k in targets
+      if not index.edges_by_key[payload.data.keys[edge_i]]?
+        index.edges_by_key[payload.data.keys[edge_i]] = []
+
+      _i = (graph.edges.push
+        edge:
+          key: payload.data.keys[edge_i]
+          data: data[payload.data.keys[edge_i]]
+        native: graph.natives[index.natives_by_key[data[payload.data.keys[edge_i]].native]]
+        source:
+          index: index.nodes_by_key[source_k]
+          object: graph.nodes[index.nodes_by_key[source_k]]
+        target:
+          index: index.nodes_by_key[target_k]
+          object: graph.nodes[index.nodes_by_key[target_k]]
+      ) - 1
+
+      index.edges_by_key[payload.data.keys[edge_i]].push _i
+
+  return setTimeout (-> draw(graph)), 0
 
 # == graph draw == #
 draw = @draw = (graph) ->
@@ -73,61 +118,71 @@ draw = @draw = (graph) ->
   color = @d3.scale.category20()
 
   force = @d3.layout.force()
-    .linkDistance(graph_config.force.distance)
-    .linkStrength(graph_config.force.strength)
-    .friction(graph_config.force.friction)
-    .charge(graph_config.force.charge)
-    .theta(graph_config.force.theta)
-    .gravity(graph_config.force.gravity)
-    .size([graph_config.width, graph_config.height])
+                    .linkDistance(graph_config.force.distance)
+                    .linkStrength(graph_config.force.strength)
+                    .friction(graph_config.force.friction)
+                    .charge(graph_config.force.charge)
+                    .theta(graph_config.force.theta)
+                    .gravity(graph_config.force.gravity)
+                    .size([graph_config.width, graph_config.height])
 
   _load = (g) ->
 
     svg = d3.select(map)
 
-    edge_group = svg.selectAll('.edge').data(g.edges)
-      .enter().append('svg')
-        .attr('id', (e) -> 'edge-' + e.edge.id)
+    ## 1) edge structure
+    edge_wrap = svg.selectAll('.edge')
+                   .data(g.edges)
+                   .enter()
 
-    link = edge_group.append('line')
-      .attr('stroke', '#999')
-      .attr('class', 'link')
-      .style('stroke-width', 2)
+    edge = edge_wrap.append('svg')
+                    .attr('id', (e) -> 'edge-' + e.edge.key)
 
-    sprite = svg.selectAll('.node').data(g.nodes)
-      .enter().append('svg')
-        .attr('id', (n) -> 'group-' + n.node.encoded)
-        .attr('width', graph_config.sprite.width)
-        .attr('height', graph_config.sprite.height)
-        .call(force.drag)
+    line = edge.append('line')
+               .attr('stroke', '#999')
+               .attr('class', 'link')
+               .style('stroke-width', 2)
 
-    group = sprite.append('g')
-      .attr('width', graph_config.sprite.width)
-      .attr('height', graph_config.sprite.height)
+    ## 2) node structure
+    node_wrap = svg.selectAll('.node')
+                   .data(g.nodes)
+                   .enter()
 
-    node = group.append('circle')
-      .attr('r', graph_config.node.radius)
-      .attr('cx', graph_config.sprite.width / 2)
-      .attr('cy', graph_config.sprite.height / 2)
-      .attr('class', 'node')
+    container = node_wrap.append('svg')
+                         .attr('id', (n) -> 'group-' + n.node.key)
+                         .attr('width', graph_config.sprite.width)
+                         .attr('height', graph_config.sprite.height)
+                         .call(force.drag)
 
-    #image = group.append('image')
-    #  .attr('width', graph_config.sprite.width)
-    #  .attr('height', graph_config.sprite.height)
-    #  .attr('clip-path', 'url(#node-circle-mask)')
-    #  .attr('xlink:href', (n) -> image_prefix + n.id + '-' + '100px.jpeg')
+    node = container.append('g')
+                    .attr('width', graph_config.sprite.width)
+                    .attr('height', graph_config.sprite.height)
 
-    @d3.select('#appstage').on('click', (n) -> force.alpha(.4))
+    node = node.append('circle')
+               .attr('r', graph_config.node.radius)
+               .attr('cx', graph_config.sprite.width / 2)
+               .attr('cy', graph_config.sprite.height / 2)
+               .attr('class', 'node')
+
+    ## 2.1) image for legislators
+    legislator_image = node.append('image')
+                           .filter((n) -> n.native.data.fecid?)
+                           .attr('width', graph_config.sprite.width)
+                           .attr('height', graph_config.sprite.height)
+                           .attr('clip-path', 'url(#node-circle-mask)')
+                           .attr('xlink:href', (n) -> image_prefix + n.native.data.govtrackid.toString() + '-' + '100px.jpeg')
+
+    @d3.select(stage).on('click', (n) -> force.alpha(.5))
 
     force.on 'tick', (f) ->
 
-      link.attr('x1', (d) -> d.source.x + (graph_config.node.radius / 2))
-          .attr('y1', (d) -> d.source.y + (graph_config.node.radius / 2))
-          .attr('x2', (d) -> d.target.x + (graph_config.node.radius / 2))
-          .attr('y2', (d) -> d.target.y + (graph_config.node.radius / 2))
+      line.attr('x1', (d) -> d.source.object.x + (graph_config.node.radius / 2))
+          .attr('y1', (d) -> d.source.object.y + (graph_config.node.radius / 2))
+          .attr('x2', (d) -> d.target.object.x + (graph_config.node.radius / 2))
+          .attr('y2', (d) -> d.target.object.y + (graph_config.node.radius / 2))
 
-      sprite.attr('x', (d) -> d.x - graph_config.node.radius)
-            .attr('y', (d) -> d.y - graph_config.node.radius)
+      container.attr('x', (d) -> d.x - graph_config.node.radius)
+               .attr('y', (d) -> d.y - graph_config.node.radius)
 
     force.nodes(g.nodes).links(g.edges).start()
 

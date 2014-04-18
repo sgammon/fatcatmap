@@ -237,11 +237,18 @@
     width: frame.offsetWidth,
     height: frame.offsetHeight,
     force: {
-      strength: 0.8,
-      friction: 0.7,
-      theta: 0.6,
-      gravity: 0.075,
-      charge: -80
+      strength: 0.7,
+      friction: 0.5,
+      theta: 0.5,
+      gravity: 0.08,
+      charge: -100,
+      distance: function(e) {
+        var _ref;
+        if (((_ref = e["native"]) != null ? _ref.data : void 0) != null) {
+          return e["native"].data.total;
+        }
+        return 50;
+      }
     },
     node: {
       radius: 20
@@ -253,30 +260,78 @@
   };
 
   receive = this.receive = function(data) {
-    var edge_i, graph, index, payload, source, source_i, target_spec, targets, _ref;
-    payload = JSON.parse(data);
-    index = {
-      map: {},
-      nodes_to_edges: {},
-      objects_to_natives: {}
-    };
-    graph = {
-      nodes: [],
-      edges: []
-    };
-    _ref = payload.data.index.map;
-    for (source_i in _ref) {
-      target_spec = _ref[source_i];
-      edge_i = target_spec[0], targets = 2 <= target_spec.length ? __slice.call(target_spec, 1) : [];
-      source = {
-        node: {
-          key: payload.data.keys[source_i],
-          object: payload.data.objects[source_i]
-        },
-        "native": payload.data.objects[payload.data.index]
-      };
+    var edge_i, graph, index, key, key_i, native_i, node_i, payload, source_k, target_k, targets, _i, _j, _k, _l, _len, _len1, _len2, _len3, _len4, _m, _ref, _ref1, _ref2, _ref3, _ref4;
+    if (typeof data === 'string') {
+      payload = this.payload = JSON.parse(data);
+    } else {
+      payload = this.payload = data;
     }
-    return draw(interpreted.graph);
+    data = this.data = {};
+    index = this.index = {
+      nodes_by_key: {},
+      edges_by_key: {},
+      natives_by_key: {},
+      object_natives: {}
+    };
+    graph = this.graph = {
+      nodes: [],
+      edges: [],
+      natives: []
+    };
+    _ref = payload.data.keys;
+    for (key_i = _i = 0, _len = _ref.length; _i < _len; key_i = ++_i) {
+      key = _ref[key_i];
+      data[key] = payload.data.objects[key_i];
+    }
+    _ref1 = payload.graph.natives;
+    for (_j = 0, _len1 = _ref1.length; _j < _len1; _j++) {
+      native_i = _ref1[_j];
+      _i = index.natives_by_key[payload.data.keys[native_i]] = (graph.natives.push({
+        key: payload.data.keys[native_i],
+        data: data[payload.data.keys[native_i]]
+      })) - 1;
+    }
+    _ref2 = payload.graph.nodes;
+    for (_k = 0, _len2 = _ref2.length; _k < _len2; _k++) {
+      node_i = _ref2[_k];
+      _i = index.nodes_by_key[payload.data.keys[node_i]] = (graph.nodes.push({
+        node: {
+          key: payload.data.keys[node_i],
+          data: data[payload.data.keys[node_i]]
+        },
+        "native": graph.natives[index.natives_by_key[data[payload.data.keys[node_i]]["native"]]]
+      })) - 1;
+    }
+    _ref3 = payload.graph.edges;
+    for (_l = 0, _len3 = _ref3.length; _l < _len3; _l++) {
+      edge_i = _ref3[_l];
+      _ref4 = payload.data.objects[edge_i].node, source_k = _ref4[0], targets = 2 <= _ref4.length ? __slice.call(_ref4, 1) : [];
+      for (_m = 0, _len4 = targets.length; _m < _len4; _m++) {
+        target_k = targets[_m];
+        if (index.edges_by_key[payload.data.keys[edge_i]] == null) {
+          index.edges_by_key[payload.data.keys[edge_i]] = [];
+        }
+        _i = (graph.edges.push({
+          edge: {
+            key: payload.data.keys[edge_i],
+            data: data[payload.data.keys[edge_i]]
+          },
+          "native": graph.natives[index.natives_by_key[data[payload.data.keys[edge_i]]["native"]]],
+          source: {
+            index: index.nodes_by_key[source_k],
+            object: graph.nodes[index.nodes_by_key[source_k]]
+          },
+          target: {
+            index: index.nodes_by_key[target_k],
+            object: graph.nodes[index.nodes_by_key[target_k]]
+          }
+        })) - 1;
+        index.edges_by_key[payload.data.keys[edge_i]].push(_i);
+      }
+    }
+    return setTimeout((function() {
+      return draw(graph);
+    }), 0);
   };
 
   draw = this.draw = function(graph) {
@@ -287,31 +342,38 @@
     color = this.d3.scale.category20();
     force = this.d3.layout.force().linkDistance(graph_config.force.distance).linkStrength(graph_config.force.strength).friction(graph_config.force.friction).charge(graph_config.force.charge).theta(graph_config.force.theta).gravity(graph_config.force.gravity).size([graph_config.width, graph_config.height]);
     _load = function(g) {
-      var edge_group, group, link, node, sprite, svg;
+      var container, edge, edge_wrap, legislator_image, line, node, node_wrap, svg;
       svg = d3.select(map);
-      edge_group = svg.selectAll('.edge').data(g.edges).enter().append('svg').attr('id', function(e) {
-        return 'edge-' + e.edge.id;
+      edge_wrap = svg.selectAll('.edge').data(g.edges).enter();
+      edge = edge_wrap.append('svg').attr('id', function(e) {
+        return 'edge-' + e.edge.key;
       });
-      link = edge_group.append('line').attr('stroke', '#999').attr('class', 'link').style('stroke-width', 2);
-      sprite = svg.selectAll('.node').data(g.nodes).enter().append('svg').attr('id', function(n) {
-        return 'group-' + n.node.encoded;
+      line = edge.append('line').attr('stroke', '#999').attr('class', 'link').style('stroke-width', 2);
+      node_wrap = svg.selectAll('.node').data(g.nodes).enter();
+      container = node_wrap.append('svg').attr('id', function(n) {
+        return 'group-' + n.node.key;
       }).attr('width', graph_config.sprite.width).attr('height', graph_config.sprite.height).call(force.drag);
-      group = sprite.append('g').attr('width', graph_config.sprite.width).attr('height', graph_config.sprite.height);
-      node = group.append('circle').attr('r', graph_config.node.radius).attr('cx', graph_config.sprite.width / 2).attr('cy', graph_config.sprite.height / 2).attr('class', 'node');
-      this.d3.select('#appstage').on('click', function(n) {
-        return force.alpha(.4);
+      node = container.append('g').attr('width', graph_config.sprite.width).attr('height', graph_config.sprite.height);
+      node = node.append('circle').attr('r', graph_config.node.radius).attr('cx', graph_config.sprite.width / 2).attr('cy', graph_config.sprite.height / 2).attr('class', 'node');
+      legislator_image = node.append('image').filter(function(n) {
+        return n["native"].data.fecid != null;
+      }).attr('width', graph_config.sprite.width).attr('height', graph_config.sprite.height).attr('clip-path', 'url(#node-circle-mask)').attr('xlink:href', function(n) {
+        return image_prefix + n["native"].data.govtrackid.toString() + '-' + '100px.jpeg';
+      });
+      this.d3.select(stage).on('click', function(n) {
+        return force.alpha(.5);
       });
       force.on('tick', function(f) {
-        link.attr('x1', function(d) {
-          return d.source.x + (graph_config.node.radius / 2);
+        line.attr('x1', function(d) {
+          return d.source.object.x + (graph_config.node.radius / 2);
         }).attr('y1', function(d) {
-          return d.source.y + (graph_config.node.radius / 2);
+          return d.source.object.y + (graph_config.node.radius / 2);
         }).attr('x2', function(d) {
-          return d.target.x + (graph_config.node.radius / 2);
+          return d.target.object.x + (graph_config.node.radius / 2);
         }).attr('y2', function(d) {
-          return d.target.y + (graph_config.node.radius / 2);
+          return d.target.object.y + (graph_config.node.radius / 2);
         });
-        return sprite.attr('x', function(d) {
+        return container.attr('x', function(d) {
           return d.x - graph_config.node.radius;
         }).attr('y', function(d) {
           return d.y - graph_config.node.radius;
