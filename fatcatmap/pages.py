@@ -10,7 +10,7 @@
 import json
 
 # canteen
-from canteen import url, Page
+from fatcatmap import url, Page
 
 
 @url('landing', '/')
@@ -33,6 +33,11 @@ class Landing(Page):
       'depth': self.default_graph['depth']
     }).extract(flatten=True)
 
-    return self.render('landing.haml', graph=json.dumps({
-      'meta': meta, 'data': data, 'graph': graph
-    }, separators=(',', ':'), indent=None, skipkeys=True))
+    # staple inline
+    self.staple_data({
+      'meta': meta,
+      'data': data,
+      'graph': graph
+    })
+
+    return self.render('landing.haml')

@@ -38,14 +38,17 @@ config = cfg.Config(app={
     'favicon': os.path.join(app, 'assets', 'img', 'favicon.ico'),
 
     'templates': {
-      'source': os.path.join(app, 'templates/source')
+      'source': os.path.join(app, 'templates/source'),
+      'compiled': 'fatcatmap.templates.compiled'
     }
 
   }
 
 }, config={
 
-  # HTTP semantics
+  #### ==== CANTEEN CONFIGURATION ==== ####
+
+  ## - HTTP Semantics
   'http': {
 
     # Default headers to add
@@ -59,9 +62,11 @@ config = cfg.Config(app={
 
   },
 
-  # Template API
+  ## - Templates
   'TemplateAPI': {
     'debug': True,
+
+    'force_compiled': False,
 
     'haml': {
       'debug': False,
@@ -86,6 +91,7 @@ config = cfg.Config(app={
     }
   },
 
+  ## - Redis
   'RedisAdapter': {
     'debug': True,
 
@@ -97,12 +103,33 @@ config = cfg.Config(app={
       'local': {'host': '127.0.0.1', 'port': 6379},
       'sandbox': {'host': '10.0.5.5', 'port': 6379}
     }
+  },
+
+
+  #### ==== FATCATMAP CONFIGURATION ==== ####
+
+  'api': {
+
+    # JSONRPC
+    'rpc': {
+      'enabled': True,
+      'version': 1,
+      'host': None if __debug__ else 'fatcatmap.org'  # `None` will use the HTTP request's host and port
+    },
+
+    # WebSockets
+    'realtime': {
+      'enabled': False,
+      'version': 1,
+      'host': None if __debug__ else 'fatcatmap.org'  # `None` will use the HTTP request's host and port
+    }
+
   }
 
 
 }, assets={
 
-  # Asset API config
+  ## - Asset Configuration
   'config': {
 
     'minified': False,
@@ -120,12 +147,12 @@ config = cfg.Config(app={
       'develop-less': ('/assets/less', os.path.join(app, 'assets', 'less')),
       'develop-sources': ('/.develop', os.path.join(os.path.dirname(app), '.develop')),
       'less-sourcs': ('/.develop/maps/fatcatmap/assets/less', os.path.join(app, 'assets', 'less')),
-      'develop-coffee': ('/.develop/maps/fatcatmap/assets/coffee', os.path.join(app, 'assets', 'coffee'))
+      'develop-coffee': ('/.develop/maps/fatcatmap/assets/coffee', os.path.join(app, 'assets', 'js'))
     }
 
   },
 
-  # Asset registry
+  ## - Asset Registry
   'assets': {
 
     'style': {},

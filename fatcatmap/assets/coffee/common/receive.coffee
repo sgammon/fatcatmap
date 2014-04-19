@@ -1,17 +1,4 @@
 
-# == utils == #
-_get = (d) -> document.getElementById d
-
-# == vars == #
-@stage = _get 'appstage'
-@map = _get 'map'
-@frame = _get 'appframe'
-@image_prefix = "//fatcatmap.org/image-proxy/providence-clarity/warehouse/raw/govtrack/photos/"
-
-@__onload_callbacks = []
-
-
-
 # == data transform == #
 receive = @receive = (data) ->
 
@@ -89,30 +76,3 @@ receive = @receive = (data) ->
       index.edges_by_key[payload.data.keys[_key_iter]].push _i
 
   return setTimeout (-> @draw(graph)), 0
-
-
-# == session / user context == #
-load_context = @load_context = (event, data) ->
-
-  @context = data || JSON.parse(document.getElementById('js-context').textContent)
-  console.log "Loading context...", @context
-
-  if @context.services
-    console.log "Loading services...", @context.services
-    apptools.rpc.service.factory(@context.services)
-
-  if @context.pagedata
-    @pagedata = JSON.parse(document.getElementById('js-data').textContent)
-    console.log "Detected stapled pagedata...", @pagedata
-
-    @receive(@pagedata)
-
-  return @context
-
-@__onload_callbacks.push load_context
-
-
-@onload = (event) ->
-
-  for callback in @__onload_callbacks
-    callback(event)

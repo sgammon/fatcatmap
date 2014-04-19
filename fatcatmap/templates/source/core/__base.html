@@ -59,11 +59,13 @@
       {% block south -%}
       <!-- bundle/page JS -->
       <script id="js-ext" type="text/javascript" src="{{ asset.script("core/ext-bundle.min.js") }}"></script>
+      <script id="js-ext" type="text/javascript" src="{{ asset.script("common.min.js" if not __debug__ else "common.js") }}"></script>
       <script id="js-page" type="text/javascript" src="{%- block page_js -%}{%- endblock -%}"></script>
 
       <!-- context -->
-      <script id="js-struct" type="text/javascript">(function(apptools){ {{- services.describe(javascript=True).replace(' ', '')|safe -}} })(window.apptools);</script>
-      <script id="js-context" type="application/json">{}</script>
+      <script id="js-context" type="application/json">{{ js_context|json|safe }}</script><!-- end #js-context -->
+
+      {% if js_context.pagedata -%}<script id="js-data" type="application/json">{{ pagedata|json|safe }}</script><!-- end #js-data -->{%- endif %}
       {%- endblock south %}
 
     </div><!-- end #js-south -->

@@ -86,7 +86,10 @@ class FCM(cli.Tool):
           result of the call. ``Falsy`` return values will be passed to
           :py:meth:`sys.exit` and converted into Unix-style return codes. '''
 
-      import fatcatmap, fatcatmap.config, canteen
+      import fatcatmap, canteen
+      from fatcatmap.config import config
+
+      fatcatmap.preload()  # load up all the things!
 
       if arguments.companion:
         dev_companion = companion.go()
@@ -94,7 +97,7 @@ class FCM(cli.Tool):
       canteen.run(fatcatmap, **{
         'port': arguments.port or 5000,
         'interface': arguments.ip or '127.0.0.1',
-        'config': fatcatmap.config or {}
+        'config': config or {}
       })
 
 
@@ -189,7 +192,7 @@ class FCM(cli.Tool):
 
         # delete existing templates first, if any
         logging.info('Cleaning existing template path...')
-        module_root = os.path.join(project_root, "coolapp", "templates")
+        module_root = os.path.join(project_root, "fatcatmap", "templates")
 
         clean_command = "rm -fr %s" % os.path.join(module_root, "compiled", "*")
         if config.get('debug', False):

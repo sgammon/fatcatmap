@@ -51,11 +51,3 @@
         {%- endblock mapper %}
     </section><!-- end #mapper -->
 {% endblock %}
-
-{% block south -%}
-    {{ super() }}
-      {% if graph -%}
-      <script id="js-data" type="application/json">{{ graph|safe }}</script>
-      <script type="text/javascript">receive(document.getElementById('js-data').textContent);</script>
-      {%- endif %}
-{% endblock %}

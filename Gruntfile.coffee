@@ -94,18 +94,24 @@ module.exports = (grunt) ->
       # `common.js`
       common:
         files:
-          'fatcatmap/assets/js/common.js': ['fatcatmap/assets/coffee/common/*.coffee']
+          'fatcatmap/assets/js/common.js': [
+            'fatcatmap/assets/coffee/common/_base.coffee',
+            'fatcatmap/assets/coffee/common/_d3.coffee',
+            'fatcatmap/assets/coffee/common/receive.coffee',
+            'fatcatmap/assets/coffee/common/context.coffee',
+            'fatcatmap/assets/coffee/common/onload.coffee'
+          ]
         options:
           sourceMap: true
           sourceMapDir: '.develop/maps/fatcatmap/assets/coffee/'
 
-      # `home.js`
-      home:
+      # `mapper.js`
+      mapper:
         files:
-          'fatcatmap/assets/js/site/home.js': ['fatcatmap/assets/coffee/home/*.coffee']
+          'fatcatmap/assets/js/mapper.js': ['fatcatmap/assets/coffee/mapper.coffee']
         options:
           sourceMap: true
-          sourceMapDir: '.develop/maps/fatcatmap/assets/coffee/site/'
+          sourceMapDir: '.develop/maps/fatcatmap/assets/coffee/'
 
     # - Closure Compiler - #
     'closure-compiler':
@@ -140,13 +146,13 @@ module.exports = (grunt) ->
             '"DEBUG=true"'
           ]
 
-      # `home.min.js`
-      home:
+      # `mapper.min.js`
+      mapper:
         closurePath: "lib/closure"
-        jsOutputFile: "fatcatmap/assets/js/site/home.min.js"
+        jsOutputFile: "fatcatmap/assets/js/mapper.min.js"
         js: [
           "fatcatmap/assets/js/common.js",
-          "fatcatmap/assets/js/site/home.js"
+          "fatcatmap/assets/js/mapper.js"
         ]
         options:
           debug: false
@@ -158,20 +164,20 @@ module.exports = (grunt) ->
             '"DEBUG=false"'
           ]
 
-      # DEBUG: `home.min.js`
-      home_debug:
+      # DEBUG: `mapper.min.js`
+      mapper_debug:
         closurePath: "lib/closure"
-        jsOutputFile: "fatcatmap/assets/js/site/home.min.js"
+        jsOutputFile: "fatcatmap/assets/js/mapper.min.js"
         js: [
           "fatcatmap/assets/js/common.js",
-          "fatcatmap/assets/js/site/home.js"
+          "fatcatmap/assets/js/mapper.js"
         ]
         options:
           debug: true
           summary_detail_level: 3
           language_in: 'ECMASCRIPT5'
           compilation_level: 'SIMPLE_OPTIMIZATIONS'
-          create_source_map: ".develop/maps/fatcatmap/assets/js/site/home.min.js.map"
+          create_source_map: ".develop/maps/fatcatmap/assets/js/mapper.min.js.map"
           define: [
             '"DEBUG=true"'
           ]
@@ -191,6 +197,13 @@ module.exports = (grunt) ->
           spawn: false
           interrupt: true
 
+      templates:
+        files: ['fatcatmap/templates/source/**/*']
+        tasks: ['shell:buildTemplates']
+        options:
+          spawn: false
+          interrupt: true
+
     svgmin: {}
 
     shell:
@@ -201,14 +214,14 @@ module.exports = (grunt) ->
         command: "bin/fcm build --templates"
 
       cleanTemplates:
-        command: "bin/fcm clean --templates"
+        command: "rm -fr fatcatmap/templates/compiled/*"
 
   ## ~~ register tasks: `default` ~~ ##
   grunt.registerTask 'default', [
     'less',
     'coffee',
     'closure-compiler:common_debug',
-    'closure-compiler:home_debug'
+    'closure-compiler:mapper_debug'
   ]
 
   ## ~~ register tasks: `develop` ~~ ##
@@ -216,7 +229,7 @@ module.exports = (grunt) ->
     'less',
     'coffee',
     'closure-compiler:common_debug',
-    'closure-compiler:home_debug',
+    'closure-compiler:mapper_debug',
     'watch',
     'shell:runServer'
   ]
@@ -226,5 +239,5 @@ module.exports = (grunt) ->
     'less',
     'coffee',
     'closure-compiler:common',
-    'closure-compiler:home'
+    'closure-compiler:mapper'
   ]
