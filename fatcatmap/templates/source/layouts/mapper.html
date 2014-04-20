@@ -45,9 +45,12 @@
     </section>
 
     <!-- mapper -->
+    <fcm-mapper></fcm-mapper>
+    {% if false %}
     <section id='mapper'>
         {% block mapper -%}
         {% include "partials/mappers/svg.html" with context %}
         {%- endblock mapper %}
     </section><!-- end #mapper -->
+    {% endif %}
 {% endblock %}

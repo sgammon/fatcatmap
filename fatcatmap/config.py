@@ -147,7 +147,8 @@ config = cfg.Config(app={
       'develop-less': ('/assets/less', os.path.join(app, 'assets', 'less')),
       'develop-sources': ('/.develop', os.path.join(os.path.dirname(app), '.develop')),
       'less-sourcs': ('/.develop/maps/fatcatmap/assets/less', os.path.join(app, 'assets', 'less')),
-      'develop-coffee': ('/.develop/maps/fatcatmap/assets/coffee', os.path.join(app, 'assets', 'js'))
+      'develop-coffee': ('/.develop/maps/fatcatmap/assets/coffee', os.path.join(app, 'assets', 'js')),
+      'web-components': ('/.develop/maps/fatcatmap/assets/coffee', os.path.join(app, 'assets', 'components'))
     }
 
   },

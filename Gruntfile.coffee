@@ -7,6 +7,7 @@ module.exports = (grunt) ->
   grunt.loadNpmTasks 'grunt-webp'
   grunt.loadNpmTasks 'grunt-shell'
   grunt.loadNpmTasks 'grunt-svgmin'
+  grunt.loadNpmTasks 'grunt-dart2js'
   grunt.loadNpmTasks 'grunt-contrib-less'
   grunt.loadNpmTasks 'grunt-contrib-watch'
   grunt.loadNpmTasks 'grunt-contrib-coffee'
@@ -114,6 +115,31 @@ module.exports = (grunt) ->
           bare: true
           sourceMap: true
           sourceMapDir: '.develop/maps/fatcatmap/assets/coffee/'
+
+    # - Dart - #
+    dart2js:
+      options:
+        minify: false
+
+      common:
+        files: {}
+        options:
+          minify: true
+
+      mapper:
+        files: {}
+        options:
+          minify: true
+
+      common_debug:
+        files: {}
+        options:
+          minify: false
+
+      mapper_debug:
+        files: {}
+        options:
+          minify: false
 
     # - Closure Compiler - #
     'closure-compiler':
