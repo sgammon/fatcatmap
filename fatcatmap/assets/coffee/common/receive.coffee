@@ -1,22 +1,28 @@
 
+###
+
+  receive: a function of untold value
+
+###
+
 # == data transform == #
-receive = @receive = (data) ->
+receive = @['receive'] = (data) ->
 
   # parse data
   if typeof data == 'string'
-    payload = @payload = JSON.parse data
+    payload = @['payload'] = JSON.parse data
   else
-    payload = @payload = data
+    payload = @['payload'] = data
 
-  data = @data = {}
+  data = @['data'] = {}
 
-  index = @index =
+  index = @['index'] =
     nodes_by_key: {}
     edges_by_key: {}
     natives_by_key: {}
     object_natives: {}
 
-  graph = @graph =
+  graph = @['graph'] =
     nodes: []
     edges: []
     natives: []
@@ -75,4 +81,4 @@ receive = @receive = (data) ->
 
       index.edges_by_key[payload.data.keys[_key_iter]].push _i
 
-  return setTimeout (-> @draw(graph)), 0
+  return setTimeout (-> @['draw'](graph)), 0
