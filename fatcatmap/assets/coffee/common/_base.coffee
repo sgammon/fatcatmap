@@ -1,11 +1,42 @@
 
-# == utils == #
+###
+
+  file header yup
+
+###
+
+
+###
+  get
+###
 _get = (d) -> document.getElementById d
 
-# == vars == #
-@stage = _get 'appstage'
-@map = _get 'map'
-@frame = _get 'appframe'
-@image_prefix = "//fatcatmap.org/image-proxy/providence-clarity/warehouse/raw/govtrack/photos/"
 
-@__onload_callbacks = []
+###
+  stage
+###
+stage = @['stage'] = _get 'appstage'
+
+
+###
+  map
+###
+map = @['map'] = _get 'map'
+
+
+###
+  frame
+###
+frame = @['frame'] = _get 'appframe'
+
+
+###
+  image prefix
+###
+image_prefix = @['image_prefix'] = "//fatcatmap.org/image-proxy/providence-clarity/warehouse/raw/govtrack/photos/"
+
+
+###
+  onload callbacks
+###
+onloads = @['__onload_callbacks'] = []

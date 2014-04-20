@@ -1,35 +1,72 @@
 
-# == utils == #
+###
+
+  file header yup
+
+###
+
+
+###
+  get
+###
 _get = (d) -> document.getElementById d
 
-# == vars == #
-@stage = _get 'appstage'
-@map = _get 'map'
-@frame = _get 'appframe'
-@image_prefix = "//fatcatmap.org/image-proxy/providence-clarity/warehouse/raw/govtrack/photos/"
 
-@__onload_callbacks = []
+###
+  stage
+###
+stage = @['stage'] = _get 'appstage'
 
 
+###
+  map
+###
+map = @['map'] = _get 'map'
+
+
+###
+  frame
+###
+frame = @['frame'] = _get 'appframe'
+
+
+###
+  image prefix
+###
+image_prefix = @['image_prefix'] = "//fatcatmap.org/image-proxy/providence-clarity/warehouse/raw/govtrack/photos/"
+
+
+###
+  onload callbacks
+###
+onloads = @['__onload_callbacks'] = []
+
+
+
+###
+
+  receive: a function of untold value
+
+###
 
 # == data transform == #
-receive = @receive = (data) ->
+receive = @['receive'] = (data) ->
 
   # parse data
   if typeof data == 'string'
-    payload = @payload = JSON.parse data
+    payload = @['payload'] = JSON.parse data
   else
-    payload = @payload = data
+    payload = @['payload'] = data
 
-  data = @data = {}
+  data = @['data'] = {}
 
-  index = @index =
+  index = @['index'] =
     nodes_by_key: {}
     edges_by_key: {}
     natives_by_key: {}
     object_natives: {}
 
-  graph = @graph =
+  graph = @['graph'] =
     nodes: []
     edges: []
     natives: []
@@ -88,31 +125,43 @@ receive = @receive = (data) ->
 
       index.edges_by_key[payload.data.keys[_key_iter]].push _i
 
-  return setTimeout (-> @draw(graph)), 0
+  return setTimeout (-> @['draw'](graph)), 0
 
+
+###
+
+  context
+
+###
 
 # == session / user context == #
-load_context = @load_context = (event, data) ->
+load_context = @['load_context'] = (event, data) ->
 
-  @context = data || JSON.parse(document.getElementById('js-context').textContent)
-  console.log "Loading context...", @context
+  context = @['context'] = data || JSON.parse(document.getElementById('js-context').textContent)
+  console.log "Loading context...", context
 
-  if @context.services
-    console.log "Loading services...", @context.services
-    apptools.rpc.service.factory(@context.services)
+  if @['context']['services']
+    console.log "Loading services...", context['services']
+    apptools['rpc']['service']['factory'](context['services'])
 
-  if @context.pagedata
-    @pagedata = JSON.parse(document.getElementById('js-data').textContent)
-    console.log "Detected stapled pagedata...", @pagedata
+  if @['context']['pagedata']
+    pagedata = @['pagedata'] = JSON.parse(document.getElementById('js-data').textContent)
+    console.log "Detected stapled pagedata...", pagedata
 
-    @receive(@pagedata)
+    @['receive'](pagedata)
 
-  return @context
+  return @['context']
 
-@__onload_callbacks.push load_context
+onloads.push load_context
 
 
-@onload = (event) ->
+###
 
-  for callback in @__onload_callbacks
+  receive: a function of untold value
+
+###
+
+_onload = @['onload'] = (event) ->
+
+  for callback in @['__onload_callbacks']
     callback(event)

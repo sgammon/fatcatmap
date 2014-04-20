@@ -102,6 +102,7 @@ module.exports = (grunt) ->
             'fatcatmap/assets/coffee/common/onload.coffee'
           ]
         options:
+          bare: true
           sourceMap: true
           sourceMapDir: '.develop/maps/fatcatmap/assets/coffee/'
 
@@ -110,6 +111,7 @@ module.exports = (grunt) ->
         files:
           'fatcatmap/assets/js/mapper.js': ['fatcatmap/assets/coffee/mapper.coffee']
         options:
+          bare: true
           sourceMap: true
           sourceMapDir: '.develop/maps/fatcatmap/assets/coffee/'
 
