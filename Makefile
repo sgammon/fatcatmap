@@ -61,13 +61,13 @@ package: develop
 
 	@echo "=== fcm distribution built. ==="
 
-ifeq ($(DEBUG),0)
-develop: .develop styles scripts templates bootstrap
+ifeq ($(DEBUG),1)
+develop: .develop scripts templates bootstrap
 	@echo "Updating source dependencies..."
 	@echo "Cloning as user $(USER)..."
 	@git clone $(SANDBOX_GIT):sources/dependencies/canteen.git $(PWD)/lib/canteen -b $(CANTEEN_BRANCH)
 else
-develop: .develop styles scripts templates bootstrap
+develop: .develop scripts templates bootstrap
 	@echo "Updating source dependencies..."
 	@echo "Cloning as user $(USER)..."
 	@git clone /base/sources/dependencies/canteen.git $(PWD)/lib/canteen -b $(CANTEEN_BRANCH)
