@@ -1,0 +1,11 @@
+name: fatcatmap
+version: 0.0.1-alpha
+author: Sam Gammon <sam@momentum.io>
+description: coming soon to a riot near you
+homepage: https://fatcatmap.org
+documentation: https://docs.fatcatmap.org
+dependencies:
+  polymer: any
+transformers:
+- polymer:
+    entry_points: fatcatmap/assets/components/fatcatmap.html

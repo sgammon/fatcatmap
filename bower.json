@@ -1,0 +1,33 @@
+{
+  "name": "fatcatmap",
+  "version": "0.0.1",
+  "authors": [
+    "Sam Gammon <sam@momentum.io>"
+  ],
+  "description": "coming soon to a riot near you",
+  "keywords": [
+    "transparency",
+    "data",
+    "politics",
+    "civics",
+    "corruption",
+    "money",
+    "influence",
+    "lobbyists",
+    "lobbying"
+  ],
+  "license": "Copyright (c) momentum labs, 2014. All rights reserved.",
+  "homepage": "https://fatcatmap.org",
+  "private": true,
+  "ignore": [
+    "**/.*",
+    "node_modules",
+    "bower_components",
+    "test",
+    "tests"
+  ],
+  "dependencies": {
+    "polymer-elements": "~0.2.3",
+    "polymer-ui-elements": "~0.2.3"
+  }
+}
