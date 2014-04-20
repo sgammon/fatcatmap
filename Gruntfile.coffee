@@ -240,6 +240,8 @@ module.exports = (grunt) ->
   grunt.registerTask 'release', [
     'less',
     'coffee',
+    'shell:cleanTemplates',
+    'shell:buildTemplates',
     'closure-compiler:common',
     'closure-compiler:mapper'
   ]

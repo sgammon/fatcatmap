@@ -66,7 +66,7 @@ config = cfg.Config(app={
   'TemplateAPI': {
     'debug': True,
 
-    'force_compiled': False,
+    'force_compiled': not __debug__,
 
     'haml': {
       'debug': False,
