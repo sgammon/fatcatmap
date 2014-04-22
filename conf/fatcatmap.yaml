@@ -4,6 +4,7 @@ uwsgi:
   # ~ app settings ~ #
   app: fatcatmap
   workers: 3
+  http-socket: 127.0.0.1:9005
 
   # ~ hostnames ~ #
   host: fatcatmap.org
