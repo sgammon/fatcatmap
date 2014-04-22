@@ -33,7 +33,7 @@ frame = @['frame'] = _get 'appframe'
 ###
   image prefix
 ###
-image_prefix = @['image_prefix'] = "//fatcatmap.org/image-proxy/providence-clarity/warehouse/raw/govtrack/photos/"
+image_prefix = @['image_prefix'] = "//deliver.fcm-static.org/image-proxy/providence-clarity/warehouse/raw/govtrack/photos/"
 
 
 ###

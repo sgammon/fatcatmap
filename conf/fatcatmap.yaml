@@ -3,7 +3,6 @@ uwsgi:
 
   # ~ app settings ~ #
   app: fatcatmap
-  socket: 9005
   workers: 3
 
   # ~ hostnames ~ #
