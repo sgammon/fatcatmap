@@ -7,8 +7,8 @@
 
 graph_config = @['graph_config'] =
 
-  width: frame.offsetWidth
-  height: frame.offsetHeight
+  width: @['mapper'].offsetWidth
+  height: @['mapper'].offsetHeight
 
   force:
     alpha: 1
@@ -44,8 +44,6 @@ graph_config = @['graph_config'] =
 
 draw = @['draw'] = (graph) ->
 
-  width = @['stage'].offsetWidth
-  height = @['stage'].offsetHeight
   config = @['graph_config']
 
   color = @['d3'].scale.category20()
@@ -57,8 +55,8 @@ draw = @['draw'] = (graph) ->
                     .charge(config['force']['charge'])
                     .theta(config['force']['theta'])
                     .gravity(config['force']['gravity'])
-                    .size([config['width'], config['height']])
                     .alpha(config['force']['alpha'])
+                    .size([config['width'], config['height']])
 
   _load = (g) ->
 

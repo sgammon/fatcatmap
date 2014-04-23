@@ -7,7 +7,7 @@
 /*
   get
  */
-var frame, image_prefix, load_context, map, onloads, receive, stage, _get, _onload,
+var frame, image_prefix, load_context, map, mapper, onloads, receive, stage, _get, _onload,
   __slice = [].slice;
 
 _get = function(d) {
@@ -30,6 +30,13 @@ map = this['map'] = _get('map');
 
 
 /*
+  mapper
+ */
+
+mapper = this['mapper'] = _get('mapper');
+
+
+/*
   frame
  */
 
@@ -40,7 +47,7 @@ frame = this['frame'] = _get('appframe');
   image prefix
  */
 
-image_prefix = this['image_prefix'] = "//fatcatmap.org/image-proxy/providence-clarity/warehouse/raw/govtrack/photos/";
+image_prefix = this['image_prefix'] = "//deliver.fcm-static.org/image-proxy/providence-clarity/warehouse/raw/govtrack/photos/";
 
 
 /*

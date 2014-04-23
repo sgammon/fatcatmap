@@ -6,8 +6,8 @@
 var draw, graph_config, _ref, _ref1, _ref2;
 
 graph_config = this['graph_config'] = {
-  width: frame.offsetWidth,
-  height: frame.offsetHeight,
+  width: this['mapper'].offsetWidth,
+  height: this['mapper'].offsetHeight,
   force: {
     alpha: 1,
     strength: 0.4,
@@ -49,12 +49,10 @@ graph_config = this['graph_config'] = {
  */
 
 draw = this['draw'] = function(graph) {
-  var color, config, force, height, width, _load;
-  width = this['stage'].offsetWidth;
-  height = this['stage'].offsetHeight;
+  var color, config, force, _load;
   config = this['graph_config'];
   color = this['d3'].scale.category20();
-  force = this['d3'].layout.force().linkDistance(config['force']['distance']).linkStrength(config['force']['strength']).friction(config['force']['friction']).charge(config['force']['charge']).theta(config['force']['theta']).gravity(config['force']['gravity']).size([config['width'], config['height']]).alpha(config['force']['alpha']);
+  force = this['d3'].layout.force().linkDistance(config['force']['distance']).linkStrength(config['force']['strength']).friction(config['force']['friction']).charge(config['force']['charge']).theta(config['force']['theta']).gravity(config['force']['gravity']).alpha(config['force']['alpha']).size([config['width'], config['height']]);
   _load = function(g) {
     var container, edge, edge_wrap, legislator_image, line, node, node_wrap, shape, svg;
     svg = this['d3'].select(this['map']);

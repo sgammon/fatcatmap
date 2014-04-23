@@ -25,6 +25,12 @@ map = @['map'] = _get 'map'
 
 
 ###
+  mapper
+###
+mapper = @['mapper'] = _get 'mapper'
+
+
+###
   frame
 ###
 frame = @['frame'] = _get 'appframe'
