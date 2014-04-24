@@ -119,27 +119,13 @@ module.exports = (grunt) ->
     # - Dart - #
     dart2js:
       options:
-        minify: false
-
-      common:
-        files: {}
-        options:
-          minify: true
+        minify: true
 
       mapper:
-        files: {}
+        files:
+          "fatcatmap/assets/js/mapper.js": "fatcatmap/assets/dart/mapper.dart"
         options:
           minify: true
-
-      common_debug:
-        files: {}
-        options:
-          minify: false
-
-      mapper_debug:
-        files: {}
-        options:
-          minify: false
 
     # - Closure Compiler - #
     'closure-compiler':
@@ -214,6 +200,13 @@ module.exports = (grunt) ->
       less:
         files: ['fatcatmap/assets/less/**/*.less']
         tasks: ['less']
+        options:
+          spawn: false
+          interrupt: true
+
+      dart:
+        files: ['fatcatmap/assets/dart/**/*.dart']
+        tasks: ['dart2js']
         options:
           spawn: false
           interrupt: true
