@@ -148,6 +148,7 @@ config = cfg.Config(app={
       'develop-sources': ('/.develop', os.path.join(os.path.dirname(app), '.develop')),
       'less-sourcs': ('/.develop/maps/fatcatmap/assets/less', os.path.join(app, 'assets', 'less')),
       'develop-coffee': ('/.develop/maps/fatcatmap/assets/coffee', os.path.join(app, 'assets', 'coffee')),
+=======
       'web-components': ('/.develop/maps/fatcatmap/assets/coffee', os.path.join(app, 'assets', 'components'))
     }
 
