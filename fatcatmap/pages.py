@@ -27,17 +27,10 @@ class Landing(Page):
 
     '''  '''
 
-    # build default graph
-    meta, data, graph = self.graph.construct(None, **{
-      'limit': self.default_graph['limit'],
-      'depth': self.default_graph['depth']
-    }).extract(flatten=True)
-
     # staple inline
-    self.staple_data({
-      'meta': meta,
-      'data': data,
-      'graph': graph
-    })
+    self.staple_data(dict(zip(('meta', 'data', 'graph'), self.graph.construct(None, **{
+      'limit': self.request.get('limit', self.default_graph['limit']),
+      'depth': self.request.get('depth', self.default_graph['depth'])
+    }).extract(flatten=True))))
 
     return self.render('landing.haml')
