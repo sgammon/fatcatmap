@@ -123,7 +123,7 @@ module.exports = (grunt) ->
 
       mapper:
         files:
-          "fatcatmap/assets/js/mapper.js": "fatcatmap/assets/dart/mapper.dart"
+          "fatcatmap/assets/js/app.js": "fatcatmap/assets/dart/main.dart"
         options:
           minify: true
 

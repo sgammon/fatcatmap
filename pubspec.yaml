@@ -5,7 +5,19 @@ description: coming soon to a riot near you
 homepage: https://fatcatmap.org
 documentation: https://docs.fatcatmap.org
 dependencies:
+  js: any
   polymer: any
+  observe: any
 transformers:
 - polymer:
-    entry_points: fatcatmap/assets/components/fatcatmap.html
+    entry_points: fatcatmap/assets/components/app.html
+- $dart2js:
+    checked: true
+    minify: false
+    verbose: true
+    analyzeAll: true
+    suppressWarnings: false
+    suppressHints: false
+    terse: false
+- simple_transformer:
+    $exclude: "lib/python2.7"
