@@ -29,8 +29,8 @@ class Landing(Page):
 
     # staple inline
     self.staple_data(dict(zip(('meta', 'data', 'graph'), self.graph.construct(None, **{
-      'limit': self.request.get('limit', self.default_graph['limit']),
-      'depth': self.request.get('depth', self.default_graph['depth'])
+      'limit': self.request.args.get('limit', self.default_graph['limit']),
+      'depth': self.request.args.get('depth', self.default_graph['depth'])
     }).extract(flatten=True))))
 
     return self.render('landing.haml')
