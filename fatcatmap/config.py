@@ -133,8 +133,8 @@ config = cfg.Config(app={
   'config': {
 
     'minified': False,
-    'serving_mode': 'local',
-    'cdn_prefix': [''],
+    'serving_mode': 'local' if __debug__ else 'cdn',
+    'cdn_prefix': ['//fatcatmap.org'],
 
     'asset_prefix': {
       'style': 'assets/style',
