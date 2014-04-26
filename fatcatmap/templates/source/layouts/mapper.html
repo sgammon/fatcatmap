@@ -6,7 +6,13 @@
             <h1 id='logo'>fatcatmap</h1>
 
             <section id='identity'>
-                <button type="button" id="logon" class="transparent btn btn-success">Sign in</button>
+                <button type="button" id="logon" onclick="toggle('#signon-providers');toggle(event.target,'active')" class="transparent btn btn-success">Sign in</button>
+                <div id="signon-providers" class="transparent">
+                    <div id="gplus-signon">g+</div>
+                    <div id="fb-signon">fb</div>
+                    <div id="tw-signon">tw</div>
+                    <div id="gh-signon">gh</div>
+                </div><!-- end div#signon-providers -->
             </section><!-- end #identity -->
         </header><!-- end header -->
 

@@ -47,6 +47,17 @@ hide = @['hide'] = (d) ->
 
 
 ###
+  toggle
+###
+toggle = @['toggle'] = (d, klass) ->
+  el = _get(d)
+  if not el.length?
+    el = [el]
+  for element in el
+    element.classList.toggle(klass || 'transparent')
+
+
+###
   dye
 ###
 dye = (d, color) ->
@@ -54,7 +65,7 @@ dye = (d, color) ->
   if not el.length?
     el = [el]
   for element in el
-    element.classList.add('transparent')
+    element.style.setProperty('background-color', color)
 
 
 ###

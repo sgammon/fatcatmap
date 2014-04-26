@@ -7,7 +7,7 @@
 /*
   get
  */
-var dye, frame, hide, image_prefix, load_context, map, mapper, onloads, receive, show, stage, _get, _onload,
+var dye, frame, hide, image_prefix, load_context, map, mapper, onloads, receive, show, stage, toggle, _get, _onload,
   __slice = [].slice;
 
 _get = this['_get'] = function(d) {
@@ -69,6 +69,25 @@ hide = this['hide'] = function(d) {
 
 
 /*
+  toggle
+ */
+
+toggle = this['toggle'] = function(d, klass) {
+  var el, element, _i, _len, _results;
+  el = _get(d);
+  if (el.length == null) {
+    el = [el];
+  }
+  _results = [];
+  for (_i = 0, _len = el.length; _i < _len; _i++) {
+    element = el[_i];
+    _results.push(element.classList.toggle(klass || 'transparent'));
+  }
+  return _results;
+};
+
+
+/*
   dye
  */
 
@@ -81,7 +100,7 @@ dye = function(d, color) {
   _results = [];
   for (_i = 0, _len = el.length; _i < _len; _i++) {
     element = el[_i];
-    _results.push(element.classList.add('transparent'));
+    _results.push(element.style.setProperty('background-color', color));
   }
   return _results;
 };

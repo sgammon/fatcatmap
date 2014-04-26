@@ -13,5 +13,26 @@
   opacity: 0 !important;
 }
 
+// Basic animations
+.fade-opacity {
+  transition-property: opacity;
+}
+
+.fade-background {
+  transition-property: opacity, background-color;
+}
+
+.fast {
+  transition-duration: 0.15s;
+}
+
+.medium {
+  transition-duration: 0.25s;
+}
+
+.slow {
+  transition-duration: 0.4s;
+}
+
 
 @import "layouts/mapper.less";
