@@ -74,7 +74,8 @@ dye = @['dye'] = (d, color) ->
 busy = @['busy'] = () ->
   _pending = @['pending_tasks']++
   if _pending == 0
-    show(@['spinner'])
+    if @['spinner']
+      show(@['spinner'])
 
 
 ###
@@ -83,7 +84,8 @@ busy = @['busy'] = () ->
 finish = @['finish'] = () ->
   _pending = --@['pending_tasks']
   if _pending == 0
-    hide(@['spinner'])
+    if @['spinner']
+      hide(@['spinner'])
 
 
 ###
@@ -102,18 +104,6 @@ spinner = @['spinner'] = _get '#appspinner'
   stage
 ###
 stage = @['stage'] = _get '#appstage'
-
-
-###
-  map
-###
-map = @['map'] = _get '#map'
-
-
-###
-  mapper
-###
-mapper = @['mapper'] = _get '#mapper'
 
 
 ###

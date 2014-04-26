@@ -74,7 +74,8 @@ dye = @['dye'] = (d, color) ->
 busy = @['busy'] = () ->
   _pending = @['pending_tasks']++
   if _pending == 0
-    show(@['spinner'])
+    if @['spinner']
+      show(@['spinner'])
 
 
 ###
@@ -83,7 +84,8 @@ busy = @['busy'] = () ->
 finish = @['finish'] = () ->
   _pending = --@['pending_tasks']
   if _pending == 0
-    hide(@['spinner'])
+    if @['spinner']
+      hide(@['spinner'])
 
 
 ###
@@ -102,18 +104,6 @@ spinner = @['spinner'] = _get '#appspinner'
   stage
 ###
 stage = @['stage'] = _get '#appstage'
-
-
-###
-  map
-###
-map = @['map'] = _get '#map'
-
-
-###
-  mapper
-###
-mapper = @['mapper'] = _get '#mapper'
 
 
 ###
@@ -285,11 +275,17 @@ load_context = @['load_context'] = (event, data) ->
         authenticated: false
 
       console.log "Establishing fresh session...", @['session']
-      _show_queue.push @['_get']('#logon')
+      _logon = @['_get']('#logon')
+      if _logon
+        _show_queue.push _logon
+
+  _map = @['_get']('#map')
+  if _map
+    _catnip = @['_get']('#catnip')
+    _show_queue.push _map
+    _mapper_queue.push _catnip
 
   _show_queue.push @['_get']('#appfooter')
-  _show_queue.push @['_get']('#map')
-  _mapper_queue.push @['_get']('#catnip')
 
   # set up UI show callback
   _ui_reveal = () =>

@@ -167,7 +167,7 @@
   bottom: 0;
   left: 0;
   right: 0;
-  z-index: 300;
+  z-index: 1000;
 
   // both footer labels
   small {
@@ -175,6 +175,20 @@
     font-size: @footer_text_size;
     font-weight: @footer_text_weight;
     display: inline-block;
+    color: #fefefe;
+    opacity: 0.75;
+
+    a {
+      color: #fff;
+      opacity: 0.75;
+      transition-property: opacity, text-decoration;
+      transition-duration: 0.15s;
+    }
+
+    a:hover {
+      opacity: 1;
+      text-decoration: underline;
+    }
   }
 
   // animation (fade-in/fade-out)

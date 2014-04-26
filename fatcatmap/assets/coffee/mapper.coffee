@@ -6,6 +6,17 @@ catnip = @['catnip'] = {}
 
 
 ###
+  map
+###
+map = @['map'] = _get '#map'
+
+
+###
+  mapper
+###
+mapper = @['mapper'] = _get '#mapper'
+
+###
   graph_config
 ###
 

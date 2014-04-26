@@ -7,7 +7,7 @@
 /*
   get
  */
-var busy, data, dye, finish, frame, graph, hide, image_prefix, index, load_context, map, mapper, onloads, pending_tasks, receive, show, spinner, stage, toggle, _get, _onload,
+var busy, data, dye, finish, frame, graph, hide, image_prefix, index, load_context, onloads, pending_tasks, receive, show, spinner, stage, toggle, _get, _onload,
   __slice = [].slice;
 
 _get = this['_get'] = function(d) {
@@ -114,7 +114,9 @@ busy = this['busy'] = function() {
   var _pending;
   _pending = this['pending_tasks']++;
   if (_pending === 0) {
-    return show(this['spinner']);
+    if (this['spinner']) {
+      return show(this['spinner']);
+    }
   }
 };
 
@@ -127,7 +129,9 @@ finish = this['finish'] = function() {
   var _pending;
   _pending = --this['pending_tasks'];
   if (_pending === 0) {
-    return hide(this['spinner']);
+    if (this['spinner']) {
+      return hide(this['spinner']);
+    }
   }
 };
 
@@ -151,20 +155,6 @@ spinner = this['spinner'] = _get('#appspinner');
  */
 
 stage = this['stage'] = _get('#appstage');
-
-
-/*
-  map
- */
-
-map = this['map'] = _get('#map');
-
-
-/*
-  mapper
- */
-
-mapper = this['mapper'] = _get('#mapper');
 
 
 /*
@@ -313,7 +303,7 @@ receive = this['receive'] = function(data) {
  */
 
 load_context = this['load_context'] = function(event, data) {
-  var context, pagedata, _mapper_queue, _mapper_reveal, _show_queue, _ui_reveal;
+  var context, pagedata, _catnip, _logon, _map, _mapper_queue, _mapper_reveal, _show_queue, _ui_reveal;
   _show_queue = [];
   _mapper_queue = [];
   context = this['context'] = data || JSON.parse(document.getElementById('js-context').textContent);
@@ -336,12 +326,19 @@ load_context = this['load_context'] = function(event, data) {
         authenticated: false
       };
       console.log("Establishing fresh session...", this['session']);
-      _show_queue.push(this['_get']('#logon'));
+      _logon = this['_get']('#logon');
+      if (_logon) {
+        _show_queue.push(_logon);
+      }
     }
   }
+  _map = this['_get']('#map');
+  if (_map) {
+    _catnip = this['_get']('#catnip');
+    _show_queue.push(_map);
+    _mapper_queue.push(_catnip);
+  }
   _show_queue.push(this['_get']('#appfooter'));
-  _show_queue.push(this['_get']('#map'));
-  _mapper_queue.push(this['_get']('#catnip'));
   _ui_reveal = (function(_this) {
     return function() {
       var element_set, _i, _len, _results;

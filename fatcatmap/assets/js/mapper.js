@@ -2,9 +2,23 @@
 /*
   catnip
  */
-var browse, catnip, draw, graph_config, _ref, _ref1, _ref2;
+var browse, catnip, draw, graph_config, map, mapper, _ref, _ref1, _ref2;
 
 catnip = this['catnip'] = {};
+
+
+/*
+  map
+ */
+
+map = this['map'] = _get('#map');
+
+
+/*
+  mapper
+ */
+
+mapper = this['mapper'] = _get('#mapper');
 
 
 /*

@@ -34,3 +34,27 @@ class Landing(Page):
     }).extract(flatten=True))))
 
     return self.render('landing.haml')
+
+
+@url('terms', '/terms')
+class TOS(Page):
+
+  '''  '''
+
+  def GET(self):
+
+    '''  '''
+
+    return self.render('legal/terms.haml')
+
+
+@url('privacy', '/privacy')
+class Privacy(Page):
+
+  '''  '''
+
+  def GET(self):
+
+    '''  '''
+
+    return self.render('legal/privacy.haml')
