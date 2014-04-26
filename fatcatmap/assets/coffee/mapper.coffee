@@ -1,8 +1,12 @@
 
 ###
+  catnip
+###
+catnip = @['catnip'] = {}
 
+
+###
   graph_config
-
 ###
 
 graph_config = @['graph_config'] =
@@ -37,87 +41,122 @@ graph_config = @['graph_config'] =
 
 
 ###
-
-  draw
-
+  browse
 ###
 
-draw = @['draw'] = (graph) ->
+browse = @['browse'] = (node) ->
 
-  config = @['graph_config']
+  console.log 'Browsing to origin...', node
 
-  color = @['d3'].scale.category20()
+  $.apptools.api.graph
+    .construct
+      origin: node.node.key
+    .fulfill
+      success: (response) ->
+        receive response
 
-  force = @['d3'].layout.force()
-                    .linkDistance(config['force']['distance'])
-                    .linkStrength(config['force']['strength'])
-                    .friction(config['force']['friction'])
-                    .charge(config['force']['charge'])
-                    .theta(config['force']['theta'])
-                    .gravity(config['force']['gravity'])
-                    .alpha(config['force']['alpha'])
-                    .size([config['width'], config['height']])
+###
+  draw
+###
 
-  _load = (g) ->
+draw = @['draw'] = (_graph) ->
 
-    svg = @['d3'].select(@['map'])
+  if not @['catnip'].graph?
 
-    ## 1) edge structure
-    edge_wrap = svg.selectAll('.edge')
-                   .data(g['edges'])
-                   .enter()
+    @['catnip']['graph'] = _graph
+    config = @['graph_config']
 
-    edge = edge_wrap.append('svg')
-                    .attr('id', (e) -> 'edge-' + e.edge.key)
+    color = @['d3'].scale.category20()
 
-    line = edge.append('line')
-               .attr('stroke', '#999')
-               .attr('class', 'link')
-               .style('stroke-width', 2)
+    force = @['catnip']['force'] = @['d3'].layout.force()
+                      .linkDistance(config['force']['distance'])
+                      .linkStrength(config['force']['strength'])
+                      .friction(config['force']['friction'])
+                      .charge(config['force']['charge'])
+                      .theta(config['force']['theta'])
+                      .gravity(config['force']['gravity'])
+                      .alpha(config['force']['alpha'])
+                      .size([config['width'], config['height']])
 
-    ## 2) node structure
-    node_wrap = svg.selectAll('.node')
-                   .data(g['nodes'])
-                   .enter()
+    _load = (g) ->
 
-    container = node_wrap.append('svg')
-                         .attr('id', (n) -> 'group-' + n['node']['key'])
-                         .attr('width', config['sprite']['width'])
-                         .attr('height', config['sprite']['height'])
-                         .call(force['drag'])
+      svg = @['catnip']['svg'] = @['d3'].select(@['map'])
 
-    node = container.append('g')
-                    .attr('width', config['sprite']['width'])
-                    .attr('height', config['sprite']['height'])
+      ## 1) edge structure
+      edge_wrap = @['catnip']['edge_wrap'] = svg.selectAll('.edge')
+                     .data(g['edges'])
+                     .enter()
 
-    shape = node.append('circle')
-                .attr('r', config['node']['radius'])
-                .attr('cx', config['sprite']['width'] / 2)
-                .attr('cy', config['sprite']['height'] / 2)
-                .attr('class', 'node')
+      edge = @['catnip']['edge'] = edge_wrap.append('svg')
+                      .attr('id', (e) -> 'edge-' + e.edge.key)
 
-    ## 2.1) image for legislators
-    legislator_image = node.append('image')
-                           .filter((n) -> n['native']['data']['govtrack_id']?)
+      line = @['catnip']['line'] = edge.append('line')
+                 .attr('stroke', '#999')
+                 .attr('class', 'link')
+                 .style('stroke-width', 2)
+
+      ## 2) node structure
+      node_wrap = @['catnip']['node_wrap'] = svg.selectAll('.node')
+                     .data(g['nodes'])
+                     .enter()
+
+      container = @catnip['node_container'] = node_wrap.append('svg')
+                           .attr('id', (n) -> 'group-' + n['node']['key'])
                            .attr('width', config['sprite']['width'])
                            .attr('height', config['sprite']['height'])
-                           .attr('clip-path', 'url(#node-circle-mask)')
-                           .attr('xlink:href', (n) -> image_prefix + n['native']['data']['govtrack_id'].toString() + '-' + '100px.' + config['sprite']['images']['format'])
+                           .call(force['drag'])
+                           .on('dblclick', browse)
 
-    @['d3'].select(stage).on('click', (n) -> force['alpha'](config['events']['click']['warmup']))
+      node = @catnip['node'] = container.append('g')
+                      .attr('width', config['sprite']['width'])
+                      .attr('height', config['sprite']['height'])
 
-    force.on 'tick', (f) ->
+      shape = @catnip['circle'] = node.append('circle')
+                  .attr('r', config['node']['radius'])
+                  .attr('cx', config['sprite']['width'] / 2)
+                  .attr('cy', config['sprite']['height'] / 2)
+                  .attr('class', 'node')
 
-      line.attr('x1', (d) -> d['source']['object']['x'] + (config['node']['radius'] / 2))
-          .attr('y1', (d) -> d['source']['object']['y'] + (config['node']['radius'] / 2))
-          .attr('x2', (d) -> d['target']['object']['x'] + (config['node']['radius'] / 2))
-          .attr('y2', (d) -> d['target']['object']['y'] + (config['node']['radius'] / 2))
+      ## 2.1) image for legislators
+      legislator_image = @catnip['legislator_image'] = node.append('image')
+                             .filter((n) -> n['native']['data']['govtrack_id']?)
+                             .attr('width', config['sprite']['width'])
+                             .attr('height', config['sprite']['height'])
+                             .attr('clip-path', 'url(#node-circle-mask)')
+                             .attr('xlink:href', (n) -> image_prefix + n['native']['data']['govtrack_id'].toString() + '-' + '100px.' + config['sprite']['images']['format'])
 
-      container.attr('x', (d) -> d['x'] - config['node']['radius'])
-               .attr('y', (d) -> d['y'] - config['node']['radius'])
+      #@['d3'].select(stage).on('click', (n) -> force['alpha'](config['events']['click']['warmup']))
 
-    force.nodes(g['nodes']).links(g['edges']).start()
+      force.on 'tick', (f) ->
 
-  _graph_draw = () =>
-    _load(graph)
-  return setTimeout(_graph_draw, 150)
+        line.attr('x1', (d) -> d['source']['object']['x'] + (config['node']['radius'] / 2))
+            .attr('y1', (d) -> d['source']['object']['y'] + (config['node']['radius'] / 2))
+            .attr('x2', (d) -> d['target']['object']['x'] + (config['node']['radius'] / 2))
+            .attr('y2', (d) -> d['target']['object']['y'] + (config['node']['radius'] / 2))
+
+        container.attr('x', (d) -> d['x'] - config['node']['radius'])
+                 .attr('y', (d) -> d['y'] - config['node']['radius'])
+
+      force.nodes(g['nodes']).links(g['edges']).start()
+
+    console.log 'Drawing graph...', _graph
+    _graph_draw = () =>
+      _load(graph)
+    return setTimeout(_graph_draw, 150)
+
+  # ~~ incremental draw: graph's already here bruh ~~ #
+  console.log 'Incremental draw...', graph
+
+  _incremental_draw = () =>
+
+    @['catnip'] = {}
+
+    # redraws for now get rid of the current grapher
+    @['hide'](@['map']);
+    @['map'].textContent = ''
+    @['draw'](graph)
+
+    _show_graph = () => @['show'](@['map'])
+    setTimeout(_show_graph, 250)
+
+  return setTimeout(_incremental_draw, 0)

@@ -40,7 +40,7 @@ load_context = @['load_context'] = (event, data) ->
       _show_queue.push @['_get']('#logon')
 
   _show_queue.push @['_get']('#appfooter')
-  _show_queue.push @['_get']('#appstage')
+  _show_queue.push @['_get']('#map')
   _mapper_queue.push @['_get']('#catnip')
 
   # set up UI show callback
