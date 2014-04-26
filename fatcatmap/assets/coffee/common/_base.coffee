@@ -60,12 +60,42 @@ toggle = @['toggle'] = (d, klass) ->
 ###
   dye
 ###
-dye = (d, color) ->
+dye = @['dye'] = (d, color) ->
   el = _get(d)
   if not el.length?
     el = [el]
   for element in el
     element.style.setProperty('background-color', color)
+
+
+###
+  busy
+###
+busy = @['busy'] = () ->
+  _pending = @['pending_tasks']++
+  if _pending == 0
+    show(@['spinner'])
+
+
+###
+  finish
+###
+finish = @['finish'] = () ->
+  _pending = --@['pending_tasks']
+  if _pending == 0
+    hide(@['spinner'])
+
+
+###
+  pending_tasks
+###
+pending_tasks = @['pending_tasks'] = 1
+
+
+###
+  spinner
+###
+spinner = @['spinner'] = _get '#appspinner'
 
 
 ###

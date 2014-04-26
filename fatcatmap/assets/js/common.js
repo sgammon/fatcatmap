@@ -7,7 +7,7 @@
 /*
   get
  */
-var dye, frame, hide, image_prefix, load_context, map, mapper, onloads, receive, show, stage, toggle, _get, _onload,
+var busy, dye, finish, frame, hide, image_prefix, load_context, map, mapper, onloads, pending_tasks, receive, show, spinner, stage, toggle, _get, _onload,
   __slice = [].slice;
 
 _get = this['_get'] = function(d) {
@@ -91,7 +91,7 @@ toggle = this['toggle'] = function(d, klass) {
   dye
  */
 
-dye = function(d, color) {
+dye = this['dye'] = function(d, color) {
   var el, element, _i, _len, _results;
   el = _get(d);
   if (el.length == null) {
@@ -104,6 +104,46 @@ dye = function(d, color) {
   }
   return _results;
 };
+
+
+/*
+  busy
+ */
+
+busy = this['busy'] = function() {
+  var _pending;
+  _pending = this['pending_tasks']++;
+  if (_pending === 0) {
+    return show(this['spinner']);
+  }
+};
+
+
+/*
+  finish
+ */
+
+finish = this['finish'] = function() {
+  var _pending;
+  _pending = --this['pending_tasks'];
+  if (_pending === 0) {
+    return hide(this['spinner']);
+  }
+};
+
+
+/*
+  pending_tasks
+ */
+
+pending_tasks = this['pending_tasks'] = 1;
+
+
+/*
+  spinner
+ */
+
+spinner = this['spinner'] = _get('#appspinner');
 
 
 /*
@@ -278,14 +318,13 @@ load_context = this['load_context'] = function(event, data) {
   })(this);
   _mapper_reveal = (function(_this) {
     return function() {
-      var element_set, _i, _len, _results;
+      var element_set, _i, _len;
       console.log('Flusing mapper reveal queue...', _mapper_queue);
-      _results = [];
       for (_i = 0, _len = _mapper_queue.length; _i < _len; _i++) {
         element_set = _mapper_queue[_i];
-        _results.push(_this['show'](element_set));
+        _this['show'](element_set);
       }
-      return _results;
+      return _this['finish']();
     };
   })(this);
   setTimeout(_ui_reveal, 800);

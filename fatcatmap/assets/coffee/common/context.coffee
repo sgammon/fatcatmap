@@ -57,6 +57,8 @@ load_context = @['load_context'] = (event, data) ->
     for element_set in _mapper_queue
       @['show'](element_set)
 
+    @['finish']()
+
   setTimeout(_ui_reveal, 800)
   setTimeout(_mapper_reveal, 500)
   return @['context']

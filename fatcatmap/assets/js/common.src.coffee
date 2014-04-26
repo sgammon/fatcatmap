@@ -60,12 +60,42 @@ toggle = @['toggle'] = (d, klass) ->
 ###
   dye
 ###
-dye = (d, color) ->
+dye = @['dye'] = (d, color) ->
   el = _get(d)
   if not el.length?
     el = [el]
   for element in el
     element.style.setProperty('background-color', color)
+
+
+###
+  busy
+###
+busy = @['busy'] = () ->
+  _pending = @['pending_tasks']++
+  if _pending == 0
+    show(@['spinner'])
+
+
+###
+  finish
+###
+finish = @['finish'] = () ->
+  _pending = --@['pending_tasks']
+  if _pending == 0
+    hide(@['spinner'])
+
+
+###
+  pending_tasks
+###
+pending_tasks = @['pending_tasks'] = 1
+
+
+###
+  spinner
+###
+spinner = @['spinner'] = _get '#appspinner'
 
 
 ###
@@ -247,6 +277,8 @@ load_context = @['load_context'] = (event, data) ->
     console.log 'Flusing mapper reveal queue...', _mapper_queue
     for element_set in _mapper_queue
       @['show'](element_set)
+
+    @['finish']()
 
   setTimeout(_ui_reveal, 800)
   setTimeout(_mapper_reveal, 500)
