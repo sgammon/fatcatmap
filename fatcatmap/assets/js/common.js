@@ -7,11 +7,83 @@
 /*
   get
  */
-var frame, image_prefix, load_context, map, mapper, onloads, receive, stage, _get, _onload,
+var dye, frame, hide, image_prefix, load_context, map, mapper, onloads, receive, show, stage, _get, _onload,
   __slice = [].slice;
 
-_get = function(d) {
-  return document.getElementById(d);
+_get = this['_get'] = function(d) {
+  if (d && (d.querySelector != null)) {
+    return d;
+  }
+  if (typeof d === 'string') {
+    if (d[0] === '#') {
+      return document.getElementById(d.replace('#', ''));
+    } else {
+      return document.querySelectorAll(d);
+    }
+  }
+  console.log('_get was asked to retrieve:', d);
+  throw 'invalid _get string';
+};
+
+
+/*
+  show
+ */
+
+show = this['show'] = function(d, hidden_only) {
+  var el, element, _i, _len, _results;
+  el = _get(d);
+  if (el.length == null) {
+    el = [el];
+  }
+  _results = [];
+  for (_i = 0, _len = el.length; _i < _len; _i++) {
+    element = el[_i];
+    if (hidden_only) {
+      _results.push(element.classList.remove('hidden'));
+    } else {
+      _results.push(element.classList.remove('transparent'));
+    }
+  }
+  return _results;
+};
+
+
+/*
+  hide
+ */
+
+hide = this['hide'] = function(d) {
+  var el, element, _i, _len, _results;
+  el = _get(d);
+  if (el.length == null) {
+    el = [el];
+  }
+  _results = [];
+  for (_i = 0, _len = el.length; _i < _len; _i++) {
+    element = el[_i];
+    _results.push(element.classList.add('transparent'));
+  }
+  return _results;
+};
+
+
+/*
+  dye
+ */
+
+dye = function(d, color) {
+  var el, element, _i, _len, _results;
+  el = _get(d);
+  if (el.length == null) {
+    el = [el];
+  }
+  _results = [];
+  for (_i = 0, _len = el.length; _i < _len; _i++) {
+    element = el[_i];
+    _results.push(element.classList.add('transparent'));
+  }
+  return _results;
 };
 
 
@@ -19,28 +91,28 @@ _get = function(d) {
   stage
  */
 
-stage = this['stage'] = _get('appstage');
+stage = this['stage'] = _get('#appstage');
 
 
 /*
   map
  */
 
-map = this['map'] = _get('map');
+map = this['map'] = _get('#map');
 
 
 /*
   mapper
  */
 
-mapper = this['mapper'] = _get('mapper');
+mapper = this['mapper'] = _get('#mapper');
 
 
 /*
   frame
  */
 
-frame = this['frame'] = _get('appframe');
+frame = this['frame'] = _get('#appframe');
 
 
 /*
@@ -144,7 +216,9 @@ receive = this['receive'] = function(data) {
  */
 
 load_context = this['load_context'] = function(event, data) {
-  var context, pagedata;
+  var context, pagedata, _mapper_queue, _mapper_reveal, _show_queue, _ui_reveal;
+  _show_queue = [];
+  _mapper_queue = [];
   context = this['context'] = data || JSON.parse(document.getElementById('js-context').textContent);
   console.log("Loading context...", context);
   if (this['context']['services']) {
@@ -156,6 +230,47 @@ load_context = this['load_context'] = function(event, data) {
     console.log("Detected stapled pagedata...", pagedata);
     this['receive'](pagedata);
   }
+  if (this['context']['session']) {
+    if (this['context']['session']['established']) {
+      this['session'] = this['context']['session']['payload'];
+      console.log("Loading existing session...", this['session']);
+    } else {
+      this['session'] = {
+        authenticated: false
+      };
+      console.log("Establishing fresh session...", this['session']);
+      _show_queue.push(this['_get']('#logon'));
+    }
+  }
+  _show_queue.push(this['_get']('#appfooter'));
+  _show_queue.push(this['_get']('#appstage'));
+  _mapper_queue.push(this['_get']('#catnip'));
+  _ui_reveal = (function(_this) {
+    return function() {
+      var element_set, _i, _len, _results;
+      console.log('Flushing UI reveal queue...', _show_queue);
+      _results = [];
+      for (_i = 0, _len = _show_queue.length; _i < _len; _i++) {
+        element_set = _show_queue[_i];
+        _results.push(_this['show'](element_set));
+      }
+      return _results;
+    };
+  })(this);
+  _mapper_reveal = (function(_this) {
+    return function() {
+      var element_set, _i, _len, _results;
+      console.log('Flusing mapper reveal queue...', _mapper_queue);
+      _results = [];
+      for (_i = 0, _len = _mapper_queue.length; _i < _len; _i++) {
+        element_set = _mapper_queue[_i];
+        _results.push(_this['show'](element_set));
+      }
+      return _results;
+    };
+  })(this);
+  setTimeout(_ui_reveal, 800);
+  setTimeout(_mapper_reveal, 500);
   return this['context'];
 };
 

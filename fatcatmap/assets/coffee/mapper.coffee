@@ -118,4 +118,6 @@ draw = @['draw'] = (graph) ->
 
     force.nodes(g['nodes']).links(g['edges']).start()
 
-  return _load(graph)
+  _graph_draw = () =>
+    _load(graph)
+  return setTimeout(_graph_draw, 150)

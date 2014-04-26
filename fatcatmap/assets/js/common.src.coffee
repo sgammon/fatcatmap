@@ -9,31 +9,76 @@
 ###
   get
 ###
-_get = (d) -> document.getElementById d
+_get = @['_get'] = (d) ->
+  if d and d.querySelector?
+    return d
+  if typeof d == 'string'
+    if d[0] == '#'
+      return document.getElementById d.replace('#','')
+    else
+      return document.querySelectorAll d
+  console.log '_get was asked to retrieve:', d
+  throw 'invalid _get string'
+
+
+###
+  show
+###
+show = @['show'] = (d, hidden_only) ->
+  el = _get(d)
+  if not el.length?
+    el = [el]
+  for element in el
+    if hidden_only
+      element.classList.remove('hidden')
+    else
+      element.classList.remove('transparent')
+
+
+###
+  hide
+###
+hide = @['hide'] = (d) ->
+  el = _get(d)
+  if not el.length?
+    el = [el]
+  for element in el
+    element.classList.add('transparent')
+
+
+###
+  dye
+###
+dye = (d, color) ->
+  el = _get(d)
+  if not el.length?
+    el = [el]
+  for element in el
+    element.classList.add('transparent')
 
 
 ###
   stage
 ###
-stage = @['stage'] = _get 'appstage'
+stage = @['stage'] = _get '#appstage'
 
 
 ###
   map
 ###
-map = @['map'] = _get 'map'
+map = @['map'] = _get '#map'
 
 
 ###
   mapper
 ###
-mapper = @['mapper'] = _get 'mapper'
+mapper = @['mapper'] = _get '#mapper'
 
 
 ###
   frame
 ###
-frame = @['frame'] = _get 'appframe'
+frame = @['frame'] = _get '#appframe'
 
 
 ###
@@ -143,19 +188,57 @@ receive = @['receive'] = (data) ->
 # == session / user context == #
 load_context = @['load_context'] = (event, data) ->
 
+  _show_queue = []
+  _mapper_queue = []
+
   context = @['context'] = data || JSON.parse(document.getElementById('js-context').textContent)
   console.log "Loading context...", context
 
+  # process services
   if @['context']['services']
     console.log "Loading services...", context['services']
     apptools['rpc']['service']['factory'](context['services'])
 
+  # process pagedata
   if @['context']['pagedata']
     pagedata = @['pagedata'] = JSON.parse(document.getElementById('js-data').textContent)
     console.log "Detected stapled pagedata...", pagedata
 
     @['receive'](pagedata)
 
+  # process session
+  if @['context']['session']
+    if @['context']['session']['established']
+      @['session'] = @['context']['session']['payload']
+      console.log "Loading existing session...", @['session']
+
+    else
+      @['session'] =
+        authenticated: false
+
+      console.log "Establishing fresh session...", @['session']
+      _show_queue.push @['_get']('#logon')
+
+  _show_queue.push @['_get']('#appfooter')
+  _show_queue.push @['_get']('#appstage')
+  _mapper_queue.push @['_get']('#catnip')
+
+  # set up UI show callback
+  _ui_reveal = () =>
+
+    console.log 'Flushing UI reveal queue...', _show_queue
+    for element_set in _show_queue
+      @['show'](element_set)
+
+  # set up mapper show callback
+  _mapper_reveal = () =>
+
+    console.log 'Flusing mapper reveal queue...', _mapper_queue
+    for element_set in _mapper_queue
+      @['show'](element_set)
+
+  setTimeout(_ui_reveal, 800)
+  setTimeout(_mapper_reveal, 500)
   return @['context']
 
 onloads.push load_context

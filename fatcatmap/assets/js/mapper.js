@@ -49,7 +49,7 @@ graph_config = this['graph_config'] = {
  */
 
 draw = this['draw'] = function(graph) {
-  var color, config, force, _load;
+  var color, config, force, _graph_draw, _load;
   config = this['graph_config'];
   color = this['d3'].scale.category20();
   force = this['d3'].layout.force().linkDistance(config['force']['distance']).linkStrength(config['force']['strength']).friction(config['force']['friction']).charge(config['force']['charge']).theta(config['force']['theta']).gravity(config['force']['gravity']).alpha(config['force']['alpha']).size([config['width'], config['height']]);
@@ -93,7 +93,12 @@ draw = this['draw'] = function(graph) {
     });
     return force.nodes(g['nodes']).links(g['edges']).start();
   };
-  return _load(graph);
+  _graph_draw = (function(_this) {
+    return function() {
+      return _load(graph);
+    };
+  })(this);
+  return setTimeout(_graph_draw, 150);
 };
 
 //# sourceMappingURL=../../../.develop/maps/fatcatmap/assets/coffee/mapper.js.map

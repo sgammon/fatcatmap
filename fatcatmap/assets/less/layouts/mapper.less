@@ -1,6 +1,7 @@
 
 
 @import (reference) "core/base.less";
+@import (reference) "less/buttons.less";
 
 
 /*
@@ -42,6 +43,38 @@
   .logo;
 }
 
+#identity {
+  position: fixed;
+  top: 2em;
+  right: 2.5em;
+  min-width: 8em;
+  max-width: 20%;
+  height: 3.5em;
+  display: inline-block;
+  margin-top: 0.67em;
+  text-align: center;
+}
+
+#logon {
+  background-color: transparent;
+  opacity: 0.95;
+  border-color: #4cae4c;
+  border-style: solid;
+  border-radius: 5px;
+  border-style: solid;
+  border-width: 1px;
+  border-color: rgba(119, 215, 29, 0.88);
+  color: #fefefe;
+  padding: .5em .9em;
+  margin-top: .5em;
+  transition-property: opacity;
+  transition-duration: 0.2s;
+
+  &:hover {
+    background: linear-gradient(@logo_slant, @logo_gradient_start, @logo_gradient_end);
+  }
+}
+
 #appfooter {
 
   height: @footer_height;
@@ -61,6 +94,10 @@
     display: inline-block;
   }
 
+  // animation (fade-in/fade-out)
+  transition-property: opacity;
+  transition-duration: 0.23s;
+
 }
 
 #appstage {
@@ -71,6 +108,12 @@
   margin-left: @appstage_margin;
   margin-right: @appstage_margin;
 
+}
+
+#catnip {
+  // animation (fade-in/fade-out)
+  transition-property: opacity;
+  transition-duration: 0.3s;
 }
 
 
