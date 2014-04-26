@@ -8,16 +8,16 @@
     <meta http-equiv="x-dns-prefetch-control" content="on">
     <title>{%- block title -%}fatcatmap ^.^{%- endblock title -%}</title>
 
+    <!-- DNS prefetch -->
+    <link rel="dns-prefetch" href="api.fatcatmap.org">
+    <link rel="dns-prefetch" href="cloud.typography.com">
+    <link rel="dns-prefetch" href="deliver.fcm-static.com">
+
     <!-- info -->
     <meta name="author" content="momentum labs">
     <meta name="keywords" content="politics, transparency">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     {%- endblock meta %}
-
-    <!-- DNS prefetch -->
-    <link rel="dns-prefetch" href="api.fatcatmap.org">
-    <link rel="dns-prefetch" href="cloud.typography.com">
-    <link rel="dns-prefetch" href="deliver.fcm-static.com">
 
     <!-- icons -->
     <link rel="icon" href="/assets/img/favicon.png" type="image/png">
@@ -26,7 +26,7 @@
     <!-- stylesheets -->
     {%- block stylesheets %}
     <link rel="stylesheet" href="{{ asset.style('themes/' + (theme or 'fcm-scaffold') + '/home.css') }}" type="text/css">
-    <link rel="stylesheet" href="//cloud.typography.com/6717292/775624/css/fonts.css" type="text/css">
+    <link rel="stylesheet" href="https://deliver.fcm-static.org/font-proxy/775624/css/fonts.css" type="text/css">
     {% endblock %}
 
     {%- if handler.agent.mobile %}
