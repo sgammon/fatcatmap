@@ -51,7 +51,7 @@ class Page(RawPage):
       if stanza == 'script-src':
         content.append('nonce-%s' % _script_nonce)  # embed script nonce
 
-      _csp_header.append('%s %s' % (stanza, ' '.join(('"%i"' if not i.startswith('http') else i) for i in content)))
+      _csp_header.append('%s %s' % (stanza, ' '.join(('"%s"' if not i.startswith('http') else i) for i in content)))
 
     self.response.headers['Content-Security-Policy'] = ' '.join(_csp_header)
 
