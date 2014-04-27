@@ -25,7 +25,10 @@ class Page(RawPage):
     # JavaScript
     'script-src': (
       ('self', 'https://deliver.fcm-static.org', 'http://localhost:5000') if __debug__ else (
-      ('self', 'https:', 'deliver.fcm-static.org')
+      ('self', 'https:', 'deliver.fcm-static.org',
+        'sha256-47c563febea492842829e6bbe6c37ea491f6b2484340478c377417ecbbfc713e',  # pagespeed timestamp start
+        'sha256-763142995ef0d64d9a780132e0b3b6a13c4a8b0223312edf2408962e0e81c9fb',  # pagespeed google analytics
+      )
     )),
 
     # WebSocket / RPC
