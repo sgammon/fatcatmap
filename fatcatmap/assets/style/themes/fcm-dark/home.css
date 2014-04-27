@@ -821,7 +821,7 @@ hr {
   text-rendering: geometricPrecision;
 }
 #appheader {
-  height: 9em;
+  height: 7em;
   position: absolute;
   top: 0;
   left: 0;
@@ -968,7 +968,7 @@ hr {
   text-decoration: underline;
 }
 #appstage {
-  margin-top: 9em;
+  margin-top: 7em;
   margin-bottom: 3em;
   margin-left: 1em;
   margin-right: 1em;
