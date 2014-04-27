@@ -95,7 +95,7 @@ config = cfg.Config(app={
 
       # Redis Instances
       'local': {'host': '127.0.0.1', 'port': 6379},
-      'sandbox': {'host': '10.0.5.111', 'port': 6379}
+      'sandbox': {'host': '10.0.5.5', 'port': 6379}
     }
   },
 
