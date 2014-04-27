@@ -99,6 +99,8 @@ module.exports = (grunt) ->
             'fatcatmap/assets/coffee/common/_d3.coffee',
             'fatcatmap/assets/coffee/common/receive.coffee',
             'fatcatmap/assets/coffee/common/context.coffee',
+            'fatcatmap/assets/coffee/common/storage.coffee',
+            'fatcatmap/assets/coffee/common/history.coffee',
             'fatcatmap/assets/coffee/common/onload.coffee'
           ]
         options:

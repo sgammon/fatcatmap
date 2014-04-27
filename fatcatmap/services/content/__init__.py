@@ -2,7 +2,7 @@
 
 '''
 
-  fcm: graph service
+  fcm: content service
 
 '''
 
