@@ -2,7 +2,7 @@
 /*
   catnip
  */
-var browse, catnip, draw, graph_config, map, mapper, _ref, _ref1, _ref2;
+var browse, catnip, configure, draw, map, mapper;
 
 catnip = this['catnip'] = {};
 
@@ -25,41 +25,43 @@ mapper = this['mapper'] = _get('#mapper');
   graph_config
  */
 
-graph_config = this['graph_config'] = {
-  width: this['mapper'].offsetWidth,
-  height: this['mapper'].offsetHeight,
-  force: {
-    alpha: 1,
-    strength: 0.4,
-    friction: 0.5,
-    theta: 0.3,
-    gravity: 0.05,
-    charge: -50,
-    distance: function(e) {
-      var _ref;
-      if (((_ref = e["native"]) != null ? _ref.data : void 0) != null) {
-        return e["native"].data.total;
+configure = function() {
+  var config;
+  config = {
+    width: this['mapper'].offsetWidth,
+    height: this['mapper'].offsetHeight,
+    force: {
+      alpha: 1,
+      strength: 0.4,
+      friction: 0.5,
+      theta: 0.3,
+      gravity: 0.05,
+      charge: -50,
+      distance: function(e) {
+        var _ref;
+        if (((_ref = e["native"]) != null ? _ref.data : void 0) != null) {
+          return e["native"].data.total;
+        }
+        return 500;
       }
-      return 500;
+    },
+    node: {
+      radius: 20
+    },
+    sprite: {
+      width: 60,
+      height: 60,
+      images: {
+        format: 'jpeg'
+      }
+    },
+    events: {
+      click: {
+        warmup: .4
+      }
     }
-  },
-  node: {
-    radius: 20
-  },
-  sprite: {
-    width: 60,
-    height: 60,
-    images: {
-      format: ((_ref = this['context']) != null ? (_ref1 = _ref.agent) != null ? (_ref2 = _ref1.capabilities) != null ? typeof _ref2.webp === "function" ? _ref2.webp({
-        'webp': 'jpeg'
-      }) : void 0 : void 0 : void 0 : void 0) || 'jpeg'
-    }
-  },
-  events: {
-    click: {
-      warmup: .4
-    }
-  }
+  };
+  return config;
 };
 
 
@@ -84,8 +86,9 @@ browse = this['browse'] = function(node) {
  */
 
 draw = this['draw'] = function(_graph) {
-  var color, config, force, _graph_draw, _incremental_draw, _load;
+  var color, config, force, graph_config, _graph_draw, _incremental_draw, _load;
   if (this['catnip'].graph == null) {
+    graph_config = this['graph_config'] = configure();
     this['catnip']['graph'] = _graph;
     config = this['graph_config'];
     color = this['d3'].scale.category20();

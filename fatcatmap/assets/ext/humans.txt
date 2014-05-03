@@ -1,1 +1,11 @@
 /*! normalize.css v3.0.1 | MIT License | git.io/normalize */
+
+/*! jQuery v2.1.1 | (c) 2005, 2014 jQuery Foundation, Inc. | jquery.org/license */
+
+/*!
+ * Masonry PACKAGED v3.1.5
+ * Cascading grid layout library
+ * http://masonry.desandro.com
+ * MIT License
+ * by David DeSandro
+ */

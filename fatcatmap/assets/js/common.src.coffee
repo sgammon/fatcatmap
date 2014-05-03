@@ -115,7 +115,8 @@ frame = @['frame'] = _get '#appframe'
 ###
   image prefix
 ###
-image_prefix = @['image_prefix'] = "//deliver.fcm-static.org/image-proxy/providence-clarity/warehouse/raw/govtrack/photos/"
+image_prefix = @['image_prefix'] = "//storage.googleapis.com/providence-clarity/warehouse/raw/govtrack/photos/"
+#image_prefix = @['image_prefix'] = "//deliver.fcm-static.org/image-proxy/providence-clarity/warehouse/raw/govtrack/photos/"
 
 
 ###
@@ -308,6 +309,20 @@ load_context = @['load_context'] = (event, data) ->
   return @['context']
 
 onloads.push load_context
+
+
+###
+
+  storage
+
+###
+
+
+###
+
+  history
+
+###
 
 
 ###

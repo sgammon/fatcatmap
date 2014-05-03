@@ -27,12 +27,25 @@
   top: 0;
   left: 0;
   bottom: 0;
-  max-width: 20em;
-  min-width: 195px;
   z-index: 900;
 
-  &.collapsed {
+  transition-property: width, opacity;
+  transition-duration: 0.35s;
 
+  &.collapsed {
+    width: 0;
+  }
+
+  &.open-small {
+    width: 21%;
+  }
+
+  &.open-expanded {
+    width: 80%;
+  }
+
+  &.open-fullscreen {
+    width: 100%;
   }
 }
 
@@ -41,12 +54,27 @@
   top: 0;
   right: 0;
   bottom: 0;
-  max-width: 20em;
-  min-width: 265px;
+  max-width: 79%;
+  min-width: 20%;
   z-index: 900;
 
-  &.collapsed {
+  transition-property: width, opacity;
+  transition-duration: 0.35s;
 
+  &.collapsed {
+    width: 0;
+  }
+
+  &.open-small {
+    width: 20%;
+  }
+
+  &.open-expanded {
+    width: 79%;
+  }
+
+  &.open-fullscreen {
+    width: 100%;
   }
 }
 

@@ -20,17 +20,18 @@ class Page(RawPage):
   __js_context__ = {}  # holds javascript context items
 
   # Content Security Policy
+  content_nonce = False
   content_security_policy = {
 
     # JavaScript
     'script-src': (
-      ('self', 'https://deliver.fcm-static.org', 'http://localhost:5000') if __debug__ else (
+      ('self', 'https://deliver.fcm-static.org', 'http://localhost:5000', 'unsafe-inline') if __debug__ else (
       ('self', 'https:', 'deliver.fcm-static.org', 'unsafe-inline')
     )),
 
     # WebSocket / RPC
     'connect-src': (
-      ('self', 'https://api.fatcatmap.org', 'https://realtime.fatcatmap.org', 'http://localhost:5000')  if __debug__ else (
+      ('self', 'https://api.fatcatmap.org', 'https://realtime.fatcatmap.org', 'http://localhost:5000', 'unsafe-inline')  if __debug__ else (
       ('self', 'https:', 'api.fatcatmap.org', 'realtime.fatcatmap.org')
     ))
 
@@ -48,10 +49,10 @@ class Page(RawPage):
     _csp_header = []
     for stanza, content in self.content_security_policy.iteritems():
       content = list(content)
-      if stanza == 'script-src':
+      if self.content_nonce and stanza == 'script-src':
         content.append('nonce-%s' % _script_nonce)  # embed script nonce
 
-      _csp_header.append('%s %s' % (stanza, ' '.join(('"%s"' if not i.startswith('http') else i) for i in content)))
+      _csp_header.append('%s %s' % (stanza, ' '.join(("'%s'" % i if not i.startswith('http') else i) for i in content)))
 
     self.response.headers['Content-Security-Policy'] = ' '.join(_csp_header)
 

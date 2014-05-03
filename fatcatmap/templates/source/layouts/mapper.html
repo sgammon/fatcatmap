@@ -17,13 +17,13 @@
 {% block appstage %}
     <section>
         <!-- leftbar -->
-        <section id='leftbar collapsed'>
+        <section id='leftbar' class='transparent collapsed'>
             {% block left -%}
             {%- endblock left %}
         </section><!-- end #leftbar -->
 
         <!-- rightbar -->
-        <section id='rightbar collapsed'>
+        <section id='rightbar' class='transparent collapsed'>
             {% block right -%}
             {%- endblock right %}
         </section><!-- end #rightbar -->
@@ -31,13 +31,13 @@
 
     <section>
         <!-- upper thirds -->
-        <section class='upper-thirds collapsed'>
+        <section id='upper-thirds' class='transparent collapsed'>
             {% block upper_thirds -%}
             {%- endblock %}
         </section>
 
         <!-- lower thirds -->
-        <section class='lower-thirds collapsed'>
+        <section id='lower-thirds' class='transparent collapsed'>
             {% block lower_thirds -%}
             {%- endblock %}
         </section>

@@ -26,7 +26,7 @@
     <!-- stylesheets -->
     {%- block stylesheets %}
     <link rel="stylesheet" href="{{ asset.style('themes/' + (theme or 'fcm-scaffold') + '/home.css') }}" type="text/css">
-    <link rel="stylesheet" href="//deliver.fcm-static.org/font-proxy/775624/css/fonts.css" type="text/css">
+    <link rel="stylesheet" href="//cloud.typography.com/6717292/775624/css/fonts.css" type="text/css">
     {% endblock %}
 
     {%- if handler.agent.mobile %}
@@ -58,8 +58,11 @@
 
       {% block south -%}
       <!-- bundle/page JS -->
-      <script id="js-ext" type="text/javascript" nonce="{{ nonce.script }}" src="{{ asset.script("core/ext-bundle.min.js") }}"></script>
-      <script id="js-ext" type="text/javascript" nonce="{{ nonce.script }}" src="{{ asset.script("common.min.js" if not __debug__ else "common.js") }}"></script>
+      <script type="text/javascript" nonce="{{ nonce.script }}" src="{{ asset.script("core/jquery/jquery-2.1.1.js" if __debug__ else "core/jquery/jquery-2.1.1.min.js") }}"></script>
+      <script type="text/javascript" nonce="{{ nonce.script }}" src="{{ asset.script("core/d3/d3-v3.js" if __debug__ else "core/d3/d3-v3.min.js") }}"></script>
+      <script type="text/javascript" nonce="{{ nonce.script }}" src="{{ asset.script("core/masonry/masonry-3.1.5.js" if __debug__ else "core/masonry/masonry-3.1.5.min.js") }}"></script>
+      <script type="text/javascript" nonce="{{ nonce.script }}" src="{{ asset.script("core/apptools/apptools-v4.js" if __debug__ else "core/apptools/apptools-v4.min.js") }}"></script>
+      <script type="text/javascript" nonce="{{ nonce.script }}" src="{{ asset.script("common.min.js" if not __debug__ else "common.js") }}"></script>
       <script id="js-page" type="text/javascript" nonce="{{ nonce.script }}" src="{%- block page_js -%}{%- endblock -%}"></script>
 
       <!-- context -->

@@ -16,39 +16,43 @@ map = @['map'] = _get '#map'
 ###
 mapper = @['mapper'] = _get '#mapper'
 
+
 ###
   graph_config
 ###
 
-graph_config = @['graph_config'] =
+configure = () ->
 
-  width: @['mapper'].offsetWidth
-  height: @['mapper'].offsetHeight
+  config =
+    width: @['mapper'].offsetWidth
+    height: @['mapper'].offsetHeight
 
-  force:
-    alpha: 1
-    strength: 0.4
-    friction: 0.5
-    theta: 0.3
-    gravity: 0.05
-    charge: -50
-    distance: (e) ->
-      if e.native?.data?
-        return e.native.data.total
-      return 500
+    force:
+      alpha: 1
+      strength: 0.4
+      friction: 0.5
+      theta: 0.3
+      gravity: 0.05
+      charge: -50
+      distance: (e) ->
+        if e.native?.data?
+          return e.native.data.total
+        return 500
 
-  node:
-    radius: 20
+    node:
+      radius: 20
 
-  sprite:
-    width: 60
-    height: 60
-    images:
-      format: (@['context']?.agent?.capabilities?.webp? 'webp' : 'jpeg') || 'jpeg'
+    sprite:
+      width: 60
+      height: 60
+      images:
+        format: 'jpeg' #@['context'].agent.capabilities.webp and 'webp' or 'jpeg'
 
-  events:
-    click:
-      warmup: .4
+    events:
+      click:
+        warmup: .4
+
+  return config
 
 
 ###
@@ -66,6 +70,7 @@ browse = @['browse'] = (node) ->
       success: (response) ->
         receive response
 
+
 ###
   draw
 ###
@@ -73,6 +78,8 @@ browse = @['browse'] = (node) ->
 draw = @['draw'] = (_graph) ->
 
   if not @['catnip'].graph?
+
+    graph_config = @['graph_config'] = configure()
 
     @['catnip']['graph'] = _graph
     config = @['graph_config']
