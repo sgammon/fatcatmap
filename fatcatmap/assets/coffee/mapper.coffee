@@ -18,6 +18,18 @@ mapper = @['mapper'] = _get '#mapper'
 
 
 ###
+  leftbar
+###
+leftbar = @['leftbar'] = _get '#leftbar'
+
+
+###
+  rightbar
+###
+leftbar = @['rightbar'] = _get '#rightbar'
+
+
+###
   graph_config
 ###
 
@@ -28,16 +40,16 @@ configure = () ->
     height: @['mapper'].offsetHeight
 
     force:
-      alpha: 1
-      strength: 0.4
-      friction: 0.5
-      theta: 0.3
-      gravity: 0.05
-      charge: -50
+      alpha: 0
+      strength: 0
+      friction: 0
+      theta: 0
+      gravity: 0
+      charge: 0
       distance: (e) ->
         if e.native?.data?
           return e.native.data.total
-        return 500
+        return 5000
 
     node:
       radius: 20
@@ -50,7 +62,7 @@ configure = () ->
 
     events:
       click:
-        warmup: .4
+        warmup: .8
 
   return config
 
@@ -146,6 +158,17 @@ draw = @['draw'] = (_graph) ->
       #@['d3'].select(stage).on('click', (n) -> force['alpha'](config['events']['click']['warmup']))
 
       force.on 'tick', (f) ->
+
+        k = .1 * e.alpha;
+
+        # Push nodes toward their designated focus.
+        nodes.forEach (o, i) =>
+          o.y += (foci[o.id].y - o.y) * k
+          o.x += (foci[o.id].x - o.x) * k
+
+        node
+            .attr("cx", function(d) { return d.x; })
+            .attr("cy", function(d) { return d.y; });
 
         line.attr('x1', (d) -> d['source']['object']['x'] + (config['node']['radius'] / 2))
             .attr('y1', (d) -> d['source']['object']['y'] + (config['node']['radius'] / 2))

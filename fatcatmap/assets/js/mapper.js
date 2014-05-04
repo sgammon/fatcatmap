@@ -2,7 +2,7 @@
 /*
   catnip
  */
-var browse, catnip, configure, draw, map, mapper;
+var browse, catnip, configure, draw, leftbar, map, mapper;
 
 catnip = this['catnip'] = {};
 
@@ -22,6 +22,20 @@ mapper = this['mapper'] = _get('#mapper');
 
 
 /*
+  leftbar
+ */
+
+leftbar = this['leftbar'] = _get('#leftbar');
+
+
+/*
+  rightbar
+ */
+
+leftbar = this['rightbar'] = _get('#rightbar');
+
+
+/*
   graph_config
  */
 
@@ -33,16 +47,16 @@ configure = function() {
     force: {
       alpha: 1,
       strength: 0.4,
-      friction: 0.5,
+      friction: 0.4,
       theta: 0.3,
-      gravity: 0.05,
-      charge: -50,
+      gravity: 0.04,
+      charge: -1,
       distance: function(e) {
         var _ref;
         if (((_ref = e["native"]) != null ? _ref.data : void 0) != null) {
           return e["native"].data.total;
         }
-        return 500;
+        return 5000;
       }
     },
     node: {
@@ -57,7 +71,7 @@ configure = function() {
     },
     events: {
       click: {
-        warmup: .4
+        warmup: .8
       }
     }
   };
