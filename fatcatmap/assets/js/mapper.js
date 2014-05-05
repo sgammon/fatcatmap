@@ -49,7 +49,7 @@ configure = function() {
       strength: 0,
       friction: 0,
       theta: 0,
-      gravity: 1,
+      gravity: 0.005,
       charge: 0,
       distance: function(e) {
         var _ref;
