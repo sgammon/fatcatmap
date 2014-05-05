@@ -44,7 +44,7 @@ configure = () ->
       strength: 0
       friction: 0
       theta: 0
-      gravity: 0
+      gravity: 1
       charge: 0
       distance: (e) ->
         if e.native?.data?
@@ -167,8 +167,8 @@ draw = @['draw'] = (_graph) ->
           o.x += (foci[o.id].x - o.x) * k
 
         node
-            .attr("cx", function(d) { return d.x; })
-            .attr("cy", function(d) { return d.y; });
+            .attr("cx", (d) -> d.x)
+            .attr("cy", (d) -> d.y)
 
         line.attr('x1', (d) -> d['source']['object']['x'] + (config['node']['radius'] / 2))
             .attr('y1', (d) -> d['source']['object']['y'] + (config['node']['radius'] / 2))

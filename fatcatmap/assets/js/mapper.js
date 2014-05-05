@@ -45,12 +45,12 @@ configure = function() {
     width: this['mapper'].offsetWidth,
     height: this['mapper'].offsetHeight,
     force: {
-      alpha: 1,
-      strength: 0.4,
-      friction: 0.4,
-      theta: 0.3,
-      gravity: 0.04,
-      charge: -1,
+      alpha: 0,
+      strength: 0,
+      friction: 0,
+      theta: 0,
+      gravity: 1,
+      charge: 0,
       distance: function(e) {
         var _ref;
         if (((_ref = e["native"]) != null ? _ref.data : void 0) != null) {
@@ -127,6 +127,19 @@ draw = this['draw'] = function(_graph) {
         return image_prefix + n['native']['data']['govtrack_id'].toString() + '-' + '100px.' + config['sprite']['images']['format'];
       });
       force.on('tick', function(f) {
+        var k;
+        k = .1 * e.alpha;
+        nodes.forEach((function(_this) {
+          return function(o, i) {
+            o.y += (foci[o.id].y - o.y) * k;
+            return o.x += (foci[o.id].x - o.x) * k;
+          };
+        })(this));
+        node.attr("cx", function(d) {
+          return d.x;
+        }).attr("cy", function(d) {
+          return d.y;
+        });
         line.attr('x1', function(d) {
           return d['source']['object']['x'] + (config['node']['radius'] / 2);
         }).attr('y1', function(d) {
