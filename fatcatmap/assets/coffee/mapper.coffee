@@ -159,16 +159,16 @@ draw = @['draw'] = (_graph) ->
 
       force.on 'tick', (f) ->
 
-        k = .1 * e.alpha;
+        #k = .1 * e.alpha;
 
         # Push nodes toward their designated focus.
-        nodes.forEach (o, i) =>
-          o.y += (foci[o.id].y - o.y) * k
-          o.x += (foci[o.id].x - o.x) * k
+        #nodes.forEach (o, i) =>
+        #  o.y += (foci[o.id].y - o.y) * k
+        #  o.x += (foci[o.id].x - o.x) * k
 
-        node
-            .attr("cx", (d) -> d.x)
-            .attr("cy", (d) -> d.y)
+        #node
+        #    .attr("cx", (d) -> d.x)
+        #    .attr("cy", (d) -> d.y)
 
         line.attr('x1', (d) -> d['source']['object']['x'] + (config['node']['radius'] / 2))
             .attr('y1', (d) -> d['source']['object']['y'] + (config['node']['radius'] / 2))
