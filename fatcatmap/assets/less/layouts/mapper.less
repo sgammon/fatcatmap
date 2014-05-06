@@ -10,6 +10,11 @@
  *
  */
 
+#resources {
+  display: none;
+  visibility: hidden;
+}
+
 #appframe {
 
   // snap layout to all sides
@@ -32,13 +37,21 @@
   left: 0;
   right: 0;
   z-index: 1000;
+
+  //background
+  background-image: url('/assets/ext/vectors/cathead-filled-eyes.svg');
+  background-repeat: no-repeat;
+  background-attachment: fixed;
+  background-size: 4.5em;
+  background-position: 2em 2em;
 }
 
 #logo {
   z-index: 1000;
   position: fixed;
-  left: @appstage_margin;
+  left: 2.5em;
   cursor: pointer;
+  background: url(/assets/ext/vectors/cathead-filled-eyes.svg);
   .logo;
 }
 
@@ -56,8 +69,8 @@
 
 #logon {
   outline: none !important;
-  background-color: transparent;
-  opacity: 0.95;
+  background-color: #333;
+  opacity: 0.85;
   border-color: #4cae4c;
   border-style: solid;
   border-radius: 5px;

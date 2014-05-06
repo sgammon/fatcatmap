@@ -26,7 +26,7 @@ leftbar = @['leftbar'] = _get '#leftbar'
 ###
   rightbar
 ###
-leftbar = @['rightbar'] = _get '#rightbar'
+rightbar = @['rightbar'] = _get '#rightbar'
 
 
 ###
@@ -41,15 +41,12 @@ configure = () ->
 
     force:
       alpha: 0
-      strength: 0
+      strength: 50
       friction: 0
-      theta: 0
-      gravity: 0.005
+      theta: 0.1
+      gravity: 0.01
       charge: 0
-      distance: (e) ->
-        if e.native?.data?
-          return e.native.data.total
-        return 5000
+      distance: 10
 
     node:
       radius: 20
@@ -58,13 +55,22 @@ configure = () ->
       width: 60
       height: 60
       images:
-        format: 'jpeg' #@['context'].agent.capabilities.webp and 'webp' or 'jpeg'
+        format: @['context'].agent.capabilities.webp and 'webp' or 'jpeg'
 
     events:
       click:
         warmup: .8
 
   return config
+
+
+###
+  detail
+###
+
+detail = @['detail'] = (node) ->
+
+  console.log 'Showing detail for node...', node
 
 
 ###
@@ -108,6 +114,16 @@ draw = @['draw'] = (_graph) ->
                       .alpha(config['force']['alpha'])
                       .size([config['width'], config['height']])
 
+    _resize = () ->
+      width = @innerWidth || document.body.clientWidth || document.documentElement.clientWidth
+      height = @innerHeight || document.body.clientHeight || document.documentElement.clientHeight
+
+      @['catnip']['svg']
+        .attr('width', width)
+        .attr('height', height)
+
+      @['catnip']['force'].alpha(config['events']['click']['warmup'])
+
     _load = (g) ->
 
       svg = @['catnip']['svg'] = @['d3'].select(@['map'])
@@ -136,6 +152,7 @@ draw = @['draw'] = (_graph) ->
                            .attr('height', config['sprite']['height'])
                            .call(force['drag'])
                            .on('dblclick', browse)
+                           .on('click', detail)
 
       node = @catnip['node'] = container.append('g')
                       .attr('width', config['sprite']['width'])
@@ -156,6 +173,9 @@ draw = @['draw'] = (_graph) ->
                              .attr('xlink:href', (n) -> image_prefix + n['native']['data']['govtrack_id'].toString() + '-' + '100px.' + config['sprite']['images']['format'])
 
       #@['d3'].select(stage).on('click', (n) -> force['alpha'](config['events']['click']['warmup']))
+
+      # attach resize handler
+      window.onresize = _resize
 
       force.on 'tick', (f) ->
 

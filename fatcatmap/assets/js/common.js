@@ -7,7 +7,7 @@
 /*
   get
  */
-var busy, data, dye, finish, frame, graph, hide, image_prefix, index, load_context, onloads, pending_tasks, receive, show, spinner, stage, toggle, _get, _onload,
+var busy, collapse, data, dye, expand, finish, frame, graph, hide, image_prefix, index, load_context, onloads, pending_tasks, receive, show, spinner, stage, toggle, _get, _onload,
   __slice = [].slice;
 
 _get = this['_get'] = function(d) {
@@ -133,6 +133,47 @@ finish = this['finish'] = function() {
       return hide(this['spinner']);
     }
   }
+};
+
+
+/*
+  expand
+ */
+
+expand = this['expand'] = function(target, size) {
+  var el, element, _i, _len, _results;
+  if (size == null) {
+    size = "small";
+  }
+  el = _get(target);
+  if (el.length == null) {
+    el = [el];
+  }
+  _results = [];
+  for (_i = 0, _len = el.length; _i < _len; _i++) {
+    element = el[_i];
+    _results.push(element.setAttribute('class', 'open-' + size));
+  }
+  return _results;
+};
+
+
+/*
+  collapse
+ */
+
+collapse = this['collapse'] = function(target) {
+  var el, element, _i, _len, _results;
+  el = _get(target);
+  if (el.length == null) {
+    el = [el];
+  }
+  _results = [];
+  for (_i = 0, _len = el.length; _i < _len; _i++) {
+    element = el[_i];
+    _results.push(element.setAttribute('class', 'collapsed transparent'));
+  }
+  return _results;
 };
 
 

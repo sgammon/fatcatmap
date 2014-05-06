@@ -2,7 +2,7 @@
 /*
   catnip
  */
-var browse, catnip, configure, draw, leftbar, map, mapper;
+var browse, catnip, configure, detail, draw, leftbar, map, mapper, rightbar;
 
 catnip = this['catnip'] = {};
 
@@ -32,7 +32,7 @@ leftbar = this['leftbar'] = _get('#leftbar');
   rightbar
  */
 
-leftbar = this['rightbar'] = _get('#rightbar');
+rightbar = this['rightbar'] = _get('#rightbar');
 
 
 /*
@@ -46,18 +46,12 @@ configure = function() {
     height: this['mapper'].offsetHeight,
     force: {
       alpha: 0,
-      strength: 0,
+      strength: 50,
       friction: 0,
-      theta: 0,
-      gravity: 0.005,
+      theta: 0.1,
+      gravity: 0.01,
       charge: 0,
-      distance: function(e) {
-        var _ref;
-        if (((_ref = e["native"]) != null ? _ref.data : void 0) != null) {
-          return e["native"].data.total;
-        }
-        return 5000;
-      }
+      distance: 10
     },
     node: {
       radius: 20
@@ -66,7 +60,7 @@ configure = function() {
       width: 60,
       height: 60,
       images: {
-        format: 'jpeg'
+        format: this['context'].agent.capabilities.webp && 'webp' || 'jpeg'
       }
     },
     events: {
@@ -76,6 +70,15 @@ configure = function() {
     }
   };
   return config;
+};
+
+
+/*
+  detail
+ */
+
+detail = this['detail'] = function(node) {
+  return console.log('Showing detail for node...', node);
 };
 
 
@@ -100,13 +103,20 @@ browse = this['browse'] = function(node) {
  */
 
 draw = this['draw'] = function(_graph) {
-  var color, config, force, graph_config, _graph_draw, _incremental_draw, _load;
+  var color, config, force, graph_config, _graph_draw, _incremental_draw, _load, _resize;
   if (this['catnip'].graph == null) {
     graph_config = this['graph_config'] = configure();
     this['catnip']['graph'] = _graph;
     config = this['graph_config'];
     color = this['d3'].scale.category20();
     force = this['catnip']['force'] = this['d3'].layout.force().linkDistance(config['force']['distance']).linkStrength(config['force']['strength']).friction(config['force']['friction']).charge(config['force']['charge']).theta(config['force']['theta']).gravity(config['force']['gravity']).alpha(config['force']['alpha']).size([config['width'], config['height']]);
+    _resize = function() {
+      var height, width;
+      width = this.innerWidth || document.body.clientWidth || document.documentElement.clientWidth;
+      height = this.innerHeight || document.body.clientHeight || document.documentElement.clientHeight;
+      this['catnip']['svg'].attr('width', width).attr('height', height);
+      return this['catnip']['force'].alpha(config['events']['click']['warmup']);
+    };
     _load = function(g) {
       var container, edge, edge_wrap, legislator_image, line, node, node_wrap, shape, svg;
       svg = this['catnip']['svg'] = this['d3'].select(this['map']);
@@ -118,7 +128,7 @@ draw = this['draw'] = function(_graph) {
       node_wrap = this['catnip']['node_wrap'] = svg.selectAll('.node').data(g['nodes']).enter();
       container = this.catnip['node_container'] = node_wrap.append('svg').attr('id', function(n) {
         return 'group-' + n['node']['key'];
-      }).attr('width', config['sprite']['width']).attr('height', config['sprite']['height']).call(force['drag']).on('dblclick', browse);
+      }).attr('width', config['sprite']['width']).attr('height', config['sprite']['height']).call(force['drag']).on('dblclick', browse).on('click', detail);
       node = this.catnip['node'] = container.append('g').attr('width', config['sprite']['width']).attr('height', config['sprite']['height']);
       shape = this.catnip['circle'] = node.append('circle').attr('r', config['node']['radius']).attr('cx', config['sprite']['width'] / 2).attr('cy', config['sprite']['height'] / 2).attr('class', 'node');
       legislator_image = this.catnip['legislator_image'] = node.append('image').filter(function(n) {
@@ -126,6 +136,7 @@ draw = this['draw'] = function(_graph) {
       }).attr('width', config['sprite']['width']).attr('height', config['sprite']['height']).attr('clip-path', 'url(#node-circle-mask)').attr('xlink:href', function(n) {
         return image_prefix + n['native']['data']['govtrack_id'].toString() + '-' + '100px.' + config['sprite']['images']['format'];
       });
+      window.onresize = _resize;
       force.on('tick', function(f) {
         line.attr('x1', function(d) {
           return d['source']['object']['x'] + (config['node']['radius'] / 2);

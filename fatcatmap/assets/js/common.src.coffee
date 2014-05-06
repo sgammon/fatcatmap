@@ -89,6 +89,30 @@ finish = @['finish'] = () ->
 
 
 ###
+  expand
+###
+expand = @['expand'] = (target, size="small") ->
+  el = _get target
+  if not el.length?
+    el = [el]
+
+  for element in el
+    element.setAttribute('class', 'open-' + size)
+
+
+###
+  collapse
+###
+collapse = @['collapse'] = (target) ->
+  el = _get target
+  if not el.length?
+    el = [el]
+
+  for element in el
+    element.setAttribute('class', 'collapsed transparent')
+
+
+###
   pending_tasks
 ###
 pending_tasks = @['pending_tasks'] = 1

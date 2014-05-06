@@ -2,6 +2,10 @@
 
 {% block logo -%}<h1 id="logo">fatcatmap</h1>{%- endblock %}
 
+{% block templates %}
+
+{% endblock templates %}
+
 {% block appheader %}
             <section id='identity'>
                 <button type="button" id="logon" onclick="toggle('#signon-providers');toggle(event.target,'active')" class="transparent btn btn-success">Sign in</button>
@@ -19,12 +23,24 @@
         <!-- leftbar -->
         <section id='leftbar' class='transparent collapsed'>
             {% block left -%}
+            <section class='controls'>
+                <div class='size-modal size-close'>X</div>
+                <div class='size-modal size-expand'>&gt;</div>
+            </section><!-- end #leftbar section.controls -->
+            <section class='content'>
+            </section><!-- end #leftbar section.content -->
             {%- endblock left %}
         </section><!-- end #leftbar -->
 
         <!-- rightbar -->
         <section id='rightbar' class='transparent collapsed'>
             {% block right -%}
+            <section class='controls'>
+                <div class='size-modal size-close'>X</div>
+                <div class='size-modal size-expand'>&gt;</div>
+            </section><!-- end #rightbar section.controls -->
+            <section class='content'>
+            </section><!-- end #rightbar section.content -->
             {%- endblock right %}
         </section><!-- end #rightbar -->
     </section>

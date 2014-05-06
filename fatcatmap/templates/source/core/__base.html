@@ -43,6 +43,12 @@
   </head>
   <body class="{{ theme|default('fcm-dark') }} alpha">
 
+    <!-- resources -->
+    <div id="resources">
+      <!-- app templates -->
+      <div id="templates">{% block templates %}{% endblock templates %}</div><!-- end #templates -->
+    </div><!-- end #resources -->
+
     <!-- appframe -->
     <div id="appframe">
         {% block appframe %}<h1>appframe</h1>{% endblock %}

@@ -97,7 +97,9 @@ module.exports = (grunt) ->
           'fatcatmap/assets/js/common.js': [
             'fatcatmap/assets/coffee/common/_base.coffee',
             'fatcatmap/assets/coffee/common/_d3.coffee',
+            'fatcatmap/assets/coffee/common/_t.coffee',
             'fatcatmap/assets/coffee/common/receive.coffee',
+            'fatcatmap/assets/coffee/common/ui.coffee',
             'fatcatmap/assets/coffee/common/context.coffee',
             'fatcatmap/assets/coffee/common/storage.coffee',
             'fatcatmap/assets/coffee/common/history.coffee',
