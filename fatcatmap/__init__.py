@@ -148,7 +148,11 @@ def preload():
   from fatcatmap.logic import *
   from fatcatmap.models import *
   from fatcatmap.services import *
-  from fatcatmap.templates.compiled import *
+
+  try:
+    from fatcatmap.templates.compiled import *
+  except ImportError:
+    pass
 
 
 __all__ = (
