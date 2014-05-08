@@ -57,7 +57,9 @@ configure = function() {
 detail = this['detail'] = this['catnip']['graph']['detail'] = function(node) {
   console.log('Showing detail for node...', node);
   $('#leftbar section.content').text('node: ' + node.node.key);
-  return $.catnip.ui.expand($.catnip.el.leftbar);
+  if ($.catnip.el.leftbar.classList.contains('collapsed')) {
+    return $.catnip.ui.expand($.catnip.el.leftbar);
+  }
 };
 
 

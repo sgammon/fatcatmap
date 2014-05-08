@@ -55,7 +55,9 @@ configure = () ->
 detail = @['detail'] = @['catnip']['graph']['detail'] = (node) ->
   console.log 'Showing detail for node...', node
   $('#leftbar section.content').text('node: ' + node.node.key)
-  $.catnip.ui.expand($.catnip.el.leftbar)
+
+  if $.catnip.el.leftbar.classList.contains('collapsed')
+    $.catnip.ui.expand($.catnip.el.leftbar)
 
 
 ###
