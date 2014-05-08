@@ -54,6 +54,8 @@ configure = () ->
 
 detail = @['detail'] = @['catnip']['graph']['detail'] = (node) ->
   console.log 'Showing detail for node...', node
+  $('#leftbar section.content').text('node: ' + node.node.key)
+  $.catnip.ui.expand($.catnip.el.leftbar)
 
 
 ###

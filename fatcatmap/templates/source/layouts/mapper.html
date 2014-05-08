@@ -9,12 +9,12 @@
 {% block frame %}
     <section>
         <!-- leftbar -->
-        <section id='leftbar' class='transparent collapsed'>
+        <section id='leftbar' class='transparent collapsed ui-sidebar'>
             {% block left -%}
             <section class='controls'>
-                <div class='size-modal size-close' onclick="close(event.target);">X</div>
-                <div class='size-modal size-expand' onclick="expand(event.target);"></div>
-                <div class='size-modal size-minimize' onclick="collapse(event.target);"></div>
+                <div class='size-modal size-close' onclick="$.catnip.ui.close(leftbar);">X</div>
+                <div class='size-modal size-expand' onclick="$.catnip.ui.expand(leftbar);"></div>
+                <div class='size-modal size-minimize' onclick="$.catnip.ui.collapse(leftbar);"></div>
             </section><!-- end #leftbar section.controls -->
             <section class='content'>
             </section><!-- end #leftbar section.content -->
@@ -22,12 +22,12 @@
         </section><!-- end #leftbar -->
 
         <!-- rightbar -->
-        <section id='rightbar' class='transparent collapsed'>
+        <section id='rightbar' class='transparent collapsed ui-sidebar'>
             {% block right -%}
             <section class='controls'>
-                <div class='size-modal size-close' onclick="close(event.target);">X</div>
-                <div class='size-modal size-expand' onclick="expand(event.target);"></div>
-                <div class='size-modal size-minimize' onclick="collapse(event.target);"></div>
+                <div class='size-modal size-close' onclick="$.catnip.ui.close(rightbar);">X</div>
+                <div class='size-modal size-expand' onclick="$.catnip.ui.expand(rightbar);"></div>
+                <div class='size-modal size-minimize' onclick="$.catnip.ui.collapse(rightbar);"></div>
             </section><!-- end #rightbar section.controls -->
             <section class='content'>
             </section><!-- end #rightbar section.content -->

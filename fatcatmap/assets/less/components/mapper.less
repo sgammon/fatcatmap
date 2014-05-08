@@ -22,7 +22,15 @@
 
 // ~~ sidebars ~~ //
 
-section.controls {
+.ui-sidebar section.content {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 6em;
+  top: 9em;
+}
+
+.ui-sidebar section.controls {
 
   top: 1em;
   font-family: fcm;
@@ -45,16 +53,27 @@ section.controls {
 
 #leftbar, #rightbar {
 
+    background-color: rgba(68, 68, 68, .9);
+    background-attachment: fixed;
+
+    &.collapsed {
+      z-index: 0;
+      pointer-events: none;
+      cursor: default;
+    }
+
     // small
     &.open-small {
 
       .size-expand {
-        opacity: 1;;
+        opacity: 1;
         cursor: pointer;
       }
 
       .size-minimize {
         opacity: 0.3;
+        pointer-events: none;
+        cursor: default;
       }
 
     }
@@ -78,6 +97,8 @@ section.controls {
     &.open-fullscreen {
       .size-expand {
         opacity: 0.3;
+        pointer-events: none;
+        cursor: default;
       }
     }
 
@@ -97,6 +118,8 @@ section.controls {
   .controls {
     text-align: right;
     right: 1em;
+    top: 2.3em;
+    color: #ccc;
   }
 
   &.collapsed {
@@ -138,11 +161,11 @@ section.controls {
   }
 
   &.open-small {
-    width: 25em;
+    width: 24em;
   }
 
   &.open-expanded {
-    width: 68em;
+    width: 66em;
   }
 
   &.open-fullscreen {
