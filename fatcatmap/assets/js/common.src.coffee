@@ -7,23 +7,6 @@
 
 
 ###
-  catnip! :)
-###
-catnip = @['catnip'] =
-  ui: {}
-  el: {}
-  data: {}
-  graph: {}
-  context: {}
-  config:
-    assets: {}
-  state:
-    pending: 1
-  events:
-    onload: []
-
-
-###
   get
 ###
 _get = @['_get'] = (d) ->
@@ -39,6 +22,32 @@ _get = @['_get'] = (d) ->
 
 
 ###
+  catnip! :)
+###
+catnip = @['catnip'] =
+  ui: {}
+  data: {}
+  graph: {}
+  context: {}
+  config:
+    assets:
+      prefix: "//storage.googleapis.com/providence-clarity/"
+  state:
+    pending: 1
+  events:
+    onload: []
+  el:
+    map: _get '#appstage'
+    stage: _get '#appstage'
+    frame: _get '#appframe'
+    logon: _get '#logon'
+    mapper: _get '#mapper'
+    spinner: _get '#appspinner'
+    leftbar: _get '#leftbar'
+    rightbar: _get '#rightbar'
+
+
+###
   show
 ###
 show = @['show'] = @['catnip']['ui']['show'] = (d, hidden_only) ->
@@ -46,9 +55,8 @@ show = @['show'] = @['catnip']['ui']['show'] = (d, hidden_only) ->
   if not el.length?
     el = [el]
   for element in el
-    if hidden_only
-      element.classList.remove('hidden')
-    else
+    element.classList.remove('hidden')
+    if not hidden_only
       element.classList.remove('transparent')
 
 
@@ -91,8 +99,8 @@ dye = @['dye'] = @['catnip']['ui']['dye'] = (d, color) ->
 busy = @['busy'] = @['catnip']['busy'] = () =>
   _pending = @['catnip']['state']['pending']++
   if _pending == 0
-    if @['spinner']
-      show(@['spinner'])
+    if @['catnip']['el']['spinner']
+      $.catnip.ui.show(@['catnip']['el']['spinner'])
 
 
 ###
@@ -101,40 +109,63 @@ busy = @['busy'] = @['catnip']['busy'] = () =>
 idle = @['idle'] = @['catnip']['idle'] = () =>
   _pending = --@['catnip']['state']['pending']
   if _pending == 0
-    if @['spinner']
-      hide(@['spinner'])
+    if @['catnip']['el']['spinner']
+      $.catnip.ui.hide(@['catnip']['el']['spinner'])
 
 
 ###
   expand
 ###
-expand = @['expand'] = @['catnip']['ui']['expand'] = (target) ->
+expand = @['expand'] = @['catnip']['ui']['expand'] = (target, state=false) ->
   el = _get target
   if not el.length?
     el = [el]
 
   for element in el
     if element.classList.contains('open-small')
-      element.setAttribute('class', 'open-expanded')
+      remove = 'open-small'
+      if not state
+        add = 'open-expanded'
     else if element.classList.contains('open-expanded')
-      element.setAttribute('class', 'open-fullscreen')
+      remove = 'open-expanded'
+      if not state
+        add = 'open-fullscreen'
     else if element.classList.contains('collapsed')
-      element.setAttribute('class', 'open-small')
+      remove = 'collapsed'
+      if not state
+        add = 'open-small'
+    add = add || state
+    if remove
+      element.classList.remove(remove)
+      element.classList.remove('transparent')
+    element.classList.add(add)
 
 
 ###
   collapse
 ###
-collapse = @['collapse'] = @['catnip']['ui']['collapse'] = (target) ->
+collapse = @['collapse'] = @['catnip']['ui']['collapse'] = (target, state=false) ->
   el = _get target
   if not el.length?
     el = [el]
 
   for element in el
-    if element.classList.contains('open-expanded')
-      element.setAttribute('class', 'open-small')
+    if element.classList.contains('open-small')
+      remove = 'open-small'
+      if not state
+        add = 'collapsed'
+    else if element.classList.contains('open-expanded')
+      remove = 'open-expanded'
+      if not state
+        add = 'open-small'
     else if element.classList.contains('open-fullscreen')
-      element.setAttribute('class', 'open-expanded')
+      remove = 'open-fullscreen'
+      if not state
+        add = 'open-expanded'
+    add = add or state
+    if remove
+      element.classList.remove(remove)
+    element.classList.add(add)
 
 
 ###
@@ -146,37 +177,11 @@ close = @['close'] = @['catnip']['ui']['close'] = (target) ->
     el = [el]
 
   for element in el
-    element.setAttribute('class', 'collapsed transparent')
-
-
-###
-  spinner
-###
-spinner = @['spinner'] = @['catnip']['el']['spinner'] = _get '#appspinner'
-
-
-###
-  stage
-###
-stage = @['stage'] = @['catnip']['el']['stage'] = _get '#appstage'
-
-
-###
-  frame
-###
-frame = @['frame'] = @['catnip']['el']['frame'] = _get '#appframe'
-
-
-###
-  logon
-###
-_logon = @['catnip']['el']['logon'] = _get '#logon'
-
-
-###
-  asset prefix
-###
-asset_prefix = @['catnip']['config']['assets']['prefix'] = "//storage.googleapis.com/providence-clarity/"
+    element.classList.remove('open-small')
+    element.classList.remove('open-expanded')
+    element.classList.remove('open-fullscreen')
+    element.classList.add('collapsed')
+    element.classList.add('transparent')
 
 
 ###

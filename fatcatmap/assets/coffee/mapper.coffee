@@ -1,26 +1,9 @@
 
 ###
-  map
-###
-map = @['map'] = @['catnip']['el']['map'] = _get '#map'
 
-
-###
   mapper
-###
-mapper = @['mapper'] = @['catnip']['el']['mapper'] = _get '#mapper'
-
 
 ###
-  leftbar
-###
-leftbar = @['leftbar'] = @['catnip']['el']['leftbar'] = _get '#leftbar'
-
-
-###
-  rightbar
-###
-rightbar = @['rightbar'] = @['catnip']['el']['rightbar'] = _get '#rightbar'
 
 
 ###
@@ -44,6 +27,12 @@ configure = () ->
 
     node:
       radius: 20
+      classes: 'node'
+
+    edge:
+      width: 2
+      stroke: '#999'
+      classes: 'link'
 
     sprite:
       width: 60
@@ -55,6 +44,7 @@ configure = () ->
       click:
         warmup: .8
 
+  @['catnip']['config']['graph'] = config
   return config
 
 
@@ -63,7 +53,6 @@ configure = () ->
 ###
 
 detail = @['detail'] = @['catnip']['graph']['detail'] = (node) ->
-
   console.log 'Showing detail for node...', node
 
 
@@ -72,7 +61,6 @@ detail = @['detail'] = @['catnip']['graph']['detail'] = (node) ->
 ###
 
 browse = @['browse'] = @['catnip']['graph']['browse'] = (node) ->
-
   console.log 'Browsing to origin...', node
 
   $.apptools.api.graph
@@ -116,7 +104,9 @@ draw = @['draw'] = @['catnip']['graph']['draw'] = (_graph) =>
         .attr('width', width)
         .attr('height', height)
 
-      @['catnip']['graph']['force'].alpha(config['events']['click']['warmup'])
+      @['catnip']['graph']['force']
+        .alpha(config['events']['click']['warmup'])
+        .size([width, height])
 
     _load = (g) ->
 
@@ -131,9 +121,9 @@ draw = @['draw'] = @['catnip']['graph']['draw'] = (_graph) =>
                       .attr('id', (e) -> 'edge-' + e.edge.key)
 
       line = @['catnip']['graph']['line'] = edge.append('line')
-                 .attr('stroke', '#999')
-                 .attr('class', 'link')
-                 .style('stroke-width', 2)
+                 .attr('stroke', config['edge']['stroke'])
+                 .attr('class', config['edge']['classes'])
+                 .style('stroke-width', config['edge']['width'])
 
       ## 2) node structure
       node_wrap = @['catnip']['graph']['node_wrap'] = svg.selectAll('.node')
@@ -144,9 +134,9 @@ draw = @['draw'] = @['catnip']['graph']['draw'] = (_graph) =>
                            .attr('id', (n) -> 'group-' + n['node']['key'])
                            .attr('width', config['sprite']['width'])
                            .attr('height', config['sprite']['height'])
-                           .call(force['drag'])
                            .on('dblclick', @['catnip']['graph']['browse'])
                            .on('click', @['catnip']['graph']['detail'])
+                           .call(force['drag'])
 
       node = @['catnip']['graph']['node'] = container.append('g')
                       .attr('width', config['sprite']['width'])
@@ -156,7 +146,7 @@ draw = @['draw'] = @['catnip']['graph']['draw'] = (_graph) =>
                   .attr('r', config['node']['radius'])
                   .attr('cx', config['sprite']['width'] / 2)
                   .attr('cy', config['sprite']['height'] / 2)
-                  .attr('class', 'node')
+                  .attr('class', config['node']['classes'])
 
       ## 2.1) image for legislators
       legislator_image = @['catnip']['graph']['legislator_image'] = node.append('image')
@@ -166,27 +156,10 @@ draw = @['draw'] = @['catnip']['graph']['draw'] = (_graph) =>
                              .attr('clip-path', 'url(#node-circle-mask)')
                              .attr('xlink:href', (n) => @['catnip']['config']['assets']['prefix'] + 'warehouse/raw/govtrack/photos/' + n['native']['data']['govtrack_id'].toString() + '-' + '100px.' + config['sprite']['images']['format'])
 
-      #@['d3'].select(stage).on('click', (n) -> force['alpha'](config['events']['click']['warmup']))
-
       # attach resize handler
       window.onresize = _resize
 
       force.on 'tick', (f) ->
-
-        # Always make origin center
-        #nodes[0].x = (@innerWidth || document.body.clientWidth || document.documentElement.clientWidth) / 2
-        #nodes[0].y = (@innerHeight || document.body.clientHeight || document.documentElement.clientHeight) / 2
-
-        #k = .1 * e.alpha;
-
-        # Push nodes toward their designated focus.
-        #nodes.forEach (o, i) =>
-        #  o.y += (foci[o.id].y - o.y) * k
-        #  o.x += (foci[o.id].x - o.x) * k
-
-        #node
-        #    .attr("cx", (d) -> d.x)
-        #    .attr("cy", (d) -> d.y)
 
         line.attr('x1', (d) -> d['source']['object']['x'] + (config['node']['radius'] / 2))
             .attr('y1', (d) -> d['source']['object']['y'] + (config['node']['radius'] / 2))

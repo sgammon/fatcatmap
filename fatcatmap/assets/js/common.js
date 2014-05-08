@@ -5,32 +5,10 @@
  */
 
 /*
-  catnip! :)
- */
-var asset_prefix, busy, catnip, close, collapse, data, dye, expand, frame, graph, hide, idle, index, load_context, receive, show, spinner, stage, toggle, _get, _logon, _onload,
-  __slice = [].slice;
-
-catnip = this['catnip'] = {
-  ui: {},
-  el: {},
-  data: {},
-  graph: {},
-  context: {},
-  config: {
-    assets: {}
-  },
-  state: {
-    pending: 1
-  },
-  events: {
-    onload: []
-  }
-};
-
-
-/*
   get
  */
+var busy, catnip, close, collapse, data, dye, expand, graph, hide, idle, index, load_context, receive, show, toggle, _get, _onload,
+  __slice = [].slice;
 
 _get = this['_get'] = function(d) {
   if (d && (d.querySelector != null)) {
@@ -49,6 +27,39 @@ _get = this['_get'] = function(d) {
 
 
 /*
+  catnip! :)
+ */
+
+catnip = this['catnip'] = {
+  ui: {},
+  data: {},
+  graph: {},
+  context: {},
+  config: {
+    assets: {
+      prefix: "//storage.googleapis.com/providence-clarity/"
+    }
+  },
+  state: {
+    pending: 1
+  },
+  events: {
+    onload: []
+  },
+  el: {
+    map: _get('#appstage'),
+    stage: _get('#appstage'),
+    frame: _get('#appframe'),
+    logon: _get('#logon'),
+    mapper: _get('#mapper'),
+    spinner: _get('#appspinner'),
+    leftbar: _get('#leftbar'),
+    rightbar: _get('#rightbar')
+  }
+};
+
+
+/*
   show
  */
 
@@ -61,10 +72,11 @@ show = this['show'] = this['catnip']['ui']['show'] = function(d, hidden_only) {
   _results = [];
   for (_i = 0, _len = el.length; _i < _len; _i++) {
     element = el[_i];
-    if (hidden_only) {
-      _results.push(element.classList.remove('hidden'));
-    } else {
+    element.classList.remove('hidden');
+    if (!hidden_only) {
       _results.push(element.classList.remove('transparent'));
+    } else {
+      _results.push(void 0);
     }
   }
   return _results;
@@ -137,8 +149,8 @@ busy = this['busy'] = this['catnip']['busy'] = (function(_this) {
     var _pending;
     _pending = _this['catnip']['state']['pending']++;
     if (_pending === 0) {
-      if (_this['spinner']) {
-        return show(_this['spinner']);
+      if (_this['catnip']['el']['spinner']) {
+        return $.catnip.ui.show(_this['catnip']['el']['spinner']);
       }
     }
   };
@@ -154,8 +166,8 @@ idle = this['idle'] = this['catnip']['idle'] = (function(_this) {
     var _pending;
     _pending = --_this['catnip']['state']['pending'];
     if (_pending === 0) {
-      if (_this['spinner']) {
-        return hide(_this['spinner']);
+      if (_this['catnip']['el']['spinner']) {
+        return $.catnip.ui.hide(_this['catnip']['el']['spinner']);
       }
     }
   };
@@ -166,8 +178,11 @@ idle = this['idle'] = this['catnip']['idle'] = (function(_this) {
   expand
  */
 
-expand = this['expand'] = this['catnip']['ui']['expand'] = function(target) {
-  var el, element, _i, _len, _results;
+expand = this['expand'] = this['catnip']['ui']['expand'] = function(target, state) {
+  var add, el, element, remove, _i, _len, _results;
+  if (state == null) {
+    state = false;
+  }
   el = _get(target);
   if (el.length == null) {
     el = [el];
@@ -176,14 +191,27 @@ expand = this['expand'] = this['catnip']['ui']['expand'] = function(target) {
   for (_i = 0, _len = el.length; _i < _len; _i++) {
     element = el[_i];
     if (element.classList.contains('open-small')) {
-      _results.push(element.setAttribute('class', 'open-expanded'));
+      remove = 'open-small';
+      if (!state) {
+        add = 'open-expanded';
+      }
     } else if (element.classList.contains('open-expanded')) {
-      _results.push(element.setAttribute('class', 'open-fullscreen'));
+      remove = 'open-expanded';
+      if (!state) {
+        add = 'open-fullscreen';
+      }
     } else if (element.classList.contains('collapsed')) {
-      _results.push(element.setAttribute('class', 'open-small'));
-    } else {
-      _results.push(void 0);
+      remove = 'collapsed';
+      if (!state) {
+        add = 'open-small';
+      }
     }
+    add = add || state;
+    if (remove) {
+      element.classList.remove(remove);
+      element.classList.remove('transparent');
+    }
+    _results.push(element.classList.add(add));
   }
   return _results;
 };
@@ -193,8 +221,11 @@ expand = this['expand'] = this['catnip']['ui']['expand'] = function(target) {
   collapse
  */
 
-collapse = this['collapse'] = this['catnip']['ui']['collapse'] = function(target) {
-  var el, element, _i, _len, _results;
+collapse = this['collapse'] = this['catnip']['ui']['collapse'] = function(target, state) {
+  var add, el, element, remove, _i, _len, _results;
+  if (state == null) {
+    state = false;
+  }
   el = _get(target);
   if (el.length == null) {
     el = [el];
@@ -202,13 +233,27 @@ collapse = this['collapse'] = this['catnip']['ui']['collapse'] = function(target
   _results = [];
   for (_i = 0, _len = el.length; _i < _len; _i++) {
     element = el[_i];
-    if (element.classList.contains('open-expanded')) {
-      _results.push(element.setAttribute('class', 'open-small'));
+    if (element.classList.contains('open-small')) {
+      remove = 'open-small';
+      if (!state) {
+        add = 'collapsed';
+      }
+    } else if (element.classList.contains('open-expanded')) {
+      remove = 'open-expanded';
+      if (!state) {
+        add = 'open-small';
+      }
     } else if (element.classList.contains('open-fullscreen')) {
-      _results.push(element.setAttribute('class', 'open-expanded'));
-    } else {
-      _results.push(void 0);
+      remove = 'open-fullscreen';
+      if (!state) {
+        add = 'open-expanded';
+      }
     }
+    add = add || state;
+    if (remove) {
+      element.classList.remove(remove);
+    }
+    _results.push(element.classList.add(add));
   }
   return _results;
 };
@@ -227,45 +272,14 @@ close = this['close'] = this['catnip']['ui']['close'] = function(target) {
   _results = [];
   for (_i = 0, _len = el.length; _i < _len; _i++) {
     element = el[_i];
-    _results.push(element.setAttribute('class', 'collapsed transparent'));
+    element.classList.remove('open-small');
+    element.classList.remove('open-expanded');
+    element.classList.remove('open-fullscreen');
+    element.classList.add('collapsed');
+    _results.push(element.classList.add('transparent'));
   }
   return _results;
 };
-
-
-/*
-  spinner
- */
-
-spinner = this['spinner'] = this['catnip']['el']['spinner'] = _get('#appspinner');
-
-
-/*
-  stage
- */
-
-stage = this['stage'] = this['catnip']['el']['stage'] = _get('#appstage');
-
-
-/*
-  frame
- */
-
-frame = this['frame'] = this['catnip']['el']['frame'] = _get('#appframe');
-
-
-/*
-  logon
- */
-
-_logon = this['catnip']['el']['logon'] = _get('#logon');
-
-
-/*
-  asset prefix
- */
-
-asset_prefix = this['catnip']['config']['assets']['prefix'] = "//storage.googleapis.com/providence-clarity/";
 
 
 /*

@@ -1,36 +1,13 @@
 
 /*
-  map
- */
-var browse, configure, detail, draw, leftbar, map, mapper, rightbar;
 
-map = this['map'] = this['catnip']['el']['map'] = _get('#map');
-
-
-/*
   mapper
  */
-
-mapper = this['mapper'] = this['catnip']['el']['mapper'] = _get('#mapper');
-
-
-/*
-  leftbar
- */
-
-leftbar = this['leftbar'] = this['catnip']['el']['leftbar'] = _get('#leftbar');
-
-
-/*
-  rightbar
- */
-
-rightbar = this['rightbar'] = this['catnip']['el']['rightbar'] = _get('#rightbar');
-
 
 /*
   graph_config
  */
+var browse, configure, detail, draw;
 
 configure = function() {
   var config;
@@ -47,7 +24,13 @@ configure = function() {
       distance: 10
     },
     node: {
-      radius: 20
+      radius: 20,
+      classes: 'node'
+    },
+    edge: {
+      width: 2,
+      stroke: '#999',
+      classes: 'link'
     },
     sprite: {
       width: 60,
@@ -62,6 +45,7 @@ configure = function() {
       }
     }
   };
+  this['catnip']['config']['graph'] = config;
   return config;
 };
 
@@ -109,7 +93,7 @@ draw = this['draw'] = this['catnip']['graph']['draw'] = (function(_this) {
         width = this.innerWidth || document.body.clientWidth || document.documentElement.clientWidth;
         height = this.innerHeight || document.body.clientHeight || document.documentElement.clientHeight;
         this['catnip']['graph']['root'].attr('width', width).attr('height', height);
-        return this['catnip']['graph']['force'].alpha(config['events']['click']['warmup']);
+        return this['catnip']['graph']['force'].alpha(config['events']['click']['warmup']).size([width, height]);
       };
       _load = function(g) {
         var container, edge, edge_wrap, legislator_image, line, node, node_wrap, shape, svg;
@@ -118,13 +102,13 @@ draw = this['draw'] = this['catnip']['graph']['draw'] = (function(_this) {
         edge = this['catnip']['graph']['edge'] = edge_wrap.append('svg').attr('id', function(e) {
           return 'edge-' + e.edge.key;
         });
-        line = this['catnip']['graph']['line'] = edge.append('line').attr('stroke', '#999').attr('class', 'link').style('stroke-width', 2);
+        line = this['catnip']['graph']['line'] = edge.append('line').attr('stroke', config['edge']['stroke']).attr('class', config['edge']['classes']).style('stroke-width', config['edge']['width']);
         node_wrap = this['catnip']['graph']['node_wrap'] = svg.selectAll('.node').data(g['nodes']).enter();
         container = this['catnip']['graph']['node_container'] = node_wrap.append('svg').attr('id', function(n) {
           return 'group-' + n['node']['key'];
-        }).attr('width', config['sprite']['width']).attr('height', config['sprite']['height']).call(force['drag']).on('dblclick', this['catnip']['graph']['browse']).on('click', this['catnip']['graph']['detail']);
+        }).attr('width', config['sprite']['width']).attr('height', config['sprite']['height']).on('dblclick', this['catnip']['graph']['browse']).on('click', this['catnip']['graph']['detail']).call(force['drag']);
         node = this['catnip']['graph']['node'] = container.append('g').attr('width', config['sprite']['width']).attr('height', config['sprite']['height']);
-        shape = this['catnip']['graph']['circle'] = node.append('circle').attr('r', config['node']['radius']).attr('cx', config['sprite']['width'] / 2).attr('cy', config['sprite']['height'] / 2).attr('class', 'node');
+        shape = this['catnip']['graph']['circle'] = node.append('circle').attr('r', config['node']['radius']).attr('cx', config['sprite']['width'] / 2).attr('cy', config['sprite']['height'] / 2).attr('class', config['node']['classes']);
         legislator_image = this['catnip']['graph']['legislator_image'] = node.append('image').filter(function(n) {
           return n['native']['data']['govtrack_id'] != null;
         }).attr('width', config['sprite']['width']).attr('height', config['sprite']['height']).attr('clip-path', 'url(#node-circle-mask)').attr('xlink:href', (function(_this) {
