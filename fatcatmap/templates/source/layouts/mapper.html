@@ -1,44 +1,63 @@
-{% extends "core/__base.html" %}
+{% extends "layouts/base.html" %}
 
-{% block appframe %}
-        <!-- header -->
-        <header id='appheader'>
-            <h1 id='logo'>fatcatmap</h1>
-        </header><!-- end header -->
+{% block logo -%}<div id='logowrap'><div id='cathead'></div><h1 id="logo">fatcatmap</h1></div>{%- endblock %}
 
-        <!-- footer -->
-        <footer id='appfooter'>
-            {% block footer -%}
-            <small id="brand">momentum labs - fatcatmap</small>
-            <small id="copyright">copyright (&copy; 2014) - technology preview</small>
-            {%- endblock footer %}
-        </footer><!-- end footer -->
-{% endblock %}
+{% block templates %}
 
-{% block appstage %}
+{% endblock templates %}
+
+{% block frame %}
     <section>
         <!-- leftbar -->
-        <section id='leftbar collapsed'>
+        <section id='leftbar' class='transparent collapsed ui-sidebar'>
             {% block left -%}
+            <section class='controls'>
+                <div class='size-modal size-close' onclick="$.catnip.ui.close(leftbar);">X</div>
+                <div class='size-modal size-expand' onclick="$.catnip.ui.expand(leftbar);"></div>
+                <div class='size-modal size-minimize' onclick="$.catnip.ui.collapse(leftbar);"></div>
+            </section><!-- end #leftbar section.controls -->
+            <section class='content'>
+            </section><!-- end #leftbar section.content -->
             {%- endblock left %}
         </section><!-- end #leftbar -->
 
         <!-- rightbar -->
-        <section id='rightbar collapsed'>
+        <section id='rightbar' class='transparent collapsed ui-sidebar'>
             {% block right -%}
+            <section class='controls'>
+                <div class='size-modal size-close' onclick="$.catnip.ui.close(rightbar);">X</div>
+                <div class='size-modal size-expand' onclick="$.catnip.ui.expand(rightbar);"></div>
+                <div class='size-modal size-minimize' onclick="$.catnip.ui.collapse(rightbar);"></div>
+            </section><!-- end #rightbar section.controls -->
+            <section class='content'>
+            </section><!-- end #rightbar section.content -->
             {%- endblock right %}
         </section><!-- end #rightbar -->
     </section>
+{% endblock frame %}
 
+{% block appheader %}
+            <section id='identity'>
+                <button type="button" id="logon" onclick="toggle('#signon-providers');toggle(event.target,'active')" class="transparent btn btn-success">Sign in</button>
+                <div id="signon-providers" class="transparent">
+                    <div id="gplus-signon">g+</div>
+                    <div id="fb-signon">fb</div>
+                    <div id="tw-signon">tw</div>
+                    <div id="gh-signon">gh</div>
+                </div><!-- end div#signon-providers -->
+            </section><!-- end #identity -->
+{% endblock appheader %}
+
+{% block appstage %}
     <section>
         <!-- upper thirds -->
-        <section class='upper-thirds collapsed'>
+        <section id='upper-thirds' class='transparent collapsed'>
             {% block upper_thirds -%}
             {%- endblock %}
         </section>
 
         <!-- lower thirds -->
-        <section class='lower-thirds collapsed'>
+        <section id='lower-thirds' class='transparent collapsed'>
             {% block lower_thirds -%}
             {%- endblock %}
         </section>

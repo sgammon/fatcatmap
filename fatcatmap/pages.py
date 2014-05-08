@@ -27,17 +27,34 @@ class Landing(Page):
 
     '''  '''
 
-    # build default graph
-    meta, data, graph = self.graph.construct(None, **{
-      'limit': self.default_graph['limit'],
-      'depth': self.default_graph['depth']
-    }).extract(flatten=True)
-
     # staple inline
-    self.staple_data({
-      'meta': meta,
-      'data': data,
-      'graph': graph
-    })
+    self.staple_data(dict(zip(('meta', 'data', 'graph'), self.graph.construct(None, **{
+      'limit': self.request.args.get('limit', self.default_graph['limit']),
+      'depth': self.request.args.get('depth', self.default_graph['depth'])
+    }).extract(flatten=True))))
 
     return self.render('landing.haml')
+
+
+@url('terms', '/terms')
+class TOS(Page):
+
+  '''  '''
+
+  def GET(self):
+
+    '''  '''
+
+    return self.render('legal/terms.haml')
+
+
+@url('privacy', '/privacy')
+class Privacy(Page):
+
+  '''  '''
+
+  def GET(self):
+
+    '''  '''
+
+    return self.render('legal/privacy.haml')

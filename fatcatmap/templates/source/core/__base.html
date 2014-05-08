@@ -8,16 +8,16 @@
     <meta http-equiv="x-dns-prefetch-control" content="on">
     <title>{%- block title -%}fatcatmap ^.^{%- endblock title -%}</title>
 
+    <!-- DNS prefetch -->
+    <link rel="dns-prefetch" href="api.fatcatmap.org">
+    <link rel="dns-prefetch" href="cloud.typography.com">
+    <link rel="dns-prefetch" href="deliver.fcm-static.com">
+
     <!-- info -->
     <meta name="author" content="momentum labs">
     <meta name="keywords" content="politics, transparency">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     {%- endblock meta %}
-
-    <!-- DNS prefetch -->
-    <link rel="dns-prefetch" href="api.fatcatmap.org">
-    <link rel="dns-prefetch" href="cloud.typography.com">
-    <link rel="dns-prefetch" href="deliver.fcm-static.com">
 
     <!-- icons -->
     <link rel="icon" href="/assets/img/favicon.png" type="image/png">
@@ -47,6 +47,12 @@
   </head>
   <body class="{{ theme|default('fcm-dark') }} alpha">
 
+    <!-- resources -->
+    <div id="resources">
+      <!-- app templates -->
+      <div id="templates">{% block templates %}{% endblock templates %}</div><!-- end #templates -->
+    </div><!-- end #resources -->
+
     <!-- appframe -->
     <div id="appframe">
         {% block appframe %}<h1>appframe</h1>{% endblock %}
@@ -62,9 +68,12 @@
 
       {% block south -%}
       <!-- bundle/page JS -->
-      <script id="js-ext" type="text/javascript" src="{{ asset.script("core/ext-bundle.min.js") }}"></script>
-      <script id="js-ext" type="text/javascript" src="{{ asset.script("common.min.js" if not __debug__ else "common.js") }}"></script>
-      <script id="js-page" type="text/javascript" src="{%- block page_js -%}{%- endblock -%}"></script>
+      <script type="text/javascript" nonce="{{ nonce.script }}" src="{{ asset.script("core/jquery/jquery-2.1.1.js" if __debug__ else "core/jquery/jquery-2.1.1.min.js") }}"></script>
+      <script type="text/javascript" nonce="{{ nonce.script }}" src="{{ asset.script("core/d3/d3-v3.js" if __debug__ else "core/d3/d3-v3.min.js") }}"></script>
+      <script type="text/javascript" nonce="{{ nonce.script }}" src="{{ asset.script("core/masonry/masonry-3.1.5.js" if __debug__ else "core/masonry/masonry-3.1.5.min.js") }}"></script>
+      <script type="text/javascript" nonce="{{ nonce.script }}" src="{{ asset.script("core/apptools/apptools-v4.js" if __debug__ else "core/apptools/apptools-v4.min.js") }}"></script>
+      <script type="text/javascript" nonce="{{ nonce.script }}" src="{{ asset.script("common.min.js" if not __debug__ else "common.js") }}"></script>
+      <script id="js-page" type="text/javascript" nonce="{{ nonce.script }}" src="{%- block page_js -%}{%- endblock -%}"></script>
 
       <!-- context -->
       <script id="js-context" type="application/json">{{ js_context|json|safe }}</script><!-- end #js-context -->

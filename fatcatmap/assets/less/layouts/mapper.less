@@ -1,6 +1,7 @@
 
 
 @import (reference) "core/base.less";
+@import (reference) "less/buttons.less";
 
 
 /*
@@ -8,6 +9,11 @@
  * Layout Elements
  *
  */
+
+#resources {
+  display: none;
+  visibility: hidden;
+}
 
 #appframe {
 
@@ -23,7 +29,6 @@
 }
 
 #appheader {
-
   height: @header_height;
 
   //snap header to top
@@ -31,15 +36,149 @@
   top: 0;
   left: 0;
   right: 0;
+}
+
+#cathead {
+  position: fixed;
+  left: .6em;
+  top: 0.2em;
   z-index: 1000;
 
+  font-family: fcm;
+  font-size: 50pt;
+
+  color: transparent;
+  background: linear-gradient(@logo_slant, @logo_gradient_start, @logo_gradient_end);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  -webkit-font-smoothing: subpixel-antialiased;
+  text-rendering: geometricPrecision;
 }
 
 #logo {
   z-index: 1000;
-  position: absolute;
-  left: @appstage_margin;
+  position: fixed;
+  left: 3em;
+  cursor: pointer;
+  -webkit-font-smoothing: subpixel-antialiased;
+  text-rendering: geometricPrecision;
   .logo;
+}
+
+#identity {
+  position: fixed;
+  top: 2em;
+  right: 2.5em;
+  min-width: 8em;
+  max-width: 20%;
+  height: 3.5em;
+  display: inline-block;
+  margin-top: 0.67em;
+  text-align: center;
+  z-index: 1000;
+}
+
+#logon {
+  outline: none !important;
+  background-color: #333;
+  opacity: 0.85;
+  border-color: #4cae4c;
+  border-style: solid;
+  border-radius: 5px;
+  border-style: solid;
+  border-width: 1px;
+  border-color: rgba(119, 215, 29, 0.75);
+  color: #fefefe;
+  padding: .5em .9em;
+  margin-top: .5em;
+  transition-property: opacity;
+  transition-duration: 0.2s;
+
+  &:hover {
+    color: #fff;
+    border-color: rgba(119, 215, 29, 0.85);
+    background: linear-gradient(@logo_slant, @logo_gradient_start, @logo_gradient_end);
+  }
+
+  &.active {
+    color: #fff;
+    border-color: rgba(119, 215, 29, 0.85);
+    background: linear-gradient(@logo_slant, @logo_gradient_start, @logo_gradient_end);
+  }
+}
+
+#signon-providers {
+  background: transparent;
+  top: 10px;
+  position: relative;
+  color: #fefefe;
+  border-radius: 5px;
+  width: 100px;
+  margin-left: auto;
+  margin-right: auto;
+  line-height: 2em;
+  border: 2px solid #666;
+
+  // Transitions
+  transition-property: top, opacity;
+  transition-duration: 0.25s;
+
+  &.transparent {
+    top: 5px;
+  }
+
+  &:before {
+    content: "";
+    position: absolute;
+    width: 0;
+    height: 0;
+    border-width: 7px;
+    border-style: solid;
+    border-color: transparent transparent #666;
+    top: -14px;
+    left: 42%;
+    opacity: 0.65;
+  }
+
+  div {
+    cursor: pointer;
+    opacity: 0.7;
+    transition-property: opacity;
+    transition-duration: 0.1s;
+    color: #fefefe;
+  }
+
+  div:hover {
+    color: white !important;
+    opacity: 1.0;
+  }
+}
+
+// signon types
+#gplus-signon {
+  background: #DD4B39;
+}
+
+#fb-signon {
+  background: #335795;
+}
+
+#tw-signon {
+  background: #4099FF;
+}
+
+#gh-signon {
+  background: #000;
+}
+
+#appspinner {
+  position: fixed;
+  bottom: 2em;
+  right: 2em;
+  display: inline-block;
+  color: white;
+  width: 31px;
+  height: 43px;
 }
 
 #appfooter {
@@ -47,11 +186,11 @@
   height: @footer_height;
 
   // snap footer to bottom
-  position: absolute;
+  position: fixed;
   bottom: 0;
   left: 0;
   right: 0;
-  z-index: 300;
+  z-index: 1000;
 
   // both footer labels
   small {
@@ -59,7 +198,25 @@
     font-size: @footer_text_size;
     font-weight: @footer_text_weight;
     display: inline-block;
+    color: #fefefe;
+    opacity: 0.75;
+
+    a {
+      color: #fff;
+      opacity: 0.75;
+      transition-property: opacity, text-decoration;
+      transition-duration: 0.15s;
+    }
+
+    a:hover {
+      opacity: 1;
+      text-decoration: underline;
+    }
   }
+
+  // animation (fade-in/fade-out)
+  transition-property: opacity;
+  transition-duration: 0.23s;
 
 }
 
@@ -71,6 +228,23 @@
   margin-left: @appstage_margin;
   margin-right: @appstage_margin;
 
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  top: 0;
+
+}
+
+#map {
+  transition-property: opacity;
+  transition-duration: 0.2s;
+}
+
+#catnip {
+  // animation (fade-in/fade-out)
+  transition-property: opacity;
+  transition-duration: 0.3s;
 }
 
 
@@ -82,12 +256,12 @@
 
 // only the branch
 #brand {
-  position: absolute;
+  position: fixed;
   left: @appstage_margin+1em;
 }
 
 // only the copyright
 #copyright {
-  position: absolute;
+  position: fixed;
   right: @appstage_margin+1em;
 }

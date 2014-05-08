@@ -9,4 +9,3 @@ webob
 protorpc
 git+git://github.com/keenlabs/protobuf.git#egg=protobuf
 git+git://github.com/keenlabs/hamlish-jinja.git#egg=hamlish_jinja
-

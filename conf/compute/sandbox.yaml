@@ -1,0 +1,41 @@
+#cloud-config
+
+hostname: sandbox-01.compute.lyr9.net
+
+ssh_authorized_keys:
+  - ssh_rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQDNIdrGj8vKkSep2X7uU7sHkSQoKVl5ivgVgh/NmCvIu3IEMDBJZyXz/8I3nrK50VrB7pQkTvviOFQLMkhNtzwWpz/DNMCkwuJN7psLJN+d6CHzIsdlUE3p5IDxqlQIbmeV7I82QcU0GisHxECNqQYcWdn9gjjDBwIDQ4tg2sfq5FyJJfcLtD7H4Fbu4KXPjr/32Wbeo4AZy4ko3HXHY77Qj2ASRComosGzeQC2OHzAJuhWBN1DvmhzCSNDiViKCfMb241Mljs9hfO7rT5MH1hEFE1xsQlwwLSgcaPNBCjPDCGjnVJFVLITr2KO2FX5DLB65NNzdPJTy+0kkFBCHmNl samgammon
+
+users:
+  - name: k9
+    groups:
+      - docker
+    no-user-group: true
+    no-create-home: true
+    primary-group: runtime
+    system: true
+  - name: sam
+    no-user-group: true
+    no-create-home: false
+    system: false
+    groups:
+      - sudo
+      - docker
+    coreos-ssh-import-github: sgammon 
+
+coreos:
+  oem:
+    id: catnip
+    name: momentum labs R&D
+    version-id: 1.298.0.0
+    home-url: https://fatcatmap.org
+    bug-report-url: https://fatcatmap.org/bugs
+  etcd:
+    name: sandbox-01
+    discovery: https://discovery.etcd.io/e1aab185a8b96be77043603aa49da67d
+    addr: $private_ipv4:4001
+    peer-addr: $private_ipv4:7001
+  units:
+    - name: etcd.service
+      command: start
+    - name: fleet.service
+      command: start

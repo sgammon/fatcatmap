@@ -7,6 +7,7 @@
 '''
 
 # exports
+import hashlib, random
 from canteen import url
 from canteen import Page as RawPage
 
@@ -18,17 +19,61 @@ class Page(RawPage):
   __page_data__ = None  # holds inlined page data
   __js_context__ = {}  # holds javascript context items
 
+  # Content Security Policy
+  content_nonce = False
+  content_security_report_only = True
+  content_security_policy = {
+
+    # JavaScript
+    'script-src': (
+      ('self', 'https://deliver.fcm-static.org', 'http://localhost:5000', 'unsafe-inline') if __debug__ else (
+      ('self', 'https:', 'deliver.fcm-static.org', 'unsafe-inline')
+    )),
+
+    # WebSocket / RPC
+    'connect-src': (
+      ('self', 'https://api.fatcatmap.org', 'https://realtime.fatcatmap.org', 'http://localhost:5000', 'unsafe-inline')  if __debug__ else (
+      ('self', 'https:', 'api.fatcatmap.org', 'realtime.fatcatmap.org')
+    ))
+
+  }
+
   @property
   def template_context(self):
 
     '''  '''
+
+    # CSP nonce
+    _script_nonce = hashlib.md5(str(random.randint(0, 1e4) * random.randint(0, 1e4))).hexdigest()[-8:]
+
+    # set CSP header
+    _csp_header = []
+    for stanza, content in self.content_security_policy.iteritems():
+      content = list(content)
+      if self.content_nonce and stanza == 'script-src':
+        content.append('nonce-%s' % _script_nonce)  # embed script nonce
+
+      _csp_header.append('%s %s' % (stanza, ' '.join(("'%s'" % i if not i.startswith('http') else i) for i in content)))
+
+    if not self.content_security_report_only:
+      self.response.headers['Content-Security-Policy'] = ' '.join(_csp_header)
+    else:
+      self.response.headers['Content-Security-Policy-Report-Only'] = ' '.join(_csp_header)
+
+    # set extra security headers
+    self.response.headers['X-Frame-Options'] = 'DENY'
+    self.response.headers['X-XSS-Protection'] = '1; mode=block'
+    self.response.headers['X-UA-Compatible'] = 'Chrome=1,IE=edge'
 
     supercontext = super(Page, self).template_context
     return (supercontext.update({
 
       # javascript context variables
       'pagedata': self.__page_data__,
-      'js_context': self._collapse_js_context()
+      'js_context': self._collapse_js_context(),
+      'nonce': {
+        'script': _script_nonce
+      }
 
     }) or supercontext)
 
@@ -103,7 +148,11 @@ def preload():
   from fatcatmap.logic import *
   from fatcatmap.models import *
   from fatcatmap.services import *
-  from fatcatmap.templates.compiled import *
+
+  try:
+    from fatcatmap.templates.compiled import *
+  except ImportError:
+    pass
 
 
 __all__ = (

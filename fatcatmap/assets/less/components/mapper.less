@@ -22,17 +22,120 @@
 
 // ~~ sidebars ~~ //
 
+.ui-sidebar section.content {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 6em;
+  top: 9em;
+}
+
+.ui-sidebar section.controls {
+
+  top: 1em;
+  font-family: fcm;
+  position: relative;
+
+  .size-modal {
+    font-family: fcm;
+    transition-property: opacity;
+    transition-duration: 0.2s;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  .size-close {
+    opacity: 1;
+    cursor: pointer;
+  }
+
+}
+
+#leftbar, #rightbar {
+
+    background-color: rgba(68, 68, 68, .9);
+    background-attachment: fixed;
+
+    &.collapsed {
+      z-index: 0;
+      pointer-events: none;
+      cursor: default;
+    }
+
+    // small
+    &.open-small {
+
+      .size-expand {
+        opacity: 1;
+        cursor: pointer;
+      }
+
+      .size-minimize {
+        opacity: 0.3;
+        pointer-events: none;
+        cursor: default;
+      }
+
+    }
+
+    // expanded & fullscreen
+    &.open-expanded, &.open-fullscreen {
+
+      .size-expand {
+        opacity: 1;
+        cursor: pointer;
+      }
+
+      .size-minimize {
+        opacity: 1;
+        cursor: pointer;
+      }
+
+    }
+
+    // fullscreen only
+    &.open-fullscreen {
+      .size-expand {
+        opacity: 0.3;
+        pointer-events: none;
+        cursor: default;
+      }
+    }
+
+}
+
+
 #leftbar {
   position: absolute;
   top: 0;
   left: 0;
   bottom: 0;
-  max-width: 20em;
-  min-width: 195px;
   z-index: 900;
 
-  &.collapsed {
+  transition-property: width, opacity;
+  transition-duration: 0.35s;
 
+  .controls {
+    text-align: right;
+    right: 1em;
+    top: 2.3em;
+    color: #ccc;
+  }
+
+  &.collapsed {
+    width: 0;
+  }
+
+  &.open-small {
+    width: 25em;
+  }
+
+  &.open-expanded {
+    width: 68em;
+  }
+
+  &.open-fullscreen {
+    width: 100%;
   }
 }
 
@@ -41,12 +144,32 @@
   top: 0;
   right: 0;
   bottom: 0;
-  max-width: 20em;
-  min-width: 265px;
+  max-width: 79%;
+  min-width: 20%;
   z-index: 900;
 
-  &.collapsed {
+  transition-property: width, opacity;
+  transition-duration: 0.35s;
 
+  .controls {
+    text-align: left;
+    left: 1em;
+  }
+
+  &.collapsed {
+    width: 0;
+  }
+
+  &.open-small {
+    width: 24em;
+  }
+
+  &.open-expanded {
+    width: 66em;
+  }
+
+  &.open-fullscreen {
+    width: 100%;
   }
 }
 
