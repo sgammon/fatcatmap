@@ -5,10 +5,32 @@
  */
 
 /*
+  catnip! :)
+ */
+var asset_prefix, busy, catnip, close, collapse, data, dye, expand, frame, graph, hide, idle, index, load_context, receive, show, spinner, stage, toggle, _get, _logon, _onload,
+  __slice = [].slice;
+
+catnip = this['catnip'] = {
+  ui: {},
+  el: {},
+  data: {},
+  graph: {},
+  context: {},
+  config: {
+    assets: {}
+  },
+  state: {
+    pending: 1
+  },
+  events: {
+    onload: []
+  }
+};
+
+
+/*
   get
  */
-var busy, collapse, data, dye, expand, finish, frame, graph, hide, image_prefix, index, load_context, onloads, pending_tasks, receive, show, spinner, stage, toggle, _get, _onload,
-  __slice = [].slice;
 
 _get = this['_get'] = function(d) {
   if (d && (d.querySelector != null)) {
@@ -30,7 +52,7 @@ _get = this['_get'] = function(d) {
   show
  */
 
-show = this['show'] = function(d, hidden_only) {
+show = this['show'] = this['catnip']['ui']['show'] = function(d, hidden_only) {
   var el, element, _i, _len, _results;
   el = _get(d);
   if (el.length == null) {
@@ -53,7 +75,7 @@ show = this['show'] = function(d, hidden_only) {
   hide
  */
 
-hide = this['hide'] = function(d) {
+hide = this['hide'] = this['catnip']['ui']['hide'] = function(d) {
   var el, element, _i, _len, _results;
   el = _get(d);
   if (el.length == null) {
@@ -72,7 +94,7 @@ hide = this['hide'] = function(d) {
   toggle
  */
 
-toggle = this['toggle'] = function(d, klass) {
+toggle = this['toggle'] = this['catnip']['ui']['toggle'] = function(d, klass) {
   var el, element, _i, _len, _results;
   el = _get(d);
   if (el.length == null) {
@@ -91,7 +113,7 @@ toggle = this['toggle'] = function(d, klass) {
   dye
  */
 
-dye = this['dye'] = function(d, color) {
+dye = this['dye'] = this['catnip']['ui']['dye'] = function(d, color) {
   var el, element, _i, _len, _results;
   el = _get(d);
   if (el.length == null) {
@@ -110,41 +132,42 @@ dye = this['dye'] = function(d, color) {
   busy
  */
 
-busy = this['busy'] = function() {
-  var _pending;
-  _pending = this['pending_tasks']++;
-  if (_pending === 0) {
-    if (this['spinner']) {
-      return show(this['spinner']);
+busy = this['busy'] = this['catnip']['busy'] = (function(_this) {
+  return function() {
+    var _pending;
+    _pending = _this['catnip']['state']['pending']++;
+    if (_pending === 0) {
+      if (_this['spinner']) {
+        return show(_this['spinner']);
+      }
     }
-  }
-};
+  };
+})(this);
 
 
 /*
-  finish
+  idle
  */
 
-finish = this['finish'] = function() {
-  var _pending;
-  _pending = --this['pending_tasks'];
-  if (_pending === 0) {
-    if (this['spinner']) {
-      return hide(this['spinner']);
+idle = this['idle'] = this['catnip']['idle'] = (function(_this) {
+  return function() {
+    var _pending;
+    _pending = --_this['catnip']['state']['pending'];
+    if (_pending === 0) {
+      if (_this['spinner']) {
+        return hide(_this['spinner']);
+      }
     }
-  }
-};
+  };
+})(this);
 
 
 /*
   expand
  */
 
-expand = this['expand'] = function(target, size) {
+expand = this['expand'] = this['catnip']['ui']['expand'] = function(target) {
   var el, element, _i, _len, _results;
-  if (size == null) {
-    size = "small";
-  }
   el = _get(target);
   if (el.length == null) {
     el = [el];
@@ -152,7 +175,15 @@ expand = this['expand'] = function(target, size) {
   _results = [];
   for (_i = 0, _len = el.length; _i < _len; _i++) {
     element = el[_i];
-    _results.push(element.setAttribute('class', 'open-' + size));
+    if (element.classList.contains('open-small')) {
+      _results.push(element.setAttribute('class', 'open-expanded'));
+    } else if (element.classList.contains('open-expanded')) {
+      _results.push(element.setAttribute('class', 'open-fullscreen'));
+    } else if (element.classList.contains('collapsed')) {
+      _results.push(element.setAttribute('class', 'open-small'));
+    } else {
+      _results.push(void 0);
+    }
   }
   return _results;
 };
@@ -162,7 +193,32 @@ expand = this['expand'] = function(target, size) {
   collapse
  */
 
-collapse = this['collapse'] = function(target) {
+collapse = this['collapse'] = this['catnip']['ui']['collapse'] = function(target) {
+  var el, element, _i, _len, _results;
+  el = _get(target);
+  if (el.length == null) {
+    el = [el];
+  }
+  _results = [];
+  for (_i = 0, _len = el.length; _i < _len; _i++) {
+    element = el[_i];
+    if (element.classList.contains('open-expanded')) {
+      _results.push(element.setAttribute('class', 'open-small'));
+    } else if (element.classList.contains('open-fullscreen')) {
+      _results.push(element.setAttribute('class', 'open-expanded'));
+    } else {
+      _results.push(void 0);
+    }
+  }
+  return _results;
+};
+
+
+/*
+  close
+ */
+
+close = this['close'] = this['catnip']['ui']['close'] = function(target) {
   var el, element, _i, _len, _results;
   el = _get(target);
   if (el.length == null) {
@@ -178,59 +234,63 @@ collapse = this['collapse'] = function(target) {
 
 
 /*
-  pending_tasks
- */
-
-pending_tasks = this['pending_tasks'] = 1;
-
-
-/*
   spinner
  */
 
-spinner = this['spinner'] = _get('#appspinner');
+spinner = this['spinner'] = this['catnip']['el']['spinner'] = _get('#appspinner');
 
 
 /*
   stage
  */
 
-stage = this['stage'] = _get('#appstage');
+stage = this['stage'] = this['catnip']['el']['stage'] = _get('#appstage');
 
 
 /*
   frame
  */
 
-frame = this['frame'] = _get('#appframe');
+frame = this['frame'] = this['catnip']['el']['frame'] = _get('#appframe');
 
 
 /*
-  image prefix
+  logon
  */
 
-image_prefix = this['image_prefix'] = "//storage.googleapis.com/providence-clarity/warehouse/raw/govtrack/photos/";
+_logon = this['catnip']['el']['logon'] = _get('#logon');
 
 
 /*
-  onload callbacks
+  asset prefix
  */
 
-onloads = this['__onload_callbacks'] = [];
+asset_prefix = this['catnip']['config']['assets']['prefix'] = "//storage.googleapis.com/providence-clarity/";
+
+
+/*
+  jQuery mount
+ */
+
+if (typeof $ !== "undefined" && $ !== null) {
+  $.extend({
+    catnip: this['catnip']
+  });
+}
 
 
 /*
   data
  */
 
-data = this['data'] = {};
+data = this['catnip']['data']['raw'] = {};
 
 
 /*
   index
  */
 
-index = this['index'] = {
+index = this['catnip']['data']['index'] = {
   adjacency: {},
   nodes_by_key: {},
   edges_by_key: {},
@@ -243,7 +303,7 @@ index = this['index'] = {
   graph
  */
 
-graph = this['graph'] = {
+graph = this['catnip']['data']['graph'] = {
   nodes: [],
   edges: [],
   natives: []
@@ -254,88 +314,89 @@ graph = this['graph'] = {
   receive: a function of untold value
  */
 
-receive = this['receive'] = function(data) {
-  var key, key_i, native_i, native_suboffset, payload, source_k, target_k, targets, _, _i, _j, _k, _key_iter, _len, _len1, _len2, _ref, _ref1, _ref2;
-  if (typeof data === 'string') {
-    payload = this['payload'] = JSON.parse(data);
-  } else {
-    payload = this['payload'] = data;
-  }
-  _ref = payload.data.keys;
-  for (key_i = _i = 0, _len = _ref.length; _i < _len; key_i = ++_i) {
-    key = _ref[key_i];
-    if (this['data'][key] == null) {
-      this['data'][key] = payload.data.objects[key_i];
+receive = this['catnip']['data']['receive'] = (function(_this) {
+  return function(data) {
+    var key, key_i, native_i, native_suboffset, payload, source_k, target_k, targets, _, _i, _j, _k, _key_iter, _len, _len1, _len2, _ref, _ref1, _ref2;
+    if (typeof data === 'string') {
+      payload = _this['catnip']['data']['payload'] = JSON.parse(data);
+    } else {
+      payload = _this['catnip']['data']['payload'] = data;
     }
-  }
-  _ref1 = Array(payload.graph.natives);
-  for (native_suboffset = _j = 0, _len1 = _ref1.length; _j < _len1; native_suboffset = ++_j) {
-    _ = _ref1[native_suboffset];
-    native_i = payload.graph.edges + 1 + native_suboffset;
-    if (index.natives_by_key[payload.data.keys[native_i]] == null) {
-      index.natives_by_key[payload.data.keys[native_i]] = (graph.natives.push({
-        key: payload.data.keys[native_i],
-        data: data[payload.data.keys[native_i]]
-      })) - 1;
+    _ref = payload.data.keys;
+    for (key_i = _i = 0, _len = _ref.length; _i < _len; key_i = ++_i) {
+      key = _ref[key_i];
+      if (_this['catnip']['data']['raw'][key] == null) {
+        _this['catnip']['data']['raw'][key] = payload.data.objects[key_i];
+      }
     }
-  }
-  _key_iter = -1;
-  while (_key_iter < payload.data.keys.length) {
-    _key_iter++;
-    if (_key_iter <= payload.graph.nodes) {
-      if (!this['index']['nodes_by_key'][payload['data']['keys'][_key_iter]]) {
-        _i = index.nodes_by_key[payload.data.keys[_key_iter]] = (graph.nodes.push({
-          node: {
-            key: payload.data.keys[_key_iter],
-            data: this['data'][payload.data.keys[_key_iter]]
-          },
-          "native": {
-            key: payload.data.objects[_key_iter]["native"],
-            data: this['data'][payload.data.objects[_key_iter]["native"]]
-          }
+    _ref1 = Array(payload.graph.natives);
+    for (native_suboffset = _j = 0, _len1 = _ref1.length; _j < _len1; native_suboffset = ++_j) {
+      _ = _ref1[native_suboffset];
+      native_i = payload.graph.edges + 1 + native_suboffset;
+      if (index.natives_by_key[payload.data.keys[native_i]] == null) {
+        index.natives_by_key[payload.data.keys[native_i]] = (graph.natives.push({
+          key: payload.data.keys[native_i],
+          data: data[payload.data.keys[native_i]]
         })) - 1;
       }
-      ({
-        "else": _i = index.nodes_by_key[payload.data.keys[_key_iter]]
-      });
-    } else if (_key_iter <= payload.graph.edges) {
-      if (!index.edges_by_key[payload.data.keys[_key_iter]]) {
-        index.edges_by_key[payload.data.keys[_key_iter]] = [];
-      }
-      _ref2 = payload.data.objects[_key_iter].node, source_k = _ref2[0], targets = 2 <= _ref2.length ? __slice.call(_ref2, 1) : [];
-      for (_k = 0, _len2 = targets.length; _k < _len2; _k++) {
-        target_k = targets[_k];
-        if (this['index']['adjacency'][source_k] && this['index']['adjacency'][source_k][target_k]) {
-          _i = this['index']['adjacency'][source_k][target_k];
-        } else {
-          _i = (graph.edges.push({
-            edge: {
+    }
+    _key_iter = -1;
+    while (_key_iter < payload.data.keys.length) {
+      _key_iter++;
+      if (_key_iter <= payload.graph.nodes) {
+        if (!_this['catnip']['data']['index']['nodes_by_key'][payload['data']['keys'][_key_iter]]) {
+          _i = index.nodes_by_key[payload.data.keys[_key_iter]] = (graph.nodes.push({
+            node: {
               key: payload.data.keys[_key_iter],
-              data: data[payload.data.keys[_key_iter]]
+              data: _this['catnip']['data']['raw'][payload.data.keys[_key_iter]]
             },
-            "native": data[payload.data.objects[_key_iter]["native"]],
-            source: {
-              index: index.nodes_by_key[source_k],
-              object: graph.nodes[index.nodes_by_key[source_k]]
-            },
-            target: {
-              index: index.nodes_by_key[target_k],
-              object: graph.nodes[index.nodes_by_key[target_k]]
+            "native": {
+              key: payload.data.objects[_key_iter]["native"],
+              data: _this['catnip']['data']['raw'][payload.data.objects[_key_iter]["native"]]
             }
           })) - 1;
-          index.edges_by_key[payload.data.keys[_key_iter]].push(_i);
-          if (this['index']['adjacency'][source_k] == null) {
-            this['index']['adjacency'][source_k] = {};
+        } else {
+          _i = index.nodes_by_key[payload.data.keys[_key_iter]];
+        }
+      } else if (_key_iter <= payload.graph.edges) {
+        if (!index.edges_by_key[payload.data.keys[_key_iter]]) {
+          index.edges_by_key[payload.data.keys[_key_iter]] = [];
+        }
+        _ref2 = payload.data.objects[_key_iter].node, source_k = _ref2[0], targets = 2 <= _ref2.length ? __slice.call(_ref2, 1) : [];
+        for (_k = 0, _len2 = targets.length; _k < _len2; _k++) {
+          target_k = targets[_k];
+          if (_this['catnip']['data']['index']['adjacency'][source_k] && _this['catnip']['data']['index']['adjacency'][source_k][target_k]) {
+            _i = _this['catnip']['data']['index']['adjacency'][source_k][target_k];
+          } else {
+            _i = (graph.edges.push({
+              edge: {
+                key: payload.data.keys[_key_iter],
+                data: data[payload.data.keys[_key_iter]]
+              },
+              "native": data[payload.data.objects[_key_iter]["native"]],
+              source: {
+                index: index.nodes_by_key[source_k],
+                object: graph.nodes[index.nodes_by_key[source_k]]
+              },
+              target: {
+                index: index.nodes_by_key[target_k],
+                object: graph.nodes[index.nodes_by_key[target_k]]
+              }
+            })) - 1;
+            index.edges_by_key[payload.data.keys[_key_iter]].push(_i);
+            if (_this['catnip']['data']['index']['adjacency'][source_k] == null) {
+              _this['catnip']['data']['index']['adjacency'][source_k] = {};
+            }
+            _this['catnip']['data']['index']['adjacency'][source_k][target_k] = _i;
           }
-          this['index']['adjacency'][source_k][target_k] = _i;
         }
       }
     }
-  }
-  return setTimeout((function() {
-    return this['draw'](graph);
-  }), 0);
-};
+    return setTimeout((function() {
+      return this['catnip']['graph']['draw'](graph);
+    }), 0);
+  };
+})(this);
 
 
 /*
@@ -343,72 +404,65 @@ receive = this['receive'] = function(data) {
   context
  */
 
-load_context = this['load_context'] = function(event, data) {
-  var context, pagedata, _catnip, _logon, _map, _mapper_queue, _mapper_reveal, _show_queue, _ui_reveal;
-  _show_queue = [];
-  _mapper_queue = [];
-  context = this['context'] = data || JSON.parse(document.getElementById('js-context').textContent);
-  console.log("Loading context...", context);
-  if (this['context']['services']) {
-    console.log("Loading services...", context['services']);
-    apptools['rpc']['service']['factory'](context['services']);
-  }
-  if (this['context']['pagedata']) {
-    pagedata = this['pagedata'] = JSON.parse(document.getElementById('js-data').textContent);
-    console.log("Detected stapled pagedata...", pagedata);
-    this['receive'](pagedata);
-  }
-  if (this['context']['session']) {
-    if (this['context']['session']['established']) {
-      this['session'] = this['context']['session']['payload'];
-      console.log("Loading existing session...", this['session']);
-    } else {
-      this['session'] = {
-        authenticated: false
-      };
-      console.log("Establishing fresh session...", this['session']);
-      _logon = this['_get']('#logon');
-      if (_logon) {
-        _show_queue.push(_logon);
+load_context = this['catnip']['context']['load'] = (function(_this) {
+  return function(event, data) {
+    var context, pagedata, _catnip, _map, _mapper_queue, _mapper_reveal, _show_queue, _ui_reveal;
+    _show_queue = [];
+    _mapper_queue = [];
+    context = _this['catnip']['context']['data'] = data || JSON.parse(document.getElementById('js-context').textContent);
+    console.log("Loading context...", context);
+    if (_this['catnip']['context']['data']['services']) {
+      console.log("Loading services...", context['services']);
+      apptools['rpc']['service']['factory'](context['services']);
+    }
+    if (_this['catnip']['context']['data']['pagedata']) {
+      pagedata = _this['pagedata'] = JSON.parse(document.getElementById('js-data').textContent);
+      console.log("Detected stapled pagedata...", pagedata);
+      _this['catnip']['data']['receive'](pagedata);
+    }
+    if (_this['catnip']['context']['data']['session']) {
+      if (_this['catnip']['context']['data']['session']['established']) {
+        _this['catnip']['session'] = _this['catnip']['context']['data']['session']['payload'];
+        console.log("Loading existing session...", _this['catnip']['session']);
+      } else {
+        _this['catnip']['session'] = {};
+        console.log("Establishing fresh session...", _this['catnip']['session']);
+        _show_queue.push(_this['catnip']['el']['logon']);
       }
     }
-  }
-  _map = this['_get']('#map');
-  if (_map) {
-    _catnip = this['_get']('#catnip');
-    _show_queue.push(_map);
-    _mapper_queue.push(_catnip);
-  }
-  _show_queue.push(this['_get']('#appfooter'));
-  _ui_reveal = (function(_this) {
-    return function() {
+    _map = _this['_get']('#map');
+    if (_map) {
+      _catnip = _this['_get']('#catnip');
+      _show_queue.push(_map);
+      _mapper_queue.push(_catnip);
+    }
+    _show_queue.push(_this['_get']('#appfooter'));
+    _ui_reveal = function() {
       var element_set, _i, _len, _results;
       console.log('Flushing UI reveal queue...', _show_queue);
       _results = [];
       for (_i = 0, _len = _show_queue.length; _i < _len; _i++) {
         element_set = _show_queue[_i];
-        _results.push(_this['show'](element_set));
+        _results.push(_this['catnip']['ui']['show'](element_set));
       }
       return _results;
     };
-  })(this);
-  _mapper_reveal = (function(_this) {
-    return function() {
+    _mapper_reveal = function() {
       var element_set, _i, _len;
       console.log('Flusing mapper reveal queue...', _mapper_queue);
       for (_i = 0, _len = _mapper_queue.length; _i < _len; _i++) {
         element_set = _mapper_queue[_i];
-        _this['show'](element_set);
+        _this['catnip']['ui']['show'](element_set);
       }
-      return _this['finish']();
+      return _this['catnip']['idle']();
     };
-  })(this);
-  setTimeout(_ui_reveal, 800);
-  setTimeout(_mapper_reveal, 500);
-  return this['context'];
-};
+    setTimeout(_ui_reveal, 800);
+    setTimeout(_mapper_reveal, 500);
+    return _this['catnip']['context'];
+  };
+})(this);
 
-onloads.push(load_context);
+this['catnip']['events']['onload'].push(load_context);
 
 
 /*
@@ -430,7 +484,7 @@ onloads.push(load_context);
 
 _onload = this['onload'] = function(event) {
   var callback, _i, _len, _ref, _results;
-  _ref = this['__onload_callbacks'];
+  _ref = this['catnip']['events']['onload'];
   _results = [];
   for (_i = 0, _len = _ref.length; _i < _len; _i++) {
     callback = _ref[_i];

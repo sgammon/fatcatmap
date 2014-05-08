@@ -7,6 +7,23 @@
 
 
 ###
+  catnip! :)
+###
+catnip = @['catnip'] =
+  ui: {}
+  el: {}
+  data: {}
+  graph: {}
+  context: {}
+  config:
+    assets: {}
+  state:
+    pending: 1
+  events:
+    onload: []
+
+
+###
   get
 ###
 _get = @['_get'] = (d) ->
@@ -24,7 +41,7 @@ _get = @['_get'] = (d) ->
 ###
   show
 ###
-show = @['show'] = (d, hidden_only) ->
+show = @['show'] = @['catnip']['ui']['show'] = (d, hidden_only) ->
   el = _get(d)
   if not el.length?
     el = [el]
@@ -38,7 +55,7 @@ show = @['show'] = (d, hidden_only) ->
 ###
   hide
 ###
-hide = @['hide'] = (d) ->
+hide = @['hide'] = @['catnip']['ui']['hide'] = (d) ->
   el = _get(d)
   if not el.length?
     el = [el]
@@ -49,7 +66,7 @@ hide = @['hide'] = (d) ->
 ###
   toggle
 ###
-toggle = @['toggle'] = (d, klass) ->
+toggle = @['toggle'] = @['catnip']['ui']['toggle'] = (d, klass) ->
   el = _get(d)
   if not el.length?
     el = [el]
@@ -60,7 +77,7 @@ toggle = @['toggle'] = (d, klass) ->
 ###
   dye
 ###
-dye = @['dye'] = (d, color) ->
+dye = @['dye'] = @['catnip']['ui']['dye'] = (d, color) ->
   el = _get(d)
   if not el.length?
     el = [el]
@@ -71,18 +88,18 @@ dye = @['dye'] = (d, color) ->
 ###
   busy
 ###
-busy = @['busy'] = () ->
-  _pending = @['pending_tasks']++
+busy = @['busy'] = @['catnip']['busy'] = () =>
+  _pending = @['catnip']['state']['pending']++
   if _pending == 0
     if @['spinner']
       show(@['spinner'])
 
 
 ###
-  finish
+  idle
 ###
-finish = @['finish'] = () ->
-  _pending = --@['pending_tasks']
+idle = @['idle'] = @['catnip']['idle'] = () =>
+  _pending = --@['catnip']['state']['pending']
   if _pending == 0
     if @['spinner']
       hide(@['spinner'])
@@ -91,19 +108,39 @@ finish = @['finish'] = () ->
 ###
   expand
 ###
-expand = @['expand'] = (target, size="small") ->
+expand = @['expand'] = @['catnip']['ui']['expand'] = (target) ->
   el = _get target
   if not el.length?
     el = [el]
 
   for element in el
-    element.setAttribute('class', 'open-' + size)
+    if element.classList.contains('open-small')
+      element.setAttribute('class', 'open-expanded')
+    else if element.classList.contains('open-expanded')
+      element.setAttribute('class', 'open-fullscreen')
+    else if element.classList.contains('collapsed')
+      element.setAttribute('class', 'open-small')
 
 
 ###
   collapse
 ###
-collapse = @['collapse'] = (target) ->
+collapse = @['collapse'] = @['catnip']['ui']['collapse'] = (target) ->
+  el = _get target
+  if not el.length?
+    el = [el]
+
+  for element in el
+    if element.classList.contains('open-expanded')
+      element.setAttribute('class', 'open-small')
+    else if element.classList.contains('open-fullscreen')
+      element.setAttribute('class', 'open-expanded')
+
+
+###
+  close
+###
+close = @['close'] = @['catnip']['ui']['close'] = (target) ->
   el = _get target
   if not el.length?
     el = [el]
@@ -113,53 +150,54 @@ collapse = @['collapse'] = (target) ->
 
 
 ###
-  pending_tasks
-###
-pending_tasks = @['pending_tasks'] = 1
-
-
-###
   spinner
 ###
-spinner = @['spinner'] = _get '#appspinner'
+spinner = @['spinner'] = @['catnip']['el']['spinner'] = _get '#appspinner'
 
 
 ###
   stage
 ###
-stage = @['stage'] = _get '#appstage'
+stage = @['stage'] = @['catnip']['el']['stage'] = _get '#appstage'
 
 
 ###
   frame
 ###
-frame = @['frame'] = _get '#appframe'
+frame = @['frame'] = @['catnip']['el']['frame'] = _get '#appframe'
 
 
 ###
-  image prefix
+  logon
 ###
-image_prefix = @['image_prefix'] = "//storage.googleapis.com/providence-clarity/warehouse/raw/govtrack/photos/"
-#image_prefix = @['image_prefix'] = "//deliver.fcm-static.org/image-proxy/providence-clarity/warehouse/raw/govtrack/photos/"
+_logon = @['catnip']['el']['logon'] = _get '#logon'
 
 
 ###
-  onload callbacks
+  asset prefix
 ###
-onloads = @['__onload_callbacks'] = []
+asset_prefix = @['catnip']['config']['assets']['prefix'] = "//storage.googleapis.com/providence-clarity/"
+
+
+###
+  jQuery mount
+###
+
+if $?
+  $.extend(catnip: @['catnip'])
 
 
 
 ###
   data
 ###
-data = @['data'] = {}
+data = @['catnip']['data']['raw'] = {}
 
 
 ###
   index
 ###
-index = @['index'] =
+index = @['catnip']['data']['index'] =
   adjacency: {}
   nodes_by_key: {}
   edges_by_key: {}
@@ -170,7 +208,7 @@ index = @['index'] =
 ###
   graph
 ###
-graph = @['graph'] =
+graph = @['catnip']['data']['graph'] =
   nodes: []
   edges: []
   natives: []
@@ -181,19 +219,19 @@ graph = @['graph'] =
 ###
 
 # == data transform == #
-receive = @['receive'] = (data) ->
+receive = @['catnip']['data']['receive'] = (data) =>
 
   # parse data
   if typeof data == 'string'
-    payload = @['payload'] = JSON.parse data
+    payload = @['catnip']['data']['payload'] = JSON.parse data
   else
-    payload = @['payload'] = data
+    payload = @['catnip']['data']['payload'] = data
 
   ## == inflate data objects == ##
 
   ## 1) keys & objects
   for key, key_i in payload.data.keys
-    @['data'][key] = payload.data.objects[key_i] unless @['data'][key]?
+    @['catnip']['data']['raw'][key] = payload.data.objects[key_i] unless @['catnip']['data']['raw'][key]?
 
   ## 2) natives
   for _, native_suboffset in Array(payload.graph.natives)
@@ -214,16 +252,16 @@ receive = @['receive'] = (data) ->
     if _key_iter <= payload.graph.nodes
 
       ## 1) nodes
-      if not @['index']['nodes_by_key'][payload['data']['keys'][_key_iter]]
+      if not @['catnip']['data']['index']['nodes_by_key'][payload['data']['keys'][_key_iter]]
         _i = index.nodes_by_key[payload.data.keys[_key_iter]] = (graph.nodes.push
           node:
             key: payload.data.keys[_key_iter]
-            data: @['data'][payload.data.keys[_key_iter]]
+            data: @['catnip']['data']['raw'][payload.data.keys[_key_iter]]
           native:
             key: payload.data.objects[_key_iter].native
-            data: @['data'][payload.data.objects[_key_iter].native]
+            data: @['catnip']['data']['raw'][payload.data.objects[_key_iter].native]
         ) - 1
-      else:
+      else
         _i = index.nodes_by_key[payload.data.keys[_key_iter]]
 
     else if _key_iter <= payload.graph.edges
@@ -236,8 +274,8 @@ receive = @['receive'] = (data) ->
 
       for target_k in targets
 
-        if @['index']['adjacency'][source_k] and @['index']['adjacency'][source_k][target_k]
-          _i = @['index']['adjacency'][source_k][target_k]
+        if @['catnip']['data']['index']['adjacency'][source_k] and @['catnip']['data']['index']['adjacency'][source_k][target_k]
+          _i = @['catnip']['data']['index']['adjacency'][source_k][target_k]
 
         else
           _i = (graph.edges.push
@@ -255,11 +293,11 @@ receive = @['receive'] = (data) ->
 
           index.edges_by_key[payload.data.keys[_key_iter]].push _i
 
-          if not @['index']['adjacency'][source_k]?
-            @['index']['adjacency'][source_k] = {}
-          @['index']['adjacency'][source_k][target_k] = _i
+          if not @['catnip']['data']['index']['adjacency'][source_k]?
+            @['catnip']['data']['index']['adjacency'][source_k] = {}
+          @['catnip']['data']['index']['adjacency'][source_k][target_k] = _i
+  return setTimeout (-> @['catnip']['graph']['draw'](graph)), 0
 
-  return setTimeout (-> @['draw'](graph)), 0
 
 
 ###
@@ -269,41 +307,39 @@ receive = @['receive'] = (data) ->
 ###
 
 # == session / user context == #
-load_context = @['load_context'] = (event, data) ->
+load_context = @['catnip']['context']['load'] = (event, data) =>
 
   _show_queue = []
   _mapper_queue = []
 
-  context = @['context'] = data || JSON.parse(document.getElementById('js-context').textContent)
+  context = @['catnip']['context']['data'] = data || JSON.parse(document.getElementById('js-context').textContent)
   console.log "Loading context...", context
 
   # process services
-  if @['context']['services']
+  if @['catnip']['context']['data']['services']
     console.log "Loading services...", context['services']
     apptools['rpc']['service']['factory'](context['services'])
 
   # process pagedata
-  if @['context']['pagedata']
+  if @['catnip']['context']['data']['pagedata']
     pagedata = @['pagedata'] = JSON.parse(document.getElementById('js-data').textContent)
     console.log "Detected stapled pagedata...", pagedata
 
-    @['receive'](pagedata)
+    @['catnip']['data']['receive'](pagedata)
 
   # process session
-  if @['context']['session']
-    if @['context']['session']['established']
-      @['session'] = @['context']['session']['payload']
-      console.log "Loading existing session...", @['session']
+  if @['catnip']['context']['data']['session']
+    if @['catnip']['context']['data']['session']['established']
+      @['catnip']['session'] = @['catnip']['context']['data']['session']['payload']
+      console.log "Loading existing session...", @['catnip']['session']
 
     else
-      @['session'] =
-        authenticated: false
+      @['catnip']['session'] = {}
 
-      console.log "Establishing fresh session...", @['session']
-      _logon = @['_get']('#logon')
-      if _logon
-        _show_queue.push _logon
+      console.log "Establishing fresh session...", @['catnip']['session']
+      _show_queue.push @['catnip']['el']['logon']
 
+  # prepare map for UI queue
   _map = @['_get']('#map')
   if _map
     _catnip = @['_get']('#catnip')
@@ -317,22 +353,22 @@ load_context = @['load_context'] = (event, data) ->
 
     console.log 'Flushing UI reveal queue...', _show_queue
     for element_set in _show_queue
-      @['show'](element_set)
+      @['catnip']['ui']['show'](element_set)
 
   # set up mapper show callback
   _mapper_reveal = () =>
 
     console.log 'Flusing mapper reveal queue...', _mapper_queue
     for element_set in _mapper_queue
-      @['show'](element_set)
+      @['catnip']['ui']['show'](element_set)
 
-    @['finish']()
+    @['catnip']['idle']()
 
   setTimeout(_ui_reveal, 800)
   setTimeout(_mapper_reveal, 500)
-  return @['context']
+  return @['catnip']['context']
 
-onloads.push load_context
+@['catnip']['events']['onload'].push load_context
 
 
 ###
@@ -357,5 +393,5 @@ onloads.push load_context
 
 _onload = @['onload'] = (event) ->
 
-  for callback in @['__onload_callbacks']
+  for callback in @['catnip']['events']['onload']
     callback(event)

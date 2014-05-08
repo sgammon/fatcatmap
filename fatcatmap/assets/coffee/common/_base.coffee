@@ -7,6 +7,23 @@
 
 
 ###
+  catnip! :)
+###
+catnip = @['catnip'] =
+  ui: {}
+  el: {}
+  data: {}
+  graph: {}
+  context: {}
+  config:
+    assets: {}
+  state:
+    pending: 1
+  events:
+    onload: []
+
+
+###
   get
 ###
 _get = @['_get'] = (d) ->
@@ -24,7 +41,7 @@ _get = @['_get'] = (d) ->
 ###
   show
 ###
-show = @['show'] = (d, hidden_only) ->
+show = @['show'] = @['catnip']['ui']['show'] = (d, hidden_only) ->
   el = _get(d)
   if not el.length?
     el = [el]
@@ -38,7 +55,7 @@ show = @['show'] = (d, hidden_only) ->
 ###
   hide
 ###
-hide = @['hide'] = (d) ->
+hide = @['hide'] = @['catnip']['ui']['hide'] = (d) ->
   el = _get(d)
   if not el.length?
     el = [el]
@@ -49,7 +66,7 @@ hide = @['hide'] = (d) ->
 ###
   toggle
 ###
-toggle = @['toggle'] = (d, klass) ->
+toggle = @['toggle'] = @['catnip']['ui']['toggle'] = (d, klass) ->
   el = _get(d)
   if not el.length?
     el = [el]
@@ -60,7 +77,7 @@ toggle = @['toggle'] = (d, klass) ->
 ###
   dye
 ###
-dye = @['dye'] = (d, color) ->
+dye = @['dye'] = @['catnip']['ui']['dye'] = (d, color) ->
   el = _get(d)
   if not el.length?
     el = [el]
@@ -71,18 +88,18 @@ dye = @['dye'] = (d, color) ->
 ###
   busy
 ###
-busy = @['busy'] = () ->
-  _pending = @['pending_tasks']++
+busy = @['busy'] = @['catnip']['busy'] = () =>
+  _pending = @['catnip']['state']['pending']++
   if _pending == 0
     if @['spinner']
       show(@['spinner'])
 
 
 ###
-  finish
+  idle
 ###
-finish = @['finish'] = () ->
-  _pending = --@['pending_tasks']
+idle = @['idle'] = @['catnip']['idle'] = () =>
+  _pending = --@['catnip']['state']['pending']
   if _pending == 0
     if @['spinner']
       hide(@['spinner'])
@@ -91,19 +108,39 @@ finish = @['finish'] = () ->
 ###
   expand
 ###
-expand = @['expand'] = (target, size="small") ->
+expand = @['expand'] = @['catnip']['ui']['expand'] = (target) ->
   el = _get target
   if not el.length?
     el = [el]
 
   for element in el
-    element.setAttribute('class', 'open-' + size)
+    if element.classList.contains('open-small')
+      element.setAttribute('class', 'open-expanded')
+    else if element.classList.contains('open-expanded')
+      element.setAttribute('class', 'open-fullscreen')
+    else if element.classList.contains('collapsed')
+      element.setAttribute('class', 'open-small')
 
 
 ###
   collapse
 ###
-collapse = @['collapse'] = (target) ->
+collapse = @['collapse'] = @['catnip']['ui']['collapse'] = (target) ->
+  el = _get target
+  if not el.length?
+    el = [el]
+
+  for element in el
+    if element.classList.contains('open-expanded')
+      element.setAttribute('class', 'open-small')
+    else if element.classList.contains('open-fullscreen')
+      element.setAttribute('class', 'open-expanded')
+
+
+###
+  close
+###
+close = @['close'] = @['catnip']['ui']['close'] = (target) ->
   el = _get target
   if not el.length?
     el = [el]
@@ -113,37 +150,38 @@ collapse = @['collapse'] = (target) ->
 
 
 ###
-  pending_tasks
-###
-pending_tasks = @['pending_tasks'] = 1
-
-
-###
   spinner
 ###
-spinner = @['spinner'] = _get '#appspinner'
+spinner = @['spinner'] = @['catnip']['el']['spinner'] = _get '#appspinner'
 
 
 ###
   stage
 ###
-stage = @['stage'] = _get '#appstage'
+stage = @['stage'] = @['catnip']['el']['stage'] = _get '#appstage'
 
 
 ###
   frame
 ###
-frame = @['frame'] = _get '#appframe'
+frame = @['frame'] = @['catnip']['el']['frame'] = _get '#appframe'
 
 
 ###
-  image prefix
+  logon
 ###
-image_prefix = @['image_prefix'] = "//storage.googleapis.com/providence-clarity/warehouse/raw/govtrack/photos/"
-#image_prefix = @['image_prefix'] = "//deliver.fcm-static.org/image-proxy/providence-clarity/warehouse/raw/govtrack/photos/"
+_logon = @['catnip']['el']['logon'] = _get '#logon'
 
 
 ###
-  onload callbacks
+  asset prefix
 ###
-onloads = @['__onload_callbacks'] = []
+asset_prefix = @['catnip']['config']['assets']['prefix'] = "//storage.googleapis.com/providence-clarity/"
+
+
+###
+  jQuery mount
+###
+
+if $?
+  $.extend(catnip: @['catnip'])

@@ -10,7 +10,10 @@
         <header id='appheader'>
             {% block logo -%}
                 <a href="{{ link('landing') }}">
-                    <h1 id="logo">fatcatmap</h1>
+                    <div id='logowrap'>
+                        <div id='cathead'></div>
+                        <h1 id="logo">fatcatmap</h1>
+                    </div>
                 </a>
             {%- endblock %}
             {% block appheader %}{% endblock %}

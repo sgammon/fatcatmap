@@ -6,41 +6,39 @@
 ###
 
 # == session / user context == #
-load_context = @['load_context'] = (event, data) ->
+load_context = @['catnip']['context']['load'] = (event, data) =>
 
   _show_queue = []
   _mapper_queue = []
 
-  context = @['context'] = data || JSON.parse(document.getElementById('js-context').textContent)
+  context = @['catnip']['context']['data'] = data || JSON.parse(document.getElementById('js-context').textContent)
   console.log "Loading context...", context
 
   # process services
-  if @['context']['services']
+  if @['catnip']['context']['data']['services']
     console.log "Loading services...", context['services']
     apptools['rpc']['service']['factory'](context['services'])
 
   # process pagedata
-  if @['context']['pagedata']
+  if @['catnip']['context']['data']['pagedata']
     pagedata = @['pagedata'] = JSON.parse(document.getElementById('js-data').textContent)
     console.log "Detected stapled pagedata...", pagedata
 
-    @['receive'](pagedata)
+    @['catnip']['data']['receive'](pagedata)
 
   # process session
-  if @['context']['session']
-    if @['context']['session']['established']
-      @['session'] = @['context']['session']['payload']
-      console.log "Loading existing session...", @['session']
+  if @['catnip']['context']['data']['session']
+    if @['catnip']['context']['data']['session']['established']
+      @['catnip']['session'] = @['catnip']['context']['data']['session']['payload']
+      console.log "Loading existing session...", @['catnip']['session']
 
     else
-      @['session'] =
-        authenticated: false
+      @['catnip']['session'] = {}
 
-      console.log "Establishing fresh session...", @['session']
-      _logon = @['_get']('#logon')
-      if _logon
-        _show_queue.push _logon
+      console.log "Establishing fresh session...", @['catnip']['session']
+      _show_queue.push @['catnip']['el']['logon']
 
+  # prepare map for UI queue
   _map = @['_get']('#map')
   if _map
     _catnip = @['_get']('#catnip')
@@ -54,19 +52,19 @@ load_context = @['load_context'] = (event, data) ->
 
     console.log 'Flushing UI reveal queue...', _show_queue
     for element_set in _show_queue
-      @['show'](element_set)
+      @['catnip']['ui']['show'](element_set)
 
   # set up mapper show callback
   _mapper_reveal = () =>
 
     console.log 'Flusing mapper reveal queue...', _mapper_queue
     for element_set in _mapper_queue
-      @['show'](element_set)
+      @['catnip']['ui']['show'](element_set)
 
-    @['finish']()
+    @['catnip']['idle']()
 
   setTimeout(_ui_reveal, 800)
   setTimeout(_mapper_reveal, 500)
-  return @['context']
+  return @['catnip']['context']
 
-onloads.push load_context
+@['catnip']['events']['onload'].push load_context

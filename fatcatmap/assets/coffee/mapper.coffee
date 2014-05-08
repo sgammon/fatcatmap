@@ -1,32 +1,26 @@
 
 ###
-  catnip
-###
-catnip = @['catnip'] = {}
-
-
-###
   map
 ###
-map = @['map'] = _get '#map'
+map = @['map'] = @['catnip']['el']['map'] = _get '#map'
 
 
 ###
   mapper
 ###
-mapper = @['mapper'] = _get '#mapper'
+mapper = @['mapper'] = @['catnip']['el']['mapper'] = _get '#mapper'
 
 
 ###
   leftbar
 ###
-leftbar = @['leftbar'] = _get '#leftbar'
+leftbar = @['leftbar'] = @['catnip']['el']['leftbar'] = _get '#leftbar'
 
 
 ###
   rightbar
 ###
-rightbar = @['rightbar'] = _get '#rightbar'
+rightbar = @['rightbar'] = @['catnip']['el']['rightbar'] = _get '#rightbar'
 
 
 ###
@@ -36,8 +30,8 @@ rightbar = @['rightbar'] = _get '#rightbar'
 configure = () ->
 
   config =
-    width: @['mapper'].offsetWidth
-    height: @['mapper'].offsetHeight
+    width: @['catnip']['el']['mapper'].offsetWidth
+    height: @['catnip']['el']['mapper'].offsetHeight
 
     force:
       alpha: 0
@@ -55,7 +49,7 @@ configure = () ->
       width: 60
       height: 60
       images:
-        format: @['context'].agent.capabilities.webp and 'webp' or 'jpeg'
+        format: (@['catnip']['context']['data']['agent']['capabilities']['webp'] and 'webp') or 'jpeg'
 
     events:
       click:
@@ -68,7 +62,7 @@ configure = () ->
   detail
 ###
 
-detail = @['detail'] = (node) ->
+detail = @['detail'] = @['catnip']['graph']['detail'] = (node) ->
 
   console.log 'Showing detail for node...', node
 
@@ -77,7 +71,7 @@ detail = @['detail'] = (node) ->
   browse
 ###
 
-browse = @['browse'] = (node) ->
+browse = @['browse'] = @['catnip']['graph']['browse'] = (node) ->
 
   console.log 'Browsing to origin...', node
 
@@ -93,18 +87,18 @@ browse = @['browse'] = (node) ->
   draw
 ###
 
-draw = @['draw'] = (_graph) ->
+draw = @['draw'] = @['catnip']['graph']['draw'] = (_graph) =>
 
-  if not @['catnip'].graph?
+  if not @['catnip']['graph']['active']?
 
-    graph_config = @['graph_config'] = configure()
+    graph_config = @['catnip']['config']['graph'] = configure()
 
-    @['catnip']['graph'] = _graph
-    config = @['graph_config']
+    @['catnip']['graph']['active'] = _graph
+    config = @['catnip']['config']['graph']
 
     color = @['d3'].scale.category20()
 
-    force = @['catnip']['force'] = @['d3'].layout.force()
+    force = @['catnip']['graph']['force'] = @['d3'].layout.force()
                       .linkDistance(config['force']['distance'])
                       .linkStrength(config['force']['strength'])
                       .friction(config['force']['friction'])
@@ -118,59 +112,59 @@ draw = @['draw'] = (_graph) ->
       width = @innerWidth || document.body.clientWidth || document.documentElement.clientWidth
       height = @innerHeight || document.body.clientHeight || document.documentElement.clientHeight
 
-      @['catnip']['svg']
+      @['catnip']['graph']['root']
         .attr('width', width)
         .attr('height', height)
 
-      @['catnip']['force'].alpha(config['events']['click']['warmup'])
+      @['catnip']['graph']['force'].alpha(config['events']['click']['warmup'])
 
     _load = (g) ->
 
-      svg = @['catnip']['svg'] = @['d3'].select(@['map'])
+      svg = @['catnip']['graph']['root'] = @['d3'].select(@['map'])
 
       ## 1) edge structure
-      edge_wrap = @['catnip']['edge_wrap'] = svg.selectAll('.edge')
+      edge_wrap = @['catnip']['graph']['edge_wrap'] = svg.selectAll('.edge')
                      .data(g['edges'])
                      .enter()
 
-      edge = @['catnip']['edge'] = edge_wrap.append('svg')
+      edge = @['catnip']['graph']['edge'] = edge_wrap.append('svg')
                       .attr('id', (e) -> 'edge-' + e.edge.key)
 
-      line = @['catnip']['line'] = edge.append('line')
+      line = @['catnip']['graph']['line'] = edge.append('line')
                  .attr('stroke', '#999')
                  .attr('class', 'link')
                  .style('stroke-width', 2)
 
       ## 2) node structure
-      node_wrap = @['catnip']['node_wrap'] = svg.selectAll('.node')
+      node_wrap = @['catnip']['graph']['node_wrap'] = svg.selectAll('.node')
                      .data(g['nodes'])
                      .enter()
 
-      container = @catnip['node_container'] = node_wrap.append('svg')
+      container = @['catnip']['graph']['node_container'] = node_wrap.append('svg')
                            .attr('id', (n) -> 'group-' + n['node']['key'])
                            .attr('width', config['sprite']['width'])
                            .attr('height', config['sprite']['height'])
                            .call(force['drag'])
-                           .on('dblclick', browse)
-                           .on('click', detail)
+                           .on('dblclick', @['catnip']['graph']['browse'])
+                           .on('click', @['catnip']['graph']['detail'])
 
-      node = @catnip['node'] = container.append('g')
+      node = @['catnip']['graph']['node'] = container.append('g')
                       .attr('width', config['sprite']['width'])
                       .attr('height', config['sprite']['height'])
 
-      shape = @catnip['circle'] = node.append('circle')
+      shape = @['catnip']['graph']['circle'] = node.append('circle')
                   .attr('r', config['node']['radius'])
                   .attr('cx', config['sprite']['width'] / 2)
                   .attr('cy', config['sprite']['height'] / 2)
                   .attr('class', 'node')
 
       ## 2.1) image for legislators
-      legislator_image = @catnip['legislator_image'] = node.append('image')
+      legislator_image = @['catnip']['graph']['legislator_image'] = node.append('image')
                              .filter((n) -> n['native']['data']['govtrack_id']?)
                              .attr('width', config['sprite']['width'])
                              .attr('height', config['sprite']['height'])
                              .attr('clip-path', 'url(#node-circle-mask)')
-                             .attr('xlink:href', (n) -> image_prefix + n['native']['data']['govtrack_id'].toString() + '-' + '100px.' + config['sprite']['images']['format'])
+                             .attr('xlink:href', (n) => @['catnip']['config']['assets']['prefix'] + 'warehouse/raw/govtrack/photos/' + n['native']['data']['govtrack_id'].toString() + '-' + '100px.' + config['sprite']['images']['format'])
 
       #@['d3'].select(stage).on('click', (n) -> force['alpha'](config['events']['click']['warmup']))
 
@@ -178,6 +172,10 @@ draw = @['draw'] = (_graph) ->
       window.onresize = _resize
 
       force.on 'tick', (f) ->
+
+        # Always make origin center
+        #nodes[0].x = (@innerWidth || document.body.clientWidth || document.documentElement.clientWidth) / 2
+        #nodes[0].y = (@innerHeight || document.body.clientHeight || document.documentElement.clientHeight) / 2
 
         #k = .1 * e.alpha;
 
@@ -210,14 +208,12 @@ draw = @['draw'] = (_graph) ->
 
   _incremental_draw = () =>
 
-    @['catnip'] = {}
-
     # redraws for now get rid of the current grapher
-    @['hide'](@['map']);
-    @['map'].textContent = ''
-    @['draw'](graph)
+    @['catnip']['ui']['hide'](@['map']);
+    @['catnip']['el']['map'].textContent = ''
+    @['catnip']['graph']['draw'](graph)
 
-    _show_graph = () => @['show'](@['map'])
+    _show_graph = () => @['catnip']['ui']['show'](@['map'])
     setTimeout(_show_graph, 250)
 
   return setTimeout(_incremental_draw, 0)

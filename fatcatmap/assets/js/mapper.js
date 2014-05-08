@@ -1,38 +1,31 @@
 
 /*
-  catnip
- */
-var browse, catnip, configure, detail, draw, leftbar, map, mapper, rightbar;
-
-catnip = this['catnip'] = {};
-
-
-/*
   map
  */
+var browse, configure, detail, draw, leftbar, map, mapper, rightbar;
 
-map = this['map'] = _get('#map');
+map = this['map'] = this['catnip']['el']['map'] = _get('#map');
 
 
 /*
   mapper
  */
 
-mapper = this['mapper'] = _get('#mapper');
+mapper = this['mapper'] = this['catnip']['el']['mapper'] = _get('#mapper');
 
 
 /*
   leftbar
  */
 
-leftbar = this['leftbar'] = _get('#leftbar');
+leftbar = this['leftbar'] = this['catnip']['el']['leftbar'] = _get('#leftbar');
 
 
 /*
   rightbar
  */
 
-rightbar = this['rightbar'] = _get('#rightbar');
+rightbar = this['rightbar'] = this['catnip']['el']['rightbar'] = _get('#rightbar');
 
 
 /*
@@ -42,8 +35,8 @@ rightbar = this['rightbar'] = _get('#rightbar');
 configure = function() {
   var config;
   config = {
-    width: this['mapper'].offsetWidth,
-    height: this['mapper'].offsetHeight,
+    width: this['catnip']['el']['mapper'].offsetWidth,
+    height: this['catnip']['el']['mapper'].offsetHeight,
     force: {
       alpha: 0,
       strength: 50,
@@ -60,7 +53,7 @@ configure = function() {
       width: 60,
       height: 60,
       images: {
-        format: this['context'].agent.capabilities.webp && 'webp' || 'jpeg'
+        format: (this['catnip']['context']['data']['agent']['capabilities']['webp'] && 'webp') || 'jpeg'
       }
     },
     events: {
@@ -77,7 +70,7 @@ configure = function() {
   detail
  */
 
-detail = this['detail'] = function(node) {
+detail = this['detail'] = this['catnip']['graph']['detail'] = function(node) {
   return console.log('Showing detail for node...', node);
 };
 
@@ -86,7 +79,7 @@ detail = this['detail'] = function(node) {
   browse
  */
 
-browse = this['browse'] = function(node) {
+browse = this['browse'] = this['catnip']['graph']['browse'] = function(node) {
   console.log('Browsing to origin...', node);
   return $.apptools.api.graph.construct({
     origin: node.node.key
@@ -102,82 +95,81 @@ browse = this['browse'] = function(node) {
   draw
  */
 
-draw = this['draw'] = function(_graph) {
-  var color, config, force, graph_config, _graph_draw, _incremental_draw, _load, _resize;
-  if (this['catnip'].graph == null) {
-    graph_config = this['graph_config'] = configure();
-    this['catnip']['graph'] = _graph;
-    config = this['graph_config'];
-    color = this['d3'].scale.category20();
-    force = this['catnip']['force'] = this['d3'].layout.force().linkDistance(config['force']['distance']).linkStrength(config['force']['strength']).friction(config['force']['friction']).charge(config['force']['charge']).theta(config['force']['theta']).gravity(config['force']['gravity']).alpha(config['force']['alpha']).size([config['width'], config['height']]);
-    _resize = function() {
-      var height, width;
-      width = this.innerWidth || document.body.clientWidth || document.documentElement.clientWidth;
-      height = this.innerHeight || document.body.clientHeight || document.documentElement.clientHeight;
-      this['catnip']['svg'].attr('width', width).attr('height', height);
-      return this['catnip']['force'].alpha(config['events']['click']['warmup']);
-    };
-    _load = function(g) {
-      var container, edge, edge_wrap, legislator_image, line, node, node_wrap, shape, svg;
-      svg = this['catnip']['svg'] = this['d3'].select(this['map']);
-      edge_wrap = this['catnip']['edge_wrap'] = svg.selectAll('.edge').data(g['edges']).enter();
-      edge = this['catnip']['edge'] = edge_wrap.append('svg').attr('id', function(e) {
-        return 'edge-' + e.edge.key;
-      });
-      line = this['catnip']['line'] = edge.append('line').attr('stroke', '#999').attr('class', 'link').style('stroke-width', 2);
-      node_wrap = this['catnip']['node_wrap'] = svg.selectAll('.node').data(g['nodes']).enter();
-      container = this.catnip['node_container'] = node_wrap.append('svg').attr('id', function(n) {
-        return 'group-' + n['node']['key'];
-      }).attr('width', config['sprite']['width']).attr('height', config['sprite']['height']).call(force['drag']).on('dblclick', browse).on('click', detail);
-      node = this.catnip['node'] = container.append('g').attr('width', config['sprite']['width']).attr('height', config['sprite']['height']);
-      shape = this.catnip['circle'] = node.append('circle').attr('r', config['node']['radius']).attr('cx', config['sprite']['width'] / 2).attr('cy', config['sprite']['height'] / 2).attr('class', 'node');
-      legislator_image = this.catnip['legislator_image'] = node.append('image').filter(function(n) {
-        return n['native']['data']['govtrack_id'] != null;
-      }).attr('width', config['sprite']['width']).attr('height', config['sprite']['height']).attr('clip-path', 'url(#node-circle-mask)').attr('xlink:href', function(n) {
-        return image_prefix + n['native']['data']['govtrack_id'].toString() + '-' + '100px.' + config['sprite']['images']['format'];
-      });
-      window.onresize = _resize;
-      force.on('tick', function(f) {
-        line.attr('x1', function(d) {
-          return d['source']['object']['x'] + (config['node']['radius'] / 2);
-        }).attr('y1', function(d) {
-          return d['source']['object']['y'] + (config['node']['radius'] / 2);
-        }).attr('x2', function(d) {
-          return d['target']['object']['x'] + (config['node']['radius'] / 2);
-        }).attr('y2', function(d) {
-          return d['target']['object']['y'] + (config['node']['radius'] / 2);
+draw = this['draw'] = this['catnip']['graph']['draw'] = (function(_this) {
+  return function(_graph) {
+    var color, config, force, graph_config, _graph_draw, _incremental_draw, _load, _resize;
+    if (_this['catnip']['graph']['active'] == null) {
+      graph_config = _this['catnip']['config']['graph'] = configure();
+      _this['catnip']['graph']['active'] = _graph;
+      config = _this['catnip']['config']['graph'];
+      color = _this['d3'].scale.category20();
+      force = _this['catnip']['graph']['force'] = _this['d3'].layout.force().linkDistance(config['force']['distance']).linkStrength(config['force']['strength']).friction(config['force']['friction']).charge(config['force']['charge']).theta(config['force']['theta']).gravity(config['force']['gravity']).alpha(config['force']['alpha']).size([config['width'], config['height']]);
+      _resize = function() {
+        var height, width;
+        width = this.innerWidth || document.body.clientWidth || document.documentElement.clientWidth;
+        height = this.innerHeight || document.body.clientHeight || document.documentElement.clientHeight;
+        this['catnip']['graph']['root'].attr('width', width).attr('height', height);
+        return this['catnip']['graph']['force'].alpha(config['events']['click']['warmup']);
+      };
+      _load = function(g) {
+        var container, edge, edge_wrap, legislator_image, line, node, node_wrap, shape, svg;
+        svg = this['catnip']['graph']['root'] = this['d3'].select(this['map']);
+        edge_wrap = this['catnip']['graph']['edge_wrap'] = svg.selectAll('.edge').data(g['edges']).enter();
+        edge = this['catnip']['graph']['edge'] = edge_wrap.append('svg').attr('id', function(e) {
+          return 'edge-' + e.edge.key;
         });
-        return container.attr('x', function(d) {
-          return d['x'] - config['node']['radius'];
-        }).attr('y', function(d) {
-          return d['y'] - config['node']['radius'];
+        line = this['catnip']['graph']['line'] = edge.append('line').attr('stroke', '#999').attr('class', 'link').style('stroke-width', 2);
+        node_wrap = this['catnip']['graph']['node_wrap'] = svg.selectAll('.node').data(g['nodes']).enter();
+        container = this['catnip']['graph']['node_container'] = node_wrap.append('svg').attr('id', function(n) {
+          return 'group-' + n['node']['key'];
+        }).attr('width', config['sprite']['width']).attr('height', config['sprite']['height']).call(force['drag']).on('dblclick', this['catnip']['graph']['browse']).on('click', this['catnip']['graph']['detail']);
+        node = this['catnip']['graph']['node'] = container.append('g').attr('width', config['sprite']['width']).attr('height', config['sprite']['height']);
+        shape = this['catnip']['graph']['circle'] = node.append('circle').attr('r', config['node']['radius']).attr('cx', config['sprite']['width'] / 2).attr('cy', config['sprite']['height'] / 2).attr('class', 'node');
+        legislator_image = this['catnip']['graph']['legislator_image'] = node.append('image').filter(function(n) {
+          return n['native']['data']['govtrack_id'] != null;
+        }).attr('width', config['sprite']['width']).attr('height', config['sprite']['height']).attr('clip-path', 'url(#node-circle-mask)').attr('xlink:href', (function(_this) {
+          return function(n) {
+            return _this['catnip']['config']['assets']['prefix'] + 'warehouse/raw/govtrack/photos/' + n['native']['data']['govtrack_id'].toString() + '-' + '100px.' + config['sprite']['images']['format'];
+          };
+        })(this));
+        window.onresize = _resize;
+        force.on('tick', function(f) {
+          line.attr('x1', function(d) {
+            return d['source']['object']['x'] + (config['node']['radius'] / 2);
+          }).attr('y1', function(d) {
+            return d['source']['object']['y'] + (config['node']['radius'] / 2);
+          }).attr('x2', function(d) {
+            return d['target']['object']['x'] + (config['node']['radius'] / 2);
+          }).attr('y2', function(d) {
+            return d['target']['object']['y'] + (config['node']['radius'] / 2);
+          });
+          return container.attr('x', function(d) {
+            return d['x'] - config['node']['radius'];
+          }).attr('y', function(d) {
+            return d['y'] - config['node']['radius'];
+          });
         });
-      });
-      return force.nodes(g['nodes']).links(g['edges']).start();
-    };
-    console.log('Drawing graph...', _graph);
-    _graph_draw = (function(_this) {
-      return function() {
+        return force.nodes(g['nodes']).links(g['edges']).start();
+      };
+      console.log('Drawing graph...', _graph);
+      _graph_draw = function() {
         return _load(graph);
       };
-    })(this);
-    return setTimeout(_graph_draw, 150);
-  }
-  console.log('Incremental draw...', graph);
-  _incremental_draw = (function(_this) {
-    return function() {
+      return setTimeout(_graph_draw, 150);
+    }
+    console.log('Incremental draw...', graph);
+    _incremental_draw = function() {
       var _show_graph;
-      _this['catnip'] = {};
-      _this['hide'](_this['map']);
-      _this['map'].textContent = '';
-      _this['draw'](graph);
+      _this['catnip']['ui']['hide'](_this['map']);
+      _this['catnip']['el']['map'].textContent = '';
+      _this['catnip']['graph']['draw'](graph);
       _show_graph = function() {
-        return _this['show'](_this['map']);
+        return _this['catnip']['ui']['show'](_this['map']);
       };
       return setTimeout(_show_graph, 250);
     };
-  })(this);
-  return setTimeout(_incremental_draw, 0);
-};
+    return setTimeout(_incremental_draw, 0);
+  };
+})(this);
 
 //# sourceMappingURL=../../../.develop/maps/fatcatmap/assets/coffee/mapper.js.map

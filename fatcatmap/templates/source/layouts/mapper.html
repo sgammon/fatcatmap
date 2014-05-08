@@ -1,6 +1,6 @@
 {% extends "layouts/base.html" %}
 
-{% block logo -%}<h1 id="logo">fatcatmap</h1>{%- endblock %}
+{% block logo -%}<div id='logowrap'><div id='cathead'></div><h1 id="logo">fatcatmap</h1></div>{%- endblock %}
 
 {% block templates %}
 
@@ -24,8 +24,9 @@
         <section id='leftbar' class='transparent collapsed'>
             {% block left -%}
             <section class='controls'>
-                <div class='size-modal size-close'>X</div>
-                <div class='size-modal size-expand'>&gt;</div>
+                <div class='size-modal size-close' onclick="close(event.target);">X</div>
+                <div class='size-modal size-expand' onclick="expand(event.target);"></div>
+                <div class='size-modal size-minimize' onclick="collapse(event.target);"></div>
             </section><!-- end #leftbar section.controls -->
             <section class='content'>
             </section><!-- end #leftbar section.content -->
@@ -36,8 +37,9 @@
         <section id='rightbar' class='transparent collapsed'>
             {% block right -%}
             <section class='controls'>
-                <div class='size-modal size-close'>X</div>
-                <div class='size-modal size-expand'>&gt;</div>
+                <div class='size-modal size-close' onclick="close(event.target);">X</div>
+                <div class='size-modal size-expand' onclick="expand(event.target);"></div>
+                <div class='size-modal size-minimize' onclick="collapse(event.target);"></div>
             </section><!-- end #rightbar section.controls -->
             <section class='content'>
             </section><!-- end #rightbar section.content -->

@@ -7,5 +7,5 @@
 
 _onload = @['onload'] = (event) ->
 
-  for callback in @['__onload_callbacks']
+  for callback in @['catnip']['events']['onload']
     callback(event)

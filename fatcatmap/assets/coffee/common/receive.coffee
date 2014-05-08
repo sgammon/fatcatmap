@@ -2,13 +2,13 @@
 ###
   data
 ###
-data = @['data'] = {}
+data = @['catnip']['data']['raw'] = {}
 
 
 ###
   index
 ###
-index = @['index'] =
+index = @['catnip']['data']['index'] =
   adjacency: {}
   nodes_by_key: {}
   edges_by_key: {}
@@ -19,7 +19,7 @@ index = @['index'] =
 ###
   graph
 ###
-graph = @['graph'] =
+graph = @['catnip']['data']['graph'] =
   nodes: []
   edges: []
   natives: []
@@ -30,19 +30,19 @@ graph = @['graph'] =
 ###
 
 # == data transform == #
-receive = @['receive'] = (data) ->
+receive = @['catnip']['data']['receive'] = (data) =>
 
   # parse data
   if typeof data == 'string'
-    payload = @['payload'] = JSON.parse data
+    payload = @['catnip']['data']['payload'] = JSON.parse data
   else
-    payload = @['payload'] = data
+    payload = @['catnip']['data']['payload'] = data
 
   ## == inflate data objects == ##
 
   ## 1) keys & objects
   for key, key_i in payload.data.keys
-    @['data'][key] = payload.data.objects[key_i] unless @['data'][key]?
+    @['catnip']['data']['raw'][key] = payload.data.objects[key_i] unless @['catnip']['data']['raw'][key]?
 
   ## 2) natives
   for _, native_suboffset in Array(payload.graph.natives)
@@ -63,16 +63,16 @@ receive = @['receive'] = (data) ->
     if _key_iter <= payload.graph.nodes
 
       ## 1) nodes
-      if not @['index']['nodes_by_key'][payload['data']['keys'][_key_iter]]
+      if not @['catnip']['data']['index']['nodes_by_key'][payload['data']['keys'][_key_iter]]
         _i = index.nodes_by_key[payload.data.keys[_key_iter]] = (graph.nodes.push
           node:
             key: payload.data.keys[_key_iter]
-            data: @['data'][payload.data.keys[_key_iter]]
+            data: @['catnip']['data']['raw'][payload.data.keys[_key_iter]]
           native:
             key: payload.data.objects[_key_iter].native
-            data: @['data'][payload.data.objects[_key_iter].native]
+            data: @['catnip']['data']['raw'][payload.data.objects[_key_iter].native]
         ) - 1
-      else:
+      else
         _i = index.nodes_by_key[payload.data.keys[_key_iter]]
 
     else if _key_iter <= payload.graph.edges
@@ -85,8 +85,8 @@ receive = @['receive'] = (data) ->
 
       for target_k in targets
 
-        if @['index']['adjacency'][source_k] and @['index']['adjacency'][source_k][target_k]
-          _i = @['index']['adjacency'][source_k][target_k]
+        if @['catnip']['data']['index']['adjacency'][source_k] and @['catnip']['data']['index']['adjacency'][source_k][target_k]
+          _i = @['catnip']['data']['index']['adjacency'][source_k][target_k]
 
         else
           _i = (graph.edges.push
@@ -104,8 +104,7 @@ receive = @['receive'] = (data) ->
 
           index.edges_by_key[payload.data.keys[_key_iter]].push _i
 
-          if not @['index']['adjacency'][source_k]?
-            @['index']['adjacency'][source_k] = {}
-          @['index']['adjacency'][source_k][target_k] = _i
-
-  return setTimeout (-> @['draw'](graph)), 0
+          if not @['catnip']['data']['index']['adjacency'][source_k]?
+            @['catnip']['data']['index']['adjacency'][source_k] = {}
+          @['catnip']['data']['index']['adjacency'][source_k][target_k] = _i
+  return setTimeout (-> @['catnip']['graph']['draw'](graph)), 0
