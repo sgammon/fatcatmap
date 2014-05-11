@@ -8,6 +8,7 @@
 
         <!-- header -->
         <header id='appheader'>
+
             {% block logo -%}
                 <a href="{{ link('landing') }}">
                     <div id='logowrap'>
@@ -26,9 +27,8 @@
             <small id="copyright" class="rs-small rs-medium rs-large">copyright (&copy; 2014) - technology preview</small>
             {%- endblock footer %}
         </footer><!-- end footer -->
-
         {% block frame %}{% endblock frame %}
-{% endblock %}
+{% endblock -%}
 
 {% block appstage %}
     <section class="content container-fluid framepad">

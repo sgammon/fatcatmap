@@ -7,7 +7,7 @@
 /*
   get
  */
-var busy, catnip, close, collapse, data, dye, expand, graph, hide, idle, index, load_context, receive, show, toggle, _get, _onload,
+var busy, catnip, close, collapse, dye, expand, graph, hide, idle, index, load_context, receive, show, toggle, _get, _onload, _ref,
   __slice = [].slice;
 
 _get = this['_get'] = function(d) {
@@ -37,7 +37,7 @@ catnip = this['catnip'] = {
   context: {},
   config: {
     assets: {
-      prefix: "//storage.googleapis.com/providence-clarity/"
+      prefix: "//deliver.fcm-static.org/"
     }
   },
   state: {
@@ -54,7 +54,8 @@ catnip = this['catnip'] = {
     mapper: _get('#mapper'),
     spinner: _get('#appspinner'),
     leftbar: _get('#leftbar'),
-    rightbar: _get('#rightbar')
+    rightbar: _get('#rightbar'),
+    signon_providers: _get('#signon-providers')
   }
 };
 
@@ -297,7 +298,7 @@ if (typeof $ !== "undefined" && $ !== null) {
   data
  */
 
-data = this['catnip']['data']['raw'] = {};
+this['catnip']['data']['raw'] = {};
 
 
 /*
@@ -320,6 +321,7 @@ index = this['catnip']['data']['index'] = {
 graph = this['catnip']['data']['graph'] = {
   nodes: [],
   edges: [],
+  origin: null,
   natives: []
 };
 
@@ -336,6 +338,7 @@ receive = this['catnip']['data']['receive'] = (function(_this) {
     } else {
       payload = _this['catnip']['data']['payload'] = data;
     }
+    graph.origin = payload.graph.origin;
     _ref = payload.data.keys;
     for (key_i = _i = 0, _len = _ref.length; _i < _len; key_i = ++_i) {
       key = _ref[key_i];
@@ -350,7 +353,7 @@ receive = this['catnip']['data']['receive'] = (function(_this) {
       if (index.natives_by_key[payload.data.keys[native_i]] == null) {
         index.natives_by_key[payload.data.keys[native_i]] = (graph.natives.push({
           key: payload.data.keys[native_i],
-          data: data[payload.data.keys[native_i]]
+          data: payload.data.objects[native_i]
         })) - 1;
       }
     }
@@ -385,17 +388,11 @@ receive = this['catnip']['data']['receive'] = (function(_this) {
             _i = (graph.edges.push({
               edge: {
                 key: payload.data.keys[_key_iter],
-                data: data[payload.data.keys[_key_iter]]
+                data: payload.data.objects[_key_iter]
               },
-              "native": data[payload.data.objects[_key_iter]["native"]],
-              source: {
-                index: index.nodes_by_key[source_k],
-                object: graph.nodes[index.nodes_by_key[source_k]]
-              },
-              target: {
-                index: index.nodes_by_key[target_k],
-                object: graph.nodes[index.nodes_by_key[target_k]]
-              }
+              "native": _this['catnip']['data']['raw'][payload.data.objects[_key_iter]["native"]],
+              source: index.nodes_by_key[source_k],
+              target: index.nodes_by_key[target_k]
             })) - 1;
             index.edges_by_key[payload.data.keys[_key_iter]].push(_i);
             if (_this['catnip']['data']['index']['adjacency'][source_k] == null) {
@@ -415,6 +412,50 @@ receive = this['catnip']['data']['receive'] = (function(_this) {
 
 /*
 
+  ui
+ */
+
+
+/*
+  logon
+ */
+
+if ((_ref = $.catnip.el.logon) != null) {
+  _ref.addEventListener('click', function(event) {
+    $.catnip.ui.toggle($.catnip.el.logon, 'active');
+    return $.catnip.ui.toggle($.catnip.el.signon_providers);
+  });
+}
+
+
+/*
+  sidebars
+ */
+
+$('.size-close').on('click', function(event) {
+  var sidebar;
+  sidebar = event.target.parentElement.parentElement;
+  console.log('Closing sidebar...', sidebar);
+  return $.catnip.ui.close(sidebar);
+});
+
+$('.size-expand').on('click', function(event) {
+  var sidebar;
+  sidebar = event.target.parentElement.parentElement;
+  console.log('Expanding sidebar...', sidebar);
+  return $.catnip.ui.expand(sidebar);
+});
+
+$('.size-minimize').on('click', function(event) {
+  var sidebar;
+  sidebar = event.target.parentElement.parentElement;
+  console.log('Collapsing sidebar...', sidebar);
+  return $.catnip.ui.collapse(sidebar);
+});
+
+
+/*
+
   context
  */
 
@@ -423,20 +464,35 @@ load_context = this['catnip']['context']['load'] = (function(_this) {
     var context, pagedata, _catnip, _map, _mapper_queue, _mapper_reveal, _show_queue, _ui_reveal;
     _show_queue = [];
     _mapper_queue = [];
-    context = _this['catnip']['context']['data'] = data || JSON.parse(document.getElementById('js-context').textContent);
+    context = _this['catnip']['context'] = data || JSON.parse(document.getElementById('js-context').textContent);
+    _this['catnip']['context']['load'] = load_context;
     console.log("Loading context...", context);
-    if (_this['catnip']['context']['data']['services']) {
+    _this['catnip']['context']['agent']['capabilities']['cookies'] = navigator.cookieEnabled;
+    _this['catnip']['context']['agent']['capabilities']['retina'] = window.devicePixelRatio === 2;
+    _this['catnip']['context']['agent']['capabilities']['worker'] = window.Worker && true || false;
+    _this['catnip']['context']['agent']['capabilities']['shared_worker'] = window.SharedWorker && true || false;
+    _this['catnip']['context']['agent']['capabilities']['service_worker'] = navigator.serviceWorker && true || false;
+    _this['catnip']['context']['agent']['capabilities']['websocket'] = window.WebSocket && true || false;
+    _this['catnip']['context']['agent']['capabilities']['geo'] = navigator.geolocation && true || false;
+    _this['catnip']['context']['agent']['capabilities']['touch'] = navigator.maxTouchPoints > 0;
+    _this['catnip']['context']['agent']['capabilities']['history'] = window.history.pushState && true || false;
+    _this['catnip']['context']['agent']['capabilities']['storage'] = {
+      local: window.localStorage != null,
+      session: window.sessionStorage != null,
+      indexed: window.IDBFactory != null
+    };
+    if (_this['catnip']['context']['services']) {
       console.log("Loading services...", context['services']);
       apptools['rpc']['service']['factory'](context['services']);
     }
-    if (_this['catnip']['context']['data']['pagedata']) {
+    if (_this['catnip']['context']['pagedata']) {
       pagedata = _this['pagedata'] = JSON.parse(document.getElementById('js-data').textContent);
       console.log("Detected stapled pagedata...", pagedata);
       _this['catnip']['data']['receive'](pagedata);
     }
-    if (_this['catnip']['context']['data']['session']) {
-      if (_this['catnip']['context']['data']['session']['established']) {
-        _this['catnip']['session'] = _this['catnip']['context']['data']['session']['payload'];
+    if (_this['catnip']['context']['session']) {
+      if (_this['catnip']['context']['session']['established']) {
+        _this['catnip']['session'] = _this['catnip']['context']['session']['payload'];
         console.log("Loading existing session...", _this['catnip']['session']);
       } else {
         _this['catnip']['session'] = {};
@@ -497,11 +553,11 @@ this['catnip']['events']['onload'].push(load_context);
  */
 
 _onload = this['onload'] = function(event) {
-  var callback, _i, _len, _ref, _results;
-  _ref = this['catnip']['events']['onload'];
+  var callback, _i, _len, _ref1, _results;
+  _ref1 = this['catnip']['events']['onload'];
   _results = [];
-  for (_i = 0, _len = _ref.length; _i < _len; _i++) {
-    callback = _ref[_i];
+  for (_i = 0, _len = _ref1.length; _i < _len; _i++) {
+    callback = _ref1[_i];
     _results.push(callback(event));
   }
   return _results;

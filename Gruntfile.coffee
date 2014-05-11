@@ -38,8 +38,8 @@ module.exports = (grunt) ->
           theme: 'light'
 
   less_options =
-    compress: false
-    cleancss: false
+    compress: true
+    cleancss: true
     ieCompat: false
     report: 'min'
     optimization: 2

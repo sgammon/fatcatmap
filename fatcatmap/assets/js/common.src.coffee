@@ -31,7 +31,7 @@ catnip = @['catnip'] =
   context: {}
   config:
     assets:
-      prefix: "//storage.googleapis.com/providence-clarity/"
+      prefix: "//deliver.fcm-static.org/"
   state:
     pending: 1
   events:
@@ -45,6 +45,7 @@ catnip = @['catnip'] =
     spinner: _get '#appspinner'
     leftbar: _get '#leftbar'
     rightbar: _get '#rightbar'
+    signon_providers: _get '#signon-providers'
 
 
 ###
@@ -196,7 +197,7 @@ if $?
 ###
   data
 ###
-data = @['catnip']['data']['raw'] = {}
+@['catnip']['data']['raw'] = {}
 
 
 ###
@@ -216,6 +217,7 @@ index = @['catnip']['data']['index'] =
 graph = @['catnip']['data']['graph'] =
   nodes: []
   edges: []
+  origin: null
   natives: []
 
 
@@ -232,6 +234,9 @@ receive = @['catnip']['data']['receive'] = (data) =>
   else
     payload = @['catnip']['data']['payload'] = data
 
+  # copy origin reference
+  graph.origin = payload.graph.origin
+
   ## == inflate data objects == ##
 
   ## 1) keys & objects
@@ -245,7 +250,7 @@ receive = @['catnip']['data']['receive'] = (data) =>
     if not index.natives_by_key[payload.data.keys[native_i]]?
       index.natives_by_key[payload.data.keys[native_i]] = (graph.natives.push
         key: payload.data.keys[native_i]
-        data: data[payload.data.keys[native_i]]
+        data: payload.data.objects[native_i]
       ) - 1
 
   ## == inflate graph structure == ##
@@ -286,14 +291,10 @@ receive = @['catnip']['data']['receive'] = (data) =>
           _i = (graph.edges.push
             edge:
               key: payload.data.keys[_key_iter]
-              data: data[payload.data.keys[_key_iter]]
-            native: data[payload.data.objects[_key_iter].native]
-            source:
-              index: index.nodes_by_key[source_k]
-              object: graph.nodes[index.nodes_by_key[source_k]]
-            target:
-              index: index.nodes_by_key[target_k]
-              object: graph.nodes[index.nodes_by_key[target_k]]
+              data: payload.data.objects[_key_iter]
+            native: @['catnip']['data']['raw'][payload.data.objects[_key_iter].native]
+            source: index.nodes_by_key[source_k]
+            target: index.nodes_by_key[target_k]
           ) - 1
 
           index.edges_by_key[payload.data.keys[_key_iter]].push _i
@@ -303,6 +304,45 @@ receive = @['catnip']['data']['receive'] = (data) =>
           @['catnip']['data']['index']['adjacency'][source_k][target_k] = _i
   return setTimeout (-> @['catnip']['graph']['draw'](graph)), 0
 
+
+###
+
+  ui
+
+###
+
+
+###
+  logon
+###
+$.catnip.el.logon?.addEventListener 'click', (event) ->
+
+  # show/hide signon options and button highlight
+  $.catnip.ui.toggle($.catnip.el.logon, 'active')
+  $.catnip.ui.toggle($.catnip.el.signon_providers)
+
+
+###
+  sidebars
+###
+
+# close button
+$('.size-close').on 'click', (event) ->
+  sidebar = event.target.parentElement.parentElement
+  console.log 'Closing sidebar...', sidebar
+  $.catnip.ui.close(sidebar)
+
+# expand button
+$('.size-expand').on 'click', (event) ->
+  sidebar = event.target.parentElement.parentElement
+  console.log 'Expanding sidebar...', sidebar
+  $.catnip.ui.expand(sidebar)
+
+# collapse button
+$('.size-minimize').on 'click', (event) ->
+  sidebar = event.target.parentElement.parentElement
+  console.log 'Collapsing sidebar...', sidebar
+  $.catnip.ui.collapse(sidebar)
 
 
 ###
@@ -317,25 +357,51 @@ load_context = @['catnip']['context']['load'] = (event, data) =>
   _show_queue = []
   _mapper_queue = []
 
-  context = @['catnip']['context']['data'] = data || JSON.parse(document.getElementById('js-context').textContent)
+  context = @['catnip']['context'] = data || JSON.parse(document.getElementById('js-context').textContent)
+  @['catnip']['context']['load'] = load_context
   console.log "Loading context...", context
 
+  # add context elements from JS
+
+  # - general
+  @['catnip']['context']['agent']['capabilities']['cookies'] = navigator.cookieEnabled
+
+  # - retina
+  @['catnip']['context']['agent']['capabilities']['retina'] = window.devicePixelRatio == 2
+
+  # - worker-related
+  @['catnip']['context']['agent']['capabilities']['worker'] = window.Worker and true or false
+  @['catnip']['context']['agent']['capabilities']['shared_worker'] = window.SharedWorker and true or false
+  @['catnip']['context']['agent']['capabilities']['service_worker'] = navigator.serviceWorker and true or false
+
+  # - transport-related
+  @['catnip']['context']['agent']['capabilities']['websocket'] = window.WebSocket and true or false
+
+  # - sensor-related
+  @['catnip']['context']['agent']['capabilities']['geo'] = navigator.geolocation and true or false
+  @['catnip']['context']['agent']['capabilities']['touch'] = navigator.maxTouchPoints > 0
+  @['catnip']['context']['agent']['capabilities']['history'] = window.history.pushState and true or false
+  @['catnip']['context']['agent']['capabilities']['storage'] =
+    local: window.localStorage?
+    session: window.sessionStorage?
+    indexed: window.IDBFactory?
+
   # process services
-  if @['catnip']['context']['data']['services']
+  if @['catnip']['context']['services']
     console.log "Loading services...", context['services']
     apptools['rpc']['service']['factory'](context['services'])
 
   # process pagedata
-  if @['catnip']['context']['data']['pagedata']
+  if @['catnip']['context']['pagedata']
     pagedata = @['pagedata'] = JSON.parse(document.getElementById('js-data').textContent)
     console.log "Detected stapled pagedata...", pagedata
 
     @['catnip']['data']['receive'](pagedata)
 
   # process session
-  if @['catnip']['context']['data']['session']
-    if @['catnip']['context']['data']['session']['established']
-      @['catnip']['session'] = @['catnip']['context']['data']['session']['payload']
+  if @['catnip']['context']['session']
+    if @['catnip']['context']['session']['established']
+      @['catnip']['session'] = @['catnip']['context']['session']['payload']
       console.log "Loading existing session...", @['catnip']['session']
 
     else
