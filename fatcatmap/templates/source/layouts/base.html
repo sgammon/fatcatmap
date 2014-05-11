@@ -23,8 +23,8 @@
         <!-- footer -->
         <footer id='appfooter' class='{%- block appfooter_fade -%}transparent{%- endblock appfooter_fade -%}'>
             {% block footer -%}
-            <small id="brand">momentum labs - fatcatmap - <a href="{{ link('privacy') }}">privacy</a>, <a href="{{ link('terms') }}">terms</a></small>
-            <small id="copyright">copyright (&copy; 2014) - technology preview</small>
+            <small class="brand">momentum labs - fatcatmap - <a href="{{ link('privacy') }}">privacy</a>, <a href="{{ link('terms') }}">terms</a></small>
+            <small id="copyright" class="rs-small rs-medium rs-large">copyright (&copy; 2014) - technology preview</small>
             {%- endblock footer %}
         </footer><!-- end footer -->
         {% block frame %}{% endblock frame %}

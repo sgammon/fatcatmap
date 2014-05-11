@@ -1,6 +1,6 @@
 {% extends "layouts/base.html" %}
 
-{% block logo -%}<div id='logowrap'><div id='cathead'></div><h1 id="logo">fatcatmap</h1></div><!-- end #logowrap -->{%- endblock %}
+{% block logo -%}<div id='logowrap'><div id='cathead'></div><div class='rs-medium rs-large'><h1 class="logo">fatcatmap</h1></div><div class='rs-small'><h1 class="logo">fcm</h1></div></div><!-- end #logowrap -->{%- endblock %}
 
 {% block templates %}{% endblock templates -%}
 
@@ -41,10 +41,8 @@
             <section id='identity'>
                 <button type="button" id="logon" class="transparent btn btn-success">Sign in</button>
                 <div id="signon-providers" class="transparent">
-                    <div id="gplus-signon">g+</div>
-                    <div id="fb-signon">fb</div>
-                    <div id="tw-signon">tw</div>
-                    <div id="gh-signon">gh</div>
+                    <div id="gplus-signon">g+</div><div id="fb-signon">fb</div>
+                    <div id="tw-signon">tw</div><div id="gh-signon">gh</div>
                 </div><!-- end div#signon-providers -->
             </section><!-- end #identity -->
 {% endblock appheader %}
