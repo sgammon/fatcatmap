@@ -17,12 +17,12 @@ configure = () ->
     height: @['catnip']['el']['mapper'].offsetHeight
 
     force:
-      alpha: 0
-      strength: 10
-      friction: 0
-      theta: 0.1
-      gravity: 0.001
-      charge: -1000
+      alpha: 0.75
+      strength: 1
+      friction: 0.9
+      theta: 0.7
+      gravity: 0.1
+      charge: -700
       distance: 150
 
     origin:
@@ -50,10 +50,6 @@ configure = () ->
       height: 60
       images:
         format: (@['catnip']['context']['data']['agent']['capabilities']['webp'] and 'webp') or 'jpeg'
-
-    events:
-      click:
-        warmup: .8
 
   @['catnip']['config']['graph'] = config
   return config
@@ -107,11 +103,11 @@ draw = @['draw'] = @['catnip']['graph']['draw'] = (_graph) =>
                       .size([config['width'], config['height']])
                       .linkDistance(config['force']['distance'])
                       .charge(config['force']['charge'])
-                      #.linkStrength(config['force']['strength'])
-                      #.friction(config['force']['friction'])
-                      #.theta(config['force']['theta'])
-                      #.gravity(config['force']['gravity'])
-                      #.alpha(config['force']['alpha'])
+                      .linkStrength(config['force']['strength'])
+                      .friction(config['force']['friction'])
+                      .theta(config['force']['theta'])
+                      .gravity(config['force']['gravity'])
+                      .alpha(config['force']['alpha'])
 
     _resize = () ->
       width = @innerWidth || document.body.clientWidth || document.documentElement.clientWidth
@@ -125,8 +121,8 @@ draw = @['draw'] = @['catnip']['graph']['draw'] = (_graph) =>
         .attr('height', height)
 
       @['catnip']['graph']['force']
-        .alpha(config['events']['click']['warmup'])
         .size([config['width'], config['height']])
+        .resume()
 
     _load = (g, w, h) ->
 

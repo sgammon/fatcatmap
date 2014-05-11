@@ -15,12 +15,12 @@ configure = function() {
     width: this['catnip']['el']['mapper'].offsetWidth,
     height: this['catnip']['el']['mapper'].offsetHeight,
     force: {
-      alpha: 0,
-      strength: 10,
-      friction: 0,
-      theta: 0.1,
-      gravity: 0.001,
-      charge: -1000,
+      alpha: 0.75,
+      strength: 1,
+      friction: 0.9,
+      theta: 0.7,
+      gravity: 0.1,
+      charge: -700,
       distance: 150
     },
     origin: {
@@ -49,11 +49,6 @@ configure = function() {
       height: 60,
       images: {
         format: (this['catnip']['context']['data']['agent']['capabilities']['webp'] && 'webp') || 'jpeg'
-      }
-    },
-    events: {
-      click: {
-        warmup: .8
       }
     }
   };
@@ -104,7 +99,7 @@ draw = this['draw'] = this['catnip']['graph']['draw'] = (function(_this) {
       _this['catnip']['graph']['active'] = _graph;
       config = _this['catnip']['config']['graph'];
       color = _this['d3'].scale.category20();
-      force = _this['catnip']['graph']['force'] = _this['d3'].layout.force().size([config['width'], config['height']]).linkDistance(config['force']['distance']).charge(config['force']['charge']);
+      force = _this['catnip']['graph']['force'] = _this['d3'].layout.force().size([config['width'], config['height']]).linkDistance(config['force']['distance']).charge(config['force']['charge']).linkStrength(config['force']['strength']).friction(config['force']['friction']).theta(config['force']['theta']).gravity(config['force']['gravity']).alpha(config['force']['alpha']);
       _resize = function() {
         var height, width;
         width = this.innerWidth || document.body.clientWidth || document.documentElement.clientWidth;
@@ -112,7 +107,7 @@ draw = this['draw'] = this['catnip']['graph']['draw'] = (function(_this) {
         this['catnip']['config']['graph']['width'] = width;
         this['catnip']['config']['graph']['height'] = height;
         this['catnip']['graph']['root'].attr('width', width).attr('height', height);
-        return this['catnip']['graph']['force'].alpha(config['events']['click']['warmup']).size([config['width'], config['height']]);
+        return this['catnip']['graph']['force'].size([config['width'], config['height']]).resume();
       };
       _load = function(g, w, h) {
         var anchorLink, anchorNode, container, edge, edge_wrap, label_force, legislator_image, line, line_tick, node, node_tick, node_wrap, shape, svg, _consider_district, _e, _edge_labels, _generate_node_classes, _i, _j, _label, _len, _len1, _n, _node_labels, _ref, _ref1, _title_postfix;

@@ -1,40 +1,41 @@
 {% extends "layouts/base.html" %}
 
-{% block logo -%}<div id='logowrap'><div id='cathead'></div><h1 id="logo">fatcatmap</h1></div>{%- endblock %}
+{% block logo -%}<div id='logowrap'><div id='cathead'></div><h1 id="logo">fatcatmap</h1></div><!-- end #logowrap -->{%- endblock %}
 
-{% block templates %}
+{% block templates %}{% endblock templates -%}
 
-{% endblock templates %}
+{%- block frame %}
+        <!-- sidebars -->
+        <section>
 
-{% block frame %}
-    <section>
-        <!-- leftbar -->
-        <section id='leftbar' class='transparent collapsed ui-sidebar'>
-            {% block left -%}
-            <section class='controls'>
-                <div class='size-modal size-close' onclick="$.catnip.ui.close(leftbar);">X</div>
-                <div class='size-modal size-expand' onclick="$.catnip.ui.expand(leftbar);"></div>
-                <div class='size-modal size-minimize' onclick="$.catnip.ui.collapse(leftbar);"></div>
-            </section><!-- end #leftbar section.controls -->
-            <section class='content'>
-            </section><!-- end #leftbar section.content -->
-            {%- endblock left %}
-        </section><!-- end #leftbar -->
+            <!-- leftbar -->
+            <section id='leftbar' class='transparent collapsed ui-sidebar'>
+                {% block left -%}
+                <section class='controls'>
+                    <div class='size-modal size-close' onclick="$.catnip.ui.close(leftbar);">X</div>
+                    <div class='size-modal size-expand' onclick="$.catnip.ui.expand(leftbar);"></div>
+                    <div class='size-modal size-minimize' onclick="$.catnip.ui.collapse(leftbar);"></div>
+                </section><!-- end #leftbar section.controls -->
+                <section class='content'>
+                </section><!-- end #leftbar section.content -->
+                {%- endblock left %}
+            </section><!-- end #leftbar -->
 
-        <!-- rightbar -->
-        <section id='rightbar' class='transparent collapsed ui-sidebar'>
-            {% block right -%}
-            <section class='controls'>
-                <div class='size-modal size-close' onclick="$.catnip.ui.close(rightbar);">X</div>
-                <div class='size-modal size-expand' onclick="$.catnip.ui.expand(rightbar);"></div>
-                <div class='size-modal size-minimize' onclick="$.catnip.ui.collapse(rightbar);"></div>
-            </section><!-- end #rightbar section.controls -->
-            <section class='content'>
-            </section><!-- end #rightbar section.content -->
-            {%- endblock right %}
-        </section><!-- end #rightbar -->
-    </section>
-{% endblock frame %}
+            <!-- rightbar -->
+            <section id='rightbar' class='transparent collapsed ui-sidebar'>
+                {% block right -%}
+                <section class='controls'>
+                    <div class='size-modal size-close' onclick="$.catnip.ui.close(rightbar);">X</div>
+                    <div class='size-modal size-expand' onclick="$.catnip.ui.expand(rightbar);"></div>
+                    <div class='size-modal size-minimize' onclick="$.catnip.ui.collapse(rightbar);"></div>
+                </section><!-- end #rightbar section.controls -->
+                <section class='content'>
+                </section><!-- end #rightbar section.content -->
+                {%- endblock right %}
+            </section><!-- end #rightbar -->
+
+        </section>
+{%- endblock frame -%}
 
 {% block appheader %}
             <section id='identity'>
@@ -49,24 +50,27 @@
 {% endblock appheader %}
 
 {% block appstage %}
-    <section>
-        <!-- upper thirds -->
-        <section id='upper-thirds' class='transparent collapsed'>
-            {% block upper_thirds -%}
-            {%- endblock %}
-        </section>
+        <div id="stage-0" class="current stage-content">
 
-        <!-- lower thirds -->
-        <section id='lower-thirds' class='transparent collapsed'>
-            {% block lower_thirds -%}
-            {%- endblock %}
-        </section>
-    </section>
+            <!-- upper/lower thirds -->
+            <section>
+                <!-- upper thirds -->
+                <section id='upper-thirds' class='transparent collapsed'>
+                    {% block upper_thirds -%}{%- endblock %}
+                </section>
 
-    <!-- mapper -->
-    <section id='mapper'>
-        {% block mapper -%}
-        {% include "partials/mappers/svg.html" with context %}
-        {%- endblock mapper %}
-    </section><!-- end #mapper -->
+                <!-- lower thirds -->
+                <section id='lower-thirds' class='transparent collapsed'>
+                    {% block lower_thirds -%}{%- endblock %}
+                </section>
+            </section>
+
+            <!-- mapper -->
+            <section id='mapper'>
+                {% block mapper -%}
+                {% include "partials/mappers/svg.html" with context %}
+                {%- endblock mapper %}
+            </section><!-- end #mapper -->
+
+        </div><!-- end .current.stage-content -->
 {% endblock %}

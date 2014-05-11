@@ -45,13 +45,15 @@
 
     <!-- resources -->
     <div id="resources">
+
       <!-- app templates -->
-      <div id="templates">{% block templates %}{% endblock templates %}</div><!-- end #templates -->
+      <div id="templates">{%- block templates -%}{%- endblock templates -%}</div><!-- end #templates -->
+
     </div><!-- end #resources -->
 
     <!-- appframe -->
     <div id="appframe">
-        {% block appframe %}<h1>appframe</h1>{% endblock %}
+        {% block appframe %}<h1>appframe</h1>{%- endblock %}
     </div><!-- end #appframe -->
 
     <!-- appstage -->
@@ -73,7 +75,6 @@
 
       <!-- context -->
       <script id="js-context" type="application/json">{{ js_context|json|safe }}</script><!-- end #js-context -->
-
       {% if js_context.pagedata -%}<script id="js-data" type="application/json">{{ pagedata|json|safe }}</script><!-- end #js-data -->{%- endif %}
       {%- endblock south %}
 
