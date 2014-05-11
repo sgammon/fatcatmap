@@ -196,7 +196,7 @@ if $?
 ###
   data
 ###
-data = @['catnip']['data']['raw'] = {}
+@['catnip']['data']['raw'] = {}
 
 
 ###
@@ -216,6 +216,7 @@ index = @['catnip']['data']['index'] =
 graph = @['catnip']['data']['graph'] =
   nodes: []
   edges: []
+  origin: null
   natives: []
 
 
@@ -232,6 +233,9 @@ receive = @['catnip']['data']['receive'] = (data) =>
   else
     payload = @['catnip']['data']['payload'] = data
 
+  # copy origin reference
+  graph.origin = payload.graph.origin
+
   ## == inflate data objects == ##
 
   ## 1) keys & objects
@@ -245,7 +249,7 @@ receive = @['catnip']['data']['receive'] = (data) =>
     if not index.natives_by_key[payload.data.keys[native_i]]?
       index.natives_by_key[payload.data.keys[native_i]] = (graph.natives.push
         key: payload.data.keys[native_i]
-        data: data[payload.data.keys[native_i]]
+        data: payload.data.objects[native_i]
       ) - 1
 
   ## == inflate graph structure == ##
@@ -286,14 +290,10 @@ receive = @['catnip']['data']['receive'] = (data) =>
           _i = (graph.edges.push
             edge:
               key: payload.data.keys[_key_iter]
-              data: data[payload.data.keys[_key_iter]]
-            native: data[payload.data.objects[_key_iter].native]
-            source:
-              index: index.nodes_by_key[source_k]
-              object: graph.nodes[index.nodes_by_key[source_k]]
-            target:
-              index: index.nodes_by_key[target_k]
-              object: graph.nodes[index.nodes_by_key[target_k]]
+              data: payload.data.objects[_key_iter]
+            native: @['catnip']['data']['raw'][payload.data.objects[_key_iter].native]
+            source: index.nodes_by_key[source_k]
+            target: index.nodes_by_key[target_k]
           ) - 1
 
           index.edges_by_key[payload.data.keys[_key_iter]].push _i

@@ -7,7 +7,7 @@
 /*
   get
  */
-var busy, catnip, close, collapse, data, dye, expand, graph, hide, idle, index, load_context, receive, show, toggle, _get, _onload,
+var busy, catnip, close, collapse, dye, expand, graph, hide, idle, index, load_context, receive, show, toggle, _get, _onload,
   __slice = [].slice;
 
 _get = this['_get'] = function(d) {
@@ -297,7 +297,7 @@ if (typeof $ !== "undefined" && $ !== null) {
   data
  */
 
-data = this['catnip']['data']['raw'] = {};
+this['catnip']['data']['raw'] = {};
 
 
 /*
@@ -320,6 +320,7 @@ index = this['catnip']['data']['index'] = {
 graph = this['catnip']['data']['graph'] = {
   nodes: [],
   edges: [],
+  origin: null,
   natives: []
 };
 
@@ -336,6 +337,7 @@ receive = this['catnip']['data']['receive'] = (function(_this) {
     } else {
       payload = _this['catnip']['data']['payload'] = data;
     }
+    graph.origin = payload.graph.origin;
     _ref = payload.data.keys;
     for (key_i = _i = 0, _len = _ref.length; _i < _len; key_i = ++_i) {
       key = _ref[key_i];
@@ -350,7 +352,7 @@ receive = this['catnip']['data']['receive'] = (function(_this) {
       if (index.natives_by_key[payload.data.keys[native_i]] == null) {
         index.natives_by_key[payload.data.keys[native_i]] = (graph.natives.push({
           key: payload.data.keys[native_i],
-          data: data[payload.data.keys[native_i]]
+          data: payload.data.objects[native_i]
         })) - 1;
       }
     }
@@ -385,17 +387,11 @@ receive = this['catnip']['data']['receive'] = (function(_this) {
             _i = (graph.edges.push({
               edge: {
                 key: payload.data.keys[_key_iter],
-                data: data[payload.data.keys[_key_iter]]
+                data: payload.data.objects[_key_iter]
               },
-              "native": data[payload.data.objects[_key_iter]["native"]],
-              source: {
-                index: index.nodes_by_key[source_k],
-                object: graph.nodes[index.nodes_by_key[source_k]]
-              },
-              target: {
-                index: index.nodes_by_key[target_k],
-                object: graph.nodes[index.nodes_by_key[target_k]]
-              }
+              "native": _this['catnip']['data']['raw'][payload.data.objects[_key_iter]["native"]],
+              source: index.nodes_by_key[source_k],
+              target: index.nodes_by_key[target_k]
             })) - 1;
             index.edges_by_key[payload.data.keys[_key_iter]].push(_i);
             if (_this['catnip']['data']['index']['adjacency'][source_k] == null) {

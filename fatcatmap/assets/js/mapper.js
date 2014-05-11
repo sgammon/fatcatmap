@@ -16,16 +16,28 @@ configure = function() {
     height: this['catnip']['el']['mapper'].offsetHeight,
     force: {
       alpha: 0,
-      strength: 50,
+      strength: 10,
       friction: 0,
       theta: 0.1,
-      gravity: 0.01,
-      charge: 0,
-      distance: 10
+      gravity: 0.001,
+      charge: -1000,
+      distance: 200
+    },
+    origin: {
+      snap: true,
+      dynamic: true,
+      position: {
+        x: this['catnip']['el']['mapper'].offsetWidth - 30,
+        y: this['catnip']['el']['mapper'].offsetHeight - 30
+      }
     },
     node: {
       radius: 20,
       classes: 'node'
+    },
+    labels: {
+      enable: true,
+      distance: 0
     },
     edge: {
       width: 2,
@@ -86,6 +98,7 @@ browse = this['browse'] = this['catnip']['graph']['browse'] = function(node) {
 draw = this['draw'] = this['catnip']['graph']['draw'] = (function(_this) {
   return function(_graph) {
     var color, config, force, graph_config, _graph_draw, _incremental_draw, _load, _resize;
+    console.log('Drawing materialized graph.', _graph);
     if (_this['catnip']['graph']['active'] == null) {
       graph_config = _this['catnip']['config']['graph'] = configure();
       _this['catnip']['graph']['active'] = _graph;
@@ -96,48 +109,148 @@ draw = this['draw'] = this['catnip']['graph']['draw'] = (function(_this) {
         var height, width;
         width = this.innerWidth || document.body.clientWidth || document.documentElement.clientWidth;
         height = this.innerHeight || document.body.clientHeight || document.documentElement.clientHeight;
+        this['catnip']['config']['graph']['width'] = width;
+        this['catnip']['config']['graph']['height'] = height;
         this['catnip']['graph']['root'].attr('width', width).attr('height', height);
-        return this['catnip']['graph']['force'].alpha(config['events']['click']['warmup']).size([width, height]);
+        return this['catnip']['graph']['force'].alpha(config['events']['click']['warmup']).size([config['width'], config['height']]);
       };
-      _load = function(g) {
-        var container, edge, edge_wrap, legislator_image, line, node, node_wrap, shape, svg;
+      _load = function(g, w, h) {
+        var anchorLink, anchorNode, container, edge, edge_wrap, label_force, legislator_image, line, line_tick, node, node_tick, node_wrap, shape, svg, _consider_district, _e, _edge_labels, _i, _j, _label, _len, _len1, _n, _node_labels, _ref, _ref1, _title_postfix;
         svg = this['catnip']['graph']['root'] = this['d3'].select(this['map']);
+        if (config['labels']['enable']) {
+          _node_labels = [];
+          _edge_labels = [];
+          _ref = g.nodes;
+          for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+            _n = _ref[_i];
+            _label = [];
+            if ((_n["native"].data.fecid != null) || (_n["native"].data.govtrack_id != null)) {
+              if (_n["native"].data.fecid != null) {
+                _consider_district = false;
+                if (_n["native"].data.fecid[0] === 'H') {
+                  _label.push('Rep.');
+                  _consider_district = true;
+                } else if (_n["native"].data.fecid[0] === 'S') {
+                  _label.push('Sen.');
+                } else if (_n["native"].data.fecid[0] === 'P') {
+                  _label.push('President');
+                }
+                _label.push(_n["native"].data.firstname);
+                _label.push(_n["native"].data.lastname);
+                _title_postfix = _n["native"].data.fecid.slice(2, 4);
+                if (_consider_district) {
+                  _title_postfix += '-' + _n["native"].data.fecid.slice(4, 6);
+                }
+                _label.push('[' + _title_postfix + ']');
+                _node_labels.push({
+                  node: _n,
+                  label: _label.join(' ')
+                });
+              } else {
+                console.warn('Missing FECID for Legislator node.', _n);
+                _node_labels.push({
+                  node: _n,
+                  label: ''
+                });
+              }
+            } else if (_n["native"].data.contributor_type != null) {
+              _node_labels.push({
+                node: _n,
+                label: _n["native"].data.name
+              });
+            } else {
+              console.error('Unidentified object.', _n);
+            }
+          }
+          _ref1 = g.edges;
+          for (_j = 0, _len1 = _ref1.length; _j < _len1; _j++) {
+            _e = _ref1[_j];
+            _edge_labels.push({
+              edge: _e,
+              label: 'contribution',
+              source: _e.source,
+              target: _e.target
+            });
+          }
+          label_force = this['catnip']['graph']['label_force'] = this['d3'].layout.force().nodes(_node_labels).links(_edge_labels).gravity(0).linkDistance(0).linkStrength(8).charge(-100).size([w, h]);
+        }
         edge_wrap = this['catnip']['graph']['edge_wrap'] = svg.selectAll('.edge').data(g['edges']).enter();
-        edge = this['catnip']['graph']['edge'] = edge_wrap.append('svg').attr('id', function(e) {
+        edge = this['catnip']['graph']['edge'] = edge_wrap.append('svg:svg').attr('id', function(e) {
           return 'edge-' + e.edge.key;
         });
-        line = this['catnip']['graph']['line'] = edge.append('line').attr('stroke', config['edge']['stroke']).attr('class', config['edge']['classes']).style('stroke-width', config['edge']['width']);
+        line = this['catnip']['graph']['line'] = edge.append('svg:line').attr('stroke', config['edge']['stroke']).attr('class', config['edge']['classes']).style('stroke-width', config['edge']['width']);
         node_wrap = this['catnip']['graph']['node_wrap'] = svg.selectAll('.node').data(g['nodes']).enter();
-        container = this['catnip']['graph']['node_container'] = node_wrap.append('svg').attr('id', function(n) {
+        container = this['catnip']['graph']['node_container'] = node_wrap.append('svg:svg').attr('id', function(n) {
           return 'group-' + n['node']['key'];
         }).attr('width', config['sprite']['width']).attr('height', config['sprite']['height']).on('dblclick', this['catnip']['graph']['browse']).on('click', this['catnip']['graph']['detail']).call(force['drag']);
-        node = this['catnip']['graph']['node'] = container.append('g').attr('width', config['sprite']['width']).attr('height', config['sprite']['height']);
-        shape = this['catnip']['graph']['circle'] = node.append('circle').attr('r', config['node']['radius']).attr('cx', config['sprite']['width'] / 2).attr('cy', config['sprite']['height'] / 2).attr('class', config['node']['classes']);
-        legislator_image = this['catnip']['graph']['legislator_image'] = node.append('image').filter(function(n) {
+        node = this['catnip']['graph']['node'] = container.append('svg:g').attr('width', config['sprite']['width']).attr('height', config['sprite']['height']);
+        shape = this['catnip']['graph']['circle'] = node.append('svg:circle').attr('r', config['node']['radius']).attr('cx', config['sprite']['width'] / 2).attr('cy', config['sprite']['height'] / 2).attr('class', config['node']['classes']);
+        legislator_image = this['catnip']['graph']['legislator_image'] = node.append('svg:image').filter(function(n) {
           return n['native']['data']['govtrack_id'] != null;
         }).attr('width', config['sprite']['width']).attr('height', config['sprite']['height']).attr('clip-path', 'url(#node-circle-mask)').attr('xlink:href', (function(_this) {
           return function(n) {
             return _this['catnip']['config']['assets']['prefix'] + 'warehouse/raw/govtrack/photos/' + n['native']['data']['govtrack_id'].toString() + '-' + '100px.' + config['sprite']['images']['format'];
           };
         })(this));
+        anchorLink = svg.selectAll('.ghost-edge.label').data(_edge_labels);
+        anchorNode = svg.selectAll('.ghost-node.label').data(label_force.nodes()).enter().append('svg:g').attr('id', function(d, i) {
+          return 'anchor-' + d.node.node.key;
+        }).attr('class', 'anchor-node').append('svg:circle').attr('r', 0).style('fill', '#FFF').append('svg:text').text(function(d, i) {
+          return d.label || '';
+        }).style('fill', '#555').style('font-family', 'Arial').style('font-size', 12);
         window.onresize = _resize;
-        force.on('tick', function(f) {
-          line.attr('x1', function(d) {
-            return d['source']['object']['x'] + (config['node']['radius'] / 2);
-          }).attr('y1', function(d) {
-            return d['source']['object']['y'] + (config['node']['radius'] / 2);
-          }).attr('x2', function(d) {
-            return d['target']['object']['x'] + (config['node']['radius'] / 2);
-          }).attr('y2', function(d) {
-            return d['target']['object']['y'] + (config['node']['radius'] / 2);
-          });
-          return container.attr('x', function(d) {
-            return d['x'] - config['node']['radius'];
-          }).attr('y', function(d) {
-            return d['y'] - config['node']['radius'];
-          });
-        });
-        return force.nodes(g['nodes']).links(g['edges']).start();
+        line_tick = (function(_this) {
+          return function(direction, point, edge_data, edge_i) {
+            if (config['origin']['snap']) {
+              if (edge_data[direction]['index'] === graph.origin) {
+                return config['origin']['position'][point];
+              }
+            }
+            return edge_data[direction][point] + (config['node']['radius'] / 2);
+          };
+        })(this);
+        node_tick = (function(_this) {
+          return function(point, node_data, node_i) {
+            if (config['origin']['snap']) {
+              if (node_i === graph.origin) {
+                return config['origin']['position'][point] - (config['sprite']['width'] / 2);
+              }
+            }
+            return node_data[point] - config['node']['radius'];
+          };
+        })(this);
+        force.on('tick', (function(_this) {
+          return function(f) {
+            var center_x, center_y;
+            center_x = config['width'] / 2;
+            center_y = config['height'] / 2;
+            if (config['origin']['dynamic'] && config['origin']['snap']) {
+              config['origin']['position'] = {
+                x: center_x + (config['sprite']['width'] / 2),
+                y: center_y + (config['sprite']['height'] / 2)
+              };
+            }
+            if (config['labels']['enable']) {
+              label_force.start();
+            }
+            line.attr('x1', function(d, i) {
+              return line_tick('source', 'x', d, i);
+            }).attr('y1', function(d, i) {
+              return line_tick('source', 'y', d, i);
+            }).attr('x2', function(d, i) {
+              return line_tick('target', 'x', d, i);
+            }).attr('y2', function(d, i) {
+              return line_tick('target', 'y', d, i);
+            });
+            return container.attr('x', function(d, i) {
+              return node_tick('x', d, i);
+            }).attr('y', function(d, i) {
+              return node_tick('y', d, i);
+            });
+          };
+        })(this));
+        force.nodes(g['nodes']).links(g['edges']).start();
+        return label_force.start();
       };
       console.log('Drawing graph...', _graph);
       _graph_draw = function() {
