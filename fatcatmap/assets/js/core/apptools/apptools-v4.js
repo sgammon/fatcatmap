@@ -1268,7 +1268,7 @@
         return this.throttle(fn, buffer, prefire);
       };
       this.currency = function(num) {
-        var char, index, len, new_nums, nums, process, _j, _len1;
+        var _char, index, len, new_nums, nums, process, _j, _len1;
         len = (nums = String(num).split('').reverse()).length;
         new_nums = [];
         process = function(c, i) {
@@ -1283,8 +1283,8 @@
           return new_nums.unshift(sym + c);
         };
         for (index = _j = 0, _len1 = nums.length; _j < _len1; index = ++_j) {
-          char = nums[index];
-          process(char, index);
+          _char = nums[index];
+          process(_char, index);
         }
         return new_nums.join('');
       };
@@ -4623,10 +4623,11 @@
         }
       };
       this.make = this.create = function(name, source) {
-        if (_this._state.index[name] != null) {
-          return false;
-        }
-        return _this.register(name, new Template(source, true, name));
+        var _tpl;
+        if (_this._state.index[name] != null) { return false; }
+        _tpl = new Template(source, false, name);
+        $.apptools.dev.log('Registering template:', name, _tpl)
+        return _this.register(name, _tpl);
       };
       this.get = function(name_or_uuid) {
         var n;

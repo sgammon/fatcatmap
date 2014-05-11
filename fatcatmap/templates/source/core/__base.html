@@ -9,14 +9,14 @@
     <title>{%- block title -%}fatcatmap ^.^{%- endblock title -%}</title>
 
     <!-- DNS prefetch -->
-    <link rel="dns-prefetch" href="api.fatcatmap.org">
-    <link rel="dns-prefetch" href="cloud.typography.com">
     <link rel="dns-prefetch" href="deliver.fcm-static.com">
+    <link rel="dns-prefetch" href="cloud.typography.com">
+    <link rel="dns-prefetch" href="api.fatcatmap.org">
 
     <!-- info -->
     <meta name="author" content="momentum labs">
-    <meta name="keywords" content="politics, transparency">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="keywords" content="politics, transparency, lobbying, open, government">
+    <meta name="viewport" content="width=device-width, initial-scale=1, minimal-ui">
     {%- endblock meta %}
 
     <!-- icons -->
@@ -47,7 +47,7 @@
     <div id="resources" class="hidden">
 
       <!-- app templates -->
-      <div id="templates">{%- block templates -%}{%- endblock templates -%}</div><!-- end #templates -->
+      <div id="templates">{% block templates -%}{%- endblock templates %}</div><!-- end #templates -->
 
     </div><!-- end #resources -->
 

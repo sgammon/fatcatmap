@@ -2,7 +2,27 @@
 
 {% block logo -%}<div id='logowrap'><div id='cathead'></div><div class='rs-medium rs-large'><h1 class="logo">fatcatmap</h1></div><div class='rs-small'><h1 class="logo">fcm</h1></div></div><!-- end #logowrap -->{%- endblock %}
 
-{% block templates %}{% endblock templates -%}
+{% block templates %}
+
+        <script id="tpl-legislator" nonce="{{ nonce.script }}" type="catnip/template" class="hidden template resource">
+        {%- raw %}
+            <div id="detail-{{=key}}" class="{{=class}}" data-kind="legislator">
+                <div class="byline">
+                    <h2>{{=label}}</h2>
+                    <h3></h3>
+                </div>
+            </div><!-- end #detail-{{=key}} -->
+        {% endraw -%}
+        </script><!-- end #tpl-legislator -->
+        <script id="tpl-contributor" nonce="{{ nonce.script }}" type="catnip/template" class="hidden template resource">
+        {%- raw %}
+            <div id="detail-{{=key}}" class="{{=class}}" data-kind="contributor">
+
+            </div><!-- end #detail-{{=key}}.contributor -->
+        {% endraw -%}
+        </script><!-- end #tpl-contributor -->
+
+      {% endblock templates %}
 
 {%- block frame %}
         <!-- sidebars -->
@@ -12,9 +32,7 @@
             <section id='leftbar' class='transparent collapsed ui-sidebar'>
                 {% block left -%}
                 <section class='controls'>
-                    <div class='size-modal size-close'>X</div>
-                    <div class='size-modal size-expand'></div>
-                    <div class='size-modal size-minimize'></div>
+                    <div class='size-close'>X</div><div class='size-expand'></div><div class='size-minimize'></div>
                 </section><!-- end #leftbar section.controls -->
                 <section class='content'>
                 </section><!-- end #leftbar section.content -->
@@ -25,9 +43,7 @@
             <section id='rightbar' class='transparent collapsed ui-sidebar'>
                 {% block right -%}
                 <section class='controls'>
-                    <div class='size-modal size-close'>X</div>
-                    <div class='size-modal size-expand'></div>
-                    <div class='size-modal size-minimize'></div>
+                    <div class='size-close'>X</div><div class='size-expand'></div><div class='size-minimize'></div>
                 </section><!-- end #rightbar section.controls -->
                 <section class='content'>
                 </section><!-- end #rightbar section.content -->

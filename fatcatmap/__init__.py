@@ -26,7 +26,7 @@ class Page(RawPage):
 
     # JavaScript
     'script-src': (
-      ('self', 'https://deliver.fcm-static.org', 'http://localhost:5000') if __debug__ else (
+      ('self', 'https://deliver.fcm-static.org', 'http://localhost:5000', 'unsafe-eval') if __debug__ else (
       ('self', 'https:', 'deliver.fcm-static.org')
     )),
 
