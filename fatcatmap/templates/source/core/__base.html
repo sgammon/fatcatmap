@@ -44,7 +44,7 @@
   <body class="{{ theme|default('fcm-dark') }} alpha">
 
     <!-- resources -->
-    <div id="resources">
+    <div id="resources" class="hidden">
 
       <!-- app templates -->
       <div id="templates">{%- block templates -%}{%- endblock templates -%}</div><!-- end #templates -->
@@ -62,7 +62,7 @@
     </div><!-- end #appstage -->
 
     <!-- JS -->
-    <div id="js-south" style="display:none;">
+    <div id="js-south" class="hidden">
 
       {% block south -%}
       <!-- bundle/page JS -->
