@@ -21,7 +21,7 @@ configure = function() {
       theta: 0.1,
       gravity: 0.001,
       charge: -1000,
-      distance: 200
+      distance: 150
     },
     origin: {
       snap: true,
@@ -97,14 +97,14 @@ browse = this['browse'] = this['catnip']['graph']['browse'] = function(node) {
 
 draw = this['draw'] = this['catnip']['graph']['draw'] = (function(_this) {
   return function(_graph) {
-    var color, config, force, graph_config, _graph_draw, _incremental_draw, _load, _resize;
+    var color, config, force, graph_config, _incremental_draw, _load, _load_graph, _resize;
     console.log('Drawing materialized graph.', _graph);
     if (_this['catnip']['graph']['active'] == null) {
       graph_config = _this['catnip']['config']['graph'] = configure();
       _this['catnip']['graph']['active'] = _graph;
       config = _this['catnip']['config']['graph'];
       color = _this['d3'].scale.category20();
-      force = _this['catnip']['graph']['force'] = _this['d3'].layout.force().linkDistance(config['force']['distance']).linkStrength(config['force']['strength']).friction(config['force']['friction']).charge(config['force']['charge']).theta(config['force']['theta']).gravity(config['force']['gravity']).alpha(config['force']['alpha']).size([config['width'], config['height']]);
+      force = _this['catnip']['graph']['force'] = _this['d3'].layout.force().size([config['width'], config['height']]).linkDistance(config['force']['distance']).charge(config['force']['charge']);
       _resize = function() {
         var height, width;
         width = this.innerWidth || document.body.clientWidth || document.documentElement.clientWidth;
@@ -115,7 +115,7 @@ draw = this['draw'] = this['catnip']['graph']['draw'] = (function(_this) {
         return this['catnip']['graph']['force'].alpha(config['events']['click']['warmup']).size([config['width'], config['height']]);
       };
       _load = function(g, w, h) {
-        var anchorLink, anchorNode, container, edge, edge_wrap, label_force, legislator_image, line, line_tick, node, node_tick, node_wrap, shape, svg, _consider_district, _e, _edge_labels, _i, _j, _label, _len, _len1, _n, _node_labels, _ref, _ref1, _title_postfix;
+        var anchorLink, anchorNode, container, edge, edge_wrap, label_force, legislator_image, line, line_tick, node, node_tick, node_wrap, shape, svg, _consider_district, _e, _edge_labels, _generate_node_classes, _i, _j, _label, _len, _len1, _n, _node_labels, _ref, _ref1, _title_postfix;
         svg = this['catnip']['graph']['root'] = this['d3'].select(this['map']);
         if (config['labels']['enable']) {
           _node_labels = [];
@@ -183,7 +183,20 @@ draw = this['draw'] = this['catnip']['graph']['draw'] = (function(_this) {
         container = this['catnip']['graph']['node_container'] = node_wrap.append('svg:svg').attr('id', function(n) {
           return 'group-' + n['node']['key'];
         }).attr('width', config['sprite']['width']).attr('height', config['sprite']['height']).on('dblclick', this['catnip']['graph']['browse']).on('click', this['catnip']['graph']['detail']).call(force['drag']);
-        node = this['catnip']['graph']['node'] = container.append('svg:g').attr('width', config['sprite']['width']).attr('height', config['sprite']['height']);
+        _generate_node_classes = function(d, i) {
+          var classList;
+          classList = ['node-group'];
+          if (d["native"].data.govtrack_id != null) {
+            classList.push('legislator');
+            classList.push(d["native"].data.gender === 'M' && 'male' || 'female');
+            classList.push(parseInt((Math.random() * 100) % 2) && 'democrat' || 'republican');
+          } else {
+            classList.push('contributor');
+            classList.push(d["native"].data.contributor_type === 'C' && 'corporate' || 'individual');
+          }
+          return classList.join(' ');
+        };
+        node = this['catnip']['graph']['node'] = container.append('svg:g').attr('width', config['sprite']['width']).attr('height', config['sprite']['height']).attr('class', _generate_node_classes);
         shape = this['catnip']['graph']['circle'] = node.append('svg:circle').attr('r', config['node']['radius']).attr('cx', config['sprite']['width'] / 2).attr('cy', config['sprite']['height'] / 2).attr('class', config['node']['classes']);
         legislator_image = this['catnip']['graph']['legislator_image'] = node.append('svg:image').filter(function(n) {
           return n['native']['data']['govtrack_id'] != null;
@@ -203,25 +216,25 @@ draw = this['draw'] = this['catnip']['graph']['draw'] = (function(_this) {
           return function(direction, point, edge_data, edge_i) {
             if (config['origin']['snap']) {
               if (edge_data[direction]['index'] === graph.origin) {
-                return config['origin']['position'][point];
+                return Math.floor(config['origin']['position'][point]);
               }
             }
-            return edge_data[direction][point] + (config['node']['radius'] / 2);
+            return Math.floor(edge_data[direction][point] + (config['node']['radius'] / 2));
           };
         })(this);
         node_tick = (function(_this) {
           return function(point, node_data, node_i) {
             if (config['origin']['snap']) {
               if (node_i === graph.origin) {
-                return config['origin']['position'][point] - (config['sprite']['width'] / 2);
+                return Math.floor(config['origin']['position'][point] - (config['sprite']['width'] / 2));
               }
             }
-            return node_data[point] - config['node']['radius'];
+            return Math.floor(node_data[point] - config['node']['radius']);
           };
         })(this);
         force.on('tick', (function(_this) {
           return function(f) {
-            var center_x, center_y;
+            var center_x, center_y, point, _k, _l, _len2, _len3, _ref2, _ref3, _results;
             center_x = config['width'] / 2;
             center_y = config['height'] / 2;
             if (config['origin']['dynamic'] && config['origin']['snap']) {
@@ -233,30 +246,31 @@ draw = this['draw'] = this['catnip']['graph']['draw'] = (function(_this) {
             if (config['labels']['enable']) {
               label_force.start();
             }
-            line.attr('x1', function(d, i) {
-              return line_tick('source', 'x', d, i);
-            }).attr('y1', function(d, i) {
-              return line_tick('source', 'y', d, i);
-            }).attr('x2', function(d, i) {
-              return line_tick('target', 'x', d, i);
-            }).attr('y2', function(d, i) {
-              return line_tick('target', 'y', d, i);
-            });
-            return container.attr('x', function(d, i) {
-              return node_tick('x', d, i);
-            }).attr('y', function(d, i) {
-              return node_tick('y', d, i);
-            });
+            _ref2 = ['x', 'y'];
+            for (_k = 0, _len2 = _ref2.length; _k < _len2; _k++) {
+              point = _ref2[_k];
+              container.attr(point, function(d, i) {
+                return node_tick(point, d, i);
+              });
+            }
+            _ref3 = ['x1', 'y1', 'x2', 'y2'];
+            _results = [];
+            for (_l = 0, _len3 = _ref3.length; _l < _len3; _l++) {
+              point = _ref3[_l];
+              _results.push(line.attr(point, function(d, i) {
+                return line_tick(point[1] === '1' && 'source' || 'target', point[0], d, i);
+              }));
+            }
+            return _results;
           };
         })(this));
-        force.nodes(g['nodes']).links(g['edges']).start();
-        return label_force.start();
+        return force.nodes(g['nodes']).links(g['edges']).start() || force;
       };
       console.log('Drawing graph...', _graph);
-      _graph_draw = function() {
+      _load_graph = function() {
         return _load(graph);
       };
-      return setTimeout(_graph_draw, 150);
+      return setTimeout(_load_graph, 150);
     }
     console.log('Incremental draw...', graph);
     _incremental_draw = function() {

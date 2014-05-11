@@ -23,7 +23,7 @@ configure = () ->
       theta: 0.1
       gravity: 0.001
       charge: -1000
-      distance: 200
+      distance: 150
 
     origin:
       snap: true
@@ -104,14 +104,14 @@ draw = @['draw'] = @['catnip']['graph']['draw'] = (_graph) =>
     color = @['d3'].scale.category20()
 
     force = @['catnip']['graph']['force'] = @['d3'].layout.force()
-                      .linkDistance(config['force']['distance'])
-                      .linkStrength(config['force']['strength'])
-                      .friction(config['force']['friction'])
-                      .charge(config['force']['charge'])
-                      .theta(config['force']['theta'])
-                      .gravity(config['force']['gravity'])
-                      .alpha(config['force']['alpha'])
                       .size([config['width'], config['height']])
+                      .linkDistance(config['force']['distance'])
+                      .charge(config['force']['charge'])
+                      #.linkStrength(config['force']['strength'])
+                      #.friction(config['force']['friction'])
+                      #.theta(config['force']['theta'])
+                      #.gravity(config['force']['gravity'])
+                      #.alpha(config['force']['alpha'])
 
     _resize = () ->
       width = @innerWidth || document.body.clientWidth || document.documentElement.clientWidth
@@ -222,9 +222,25 @@ draw = @['draw'] = @['catnip']['graph']['draw'] = (_graph) =>
                            .on('click', @['catnip']['graph']['detail'])
                            .call(force['drag'])
 
+      _generate_node_classes = (d, i) ->
+        classList = ['node-group']
+
+        # if it's a legislator, assign a random party
+        if d.native.data.govtrack_id?
+          classList.push 'legislator'
+          classList.push d.native.data.gender == 'M' and 'male' or 'female'
+          classList.push parseInt((Math.random() * 100) % 2) and 'democrat' or 'republican'
+
+        else
+          classList.push 'contributor'
+          classList.push d.native.data.contributor_type == 'C' and 'corporate' or 'individual'
+
+        return classList.join(' ')
+
       node = @['catnip']['graph']['node'] = container.append('svg:g')
                       .attr('width', config['sprite']['width'])
                       .attr('height', config['sprite']['height'])
+                      .attr('class', _generate_node_classes)
 
       shape = @['catnip']['graph']['circle'] = node.append('svg:circle')
                   .attr('r', config['node']['radius'])
@@ -255,15 +271,15 @@ draw = @['draw'] = @['catnip']['graph']['draw'] = (_graph) =>
       line_tick = (direction, point, edge_data, edge_i) =>
         if config['origin']['snap']
           if edge_data[direction]['index'] == graph.origin
-            return config['origin']['position'][point]
-        return edge_data[direction][point] + (config['node']['radius'] / 2)
+            return Math.floor(config['origin']['position'][point])
+        return Math.floor(edge_data[direction][point] + (config['node']['radius'] / 2))
 
       # node tick callback
       node_tick = (point, node_data, node_i) =>
         if config['origin']['snap']
           if node_i == graph.origin
-            return config['origin']['position'][point] - (config['sprite']['width'] / 2)
-        return node_data[point] - config['node']['radius']
+            return Math.floor(config['origin']['position'][point] - (config['sprite']['width'] / 2))
+        return Math.floor(node_data[point] - config['node']['radius'])
 
       force.on 'tick', (f) =>
 
@@ -275,29 +291,20 @@ draw = @['draw'] = @['catnip']['graph']['draw'] = (_graph) =>
             x: center_x + (config['sprite']['width'] / 2)
             y: center_y + (config['sprite']['height'] / 2)
 
-        if config['labels']['enable']
-          label_force.start()
+        label_force.start() if config['labels']['enable']
 
-        line
-          .attr 'x1', (d, i) => line_tick('source', 'x', d, i)
-          .attr 'y1', (d, i) => line_tick('source', 'y', d, i)
-          .attr 'x2', (d, i) => line_tick('target', 'x', d, i)
-          .attr 'y2', (d, i) => line_tick('target', 'y', d, i)
+        for point in ['x', 'y']
+          container.attr point, (d, i) => node_tick(point, d, i)
 
-        container
-            .attr 'x', (d, i) => node_tick('x', d, i)
-            .attr 'y', (d, i) => node_tick('y', d, i)
-
-      # label force
+        for point in ['x1', 'y1', 'x2', 'y2']
+          line.attr point, (d, i) => line_tick(point[1] == '1' and 'source' or 'target', point[0], d, i)
 
       # start yer engines! :)
-      force.nodes(g['nodes']).links(g['edges']).start()
-      label_force.start()
+      return force.nodes(g['nodes']).links(g['edges']).start() or force
 
     console.log 'Drawing graph...', _graph
-    _graph_draw = () =>
-      _load(graph)
-    return setTimeout(_graph_draw, 150)
+    _load_graph = () => _load(graph)
+    return setTimeout(_load_graph, 150)
 
   # ~~ incremental draw: graph's already here bruh ~~ #
   console.log 'Incremental draw...', graph

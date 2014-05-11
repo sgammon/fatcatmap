@@ -5,13 +5,12 @@
 // ~~ mapper ~~ //
 
 #mapper {
-  position: absolute;
+  position: fixed;
   top: 0;
   left: 0;
   right: 0;
   bottom: 0;
   z-index: 500;
-  overflow: hidden;
 }
 
 #catnip {
@@ -222,17 +221,31 @@ svg svg {
   fill: #ddd;
 }
 
+.node-group {
+
+  &.legislator {
+
+    &.democrat {
+      circle {
+        stroke: #1A6CAC;
+        stroke-width: 6px;
+      }
+    }
+
+    &.republican {
+      circle {
+        stroke: #AB1820;
+        stroke-width: 6px;
+      }
+    }
+
+  }
+
+}
+
 .link {
   stroke-opacity: .6;
   cursor: pointer;
-}
-
-.republican {
-  stroke: hsla(344, 82%, 49%, 0.9);
-}
-
-.democrat {
-  stroke: hsla(213, 79%, 51%, 0.9);
 }
 
 .congress {
