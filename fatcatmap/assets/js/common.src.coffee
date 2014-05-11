@@ -31,7 +31,7 @@ catnip = @['catnip'] =
   context: {}
   config:
     assets:
-      prefix: "//storage.googleapis.com/providence-clarity/"
+      prefix: "//deliver.fcm-static.org/"
   state:
     pending: 1
   events:
@@ -45,6 +45,7 @@ catnip = @['catnip'] =
     spinner: _get '#appspinner'
     leftbar: _get '#leftbar'
     rightbar: _get '#rightbar'
+    signon_providers: _get '#signon-providers'
 
 
 ###
@@ -303,6 +304,45 @@ receive = @['catnip']['data']['receive'] = (data) =>
           @['catnip']['data']['index']['adjacency'][source_k][target_k] = _i
   return setTimeout (-> @['catnip']['graph']['draw'](graph)), 0
 
+
+###
+
+  ui
+
+###
+
+
+###
+  logon
+###
+$.catnip.el.logon?.addEventListener 'click', (event) ->
+
+  # show/hide signon options and button highlight
+  $.catnip.ui.toggle($.catnip.el.logon, 'active')
+  $.catnip.ui.toggle($.catnip.el.signon_providers)
+
+
+###
+  sidebars
+###
+
+# close button
+$('.size-close').on 'click', (event) ->
+  sidebar = event.target.parentElement.parentElement
+  console.log 'Closing sidebar...', sidebar
+  $.catnip.ui.close(sidebar)
+
+# expand button
+$('.size-expand').on 'click', (event) ->
+  sidebar = event.target.parentElement.parentElement
+  console.log 'Expanding sidebar...', sidebar
+  $.catnip.ui.expand(sidebar)
+
+# collapse button
+$('.size-minimize').on 'click', (event) ->
+  sidebar = event.target.parentElement.parentElement
+  console.log 'Collapsing sidebar...', sidebar
+  $.catnip.ui.collapse(sidebar)
 
 
 ###

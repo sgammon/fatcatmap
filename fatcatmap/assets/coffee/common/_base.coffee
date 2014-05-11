@@ -31,7 +31,7 @@ catnip = @['catnip'] =
   context: {}
   config:
     assets:
-      prefix: "//storage.googleapis.com/providence-clarity/"
+      prefix: "//deliver.fcm-static.org/"
   state:
     pending: 1
   events:
@@ -45,6 +45,7 @@ catnip = @['catnip'] =
     spinner: _get '#appspinner'
     leftbar: _get '#leftbar'
     rightbar: _get '#rightbar'
+    signon_providers: _get '#signon-providers'
 
 
 ###

@@ -253,7 +253,7 @@ draw = @['draw'] = @['catnip']['graph']['draw'] = (_graph) =>
                              .attr 'xlink:href', (n) =>
                                 # use 200px-size for retina, 100px-size otherwise
                                 img_size = (@['catnip']['context']['agent']['capabilities']['retina'] and '200px') or '100px'
-                                return @['catnip']['config']['assets']['prefix'] + 'warehouse/raw/govtrack/photos/' + n['native']['data']['govtrack_id'].toString() + '-' + img_size + '.' + config['sprite']['images']['format']
+                                return @['catnip']['config']['assets']['prefix'] + 'image-proxy/providence-clarity/warehouse/raw/govtrack/photos/' + n['native']['data']['govtrack_id'].toString() + '-' + img_size + '.' + config['sprite']['images']['format']
 
       if config['labels']['enable']
         ## 3) label structure

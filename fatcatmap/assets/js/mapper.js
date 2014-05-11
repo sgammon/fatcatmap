@@ -199,7 +199,7 @@ draw = this['draw'] = this['catnip']['graph']['draw'] = (function(_this) {
           return function(n) {
             var img_size;
             img_size = (_this['catnip']['context']['agent']['capabilities']['retina'] && '200px') || '100px';
-            return _this['catnip']['config']['assets']['prefix'] + 'warehouse/raw/govtrack/photos/' + n['native']['data']['govtrack_id'].toString() + '-' + img_size + '.' + config['sprite']['images']['format'];
+            return _this['catnip']['config']['assets']['prefix'] + 'image-proxy/providence-clarity/warehouse/raw/govtrack/photos/' + n['native']['data']['govtrack_id'].toString() + '-' + img_size + '.' + config['sprite']['images']['format'];
           };
         })(this));
         if (config['labels']['enable']) {

@@ -7,7 +7,7 @@
 /*
   get
  */
-var busy, catnip, close, collapse, dye, expand, graph, hide, idle, index, load_context, receive, show, toggle, _get, _onload,
+var busy, catnip, close, collapse, dye, expand, graph, hide, idle, index, load_context, receive, show, toggle, _get, _onload, _ref,
   __slice = [].slice;
 
 _get = this['_get'] = function(d) {
@@ -37,7 +37,7 @@ catnip = this['catnip'] = {
   context: {},
   config: {
     assets: {
-      prefix: "//storage.googleapis.com/providence-clarity/"
+      prefix: "//deliver.fcm-static.org/"
     }
   },
   state: {
@@ -54,7 +54,8 @@ catnip = this['catnip'] = {
     mapper: _get('#mapper'),
     spinner: _get('#appspinner'),
     leftbar: _get('#leftbar'),
-    rightbar: _get('#rightbar')
+    rightbar: _get('#rightbar'),
+    signon_providers: _get('#signon-providers')
   }
 };
 
@@ -411,6 +412,50 @@ receive = this['catnip']['data']['receive'] = (function(_this) {
 
 /*
 
+  ui
+ */
+
+
+/*
+  logon
+ */
+
+if ((_ref = $.catnip.el.logon) != null) {
+  _ref.addEventListener('click', function(event) {
+    $.catnip.ui.toggle($.catnip.el.logon, 'active');
+    return $.catnip.ui.toggle($.catnip.el.signon_providers);
+  });
+}
+
+
+/*
+  sidebars
+ */
+
+$('.size-close').on('click', function(event) {
+  var sidebar;
+  sidebar = event.target.parentElement.parentElement;
+  console.log('Closing sidebar...', sidebar);
+  return $.catnip.ui.close(sidebar);
+});
+
+$('.size-expand').on('click', function(event) {
+  var sidebar;
+  sidebar = event.target.parentElement.parentElement;
+  console.log('Expanding sidebar...', sidebar);
+  return $.catnip.ui.expand(sidebar);
+});
+
+$('.size-minimize').on('click', function(event) {
+  var sidebar;
+  sidebar = event.target.parentElement.parentElement;
+  console.log('Collapsing sidebar...', sidebar);
+  return $.catnip.ui.collapse(sidebar);
+});
+
+
+/*
+
   context
  */
 
@@ -508,11 +553,11 @@ this['catnip']['events']['onload'].push(load_context);
  */
 
 _onload = this['onload'] = function(event) {
-  var callback, _i, _len, _ref, _results;
-  _ref = this['catnip']['events']['onload'];
+  var callback, _i, _len, _ref1, _results;
+  _ref1 = this['catnip']['events']['onload'];
   _results = [];
-  for (_i = 0, _len = _ref.length; _i < _len; _i++) {
-    callback = _ref[_i];
+  for (_i = 0, _len = _ref1.length; _i < _len; _i++) {
+    callback = _ref1[_i];
     _results.push(callback(event));
   }
   return _results;

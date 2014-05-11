@@ -20,19 +20,19 @@ class Page(RawPage):
   __js_context__ = {}  # holds javascript context items
 
   # Content Security Policy
-  content_nonce = False
-  content_security_report_only = True
+  content_nonce = True
+  content_security_report_only = False
   content_security_policy = {
 
     # JavaScript
     'script-src': (
-      ('self', 'https://deliver.fcm-static.org', 'http://localhost:5000', 'unsafe-inline') if __debug__ else (
-      ('self', 'https:', 'deliver.fcm-static.org', 'unsafe-inline')
+      ('self', 'https://deliver.fcm-static.org', 'http://localhost:5000') if __debug__ else (
+      ('self', 'https:', 'deliver.fcm-static.org')
     )),
 
     # WebSocket / RPC
     'connect-src': (
-      ('self', 'https://api.fatcatmap.org', 'https://realtime.fatcatmap.org', 'http://localhost:5000', 'unsafe-inline')  if __debug__ else (
+      ('self', 'https://api.fatcatmap.org', 'https://realtime.fatcatmap.org', 'http://localhost:5000')  if __debug__ else (
       ('self', 'https:', 'api.fatcatmap.org', 'realtime.fatcatmap.org')
     ))
 

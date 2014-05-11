@@ -127,7 +127,7 @@ config = cfg.Config(app={
   'config': {
 
     'minified': False,
-    'serving_mode': 'local' if __debug__ else 'cdn',
+    'serving_mode': 'cdn',
     'cdn_prefix': ['//deliver.fcm-static.org'],
 
     'asset_prefix': {
