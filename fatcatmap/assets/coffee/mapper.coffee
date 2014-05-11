@@ -37,7 +37,7 @@ configure = () ->
       classes: 'node'
 
     labels:
-      enable: true
+      enable: false
       distance: 0
 
     edge:
@@ -49,7 +49,7 @@ configure = () ->
       width: 60
       height: 60
       images:
-        format: (@['catnip']['context']['data']['agent']['capabilities']['webp'] and 'webp') or 'jpeg'
+        format: (@['catnip']['context']['agent']['capabilities']['webp'] and 'webp') or 'jpeg'
 
   @['catnip']['config']['graph'] = config
   return config
@@ -250,15 +250,19 @@ draw = @['draw'] = @['catnip']['graph']['draw'] = (_graph) =>
                              .attr('width', config['sprite']['width'])
                              .attr('height', config['sprite']['height'])
                              .attr('clip-path', 'url(#node-circle-mask)')
-                             .attr('xlink:href', (n) => @['catnip']['config']['assets']['prefix'] + 'warehouse/raw/govtrack/photos/' + n['native']['data']['govtrack_id'].toString() + '-' + '100px.' + config['sprite']['images']['format'])
+                             .attr 'xlink:href', (n) =>
+                                # use 200px-size for retina, 100px-size otherwise
+                                img_size = (@['catnip']['context']['agent']['capabilities']['retina'] and '200px') or '100px'
+                                return @['catnip']['config']['assets']['prefix'] + 'warehouse/raw/govtrack/photos/' + n['native']['data']['govtrack_id'].toString() + '-' + img_size + '.' + config['sprite']['images']['format']
 
-      ## 3) label structure
-      anchorLink = svg.selectAll('.ghost-edge.label').data(_edge_labels)
-      anchorNode = svg.selectAll('.ghost-node.label').data(label_force.nodes()).enter()
-                      .append('svg:g').attr('id', (d, i) -> 'anchor-' + d.node.node.key).attr('class', 'anchor-node')
-                      .append('svg:circle').attr('r', 0).style('fill', '#FFF')
-                      .append('svg:text').text((d, i) -> d.label or '')
-                      .style('fill', '#555').style('font-family', 'Arial').style('font-size', 12)
+      if config['labels']['enable']
+        ## 3) label structure
+        anchorLink = svg.selectAll('.ghost-edge.label').data(_edge_labels)
+        anchorNode = svg.selectAll('.ghost-node.label').data(label_force.nodes()).enter()
+                        .append('svg:g').attr('id', (d, i) -> 'anchor-' + d.node.node.key).attr('class', 'anchor-node')
+                        .append('svg:circle').attr('r', 0).style('fill', '#FFF')
+                        .append('svg:text').text((d, i) -> d.label or '')
+                        .style('fill', '#555').style('font-family', 'Arial').style('font-size', 12)
 
       # attach resize handler
       window.onresize = _resize

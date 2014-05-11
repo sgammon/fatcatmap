@@ -419,20 +419,35 @@ load_context = this['catnip']['context']['load'] = (function(_this) {
     var context, pagedata, _catnip, _map, _mapper_queue, _mapper_reveal, _show_queue, _ui_reveal;
     _show_queue = [];
     _mapper_queue = [];
-    context = _this['catnip']['context']['data'] = data || JSON.parse(document.getElementById('js-context').textContent);
+    context = _this['catnip']['context'] = data || JSON.parse(document.getElementById('js-context').textContent);
+    _this['catnip']['context']['load'] = load_context;
     console.log("Loading context...", context);
-    if (_this['catnip']['context']['data']['services']) {
+    _this['catnip']['context']['agent']['capabilities']['cookies'] = navigator.cookieEnabled;
+    _this['catnip']['context']['agent']['capabilities']['retina'] = window.devicePixelRatio === 2;
+    _this['catnip']['context']['agent']['capabilities']['worker'] = window.Worker && true || false;
+    _this['catnip']['context']['agent']['capabilities']['shared_worker'] = window.SharedWorker && true || false;
+    _this['catnip']['context']['agent']['capabilities']['service_worker'] = navigator.serviceWorker && true || false;
+    _this['catnip']['context']['agent']['capabilities']['websocket'] = window.WebSocket && true || false;
+    _this['catnip']['context']['agent']['capabilities']['geo'] = navigator.geolocation && true || false;
+    _this['catnip']['context']['agent']['capabilities']['touch'] = navigator.maxTouchPoints > 0;
+    _this['catnip']['context']['agent']['capabilities']['history'] = window.history.pushState && true || false;
+    _this['catnip']['context']['agent']['capabilities']['storage'] = {
+      local: window.localStorage != null,
+      session: window.sessionStorage != null,
+      indexed: window.IDBFactory != null
+    };
+    if (_this['catnip']['context']['services']) {
       console.log("Loading services...", context['services']);
       apptools['rpc']['service']['factory'](context['services']);
     }
-    if (_this['catnip']['context']['data']['pagedata']) {
+    if (_this['catnip']['context']['pagedata']) {
       pagedata = _this['pagedata'] = JSON.parse(document.getElementById('js-data').textContent);
       console.log("Detected stapled pagedata...", pagedata);
       _this['catnip']['data']['receive'](pagedata);
     }
-    if (_this['catnip']['context']['data']['session']) {
-      if (_this['catnip']['context']['data']['session']['established']) {
-        _this['catnip']['session'] = _this['catnip']['context']['data']['session']['payload'];
+    if (_this['catnip']['context']['session']) {
+      if (_this['catnip']['context']['session']['established']) {
+        _this['catnip']['session'] = _this['catnip']['context']['session']['payload'];
         console.log("Loading existing session...", _this['catnip']['session']);
       } else {
         _this['catnip']['session'] = {};

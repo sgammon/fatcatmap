@@ -36,7 +36,7 @@ configure = function() {
       classes: 'node'
     },
     labels: {
-      enable: true,
+      enable: false,
       distance: 0
     },
     edge: {
@@ -48,7 +48,7 @@ configure = function() {
       width: 60,
       height: 60,
       images: {
-        format: (this['catnip']['context']['data']['agent']['capabilities']['webp'] && 'webp') || 'jpeg'
+        format: (this['catnip']['context']['agent']['capabilities']['webp'] && 'webp') || 'jpeg'
       }
     }
   };
@@ -197,15 +197,19 @@ draw = this['draw'] = this['catnip']['graph']['draw'] = (function(_this) {
           return n['native']['data']['govtrack_id'] != null;
         }).attr('width', config['sprite']['width']).attr('height', config['sprite']['height']).attr('clip-path', 'url(#node-circle-mask)').attr('xlink:href', (function(_this) {
           return function(n) {
-            return _this['catnip']['config']['assets']['prefix'] + 'warehouse/raw/govtrack/photos/' + n['native']['data']['govtrack_id'].toString() + '-' + '100px.' + config['sprite']['images']['format'];
+            var img_size;
+            img_size = (_this['catnip']['context']['agent']['capabilities']['retina'] && '200px') || '100px';
+            return _this['catnip']['config']['assets']['prefix'] + 'warehouse/raw/govtrack/photos/' + n['native']['data']['govtrack_id'].toString() + '-' + img_size + '.' + config['sprite']['images']['format'];
           };
         })(this));
-        anchorLink = svg.selectAll('.ghost-edge.label').data(_edge_labels);
-        anchorNode = svg.selectAll('.ghost-node.label').data(label_force.nodes()).enter().append('svg:g').attr('id', function(d, i) {
-          return 'anchor-' + d.node.node.key;
-        }).attr('class', 'anchor-node').append('svg:circle').attr('r', 0).style('fill', '#FFF').append('svg:text').text(function(d, i) {
-          return d.label || '';
-        }).style('fill', '#555').style('font-family', 'Arial').style('font-size', 12);
+        if (config['labels']['enable']) {
+          anchorLink = svg.selectAll('.ghost-edge.label').data(_edge_labels);
+          anchorNode = svg.selectAll('.ghost-node.label').data(label_force.nodes()).enter().append('svg:g').attr('id', function(d, i) {
+            return 'anchor-' + d.node.node.key;
+          }).attr('class', 'anchor-node').append('svg:circle').attr('r', 0).style('fill', '#FFF').append('svg:text').text(function(d, i) {
+            return d.label || '';
+          }).style('fill', '#555').style('font-family', 'Arial').style('font-size', 12);
+        }
         window.onresize = _resize;
         line_tick = (function(_this) {
           return function(direction, point, edge_data, edge_i) {
