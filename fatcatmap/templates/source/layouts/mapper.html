@@ -27,15 +27,13 @@
 {%- block frame %}
         <!-- sidebars -->
         <section>
-
             <!-- leftbar -->
             <section id='leftbar' class='transparent collapsed ui-sidebar'>
                 {% block left -%}
                 <section class='controls'>
                     <div class='size-close'>X</div><div class='size-expand'></div><div class='size-minimize'></div>
                 </section><!-- end #leftbar section.controls -->
-                <section class='content'>
-                </section><!-- end #leftbar section.content -->
+                <section class='content'></section><!-- end #leftbar section.content -->
                 {%- endblock left %}
             </section><!-- end #leftbar -->
 
@@ -45,11 +43,9 @@
                 <section class='controls'>
                     <div class='size-close'>X</div><div class='size-expand'></div><div class='size-minimize'></div>
                 </section><!-- end #rightbar section.controls -->
-                <section class='content'>
-                </section><!-- end #rightbar section.content -->
+                <section class='content'></section><!-- end #rightbar section.content -->
                 {%- endblock right %}
             </section><!-- end #rightbar -->
-
         </section>
 {%- endblock frame -%}
 
@@ -68,13 +64,11 @@
 
             <!-- upper/lower thirds -->
             <section>
-
                 <!-- upper thirds -->
                 <section id='upper-thirds' class='transparent collapsed'>{%- block upper_thirds -%}{%- endblock -%}</section><!-- end #upper-thirds -->
 
                 <!-- lower thirds -->
                 <section id='lower-thirds' class='transparent collapsed'>{%- block lower_thirds -%}{%- endblock -%}</section><!-- end #lower-thirds -->
-
             </section>
 
             <!-- mapper -->
