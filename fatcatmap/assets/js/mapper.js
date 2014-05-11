@@ -62,8 +62,24 @@ configure = function() {
  */
 
 detail = this['detail'] = this['catnip']['graph']['detail'] = function(node) {
-  console.log('Showing detail for node...', node);
-  $('#leftbar section.content').text('node: ' + node.node.key);
+  var rendered, _ref, _ref1, _ref2;
+  if (node["native"].data.firstname != null) {
+    rendered = $.apptools.templates.get('tpl-legislator').render({
+      key: node.node.key,
+      "class": 'node-detail',
+      firstname: node["native"].data.firstname,
+      lastname: node["native"].data.lastname,
+      office: (((_ref = node["native"].data.fecid) != null ? _ref[0] : void 0) === 'H') && 'Representative' || 'Senator',
+      title: (((_ref1 = node["native"].data.fecid) != null ? _ref1[0] : void 0) === 'H') && 'Rep' || 'Sen',
+      state: (_ref2 = node["native"].data.fecid) != null ? _ref2.slice(2, 4) : void 0,
+      govtrack_id: node["native"].data.govtrack_id,
+      image_format: $.catnip.config.graph.sprite.images.format,
+      portrait_size: '200px',
+      config: $.catnip.config
+    });
+    $('#leftbar section.content').html(rendered);
+  }
+  console.log('Showing detail for node...', node, rendered);
   if ($.catnip.el.leftbar.classList.contains('collapsed')) {
     return $.catnip.ui.expand($.catnip.el.leftbar);
   }

@@ -60,8 +60,27 @@ configure = () ->
 ###
 
 detail = @['detail'] = @['catnip']['graph']['detail'] = (node) ->
-  console.log 'Showing detail for node...', node
-  $('#leftbar section.content').text('node: ' + node.node.key)
+
+  # resolve node type
+  if node.native.data.firstname?
+
+    # render template
+    rendered = $.apptools.templates.get('tpl-legislator').render
+      key: node.node.key,
+      class: 'node-detail',
+      firstname: node.native.data.firstname,
+      lastname: node.native.data.lastname,
+      office: (node.native.data.fecid?[0]=='H') and 'Representative' or 'Senator',
+      title: (node.native.data.fecid?[0]=='H') and 'Rep' or 'Sen',
+      state: node.native.data.fecid?.slice(2, 4),
+      govtrack_id: node.native.data.govtrack_id,
+      image_format: $.catnip.config.graph.sprite.images.format,
+      portrait_size: '200px'
+      config: $.catnip.config
+
+    $('#leftbar section.content').html(rendered)
+
+  console.log 'Showing detail for node...', node, rendered
 
   if $.catnip.el.leftbar.classList.contains('collapsed')
     $.catnip.ui.expand($.catnip.el.leftbar)

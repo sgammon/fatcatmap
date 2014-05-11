@@ -8,8 +8,11 @@
         {%- raw %}
             <div id="detail-{{=key}}" class="{{=class}}" data-kind="legislator">
                 <div class="byline">
-                    <h2>{{=label}}</h2>
-                    <h3></h3>
+                    <h2>{{=firstname}} {{=lastname}}</h2>
+                    <h3>{{=office}}, {{=state}}{{district}}-{{=district}}{{/district}}</h3>
+                </div>
+                <div class="portrait">
+                    <img class="legislator govtrack thumbnail" alt="{{=title}}. {{=firstname}} {{=lastname}} [{{=state}}{{district}}-{{=district}}{{/district}}]" src="{{=config.assets.prefix}}image-proxy/providence-clarity/warehouse/raw/govtrack/photos/{{=govtrack_id}}{{portrait_size}}-{{=portrait_size}}{{/portrait_size}}.{{=image_format}}" />
                 </div>
             </div><!-- end #detail-{{=key}} -->
         {% endraw -%}
@@ -17,7 +20,10 @@
         <script id="tpl-contributor" nonce="{{ nonce.script }}" type="catnip/template" class="hidden template resource">
         {%- raw %}
             <div id="detail-{{=key}}" class="{{=class}}" data-kind="contributor">
-
+                <div class="byline">
+                    <h2>{{=name}}</h2>
+                    <h3>{{type=='C'}}Corporate Contributor{{:type=='I'}}Individual Contributor{{/type}}</h3>
+                </div>
             </div><!-- end #detail-{{=key}}.contributor -->
         {% endraw -%}
         </script><!-- end #tpl-contributor -->
