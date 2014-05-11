@@ -63,7 +63,7 @@ class Page(RawPage):
     # set extra security headers
     self.response.headers['X-Frame-Options'] = 'DENY'
     self.response.headers['X-XSS-Protection'] = '1; mode=block'
-    self.response.headers['X-UA-Compatible'] = 'Chrome=1,IE=edge'
+    self.response.headers['X-Content-Type-Options'] = 'nosniff'
 
     supercontext = super(Page, self).template_context
     return (supercontext.update({
