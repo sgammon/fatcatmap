@@ -278,7 +278,7 @@ draw = @['draw'] = @['catnip']['graph']['draw'] = (_graph) =>
       node_tick = (point, node_data, node_i) =>
         if config['origin']['snap']
           if node_i == graph.origin
-            return Math.floor(config['origin']['position'][point] - (config['sprite']['width'] / 2))
+            return Math.floor(config['origin']['position'][point] - (config['sprite'][point == 'x' and 'width' or 'height']) / 2)
         return Math.floor(node_data[point] - config['node']['radius'])
 
       force.on 'tick', (f) =>

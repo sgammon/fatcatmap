@@ -225,7 +225,7 @@ draw = this['draw'] = this['catnip']['graph']['draw'] = (function(_this) {
           return function(point, node_data, node_i) {
             if (config['origin']['snap']) {
               if (node_i === graph.origin) {
-                return Math.floor(config['origin']['position'][point] - (config['sprite']['width'] / 2));
+                return Math.floor(config['origin']['position'][point] - config['sprite'][point === 'x' && 'width' || 'height'] / 2);
               }
             }
             return Math.floor(node_data[point] - config['node']['radius']);
