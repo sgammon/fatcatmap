@@ -54,15 +54,13 @@
 
             <!-- upper/lower thirds -->
             <section>
+
                 <!-- upper thirds -->
-                <section id='upper-thirds' class='transparent collapsed'>
-                    {% block upper_thirds -%}{%- endblock %}
-                </section>
+                <section id='upper-thirds' class='transparent collapsed'>{%- block upper_thirds -%}{%- endblock -%}</section><!-- end #upper-thirds -->
 
                 <!-- lower thirds -->
-                <section id='lower-thirds' class='transparent collapsed'>
-                    {% block lower_thirds -%}{%- endblock %}
-                </section>
+                <section id='lower-thirds' class='transparent collapsed'>{%- block lower_thirds -%}{%- endblock -%}</section><!-- end #lower-thirds -->
+
             </section>
 
             <!-- mapper -->
