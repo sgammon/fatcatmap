@@ -59,8 +59,8 @@ endif
 endif
 
 ifeq ($(BUILDBOX),1)
-LIBROOT=./lib
-DEVROOT=.
+LIBROOT=$(BUILDROOT)/lib
+DEVROOT=$(BUILDROOT)
 else
 LIBROOT=$(PWD)/lib
 DEVROOT=$(PWD)
@@ -198,6 +198,7 @@ $(DEVROOT)/lib/python2.7/site-packages/canteen.pth:
 	@touch ./.env
 
 $(DEVROOT)/.env: closure bootstrap canteen npm
+	@echo "Using devroot $(DEVROOT)..."
 	@echo "Initializing virtualenv..."
 	@-pip install virtualenv
 	@virtualenv $(DEVROOT) --prompt="(fcm)" -q
