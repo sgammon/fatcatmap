@@ -5,6 +5,7 @@
   , "keywords": ["politics", "transparency", "opendata", "opensource"]
   , "homepage": "https://fatcatmap.org"
   , "author": "momentum labs"
+  , "private": true
   , "scripts": {}
   , "repository": {
       "type": "git"

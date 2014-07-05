@@ -95,7 +95,7 @@ canteen: lib/canteen
 
 js:
 	@echo "Compiling Coffee..."
-	@node_modules/grunt-cli/bin/grunt coffee closure-compiler
+	@node_modules/grunt-cli/bin/grunt coffee
 
 styles:
 	@echo "Compiling Less..."
