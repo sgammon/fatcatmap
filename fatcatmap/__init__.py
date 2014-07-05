@@ -140,19 +140,12 @@ class Page(RawPage):
   js_context = property(lambda self: self.__js_context__)
 
 
-def preload():
-
-  '''  '''
-
-  # preload fcm modules
-  from fatcatmap.logic import *
-  from fatcatmap.models import *
-  from fatcatmap.services import *
-
-  try:
-    from fatcatmap.templates.compiled import *
-  except ImportError:
-    pass
+## == preload all the things! == ##
+from .config import *
+from .models import *
+from .logic import *
+from .pages import *
+from .services import *
 
 
 __all__ = (

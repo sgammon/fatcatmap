@@ -2,7 +2,20 @@
 #
 #    fatcatmap: makefile
 #
-
+#   :author: Sam Gammon <sam@momentum.io>
+#   :author: Alex Rosner <alex@momentum.io>
+#   :author: David Rekow <david@momentum.io>
+#   :author: Ian Weisberger <ian@momentum.io>
+#   :copyright: (c) momentum labs, 2014
+#   :license: This is private software code and all
+#             rights to access, observe, run, compile
+#             deploy, modify, put use to, or leverage
+#             for commercial gain (and any other rights
+#             not enumerated here as governed by
+#             applicable law) are held and reserved
+#             ad infinitum by momentum labs, inc. and
+#             its employees, founders, and partners.
+#
 
 ### === VARS === ###
 
@@ -11,8 +24,13 @@ HOST?=127.0.0.1
 PORT?=9000
 DEBUG?=1
 USER?=`whoami`
+SANDBOX?=0
 SANDBOX_GIT?=$(USER)@sandbox
-CANTEEN_BRANCH?=master
+CANTEEN_BRANCH?=runtime/uwsgi
+BOOTSTRAP_BRANCH?=master
+BUILDBOX?=0
+BREW?=1
+BREWDEPS=openssl python haproxy redis nginx pypy
 
 ifeq ($(DEBUG),0)
 LESS_ARGS=--no-ie-compat --include-path=fatcatmap/assets/less:fatcatmap/assets/bootstrap --compress --clean-css -O2
@@ -40,6 +58,14 @@ OPTIONALS+=logbook
 endif
 endif
 
+ifeq ($(BUILDBOX),1)
+LIBROOT=./lib
+DEVROOT=.
+else
+LIBROOT=$(PWD)/lib
+DEVROOT=$(PWD)
+endif
+
 
 ### === ROUTINES === ###
 
@@ -61,32 +87,61 @@ package: develop
 
 	@echo "=== fcm distribution built. ==="
 
-ifeq ($(DEBUG),1)
-develop: .develop scripts templates bootstrap
+develop: .develop js styles templates coverage
 	@echo "Updating source dependencies..."
 	@echo "Cloning as user $(USER)..."
-	@git clone $(SANDBOX_GIT):sources/dependencies/canteen.git $(PWD)/lib/canteen -b $(CANTEEN_BRANCH)
+
+canteen: lib/canteen
+
+js:
+	@echo "Compiling Coffee..."
+	@node_modules/grunt-cli/bin/grunt coffee closure-compiler
+
+styles:
+	@echo "Compiling Less..."
+	@node_modules/grunt-cli/bin/grunt less
+
+ifeq ($(BREW),1)
+brew:
+	@echo "Brewing for Mac..."
+	@-which brew > /dev/null && brew install $(BREWDEPS) 2> /dev/null
 else
-develop: .develop scripts templates bootstrap
+brew:
+	@echo "Skipping brew."
+endif
+
+ifeq ($(SANDBOX),1)
+lib/canteen:
+	@echo "Cloning Canteen from sandbox..."
+	@git clone $(SANDBOX_GIT):sources/dependencies/canteen.git $(LIBROOT)/canteen -b $(CANTEEN_BRANCH)
+ifeq ($(DEBUG),1)
+else
+lib/canteen:
 	@echo "Updating source dependencies..."
-	@echo "Cloning as user $(USER)..."
-	@git clone /base/sources/dependencies/canteen.git $(PWD)/lib/canteen -b $(CANTEEN_BRANCH)
+	@git clone /base/sources/dependencies/canteen.git $(LIBROOT)/canteen -b $(CANTEEN_BRANCH)
+endif
+else
+lib/canteen:
+	@echo "Updating source dependencies..."
+	@echo "Cloning from GitHub..."
+	@git clone https://github.com/momentum/canteen.git $(LIBROOT)/canteen -b $(CANTEEN_BRANCH)
 endif
 
 test:
-	@pip install nose
+	@pip install nose coverage
 	@echo "Running testsuite..."
-	@nosetests fatcatmap_tests canteen_tests --no-byte-compile --verbose
+	@nosetests canteen_tests fatcatmap_tests --verbose
 
 coverage:
-	@pip install nose
+	@pip install nose coverage
 	@echo "Running testsuite (with coverage)..."
-	@nosetests fatcatmap_tests canteen_tests --with-coverage \
+	@mkdir -p .develop/coverage
+	@nosetests canteen_tests fatcatmap_tests --with-coverage \
 							 --cover-package=fatcatmap \
-							 --cover-package=canteen \
-							 --cover-html-dir=.develop/coverage_html \
-							 --cover-xml-file=.develop/coverage.xml \
-							 --no-byte-compile;
+							 --cover-html \
+							 --cover-html-dir=.develop/coverage/html \
+							 --cover-xml \
+							 --cover-xml-file=.develop/coverage.xml;
 
 deploy:
 	@echo "Deployment is not currently supported from dev. Check back later."
@@ -117,34 +172,35 @@ forceclean: distclean
 	@git reset --hard
 
 	@echo "Cleaning libraries..."
-	@rm -fr $(PWD)/lib/canteen
+	@rm -fr $(LIBROOT)/canteen
 
 	@echo "Cleaning untracked files..."
 	@git clean -df
 
 ### === dirs === ###
-bin: $(PWD)/.env
-lib: $(PWD)/.env
+bin: $(DEVROOT)/.env
+lib: $(DEVROOT)/.env
 
 ### === resources === ###
-templates: $(PWD)/.develop
+templates: $(DEVROOT)/.develop
 	@echo "Building fcm templates..."
+	@bin/fcm build --templates
 
 ### === defs === ###
-$(PWD)/bin/fcm:
+$(DEVROOT)/bin/fcm:
 	@echo "Symlinking toolchain..."
-	@-ln -s $(PWD)/scripts/fcm.py $(PWD)/bin/fcm
+	@-ln -s $(DEVROOT)/scripts/fcm.py $(DEVROOT)/bin/fcm
 
-$(PWD)/lib/python2.7/site-packages/canteen.pth:
-	@echo "$(PWD)/lib/canteen" > lib/python2.7/site-packages/canteen.pth
+$(DEVROOT)/lib/python2.7/site-packages/canteen.pth:
+	@echo "$(DEVROOT)/lib/canteen" > lib/python2.7/site-packages/canteen.pth
 
-.develop: bin lib $(PWD)/.env $(PWD)/bin/fcm $(PWD)/lib/python2.7/site-packages/canteen.pth closure $(OPTIONALS)
+.develop: bin lib $(DEVROOT)/.env $(DEVROOT)/bin/fcm bootstrap canteen closure $(DEVROOT)/lib/python2.7/site-packages/canteen.pth brew $(OPTIONALS)
 	@touch ./.env
 
-$(PWD)/.env: npm
+$(DEVROOT)/.env: closure bootstrap canteen npm
 	@echo "Initializing virtualenv..."
 	@pip install virtualenv
-	@virtualenv . --prompt="(fcm)" -q
+	@virtualenv $(DEVROOT) --prompt="(fcm)" -q
 	@-sed -e 's/printf "%s%s%s" "(fcm)" (set_color normal) (_old_fish_prompt)/printf " %s ^.^ %s %s(fcm)%s  %s " (set_color -b green black) (set_color normal) (set_color -b white black) (set_color normal) (_old_fish_prompt)/g' bin/activate.fish > bin/activate_color.fish
 	@-mv bin/activate.fish bin/activate_lame.fish
 	@-mv bin/activate_color.fish bin/activate.fish
@@ -152,11 +208,20 @@ $(PWD)/.env: npm
 	@echo "Overriding standard Google paths..."
 	@-echo "" > lib/python2.7/site-packages/protobuf-2.5.0-py2.7-nspkg.pth
 
-	@echo "Installing Pip dependencies (this may take awhile)..."
+	@echo "Installing Canteen dependencies..."
+	@bin/pip install "git+https://github.com/sgammon/protobuf.git#egg=protobuf-2.5.2-canteen"
+	@bin/pip install "git+https://github.com/sgammon/hamlish-jinja.git#egg=hamlish_jinja-0.3.4-canteen"
+	@pip install -r lib/canteen/requirements.txt
+	@pip install -r lib/canteen/dev_requirements.txt
+
+	@echo "Installing Pip dependencies..."
 	@-bin/pip install -r ./requirements.txt
 	@-mkdir -p .develop
 	@-mkdir -p .develop/maps/fatcatmap/assets/{js,less,style,coffee}/site
 	@-chmod -R 775 .develop
+
+	@echo "Building Canteen..."
+	@-cd lib/canteen; $(MAKE) DEPS=0 VIRTUALENV=0 package
 
 devserver:
 	@echo "Running development server..."
@@ -195,43 +260,36 @@ logbook:
 	@echo "Installing Logbook..."
 	@-bin/pip install "git+git://github.com/keenlabs/logbook.git#egg=logbook"
 
-ifeq ($(DEBUG),1)
-$(PWD)/node_modules: bootstrap
+$(DEVROOT)/node_modules: bootstrap
 	@echo "Installing NPM dependencies..."
 	@-npm install
-else
-$(PWD)/node_modules: bootstrap
-endif
 
-npm: $(PWD)/node_modules
+npm: $(DEVROOT)/node_modules
 
-jekyll:
-	@echo "Installing Jekyll..."
-	@-gem install jekyll --install-dir ./.Gems --no-document
-
-$(PWD)/lib/closure/compiler.jar:
+$(LIBROOT)/closure/compiler.jar:
 	@echo "Downloading Closure Compiler..."
 	@-wget http://dl.google.com/closure-compiler/compiler-latest.zip
-	@-mkdir -p $(PWD)/lib/closure
+	@-mkdir -p $(LIBROOT)/closure
 
 	@echo "Extracting Closure Compiler..."
-	@-unzip compiler-latest.zip -d $(PWD)/lib/closure
-	@-mv compiler-latest.zip $(PWD)/lib/closure
+	@-unzip compiler-latest.zip -d $(LIBROOT)/closure
+	@-mv compiler-latest.zip $(LIBROOT)/closure
 	@-rm -f compiler-latest.zip
 
-	@-mkdir -p $(PWD)/lib/closure/build;
-	@-mv $(PWD)/lib/closure/compiler.jar $(PWD)/lib/closure/build/compiler.jar;
+	@-mkdir -p $(LIBROOT)/closure/build;
+	@-mv $(LIBROOT)/closure/compiler.jar $(LIBROOT)/closure/build/compiler.jar;
 
-closure: $(PWD)/lib/closure/compiler.jar
+closure: $(LIBROOT)/closure/compiler.jar
 
 cython:
 	@echo "Installing Cython..."
 	@-bin/pip install cython
 
+ifeq ($(SANDBOX),1)
 ifeq ($(DEBUG),1)
 fatcatmap/assets/bootstrap/package.json:
 	@echo "Cloning Bootstrap sources..."
-	@git clone $(SANDBOX_GIT):sources/dependencies/bootstrap.git ./fatcatmap/assets/bootstrap
+	@git clone $(SANDBOX_GIT):sources/dependencies/bootstrap.git ./fatcatmap/assets/bootstrap -b $(BOOTSTRAP_BRANCH)
 
 	@echo "Building Bootstrap..."
 	@-cd fatcatmap/assets/bootstrap; \
@@ -240,19 +298,24 @@ fatcatmap/assets/bootstrap/package.json:
 else
 fatcatmap/assets/bootstrap/package.json:
 	@echo "Cloning Bootstrap sources..."
-	@git clone /base/sources/dependencies/bootstrap.git ./fatcatmap/assets/bootstrap
+	@git clone /base/sources/dependencies/bootstrap.git ./fatcatmap/assets/bootstrap -b $(BOOTSTRAP_BRANCH)
+endif
+else
+fatcatmap/assets/bootstrap/package.json:
+	@echo "Cloning Bootstrap sources from GitHub..."
+	@git clone https://github.com/momentum/bootstrap.git ./fatcatmap/assets/bootstrap -b $(BOOTSTRAP_BRANCH)
 endif
 
 bootstrap: fatcatmap/assets/bootstrap/package.json
 	@echo "Bootstrap is ready."
 
 ifeq ($(DEBUG),1)
-grunt:
+grunt: npm
 	@-mkdir -p .develop/maps/fatcatmap/assets/js/site
 	@-mkdir -p .develop/maps/fatcatmap/assets/coffee/site
 	@grunt
 endif
 ifeq ($(DEBUG),0)
-grunt:
-	@grunt release
+grunt: npm
+	@node_modules/grunt-cli/bin/grunt release
 endif

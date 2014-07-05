@@ -19,3 +19,4 @@ fatcatmap/templates/compiled/*
 bower_components/*
 pubspec.lock
 packages/*
+.coverage
