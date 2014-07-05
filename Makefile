@@ -184,7 +184,7 @@ lib: $(DEVROOT)/.env
 ### === resources === ###
 templates: $(DEVROOT)/.develop
 	@echo "Building fcm templates..."
-	@bin/fcm build --templates
+	@bin/python $(DEVROOT)/scripts/fcm.py build --templates
 
 ### === defs === ###
 $(DEVROOT)/bin/fcm:
