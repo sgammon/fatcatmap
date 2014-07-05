@@ -89,8 +89,6 @@ class FCM(cli.Tool):
       import fatcatmap, canteen
       from fatcatmap.config import config
 
-      fatcatmap.preload()  # load up all the things!
-
       if arguments.companion:
         dev_companion = companion.go()
 
