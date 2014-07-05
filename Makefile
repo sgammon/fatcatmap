@@ -141,7 +141,9 @@ coverage:
 							 --cover-html \
 							 --cover-html-dir=.develop/coverage/html \
 							 --cover-xml \
-							 --cover-xml-file=.develop/clover.xml;
+							 --cover-xml-file=.develop/clover.xml \
+							 --with-xunit \
+							 --xunit-file=.develop/xunit.xml;
 
 deploy:
 	@echo "Deployment is not currently supported from dev. Check back later."
