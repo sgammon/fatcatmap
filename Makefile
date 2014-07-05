@@ -128,12 +128,12 @@ lib/canteen:
 endif
 
 test:
-	@pip install nose coverage
+	@-bin/pip install nose coverage
 	@echo "Running testsuite..."
 	@nosetests canteen_tests fatcatmap_tests --verbose
 
 coverage:
-	@pip install nose coverage
+	@-bin/pip install nose coverage
 	@echo "Running testsuite (with coverage)..."
 	@mkdir -p .develop/coverage
 	@nosetests canteen_tests fatcatmap_tests --with-coverage \
@@ -199,7 +199,7 @@ $(DEVROOT)/lib/python2.7/site-packages/canteen.pth:
 
 $(DEVROOT)/.env: closure bootstrap canteen npm
 	@echo "Initializing virtualenv..."
-	@pip install virtualenv
+	@-pip install virtualenv
 	@virtualenv $(DEVROOT) --prompt="(fcm)" -q
 	@-sed -e 's/printf "%s%s%s" "(fcm)" (set_color normal) (_old_fish_prompt)/printf " %s ^.^ %s %s(fcm)%s  %s " (set_color -b green black) (set_color normal) (set_color -b white black) (set_color normal) (_old_fish_prompt)/g' bin/activate.fish > bin/activate_color.fish
 	@-mv bin/activate.fish bin/activate_lame.fish
@@ -211,8 +211,8 @@ $(DEVROOT)/.env: closure bootstrap canteen npm
 	@echo "Installing Canteen dependencies..."
 	@bin/pip install "git+https://github.com/sgammon/protobuf.git#egg=protobuf-2.5.2-canteen"
 	@bin/pip install "git+https://github.com/sgammon/hamlish-jinja.git#egg=hamlish_jinja-0.3.4-canteen"
-	@pip install -r lib/canteen/requirements.txt
-	@pip install -r lib/canteen/dev_requirements.txt
+	@bin/pip install -r lib/canteen/requirements.txt
+	@bin/pip install -r lib/canteen/dev_requirements.txt
 
 	@echo "Installing Pip dependencies..."
 	@-bin/pip install -r ./requirements.txt
@@ -282,7 +282,7 @@ $(LIBROOT)/closure/compiler.jar:
 else
 $(LIBROOT)/closure/compiler.jar:
 	@echo "Downloading Closure Compiler..."
-	@-curl http://dl.google.com/closure-compiler/compiler-latest.zip > ./compiler-latest.zip
+	@-curl http://dl.google.com/closure-compiler/compiler-latest.zip > ./compiler-latest.zip 2> /dev/null
 	@-mkdir -p $(LIBROOT)/closure
 
 	@echo "Extracting Closure Compiler..."
