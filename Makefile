@@ -221,7 +221,7 @@ $(DEVROOT)/.env: closure bootstrap canteen npm
 	@-chmod -R 775 .develop
 
 	@echo "Building Canteen..."
-	@-cd lib/canteen; $(MAKE) DEPS=0 VIRTUALENV=0 package
+	@-cd lib/canteen; $(MAKE) DEPS=0 VIRTUALENV=0 TESTS=0 package
 
 devserver:
 	@echo "Running development server..."
