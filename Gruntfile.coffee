@@ -225,9 +225,7 @@ module.exports = (grunt) ->
   ## ~~ register tasks: `default` ~~ ##
   grunt.registerTask 'default', [
     'less',
-    'coffee',
-    'closure-compiler:common_debug',
-    'closure-compiler:mapper_debug'
+    'coffee'
   ]
 
   ## ~~ register tasks: `develop` ~~ ##
