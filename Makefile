@@ -26,7 +26,7 @@ DEBUG?=1
 USER?=`whoami`
 SANDBOX?=0
 SANDBOX_GIT?=$(USER)@sandbox
-CANTEEN_BRANCH?=runtime/uwsgi
+CANTEEN_BRANCH?=master
 BOOTSTRAP_BRANCH?=master
 BUILDBOX?=0
 BREW?=1
@@ -59,8 +59,8 @@ endif
 endif
 
 ifeq ($(BUILDBOX),1)
-LIBROOT=./lib
-DEVROOT=.
+LIBROOT=$(BUILDROOT)/lib
+DEVROOT=$(BUILDROOT)
 else
 LIBROOT=$(PWD)/lib
 DEVROOT=$(PWD)
@@ -95,7 +95,7 @@ canteen: lib/canteen
 
 js:
 	@echo "Compiling Coffee..."
-	@node_modules/grunt-cli/bin/grunt coffee closure-compiler
+	@node_modules/grunt-cli/bin/grunt coffee
 
 styles:
 	@echo "Compiling Less..."
@@ -128,20 +128,22 @@ lib/canteen:
 endif
 
 test:
-	@pip install nose coverage
+	@-bin/pip install nose coverage
 	@echo "Running testsuite..."
-	@nosetests canteen_tests fatcatmap_tests --verbose
+	@-bin/nosetests canteen_tests fatcatmap_tests --verbose
 
 coverage:
-	@pip install nose coverage
+	@-bin/pip install nose coverage
 	@echo "Running testsuite (with coverage)..."
 	@mkdir -p .develop/coverage
-	@nosetests canteen_tests fatcatmap_tests --with-coverage \
+	@-bin/nosetests canteen_tests fatcatmap_tests --with-coverage \
 							 --cover-package=fatcatmap \
 							 --cover-html \
 							 --cover-html-dir=.develop/coverage/html \
 							 --cover-xml \
-							 --cover-xml-file=.develop/coverage.xml;
+							 --cover-xml-file=.develop/clover.xml \
+							 --with-xunit \
+							 --xunit-file=.develop/xunit.xml;
 
 deploy:
 	@echo "Deployment is not currently supported from dev. Check back later."
@@ -184,7 +186,7 @@ lib: $(DEVROOT)/.env
 ### === resources === ###
 templates: $(DEVROOT)/.develop
 	@echo "Building fcm templates..."
-	@bin/fcm build --templates
+	@bin/python $(DEVROOT)/scripts/fcm.py build --templates
 
 ### === defs === ###
 $(DEVROOT)/bin/fcm:
@@ -198,8 +200,9 @@ $(DEVROOT)/lib/python2.7/site-packages/canteen.pth:
 	@touch ./.env
 
 $(DEVROOT)/.env: closure bootstrap canteen npm
+	@echo "Using devroot $(DEVROOT)..."
 	@echo "Initializing virtualenv..."
-	@pip install virtualenv
+	@-pip install virtualenv
 	@virtualenv $(DEVROOT) --prompt="(fcm)" -q
 	@-sed -e 's/printf "%s%s%s" "(fcm)" (set_color normal) (_old_fish_prompt)/printf " %s ^.^ %s %s(fcm)%s  %s " (set_color -b green black) (set_color normal) (set_color -b white black) (set_color normal) (_old_fish_prompt)/g' bin/activate.fish > bin/activate_color.fish
 	@-mv bin/activate.fish bin/activate_lame.fish
@@ -211,8 +214,8 @@ $(DEVROOT)/.env: closure bootstrap canteen npm
 	@echo "Installing Canteen dependencies..."
 	@bin/pip install "git+https://github.com/sgammon/protobuf.git#egg=protobuf-2.5.2-canteen"
 	@bin/pip install "git+https://github.com/sgammon/hamlish-jinja.git#egg=hamlish_jinja-0.3.4-canteen"
-	@pip install -r lib/canteen/requirements.txt
-	@pip install -r lib/canteen/dev_requirements.txt
+	@bin/pip install -r lib/canteen/requirements.txt
+	@bin/pip install -r lib/canteen/dev_requirements.txt
 
 	@echo "Installing Pip dependencies..."
 	@-bin/pip install -r ./requirements.txt
@@ -221,7 +224,7 @@ $(DEVROOT)/.env: closure bootstrap canteen npm
 	@-chmod -R 775 .develop
 
 	@echo "Building Canteen..."
-	@-cd lib/canteen; $(MAKE) DEPS=0 VIRTUALENV=0 package
+	@-cd lib/canteen; $(MAKE) DEPS=0 VIRTUALENV=0 TESTS=0 package
 
 devserver:
 	@echo "Running development server..."
@@ -266,9 +269,10 @@ $(DEVROOT)/node_modules: bootstrap
 
 npm: $(DEVROOT)/node_modules
 
+ifeq ($(BUILDBOX),0)
 $(LIBROOT)/closure/compiler.jar:
 	@echo "Downloading Closure Compiler..."
-	@-wget http://dl.google.com/closure-compiler/compiler-latest.zip
+	@-curl --progress-bar http://dl.google.com/closure-compiler/compiler-latest.zip > ./compiler-latest.zip
 	@-mkdir -p $(LIBROOT)/closure
 
 	@echo "Extracting Closure Compiler..."
@@ -278,6 +282,20 @@ $(LIBROOT)/closure/compiler.jar:
 
 	@-mkdir -p $(LIBROOT)/closure/build;
 	@-mv $(LIBROOT)/closure/compiler.jar $(LIBROOT)/closure/build/compiler.jar;
+else
+$(LIBROOT)/closure/compiler.jar:
+	@echo "Downloading Closure Compiler..."
+	@-curl http://dl.google.com/closure-compiler/compiler-latest.zip > ./compiler-latest.zip 2> /dev/null
+	@-mkdir -p $(LIBROOT)/closure
+
+	@echo "Extracting Closure Compiler..."
+	@-unzip compiler-latest.zip -d $(LIBROOT)/closure
+	@-mv compiler-latest.zip $(LIBROOT)/closure
+	@-rm -f compiler-latest.zip
+
+	@-mkdir -p $(LIBROOT)/closure/build;
+	@-mv $(LIBROOT)/closure/compiler.jar $(LIBROOT)/closure/build/compiler.jar;
+endif
 
 closure: $(LIBROOT)/closure/compiler.jar
 
