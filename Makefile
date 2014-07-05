@@ -266,9 +266,10 @@ $(DEVROOT)/node_modules: bootstrap
 
 npm: $(DEVROOT)/node_modules
 
+ifeq ($(BUILDBOX),0)
 $(LIBROOT)/closure/compiler.jar:
 	@echo "Downloading Closure Compiler..."
-	@-wget http://dl.google.com/closure-compiler/compiler-latest.zip
+	@-curl --progress-bar http://dl.google.com/closure-compiler/compiler-latest.zip > ./compiler-latest.zip
 	@-mkdir -p $(LIBROOT)/closure
 
 	@echo "Extracting Closure Compiler..."
@@ -278,6 +279,20 @@ $(LIBROOT)/closure/compiler.jar:
 
 	@-mkdir -p $(LIBROOT)/closure/build;
 	@-mv $(LIBROOT)/closure/compiler.jar $(LIBROOT)/closure/build/compiler.jar;
+else
+$(LIBROOT)/closure/compiler.jar:
+	@echo "Downloading Closure Compiler..."
+	@-curl http://dl.google.com/closure-compiler/compiler-latest.zip > ./compiler-latest.zip
+	@-mkdir -p $(LIBROOT)/closure
+
+	@echo "Extracting Closure Compiler..."
+	@-unzip compiler-latest.zip -d $(LIBROOT)/closure
+	@-mv compiler-latest.zip $(LIBROOT)/closure
+	@-rm -f compiler-latest.zip
+
+	@-mkdir -p $(LIBROOT)/closure/build;
+	@-mv $(LIBROOT)/closure/compiler.jar $(LIBROOT)/closure/build/compiler.jar;
+endif
 
 closure: $(LIBROOT)/closure/compiler.jar
 
