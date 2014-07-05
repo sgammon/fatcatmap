@@ -130,13 +130,13 @@ endif
 test:
 	@-bin/pip install nose coverage
 	@echo "Running testsuite..."
-	@nosetests canteen_tests fatcatmap_tests --verbose
+	@-bin/nosetests canteen_tests fatcatmap_tests --verbose
 
 coverage:
 	@-bin/pip install nose coverage
 	@echo "Running testsuite (with coverage)..."
 	@mkdir -p .develop/coverage
-	@nosetests canteen_tests fatcatmap_tests --with-coverage \
+	@-bin/nosetests canteen_tests fatcatmap_tests --with-coverage \
 							 --cover-package=fatcatmap \
 							 --cover-html \
 							 --cover-html-dir=.develop/coverage/html \
