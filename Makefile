@@ -96,11 +96,11 @@ canteen: lib/canteen
 
 js:
 	@echo "Minifying Javascript..."
-	@node_modules/gulp/bin/gulp.js closure
+	@-node_modules/gulp/bin/gulp.js closure
 
 styles:
 	@echo "Compiling Less..."
-	@node_modules/gulp/bin/gulp.js less
+	@-node_modules/gulp/bin/gulp.js less
 
 ifeq ($(BREW),1)
 brew:
@@ -133,7 +133,7 @@ test:
 	@echo "Running python testsuite..."
 	@-bin/nosetests canteen_tests fatcatmap_tests --verbose
 	@echo "Running javascript testsuite..."
-	@ENV=$(ENVIRONMENT) gulp test
+	@-ENV=$(ENVIRONMENT) gulp test
 
 coverage:
 	@-bin/pip install nose coverage
@@ -335,7 +335,7 @@ ifeq ($(DEBUG),1)
 gulp: npm
 	@-mkdir -p .develop/maps/fatcatmap/assets/js/site
 	@-mkdir -p .develop/maps/fatcatmap/assets/coffee/site
-	@gulp
+	@-gulp
 endif
 ifeq ($(DEBUG),0)
 gulp: npm
