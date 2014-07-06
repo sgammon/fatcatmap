@@ -1,6 +1,8 @@
 # -*- coding: utf-8 -*-
 
 '''
+<<<<<<< HEAD
+=======
 
   fabric: services
   ~~~~~~~~~~~~~~~~
@@ -29,5 +31,3 @@ def setup_uwsgi():
     user='alice',
     stdout_logfile='/path/to/logs/myapp.log',
     )
-
-

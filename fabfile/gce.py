@@ -15,12 +15,14 @@ from libcloud.compute.providers import get_driver
 import settings
 
 
+
 libcloud.security.CA_CERTS_PATH.append('/usr/local/etc/openssl/cert.pem')
 
 
 class Deploy(object):
 
   '''  '''
+
   ##### Set defaults for Deploy #####
   ID = settings.PROJECT_ID
   PEM = settings.PEM

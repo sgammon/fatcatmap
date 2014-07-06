@@ -5,10 +5,17 @@
   fabric: settings
   ~~~~~~~~~~~~~~~~
 
+
   Settings for deployment.  Specifies allowed groups
   as well as packages and configs for specific groups
 
 '''
+
+ALLOWED_GROUPS = ['lb', 'web', 'app', 'misc']
+ALLOWED_ENVIRONMENTS = ['prod', 'stage']
+
+
+
 ###### GENERAL SETTINGS ######
 
 ALLOWED_GROUPS = ['lb', 'web', 'app', 'misc']
