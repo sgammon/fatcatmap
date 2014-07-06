@@ -225,17 +225,13 @@ module.exports = (grunt) ->
   ## ~~ register tasks: `default` ~~ ##
   grunt.registerTask 'default', [
     'less',
-    'coffee',
-    'closure-compiler:common_debug',
-    'closure-compiler:mapper_debug'
+    'coffee'
   ]
 
   ## ~~ register tasks: `develop` ~~ ##
   grunt.registerTask 'develop', [
     'less',
     'coffee',
-    'closure-compiler:common_debug',
-    'closure-compiler:mapper_debug',
     'watch',
     'shell:runServer'
   ]
@@ -243,7 +239,5 @@ module.exports = (grunt) ->
   ## ~~ register tasks: `release` ~~ ##
   grunt.registerTask 'release', [
     'less',
-    'coffee',
-    'closure-compiler:common',
-    'closure-compiler:mapper'
+    'coffee'
   ]

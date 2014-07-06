@@ -26,7 +26,7 @@ DEBUG?=1
 USER?=`whoami`
 SANDBOX?=0
 SANDBOX_GIT?=$(USER)@sandbox
-CANTEEN_BRANCH?=runtime/uwsgi
+CANTEEN_BRANCH?=master
 BOOTSTRAP_BRANCH?=master
 BUILDBOX?=0
 BREW?=1
@@ -58,6 +58,14 @@ OPTIONALS+=logbook
 endif
 endif
 
+ifeq ($(BUILDBOX),1)
+LIBROOT=$(BUILDROOT)/lib
+DEVROOT=$(BUILDROOT)
+else
+LIBROOT=$(PWD)/lib
+DEVROOT=$(PWD)
+endif
+
 
 ### === ROUTINES === ###
 
@@ -79,7 +87,7 @@ package: develop
 
 	@echo "=== fcm distribution built. ==="
 
-develop: .develop js styles templates
+develop: .develop js styles templates coverage
 	@echo "Updating source dependencies..."
 	@echo "Cloning as user $(USER)..."
 
@@ -87,7 +95,7 @@ canteen: lib/canteen
 
 js:
 	@echo "Compiling Coffee..."
-	@node_modules/grunt-cli/bin/grunt coffee closure-compiler
+	@node_modules/grunt-cli/bin/grunt coffee
 
 styles:
 	@echo "Compiling Less..."
@@ -105,35 +113,37 @@ endif
 ifeq ($(SANDBOX),1)
 lib/canteen:
 	@echo "Cloning Canteen from sandbox..."
-	@git clone $(SANDBOX_GIT):sources/dependencies/canteen.git $(PWD)/lib/canteen -b $(CANTEEN_BRANCH)
+	@git clone $(SANDBOX_GIT):sources/dependencies/canteen.git $(LIBROOT)/canteen -b $(CANTEEN_BRANCH)
 ifeq ($(DEBUG),1)
 else
 lib/canteen:
 	@echo "Updating source dependencies..."
-	@git clone /base/sources/dependencies/canteen.git $(PWD)/lib/canteen -b $(CANTEEN_BRANCH)
+	@git clone /base/sources/dependencies/canteen.git $(LIBROOT)/canteen -b $(CANTEEN_BRANCH)
 endif
 else
 lib/canteen:
 	@echo "Updating source dependencies..."
 	@echo "Cloning from GitHub..."
-	@git clone https://github.com/momentum/canteen.git $(PWD)/lib/canteen -b $(CANTEEN_BRANCH)
+	@git clone https://github.com/momentum/canteen.git $(LIBROOT)/canteen -b $(CANTEEN_BRANCH)
 endif
 
 test:
-	@pip install nose coverage
+	@-bin/pip install nose coverage
 	@echo "Running testsuite..."
-	@nosetests canteen_tests fatcatmap_tests --verbose
+	@-bin/nosetests canteen_tests fatcatmap_tests --verbose
 
 coverage:
-	@pip install nose coverage
+	@-bin/pip install nose coverage
 	@echo "Running testsuite (with coverage)..."
 	@mkdir -p .develop/coverage
-	@nosetests canteen_tests fatcatmap_tests --with-coverage \
+	@-bin/nosetests canteen_tests fatcatmap_tests --with-coverage \
 							 --cover-package=fatcatmap \
 							 --cover-html \
 							 --cover-html-dir=.develop/coverage/html \
 							 --cover-xml \
-							 --cover-xml-file=.develop/coverage.xml;
+							 --cover-xml-file=.develop/clover.xml \
+							 --with-xunit \
+							 --xunit-file=.develop/xunit.xml;
 
 deploy:
 	@echo "Deployment is not currently supported from dev. Check back later."
@@ -164,35 +174,36 @@ forceclean: distclean
 	@git reset --hard
 
 	@echo "Cleaning libraries..."
-	@rm -fr $(PWD)/lib/canteen
+	@rm -fr $(LIBROOT)/canteen
 
 	@echo "Cleaning untracked files..."
 	@git clean -df
 
 ### === dirs === ###
-bin: $(PWD)/.env
-lib: $(PWD)/.env
+bin: $(DEVROOT)/.env
+lib: $(DEVROOT)/.env
 
 ### === resources === ###
-templates: $(PWD)/.develop
+templates: $(DEVROOT)/.develop
 	@echo "Building fcm templates..."
-	@bin/fcm build --templates
+	@bin/python $(DEVROOT)/scripts/fcm.py build --templates
 
 ### === defs === ###
-$(PWD)/bin/fcm:
+$(DEVROOT)/bin/fcm:
 	@echo "Symlinking toolchain..."
-	@-ln -s $(PWD)/scripts/fcm.py $(PWD)/bin/fcm
+	@-ln -s $(DEVROOT)/scripts/fcm.py $(DEVROOT)/bin/fcm
 
-$(PWD)/lib/python2.7/site-packages/canteen.pth:
-	@echo "$(PWD)/lib/canteen" > lib/python2.7/site-packages/canteen.pth
+$(DEVROOT)/lib/python2.7/site-packages/canteen.pth:
+	@echo "$(DEVROOT)/lib/canteen" > lib/python2.7/site-packages/canteen.pth
 
-.develop: bin lib $(PWD)/.env $(PWD)/bin/fcm bootstrap canteen closure $(PWD)/lib/python2.7/site-packages/canteen.pth brew $(OPTIONALS)
+.develop: bin lib $(DEVROOT)/.env $(DEVROOT)/bin/fcm bootstrap canteen closure $(DEVROOT)/lib/python2.7/site-packages/canteen.pth brew $(OPTIONALS)
 	@touch ./.env
 
-$(PWD)/.env: closure bootstrap canteen npm
+$(DEVROOT)/.env: closure bootstrap canteen npm
+	@echo "Using devroot $(DEVROOT)..."
 	@echo "Initializing virtualenv..."
-	@pip install virtualenv
-	@virtualenv . --prompt="(fcm)" -q
+	@-pip install virtualenv
+	@virtualenv $(DEVROOT) --prompt="(fcm)" -q
 	@-sed -e 's/printf "%s%s%s" "(fcm)" (set_color normal) (_old_fish_prompt)/printf " %s ^.^ %s %s(fcm)%s  %s " (set_color -b green black) (set_color normal) (set_color -b white black) (set_color normal) (_old_fish_prompt)/g' bin/activate.fish > bin/activate_color.fish
 	@-mv bin/activate.fish bin/activate_lame.fish
 	@-mv bin/activate_color.fish bin/activate.fish
@@ -203,8 +214,8 @@ $(PWD)/.env: closure bootstrap canteen npm
 	@echo "Installing Canteen dependencies..."
 	@bin/pip install "git+https://github.com/sgammon/protobuf.git#egg=protobuf-2.5.2-canteen"
 	@bin/pip install "git+https://github.com/sgammon/hamlish-jinja.git#egg=hamlish_jinja-0.3.4-canteen"
-	@pip install -r lib/canteen/requirements.txt
-	@pip install -r lib/canteen/dev_requirements.txt
+	@bin/pip install -r lib/canteen/requirements.txt
+	@bin/pip install -r lib/canteen/dev_requirements.txt
 
 	@echo "Installing Pip dependencies..."
 	@-bin/pip install -r ./requirements.txt
@@ -213,7 +224,7 @@ $(PWD)/.env: closure bootstrap canteen npm
 	@-chmod -R 775 .develop
 
 	@echo "Building Canteen..."
-	@-cd lib/canteen; $(MAKE) DEPS=0
+	@-cd lib/canteen; $(MAKE) DEPS=0 VIRTUALENV=0 TESTS=0 package
 
 devserver:
 	@echo "Running development server..."
@@ -252,26 +263,41 @@ logbook:
 	@echo "Installing Logbook..."
 	@-bin/pip install "git+git://github.com/keenlabs/logbook.git#egg=logbook"
 
-$(PWD)/node_modules: bootstrap
+$(DEVROOT)/node_modules: bootstrap
 	@echo "Installing NPM dependencies..."
 	@-npm install
 
-npm: $(PWD)/node_modules
+npm: $(DEVROOT)/node_modules
 
-$(PWD)/lib/closure/compiler.jar:
+ifeq ($(BUILDBOX),0)
+$(LIBROOT)/closure/compiler.jar:
 	@echo "Downloading Closure Compiler..."
-	@-wget http://dl.google.com/closure-compiler/compiler-latest.zip
-	@-mkdir -p $(PWD)/lib/closure
+	@-curl --progress-bar http://dl.google.com/closure-compiler/compiler-latest.zip > ./compiler-latest.zip
+	@-mkdir -p $(LIBROOT)/closure
 
 	@echo "Extracting Closure Compiler..."
-	@-unzip compiler-latest.zip -d $(PWD)/lib/closure
-	@-mv compiler-latest.zip $(PWD)/lib/closure
+	@-unzip compiler-latest.zip -d $(LIBROOT)/closure
+	@-mv compiler-latest.zip $(LIBROOT)/closure
 	@-rm -f compiler-latest.zip
 
-	@-mkdir -p $(PWD)/lib/closure/build;
-	@-mv $(PWD)/lib/closure/compiler.jar $(PWD)/lib/closure/build/compiler.jar;
+	@-mkdir -p $(LIBROOT)/closure/build;
+	@-mv $(LIBROOT)/closure/compiler.jar $(LIBROOT)/closure/build/compiler.jar;
+else
+$(LIBROOT)/closure/compiler.jar:
+	@echo "Downloading Closure Compiler..."
+	@-curl http://dl.google.com/closure-compiler/compiler-latest.zip > ./compiler-latest.zip 2> /dev/null
+	@-mkdir -p $(LIBROOT)/closure
 
-closure: $(PWD)/lib/closure/compiler.jar
+	@echo "Extracting Closure Compiler..."
+	@-unzip compiler-latest.zip -d $(LIBROOT)/closure
+	@-mv compiler-latest.zip $(LIBROOT)/closure
+	@-rm -f compiler-latest.zip
+
+	@-mkdir -p $(LIBROOT)/closure/build;
+	@-mv $(LIBROOT)/closure/compiler.jar $(LIBROOT)/closure/build/compiler.jar;
+endif
+
+closure: $(LIBROOT)/closure/compiler.jar
 
 cython:
 	@echo "Installing Cython..."
