@@ -23,7 +23,7 @@
     "wrench": "~1.5.4",
     "webp-bin": "~0.1.4",
     "less-stream": "~0.1.1",
-    "closure-compiler-stream": "~0.1.1",
+    "closure-compiler-stream": "~0.1.2",
     "karma": "~0.10.x",
     "karma-coverage": "~0.1",
     "karma-jasmine": "~0.1.5",

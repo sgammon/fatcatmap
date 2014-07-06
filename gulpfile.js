@@ -17,7 +17,7 @@ var path = require('path'),
       if (out)
         console.log(out);
       if (err)
-        console.err(err);
+        throw err;
       cb(e);
     };
   },
