@@ -198,7 +198,8 @@ class Graph(object):
 
     if not isinstance(node, self.__node_model__):
       raise TypeError('Must pass `node` of bound Node'
-                      ' model type to `Graph.add_node`.')
+                      ' model type to `Graph.add_node`.'
+                      ' Instead, got type: "%s".' % type(node))
 
     # check against key and add
     if node.key not in self.__keys__:

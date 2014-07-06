@@ -7,12 +7,12 @@ __doc__ = '''
 
 '''
 
-__version__ = (1, 0)
+__version__ = (0, 0, 1)
 __author__ = "Sam Gammon <sam@momentum.io>"
 
 
 # stdlib
-import os, sys
+import os, sys, time, subprocess, StringIO
 
 project_root = os.path.abspath(os.path.dirname(os.path.dirname(__file__)))
 sys.path.insert(0, project_root)
@@ -43,6 +43,20 @@ from canteen.util import cli, debug
 
 ## Globals
 logging = debug.Logger(name='fcm')
+UWSGI_BASE_ARGS, UWSGI_PROD_ARGS = [
+  "--pcre-jit",
+  "--vacuum",
+  "--py-autoreload",
+  "--pidfile=/tmp/fcm.pid",
+  "--wsgi=dispatch:application",
+  "--shared-import=fatcatmap",
+  "--shared-import=werkzeug",
+  "--shared-import=canteen",
+  "--shared-import=jinja2",
+], [
+  "--optimize",
+  "--uwsgi=127.0.0.1:3000"
+]
 
 
 class FCM(cli.Tool):
@@ -88,8 +102,6 @@ class FCM(cli.Tool):
 
       import fatcatmap, canteen
       from fatcatmap.config import config
-
-      fatcatmap.preload()  # load up all the things!
 
       if arguments.companion:
         dev_companion = companion.go()
@@ -207,6 +219,54 @@ class FCM(cli.Tool):
           raise
         else:
           logging.info('Templates compiled successfully.')
+
+
+  class Shell(cli.Tool):
+
+    ''' Runs a local or simulated production shell. '''
+
+    arguments = (
+      ('--production', '-p', {'action': 'store_true', 'help': 'simulate production'}),
+    )
+
+    def execute(arguments):
+
+      ''' Execute the ``fcm shell`` tool, given a set of arguments packaged
+          as a :py:class:`argparse.Namespace`.
+
+          :param arguments: Product of the ``parser.parse_args()`` call,
+          dispatched by ``canteen`` or manually.
+
+          :returns: Python value ``True`` or ``False`` depending on the
+          result of the call. ``Falsy`` return values will be passed to
+          :py:meth:`sys.exit` and converted into Unix-style return codes. '''
+
+      # assemble uWSGI arguments
+      uwsgi_args = [
+
+        # uwsgi path
+        os.path.join(project_root, 'bin', 'uwsgi'),
+
+        # base interactive flags
+        "--socket=/tmp/fcm.sock",
+        "--pyshell"
+
+      ] + UWSGI_BASE_ARGS + (UWSGI_PROD_ARGS if arguments.production else [])
+
+      try:
+        # spawn uWSGI
+        shell = subprocess.Popen(uwsgi_args,
+          stdin=sys.stdin,
+          stdout=sys.stdout,
+          stderr=sys.stderr
+        )
+
+        returncode = shell.wait()
+
+      except KeyboardInterrupt:
+        shell.terminate()
+        time.sleep(1)  # sleep a second to let console shut up
+      sys.stdin, sys.stdout, sys.stderr = (StringIO.StringIO() for x in (0, 1, 2))
 
 
   class Deploy(cli.Tool):

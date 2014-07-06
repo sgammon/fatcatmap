@@ -1,0 +1,44 @@
+<?xml version="1.0" ?>
+<AccessControlList>
+    <Owner>
+        <ID>00b4903a977c2d284aeedb2913f02cf2c36e0afe091852e0c71555e54254622e</ID>
+    </Owner>
+    <Entries>
+        <Entry>
+            <Scope type="GroupById">
+                <ID>00b4903a970bd12568d51b63f5d18e2efe1ed8b84d209a1ece0ce10528cedfce</ID>
+            </Scope>
+            <Permission>FULL_CONTROL</Permission>
+        </Entry>
+        <Entry>
+            <Scope type="GroupById">
+                <ID>00b4903a9727e7189022d19b9a2f215ffc986455836b9cc00bd4d028ffd44347</ID>
+            </Scope>
+            <Permission>FULL_CONTROL</Permission>
+        </Entry>
+        <Entry>
+            <Scope type="GroupById">
+                <ID>00b4903a97c55845f1fe96266a666c7c273637370ace7d873addb1114b1b5ef9</ID>
+            </Scope>
+            <Permission>READ</Permission>
+        </Entry>
+        <Entry>
+            <Scope type="UserByEmail">
+                <EmailAddress>sam@momentum.io</EmailAddress>
+                <Name>Sam Gammon</Name>
+            </Scope>
+            <Permission>FULL_CONTROL</Permission>
+        </Entry>
+        <Entry>
+            <Scope type="UserById">
+                <ID>00b4903a977c2d284aeedb2913f02cf2c36e0afe091852e0c71555e54254622e</ID>
+            </Scope>
+            <Permission>FULL_CONTROL</Permission>
+        </Entry>
+        <Entry>
+            <Scope type="AllUsers"/>
+            <Permission>READ</Permission>
+        </Entry>
+    </Entries>
+</AccessControlList>
+

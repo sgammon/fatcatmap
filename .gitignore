@@ -16,3 +16,8 @@ npm-debug.log
 man/
 compiler-latest.zip
 fatcatmap/templates/compiled/*
+bower_components/*
+pubspec.lock
+packages/*
+.coverage
+.idea

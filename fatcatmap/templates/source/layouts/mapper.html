@@ -1,53 +1,88 @@
-{% extends "core/__base.html" %}
+{% extends "layouts/base.html" %}
 
-{% block appframe %}
-        <!-- header -->
-        <header id='appheader'>
-            <h1>fatcatmap</h1>
-        </header><!-- end header -->
+{% block logo -%}<div id='logowrap'><div id='cathead'></div><div class='rs-medium rs-large'><h1 class="logo">fatcatmap</h1></div><div class='rs-small'><h1 class="logo">fcm</h1></div></div><!-- end #logowrap -->{%- endblock %}
 
-        <!-- footer -->
-        <footer id='appfooter'>
-            {% block footer -%}
-            <small id="brand">momentum labs - fatcatmap</small>
-            <small id="copyright">copyright (&copy; 2014) - technology preview</small>
-            {%- endblock footer %}
-        </footer><!-- end footer -->
-{% endblock %}
+{% block templates %}
+
+        <script id="tpl-legislator" nonce="{{ nonce.script }}" type="catnip/template" class="hidden template resource">
+        {%- raw %}
+            <div id="detail-{{=key}}" class="{{=class}}" data-kind="legislator">
+                <div class="byline">
+                    <h2>{{=firstname}} {{=lastname}}</h2>
+                    <h3>{{=office}}, {{=state}}{{district}}-{{=district}}{{/district}}</h3>
+                </div>
+                <div class="portrait">
+                    <img class="legislator govtrack thumbnail" alt="{{=title}}. {{=firstname}} {{=lastname}} [{{=state}}{{district}}-{{=district}}{{/district}}]" src="{{=config.assets.prefix}}image-proxy/providence-clarity/warehouse/raw/govtrack/photos/{{=govtrack_id}}{{portrait_size}}-{{=portrait_size}}{{/portrait_size}}.{{=image_format}}" />
+                </div>
+            </div><!-- end #detail-{{=key}} -->
+        {% endraw -%}
+        </script><!-- end #tpl-legislator -->
+        <script id="tpl-contributor" nonce="{{ nonce.script }}" type="catnip/template" class="hidden template resource">
+        {%- raw %}
+            <div id="detail-{{=key}}" class="{{=class}}" data-kind="contributor">
+                <div class="byline">
+                    <h2>{{=name}}</h2>
+                    <h3>{{type=='C'}}Corporate Contributor{{:type=='I'}}Individual Contributor{{/type}}</h3>
+                </div>
+            </div><!-- end #detail-{{=key}}.contributor -->
+        {% endraw -%}
+        </script><!-- end #tpl-contributor -->
+
+      {% endblock templates %}
+
+{%- block frame %}
+        <!-- sidebars -->
+        <section>
+            <!-- leftbar -->
+            <section id='leftbar' class='transparent collapsed ui-sidebar'>
+                {% block left -%}
+                <section class='controls'>
+                    <div class='size-close'>X</div><div class='size-expand'></div><div class='size-minimize'></div>
+                </section><!-- end #leftbar section.controls -->
+                <section class='content'></section><!-- end #leftbar section.content -->
+                {%- endblock left %}
+            </section><!-- end #leftbar -->
+
+            <!-- rightbar -->
+            <section id='rightbar' class='transparent collapsed ui-sidebar'>
+                {% block right -%}
+                <section class='controls'>
+                    <div class='size-close'>X</div><div class='size-expand'></div><div class='size-minimize'></div>
+                </section><!-- end #rightbar section.controls -->
+                <section class='content'></section><!-- end #rightbar section.content -->
+                {%- endblock right %}
+            </section><!-- end #rightbar -->
+        </section>
+{%- endblock frame -%}
+
+{% block appheader %}
+            <section id='identity'>
+                <button type="button" id="logon" class="transparent btn btn-success">Sign in</button>
+                <div id="signon-providers" class="transparent">
+                    <div id="gplus-signon">g+</div><div id="fb-signon">fb</div>
+                    <div id="tw-signon">tw</div><div id="gh-signon">gh</div>
+                </div><!-- end div#signon-providers -->
+            </section><!-- end #identity -->
+{% endblock appheader %}
 
 {% block appstage %}
-    <section>
-        <!-- leftbar -->
-        <section id='leftbar collapsed'>
-            {% block left -%}
-            {%- endblock left %}
-        </section><!-- end #leftbar -->
+        <div id="stage-0" class="current stage-content">
 
-        <!-- rightbar -->
-        <section id='rightbar collapsed'>
-            {% block right -%}
-            {%- endblock right %}
-        </section><!-- end #rightbar -->
-    </section>
+            <!-- upper/lower thirds -->
+            <section>
+                <!-- upper thirds -->
+                <section id='upper-thirds' class='transparent collapsed'>{%- block upper_thirds -%}{%- endblock -%}</section><!-- end #upper-thirds -->
 
-    <section>
-        <!-- upper thirds -->
-        <section class='upper-thirds collapsed'>
-            {% block upper_thirds -%}
-            {%- endblock %}
-        </section>
+                <!-- lower thirds -->
+                <section id='lower-thirds' class='transparent collapsed'>{%- block lower_thirds -%}{%- endblock -%}</section><!-- end #lower-thirds -->
+            </section>
 
-        <!-- lower thirds -->
-        <section class='lower-thirds collapsed'>
-            {% block lower_thirds -%}
-            {%- endblock %}
-        </section>
-    </section>
+            <!-- mapper -->
+            <section id='mapper'>
+                {% block mapper -%}
+                {% include "partials/mappers/svg.html" with context %}
+                {%- endblock mapper %}
+            </section><!-- end #mapper -->
 
-    <!-- mapper -->
-    <section id='mapper'>
-        {% block mapper -%}
-        {% include "partials/mappers/svg.html" with context %}
-        {%- endblock mapper %}
-    </section><!-- end #mapper -->
+        </div><!-- end .current.stage-content -->
 {% endblock %}

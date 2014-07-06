@@ -8,7 +8,10 @@
 
 # messages and RPC
 from . import messages
-from canteen import remote, Service
+from canteen import remote, Service, model
+
+# models
+from fatcatmap.models.graph import node
 
 
 @remote.public('graph')
@@ -21,8 +24,10 @@ class GraphService(Service):
 
     ''' '''
 
+    origin = (request.origin and node.Node.get(model.Key(urlsafe=request.origin))) or None
+
     # construct graph
-    meta, data, graph = self.graph.construct(request.origin, **{
+    meta, data, graph = self.graph.construct(origin, **{
       'fulfill': (request.options.natives or True) if request.options else True,
       'depth': (request.options.depth or 1) if request.options else 1,
       'limit': (request.options.limit or 5) if request.options else 5

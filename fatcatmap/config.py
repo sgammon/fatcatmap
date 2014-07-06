@@ -6,7 +6,7 @@
 
 '''
 
-__version__ = ((0, 0, 1), (20140417, 'alpha'))
+__version__ = ((0, 0, 1), (20140419, 'alpha'))
 
 
 import os
@@ -52,13 +52,7 @@ config = cfg.Config(app={
   'http': {
 
     # Default headers to add
-    'headers': {
-
-      # Debug Headers
-      "Canteen": "v%s" % '.'.join(tuple(map(unicode, canteen.__version__))),
-      'XAF-Catnip': "v%s %s" % tuple(map(lambda x: x[0].join(map(unicode, x[1])), zip(('.', '-'), __version__))) if __debug__ else None,
-
-    }
+    'headers': {}
 
   },
 
@@ -66,7 +60,7 @@ config = cfg.Config(app={
   'TemplateAPI': {
     'debug': True,
 
-    'force_compiled': False,
+    'force_compiled': not __debug__,
 
     'haml': {
       'debug': False,
@@ -114,14 +108,14 @@ config = cfg.Config(app={
     'rpc': {
       'enabled': True,
       'version': 1,
-      'host': None if __debug__ else 'fatcatmap.org'  # `None` will use the HTTP request's host and port
+      'host': None if __debug__ else 'api.fatcatmap.org'  # `None` will use the HTTP request's host and port
     },
 
     # WebSockets
     'realtime': {
       'enabled': False,
       'version': 1,
-      'host': None if __debug__ else 'fatcatmap.org'  # `None` will use the HTTP request's host and port
+      'host': None if __debug__ else 'realtime.fatcatmap.org'  # `None` will use the HTTP request's host and port
     }
 
   }
@@ -133,8 +127,8 @@ config = cfg.Config(app={
   'config': {
 
     'minified': False,
-    'serving_mode': 'local',
-    'cdn_prefix': [''],
+    'serving_mode': 'local' if __debug__ else 'cdn',
+    'cdn_prefix': ['//deliver.fcm-static.org'],
 
     'asset_prefix': {
       'style': 'assets/style',

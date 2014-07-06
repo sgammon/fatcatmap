@@ -24,3 +24,8 @@ uwsgi:
   static: /assets/img fatcatmap/assets/img
   static: /assets/ext fatcatmap/assets/ext
   static: /assets/style fatcatmap/assets/style
+
+  # ~ advanced ~ #
+  http-socket: 127.0.0.1:9005
+  http-websockets: on
+  static-map: /image-proxy/providence-clarity/warehouse=/base/data/warehouse

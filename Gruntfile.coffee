@@ -38,8 +38,8 @@ module.exports = (grunt) ->
           theme: 'light'
 
   less_options =
-    compress: false
-    cleancss: false
+    compress: true
+    cleancss: true
     ieCompat: false
     report: 'min'
     optimization: 2
@@ -97,11 +97,16 @@ module.exports = (grunt) ->
           'fatcatmap/assets/js/common.js': [
             'fatcatmap/assets/coffee/common/_base.coffee',
             'fatcatmap/assets/coffee/common/_d3.coffee',
+            'fatcatmap/assets/coffee/common/_t.coffee',
             'fatcatmap/assets/coffee/common/receive.coffee',
+            'fatcatmap/assets/coffee/common/ui.coffee',
             'fatcatmap/assets/coffee/common/context.coffee',
+            'fatcatmap/assets/coffee/common/storage.coffee',
+            'fatcatmap/assets/coffee/common/history.coffee',
             'fatcatmap/assets/coffee/common/onload.coffee'
           ]
         options:
+          bare: true
           sourceMap: true
           sourceMapDir: '.develop/maps/fatcatmap/assets/coffee/'
 
@@ -110,6 +115,7 @@ module.exports = (grunt) ->
         files:
           'fatcatmap/assets/js/mapper.js': ['fatcatmap/assets/coffee/mapper.coffee']
         options:
+          bare: true
           sourceMap: true
           sourceMapDir: '.develop/maps/fatcatmap/assets/coffee/'
 
@@ -219,17 +225,13 @@ module.exports = (grunt) ->
   ## ~~ register tasks: `default` ~~ ##
   grunt.registerTask 'default', [
     'less',
-    'coffee',
-    'closure-compiler:common_debug',
-    'closure-compiler:mapper_debug'
+    'coffee'
   ]
 
   ## ~~ register tasks: `develop` ~~ ##
   grunt.registerTask 'develop', [
     'less',
     'coffee',
-    'closure-compiler:common_debug',
-    'closure-compiler:mapper_debug',
     'watch',
     'shell:runServer'
   ]
@@ -237,7 +239,5 @@ module.exports = (grunt) ->
   ## ~~ register tasks: `release` ~~ ##
   grunt.registerTask 'release', [
     'less',
-    'coffee',
-    'closure-compiler:common',
-    'closure-compiler:mapper'
+    'coffee'
   ]

@@ -1,12 +1,16 @@
 
 //== FCM Logo
-.logo {
+.fcm-logo {
+  z-index: 1000;
+  position: fixed;
+  text-rendering: geometricPrecision;
   font-family: @heading_font_family;
   font-weight: @heading_font_weight;
   font-size: @logo_size;
+  display: inline-block;
   color: transparent;
   background: linear-gradient(@logo_slant, @logo_gradient_start, @logo_gradient_end);
-  display: inline-block;
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
+  -webkit-font-smoothing: subpixel-antialiased;
 }

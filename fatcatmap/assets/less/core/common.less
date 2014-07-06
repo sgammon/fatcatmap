@@ -3,6 +3,8 @@
 @import "less/scaffolding.less";
 @import "less/grid.less";
 @import "core/base.less";
+@import "core/animations.less";
+@import "core/fonts.less";
 
 // Utility classes
 .hidden {
@@ -13,5 +15,60 @@
   opacity: 0 !important;
 }
 
+// Basic animations
+.fade-opacity {
+  transition-property: opacity;
+}
 
+.fade-background {
+  transition-property: opacity, background-color;
+}
+
+.fast {
+  transition-duration: 0.15s;
+}
+
+.medium {
+  transition-duration: 0.25s;
+}
+
+.slow {
+  transition-duration: 0.4s;
+}
+
+.framepad {
+  margin: 0em 2.2em;
+}
+
+// Preload font & spinner
+.fcm-pre {
+  font-family: "fcm";
+  speak: none;
+  font-weight: normal;
+  font-variant: normal;
+  text-transform: none;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: geometricPrecision;
+  -webkit-transition-property: color,opacity;
+  -webkit-transition-duration: 0.3s;
+}
+
+.fcm-pre.loading.spinner {
+  display: inline-block;
+  -webkit-animation: rotate 0.5s linear infinite;
+  font-size: 2.2em;
+  text-align: center;
+  opacity: 0.75;
+}
+
+// Regular content
+#appstage section.content {
+  color: white;
+
+  .main-heading {
+    border-bottom: 1px solid rgba(90, 90, 90, .8);
+  }
+}
+
+@import "core/media-queries.less";
 @import "layouts/mapper.less";
