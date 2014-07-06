@@ -8,14 +8,31 @@ from fabtools import require,deb
 
 from settings import GROUP_PACKAGES
 import services
+from helpers import get_node
 
+@task
+def bootstrap():
+  node = get_node()
+  if node.group=="lb":
+    install_haproxy()
+    install_nginx
+  if node.group == "app":
+    install_k9()
+
+@task
+def install_k9():
+  pass
+
+@task
 def install_haproxy():
-    require.files.file(path="/etc/default/haproxy",contents="ENABLED=1",use_sudo=True)
+    pass
 
+@task
+def install_nginx():
+  pass
 
 @task
 def initial_packages():
-
     node = env.node()
     print colors.yellow("installing apt keys and sources")
     package_dict = GROUP_PACKAGES[node.group]
@@ -26,7 +43,7 @@ def initial_packages():
 
     print deb.install(package_dict['packages'],update=True)
     if node.group == "lb":
-        install_haproxy()
+        require.files.file(path="/etc/default/haproxy",contents="ENABLED=1",use_sudo=True)
         services.service('nginx','restart')
         services.service('haproxy','restart')
 

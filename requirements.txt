@@ -8,3 +8,6 @@ wsgiref
 webob
 protorpc
 uwsgi
+fabtools
+fabric
+apache-libcloud

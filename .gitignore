@@ -20,3 +20,4 @@ bower_components/*
 pubspec.lock
 packages/*
 .coverage
+.idea

@@ -15,7 +15,6 @@ env.user = "fabric" # username to use for GCE...should match key name
 env.key_filename = ['fabfile/keys/id_rsa']
 
 
-
 @task
 def create_nodes(n=3,environment=environment,group=group):
     """Create new nodes allows chaining of deployment commands

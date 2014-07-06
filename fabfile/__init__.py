@@ -6,3 +6,4 @@ Prefixes:
 import provision as p
 import deploy as d
 from provision import hosts
+from deploy import bootstrap
