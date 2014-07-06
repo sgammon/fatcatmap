@@ -15,3 +15,9 @@
  *          license and explicitly means acceptance to these terms.
  * @see LICENSE.md
  */
+
+describe("Tests should exist", function () {
+  it("should not be crazy", function () {
+    expect(true).toBe(true);
+  });
+});

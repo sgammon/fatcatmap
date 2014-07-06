@@ -49,6 +49,9 @@ redis=on
 ENVIRONMENT?=debug
 OS?=Mac
 
+gulp:
+	
+
 ifeq ($(extensions),on)
 ifeq ($(gevent),on)
 OPTIONALS+=gevent
@@ -129,8 +132,10 @@ endif
 
 test:
 	@-bin/pip install nose coverage
-	@echo "Running testsuite..."
+	@echo "Running python testsuite..."
 	@-bin/nosetests canteen_tests fatcatmap_tests --verbose
+	@echo "Running javascript testsuite..."
+	@ENV=$(ENVIRONMENT) gulp test
 
 coverage:
 	@-bin/pip install nose coverage

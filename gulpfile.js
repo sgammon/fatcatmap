@@ -1,14 +1,16 @@
-var gulp = require('gulp'),
-  less = require('gulp-less'),
+var path = require('path'),
+  less = require('less-stream'),
+  closure = require('closure-compiler-stream'),
+  gulp = require('gulp'),
   rmrf = require('gulp-rimraf'),
-  karma = require('gulp-karma'),
   svgmin = require('gulp-svgmin'),
   imagemin = require('gulp-imagemin'),
   sourcemaps = require('gulp-sourcemaps'),
-  closure = require('gulp-closure-compiler'),
+  karma = require('karma').server,
   exec = require('child_process').exec,
 
   ASSET_PREFIX = 'fatcatmap/assets/',
+  DEBUG = (process.env.ENV === 'debug'),
 
   getExecCb = function (cb) {
     return function (e, out, err) {
@@ -36,11 +38,9 @@ inputs = {
   img: ASSET_PREFIX + 'img/**/*.{png,jpg,gif}',
   less: ASSET_PREFIX + 'less/**/*.less',
   js: {
-    app: [
-      ASSET_PREFIX + 'js/src/core/**/*.js',   // core
-      ASSET_PREFIX + 'js/src/map/**/*.js',    // mapper
-    ],
+    app: ASSET_PREFIX + 'js/src/**/*.js',
     lib: ASSET_PREFIX + 'js/lib/**/*.js',
+    closure: ASSET_PREFIX + 'js/lib/closure/base.js',
     externs: ASSET_PREFIX + 'js/externs/*.js',
     test: 'fatcatmap_tests/js/spec'
   },
@@ -53,15 +53,15 @@ outputs = {
   img: ASSET_PREFIX + 'img',
   css: ASSET_PREFIX + 'style',
   js: {
-    app: ASSET_PREFIX + 'js/compiled'
+    app: ASSET_PREFIX + 'js/compiled/'
   },
   themes: {
-    dark: ASSET_PREFIX + 'style/themes/fcm-dark/home.css',
-    light: ASSET_PREFIX + 'style/themes/fcm-light/home.css',
-    scaffold: ASSET_PREFIX + 'style/themes/fcm-scaffold/home.css'
+    dark: ASSET_PREFIX + 'style/themes/dark/',
+    light: ASSET_PREFIX + 'style/themes/light/',
+    scaffold: ASSET_PREFIX + 'style/themes/scaffold/'
   },
   templates: 'fatcatmap/templates/compiled/*',
-  sourcemaps: '.develop/maps'
+  sourcemaps: '../../../../../.develop/maps/'
 };
 
 // Build configuration.
@@ -70,7 +70,7 @@ config = {
   // Sourcemaps
   sourcemaps: {
     includeContent: false,
-    sourceRoot: '/.develop/maps'
+    sourceRoot: '/.develop/maps/' // This needs to match asset serve root for less
   },
 
   // Images
@@ -102,13 +102,13 @@ config = {
     },
     themes: {
       dark: {
-        globalVars: { theme: 'dark' }
+        modifyVars: { theme: 'dark' }
       },
       light: {
-        globalVars: { theme: 'light' }
+        modifyVars: { theme: 'light' }
       },
       scaffold: {
-        globalVars: { theme: 'scaffold' }
+        modifyVars: { theme: 'scaffold' }
       }
     }
   },
@@ -118,77 +118,81 @@ config = {
 
     // Prod compile settings
     app: {
-      compilerPath: 'lib/closure/build/compiler.jar',
-      fileName: outputs.js + '/app.min.js',
-      compilerFlags: {
-        debug: false,
-        summary_detail_level: 3,
-        warning_level: 'VERBOSE',
-        language_in: 'ECMASCRIPT5',
-        closure_entry_point: 'app.main',
-        use_types_for_optimization: true,
-        process_closure_primitives: true,
-        compilation_level: 'ADVANCED_OPTIMIZATIONS'
-      }
+      jar: 'lib/closure/build/compiler.jar',
+      js_output_file: outputs.js.app + 'app.min.js',
+      debug: false,
+      summary_detail_level: 3,
+      warning_level: 'VERBOSE',
+      language_in: 'ECMASCRIPT5',
+      closure_entry_point: 'app.main',
+      use_types_for_optimization: null,
+      process_closure_primitives: true,
+      compilation_level: 'ADVANCED_OPTIMIZATIONS'
     },
 
     // Debug compile settings
     debug: {
-      compilerPath: 'lib/closure/build/compiler.jar',
-      fileName: outputs.js + '/app.debug.min.js',
-      compilerFlags: {
-        debug: true,
-        summary_detail_level: 3,
-        warning_level: 'VERBOSE',
-        language_in: 'ECMASCRIPT5',
-        formatting: 'PRETTY_PRINT',
-        closure_entry_point: 'app.main',
-        use_types_for_optimization: true,
-        process_closure_primitives: true,
-        compilation_level: 'SIMPLE_OPTIMIZATIONS'
-      }
+      jar: 'lib/closure/build/compiler.jar',
+      js_output_file: outputs.js.app + 'app.debug.js',
+      debug: true,
+      summary_detail_level: 3,
+      warning_level: 'VERBOSE',
+      language_in: 'ECMASCRIPT5',
+      formatting: 'PRETTY_PRINT',
+      closure_entry_point: 'app.main',
+      use_types_for_optimization: null,
+      process_closure_primitives: true,
+      compilation_level: 'SIMPLE_OPTIMIZATIONS'
     }
   },
 
   // SVG minification
-  svgmin: {}
+  svgmin: {},
+
+  // Test config
+  karma: require('./fatcatmap_tests/js/karma.conf.js')
 };
 
 // Compile less source to css
 gulp.task('less', [
   'less:dark',
-  // 'less:light',
-  // 'less:scaffold'
+  'less:light',
+  'less:scaffold'
 ]);
 
 // Compile dark theme
 gulp.task('less:dark', function () {
   var opts = merge(merge({}, config.less.options), config.less.themes.dark);
-  console.log('compiling dark less with options: %j', opts);
   return gulp.src(inputs.themes)
     .pipe(sourcemaps.init())
     .pipe(less(opts))
-    .pipe(sourcemaps.write(outputs.sourcemaps, config.sourcemaps))
+    .pipe(sourcemaps.write(
+      outputs.sourcemaps + ASSET_PREFIX + 'style/themes/dark/',
+      config.sourcemaps))
     .pipe(gulp.dest(outputs.themes.dark));
 });
 
 // Compile light theme
 gulp.task('less:light', function () {
-  var opts = merge({}, config.less.options);
+  var opts = merge(merge({}, config.less.options), config.less.themes.light);
   return gulp.src(inputs.themes)
     .pipe(sourcemaps.init())
-    .pipe(less(merge(opts, config.less.themes.light)))
-    .pipe(sourcemaps.write(outputs.sourcemaps, config.sourcemaps))
+    .pipe(less(opts))
+    .pipe(sourcemaps.write(
+      outputs.sourcemaps + ASSET_PREFIX + 'style/themes/light/',
+      config.sourcemaps))
     .pipe(gulp.dest(outputs.themes.light));
 });
 
 // Compile scaffold theme
 gulp.task('less:scaffold', function () {
-  var opts = merge({}, config.less.options);
+  var opts = merge(merge({}, config.less.options), config.less.themes.scaffold);
   return gulp.src(inputs.themes)
     .pipe(sourcemaps.init())
-    .pipe(less(merge(opts, config.less.themes.scaffold)))
-    .pipe(sourcemaps.write(outputs.sourcemaps, config.sourcemaps))
+    .pipe(less(opts))
+    .pipe(sourcemaps.write(
+      outputs.sourcemaps + ASSET_PREFIX + 'style/themes/scaffold/',
+      config.sourcemaps))
     .pipe(gulp.dest(outputs.themes.scaffold));
 });
 
@@ -200,23 +204,19 @@ gulp.task('less:clean', function () {
 
 // Compile JS with Closure Compiler in production mode
 gulp.task('closure', function () {
-  console.log('Compiling js for production with closure...');
   return gulp.src(inputs.js.app)
-    .pipe(closure(config.closure.app))
-    .pipe(gulp.dest(outputs.js.app));
+    .pipe(closure(config.closure.app));
 });
 
 // Compile JS with Closure Compiler in debug mode
 gulp.task('closure:debug', function () {
-  console.log('Compiling debug js with closure...');
   return gulp.src(inputs.js.app)
-    .pipe(closure(config.closure.debug))
-    .pipe(gulp.dest(outputs.js.app));
+    .pipe(closure(config.closure.debug));
 });
 
 // Clean compiled JS files
 gulp.task('closure:clean', function () {
-  return gulp.src(outputs.js)
+  return gulp.src(outputs.js.app + '/*')
     .pipe(rmrf());
 });
 
@@ -227,7 +227,7 @@ gulp.task('templates:build', function (cb) {
 
 // Clean templates
 gulp.task('templates:clean', function () {
-  return gulp.src(outputs.template)
+  return gulp.src(outputs.templates)
     .pipe(rmrf());
 });
 
@@ -243,16 +243,41 @@ gulp.task('watch', function (cb) {
   cb();
 });
 
+// Run JS tests based on environment
+gulp.task('test', [DEBUG ? 'test:debug' : 'test:release']);
+
+// Run JS tests in dev mode
+gulp.task('test:debug', ['closure:debug'], function (cb) {
+  var cfg = merge({}, config.karma);
+  cfg.files = cfg._debugFiles;
+  karma.start(cfg);
+  cb();
+});
+
+// Run JS tests in release mode
+gulp.task('test:release', ['closure'], function (cb) {
+  var cfg = merge({}, config.karma);
+  cfg.files = cfg._releaseFiles;
+  karma.start(cfg);
+  cb();
+});
+
+// Clean JS test output
+gulp.task('test:clean', function () {
+  return gulp.src(['.develop/coverage/js/*', '.develop/test-reports/js/*'])
+    .pipe(rmrf());
+});
+
 // Default task - runs with bare 'gulp'.
 gulp.task('default', [
   'less',
-  'closure:debug'
+  'test:debug',
 ]);
 
 // Develop task
 gulp.task('develop', [
   'less',
-  'closure:debug',
+  'test:debug',
   'serve',
   'watch'
 ]);
@@ -260,12 +285,13 @@ gulp.task('develop', [
 // Release task
 gulp.task('release', [
   'less',
-  'closure'
+  'closure',
+  'test:release'
 ]);
 
 // Clean task
 gulp.task('clean', [
   'less:clean',
   'closure:clean',
-  'template:clean'
+  'templates:clean'
 ]);
