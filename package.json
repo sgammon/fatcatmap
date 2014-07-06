@@ -1,42 +1,38 @@
 {
-    "name": "fatcatmap"
-  , "description": "coming soon to a riot near you"
-  , "version": "1.0.0"
-  , "keywords": ["politics", "transparency", "opendata", "opensource"]
-  , "homepage": "https://fatcatmap.org"
-  , "author": "momentum labs"
-  , "private": true
-  , "scripts": {}
-  , "repository": {
-      "type": "git"
-    , "url": "https://github.com/sgammon/fatcatmap.git"
-  }
-  , "bugs": {
-      "url": "https://github.com/sgammon/fatcatmap/issues"
-  }
-  , "licenses": [
+  "name": "fatcatmap",
+  "description": "coming soon to a riot near you",
+  "version": "1.0.0",
+  "keywords": ["politics", "transparency", "opendata", "opensource"],
+  "homepage": "https://fatcatmap.org",
+  "author": "momentum labs",
+  "private": true,
+  "scripts": {},
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/momentum/fatcatmap.git"
+  },
+  "bugs": "https://github.com/momentum/fatcatmap/issues",
+  "licenses": [
     {
-        "type": "Private"
-      , "url": "https://fatcatmap.org/license"
+      "type": "Private",
+      "url": "https://fatcatmap.org/license"
     }
-  ]
-  , "devDependencies": {
-      "underscore": "~1.6.0"
-    , "btoa": "~1.1.1"
-    , "uglify-js": "2.4.8"
-    , "coffee-script": "1.6.3"
-    , "wrench": "1.5.4"
-    , "less": "1.5.1"
-    , "webp-bin": "~0.1.4"
-    , "grunt": "~0.4.1"
-    , "grunt-cli": "~0.1.13"
-    , "grunt-webp": "~0.0.4"
-    , "grunt-shell": "~0.6.4"
-    , "grunt-svgmin": "~0.4.0"
-    , "grunt-contrib-less": "~0.11.0"
-    , "grunt-contrib-watch": "~0.6.1"
-    , "grunt-contrib-coffee": "~0.10.1"
-    , "grunt-contrib-imagemin": "~0.6.1"
-    , "grunt-closure-compiler": "~0.0.21"
+  ],
+  "devDependencies": {
+    "btoa": "~1.1.1",
+    "wrench": "~1.5.4",
+    "webp-bin": "~0.1.4",
+    "less-stream": "~0.1.1",
+    "closure-compiler-stream": "~0.1.2",
+    "karma": "~0.10.x",
+    "karma-coverage": "~0.1",
+    "karma-jasmine": "~0.1.5",
+    "karma-junit-reporter": "~0.1",
+    "karma-phantomjs-launcher": "~0.1",
+    "gulp": "~3.8.5",
+    "gulp-svgmin": "~0.4.6",
+    "gulp-rimraf": "~0.1.0",
+    "gulp-imagemin": "~0.6.1",
+    "gulp-sourcemaps": "~0.4.4"
   }
 }

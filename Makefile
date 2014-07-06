@@ -49,6 +49,7 @@ redis=on
 ENVIRONMENT?=debug
 OS?=Mac
 
+
 ifeq ($(extensions),on)
 ifeq ($(gevent),on)
 OPTIONALS+=gevent
@@ -94,12 +95,12 @@ develop: .develop js styles templates coverage
 canteen: lib/canteen
 
 js:
-	@echo "Compiling Coffee..."
-	@node_modules/grunt-cli/bin/grunt coffee
+	@echo "Minifying Javascript..."
+	@-node_modules/gulp/bin/gulp.js closure
 
 styles:
 	@echo "Compiling Less..."
-	@node_modules/grunt-cli/bin/grunt less
+	@-node_modules/gulp/bin/gulp.js less
 
 ifeq ($(BREW),1)
 brew:
@@ -129,8 +130,10 @@ endif
 
 test:
 	@-bin/pip install nose coverage
-	@echo "Running testsuite..."
+	@echo "Running python testsuite..."
 	@-bin/nosetests canteen_tests fatcatmap_tests --verbose
+	@echo "Running javascript testsuite..."
+	@-ENV=$(ENVIRONMENT) gulp test
 
 coverage:
 	@-bin/pip install nose coverage
@@ -329,12 +332,12 @@ bootstrap: fatcatmap/assets/bootstrap/package.json
 	@echo "Bootstrap is ready."
 
 ifeq ($(DEBUG),1)
-grunt: npm
+gulp: npm
 	@-mkdir -p .develop/maps/fatcatmap/assets/js/site
 	@-mkdir -p .develop/maps/fatcatmap/assets/coffee/site
-	@grunt
+	@-gulp
 endif
 ifeq ($(DEBUG),0)
-grunt: npm
-	@node_modules/grunt-cli/bin/grunt release
+gulp: npm
+	@node_modules/gulp/bin/gulp.js release
 endif
