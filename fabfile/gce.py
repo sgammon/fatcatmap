@@ -12,7 +12,7 @@ import libcloud.security
 from fabfile.helpers import GCENode
 from libcloud.compute.types import Provider
 from libcloud.compute.providers import get_driver
-from .settings import ALLOWED_GROUPS, ALLOWED_ENVIRONMENTS
+import settings
 
 
 libcloud.security.CA_CERTS_PATH.append('/usr/local/etc/openssl/cert.pem')
@@ -21,22 +21,21 @@ libcloud.security.CA_CERTS_PATH.append('/usr/local/etc/openssl/cert.pem')
 class Deploy(object):
 
   '''  '''
-
-  ID = '489276160057-dffvig7s5uoqg0em72ndnsuvc72jb6m6@developer.gserviceaccount.com'
-  PEM = 'fabfile/credentials/identity.pem'
-  PROJECT = 'fcm-catnip'
-
-  REGION = 'us-central1-a'
-  SIZE_STR = 'g1-small'
-  IMAGE_STR = 'debian-7-wheezy-v20140606'
-
+  ##### Set defaults for Deploy #####
+  ID = settings.PROJECT_ID
+  PEM = settings.PEM
+  PROJECT = settings.PROJECT
+  REGION = settings.REGION
+  SIZE_STR = settings.SIZE
+  IMAGE_STR = settings.IMAGE
+  NETWORK = settings.NETWORK
   node_class = GCENode  # used for cross-cloud compatability
 
   def __init__(self, environment="prod", group="web", names=None):
 
     '''  '''
 
-    if (group not in ALLOWED_GROUPS) or (environment not in ALLOWED_ENVIRONMENTS):
+    if (group not in settings.ALLOWED_GROUPS) or (environment not in settings.ALLOWED_ENVIRONMENTS):
       raise Exception("invalid group or environment specified")
     self.names = names
     self.group = group
@@ -79,6 +78,7 @@ class Deploy(object):
     name = "{group}-{env}-{n}".format(group=self.group, env=self.environment, n=node_n)
     node = self.driver.create_node(name=name,
                      image=self.image, size=self.size,
+                     ex_network=self.NETWORK,
                      ex_metadata={'group': self.group, 'environment': self.environment})
     print node
 
