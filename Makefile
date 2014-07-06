@@ -135,15 +135,16 @@ test:
 coverage:
 	@-bin/pip install nose coverage
 	@echo "Running testsuite (with coverage)..."
-	@mkdir -p .develop/coverage
+	@mkdir -p .develop/tests/python/xunit .develop/tests/js
+	@mkdir -p .develop/coverage/python/xunit .develop/coverage/js
 	@-bin/nosetests canteen_tests fatcatmap_tests --with-coverage \
 							 --cover-package=fatcatmap \
 							 --cover-html \
-							 --cover-html-dir=.develop/coverage/html \
 							 --cover-xml \
-							 --cover-xml-file=.develop/clover.xml \
 							 --with-xunit \
-							 --xunit-file=.develop/xunit.xml;
+							 --cover-html-dir=.develop/coverage/python/html \
+							 --cover-xml-file=.develop/coverage/python/clover.xml \
+							 --xunit-file=.develop/tests/python/xunit.xml;
 
 deploy:
 	@echo "Deployment is not currently supported from dev. Check back later."
