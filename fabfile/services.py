@@ -1,12 +1,19 @@
-from fabric import colors
-from fabric.api import env
-from fabric.api import task
-from fabric.api import run,sudo
+# -*- coding: utf-8 -*-
 
-from fabtools import require,service
+'''
+
+  fabric: services
+  ~~~~~~~~~~~~~~~~
+
+'''
+
+# fabric
+from fabric.api import env, task, run, sudo
 
 
 @task
-def service(name,action="restart"):
-    sudo("service {0} {1}".format(name,action))
+def service(name, action="restart"):
 
+  '''  '''
+
+  sudo("service {0} {1}".format(name, action))
