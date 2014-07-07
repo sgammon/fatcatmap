@@ -38,7 +38,7 @@ class GCENode(object):
     '''  '''
 
     items = self.node.extra['metadata']['items']
-    self.metadata = dict([(item['key'],item['value']) for item in items])
+    self.metadata = dict([(item['key'], item['value']) for item in items])
     self.group = self.metadata.get('group')
     self.environment = self.metadata.get('environment')
 

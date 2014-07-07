@@ -28,12 +28,11 @@ class Deploy(object):
   PEM = settings.PEM
   PROJECT = settings.PROJECT
   REGION = settings.REGION
-  SIZE_STR = settings.SIZE
   IMAGE_STR = settings.IMAGE
   NETWORK = settings.NETWORK
   node_class = GCENode  # used for cross-cloud compatability
 
-  def __init__(self, environment="prod", group="web", names=None):
+  def __init__(self, environment="production", group="app", names=None):
 
     '''  '''
 
@@ -41,6 +40,7 @@ class Deploy(object):
       raise Exception("invalid group or environment specified")
     self.names = names
     self.group = group
+    self.tags = settings.GROUP_TAGS.get(group) + settings.ENVIRONMENT_TAGS.get(environment)
     self.environment = environment
     self._setup()
 
@@ -51,7 +51,7 @@ class Deploy(object):
     driver = get_driver(Provider.GCE)
     self.driver = driver(self.ID, self.PEM, self.REGION, self.PROJECT)
     self.image = self.driver.ex_get_image(self.IMAGE_STR)
-    self.size = self.driver.ex_get_size(self.SIZE_STR)
+    self.size = self.driver.ex_get_size(settings.GROUP_SETTINGS[self.group]['size'])
 
   def get_nodes(self,):
 
@@ -77,11 +77,43 @@ class Deploy(object):
     if len(n) > 0:
       node_n = max(n) + 1
 
-    name = "{group}-{env}-{n}".format(group=self.group, env=self.environment, n=node_n)
-    node = self.driver.create_node(name=name,
-                     image=self.image, size=self.size,
-                     ex_network=self.NETWORK,
-                     ex_metadata={'group': self.group, 'environment': self.environment})
+    name = "{env}-{group}-{n}".format(
+      group=self.group,
+      env=settings.GROUP_LABELS.get(self.environment),
+      n=node_n
+    )
+
+    # create boot disk
+    boot_volume = self.driver.create_volume(
+          name=name,
+          size=settings.BOOT_DISK_SIZE,
+          location=self.REGION,
+          snapshot=settings.BOOT_DISK_SNAPSHOT,
+          use_existing=False,
+          type=settings.BOOT_DISK_TYPE
+    )
+
+    print "Made boot volume for '%s'." % name
+
+    # create node
+    node = self.driver.create_node(
+          name=name,
+          size=self.size,
+          image=self.image,
+          ex_tags=self.tags,
+          location=self.REGION,
+          ex_boot_disk=boot_volume,
+          ex_ip_forwarding=settings.GROUP_SETTINGS[self.group]['ip_forwarding'],
+          ex_service_scopes=settings.GROUP_SETTINGS[self.group]['service_scopes'],
+          ex_network=self.NETWORK,
+          ex_metadata={
+            'group': self.group,
+            'environment': self.environment,
+            'startup-script-url': settings.STARTUP_SCRIPT_URL
+          }
+    )
+
+    print "Made node '%s'." % name
     print node
 
   def deploy_many(self, n=3):

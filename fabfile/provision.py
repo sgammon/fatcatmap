@@ -17,8 +17,8 @@ from fabric.api import env
 from fabric.api import task
 
 
-group = "web"  # default group
-environment = "prod"  # default environment
+group = "app"  # default group
+environment = "sandbox"  # default environment
 env.user = "fabric"  # username to use for GCE...should match key name
 env.key_filename = ['fabfile/keys/id_rsa']
 

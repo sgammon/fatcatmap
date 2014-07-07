@@ -222,6 +222,7 @@ $(DEVROOT)/.env: closure bootstrap canteen npm
 	@bin/pip install -r lib/canteen/dev_requirements.txt
 
 	@echo "Installing Pip dependencies..."
+	@bin/pip install "git+https://github.com/sgammon/libcloud.git@trunk#egg=libcloud-0.15.1"
 	@-bin/pip install -r ./requirements.txt
 	@-mkdir -p .develop
 	@-mkdir -p .develop/maps/fatcatmap/assets/{js,less,style,coffee}/site

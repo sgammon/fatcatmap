@@ -10,4 +10,3 @@ protorpc
 uwsgi
 fabtools
 fabric
-apache-libcloud

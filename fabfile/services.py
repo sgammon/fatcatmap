@@ -19,9 +19,6 @@ def service(name, action="restart"):
   '''  '''
   sudo("service {0} {1}".format(name, action))
 
-@task
-def sup():
-  pass
 
 @task
 def setup_uwsgi():
