@@ -53,7 +53,7 @@ class Deploy(object):
     self.image = self.driver.ex_get_image(self.IMAGE_STR)
     self.size = self.driver.ex_get_size(self.SIZE_STR)
 
-  def get_nodes(self,):
+  def get_nodes(self):
 
     ''' filters nodes and converts libcloud nodes into our node object as '''
 

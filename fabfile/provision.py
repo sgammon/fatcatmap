@@ -8,8 +8,10 @@
 '''
 
 # local
+import time
 from .gce import Deploy
 from .helpers import get_node
+from .deploy import bootstrap
 
 # fabric
 from fabric import colors
@@ -17,8 +19,8 @@ from fabric.api import env
 from fabric.api import task
 
 
-group = "web"  # default group
-environment = "prod"  # default environment
+group = "app"  # default group
+environment = "production"  # default environment
 env.user = "fabric"  # username to use for GCE...should match key name
 env.key_filename = ['fabfile/keys/id_rsa']
 
@@ -34,6 +36,10 @@ def create_nodes(n=3, environment=environment, group=group):
   env.d = Deploy(environment, group)
   env.d.deploy_many(n)
   hosts(environment, group)
+
+  print "Waiting for instance to finish provisioning..."
+  time.sleep(15)
+  bootstrap(environment, group)
 
 
 @task
@@ -58,6 +64,7 @@ def hosts(environment=environment, group=group, name=None):
     env.hosts.append(node.ip)
     env.hosts_detail[node.ip] = node
   print colors.green([node for node in _nodes])
+  return env
 
 
 @task

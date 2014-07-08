@@ -15,7 +15,9 @@ def get_node():
 
   '''  '''
 
-  return env.hosts_detail[env.host]
+  for host in env.hosts_detail:
+    if env.host == env.hosts_detail[host].name:
+      return env.hosts_detail[host]
 
 
 class GCENode(object):

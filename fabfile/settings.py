@@ -11,18 +11,16 @@
 
 '''
 
-ALLOWED_GROUPS = ['lb', 'web', 'app', 'misc']
-ALLOWED_ENVIRONMENTS = ['prod', 'stage']
-
-
-
-###### GENERAL SETTINGS ######
-
-ALLOWED_GROUPS = ['lb', 'web', 'app', 'misc']
-ALLOWED_ENVIRONMENTS = ['prod', 'stage']
+ALLOWED_GROUPS = ['lb', 'app']
+ALLOWED_ENVIRONMENTS = ['production', 'staging', 'sandbox']
 
 
 ###### GCE SETTINGS #####
+USER = 'k9'
+BOOT_DISK_SIZE = 10  # in gigabytes
+BOOT_DISK_SNAPSHOT = 'boot-v5'  # snapshot name
+STARTUP_SCRIPT_URL = 'https://storage.googleapis.com/fcm-dev/base/bootstrap.sh'
+BOOT_DISK_TYPE = 'https://www.googleapis.com/compute/v1/projects/fcm-catnip/zones/us-central1-a/diskTypes/pd-ssd'
 PROJECT_ID = '489276160057-dffvig7s5uoqg0em72ndnsuvc72jb6m6@developer.gserviceaccount.com'
 PEM = 'fabfile/credentials/identity.pem'
 PROJECT =  'fcm-catnip'

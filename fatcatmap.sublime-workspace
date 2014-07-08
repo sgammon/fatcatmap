@@ -1,1 +1,1001 @@
-{}
+{
+	"auto_complete":
+	{
+		"selected_items":
+		[
+		]
+	},
+	"buffers":
+	[
+		{
+			"contents": "\n\n# users and groups\nsudo groupadd runtime\nsudo useradd -g runtime k9 -m --system\nsudo chsh -s `which bash` k9\n\n# global update\nsudo apt-get update && sudo apt-get upgrade\n\n# runtime packages (IF DEBIAN)\nsudo apt-get install -y zlib1g libsnappy1 make unzip tar git liblz4-1 stow htop tree libjansson4\n\n# runtime packages (IF UBUNTU)\nsudo apt-get install -y zlib1g libsnappy1 make unzip tar git liblz4-0.0 stow htop tree libjansson4\n\n# dev packages\nsudo apt-get install -y python-dev libsnappy-dev gcc-4.8 mercurial subversion binutils-gold liblz4-dev g++ libjansson-dev\n\n# modify visudo\nsudo echo \"k9 ALL=NOPASSWD: ALL\" >> /etc/sudoers\n",
+			"settings":
+			{
+				"buffer_size": 636,
+				"line_ending": "Unix"
+			}
+		},
+		{
+			"file": "requirements.txt",
+			"settings":
+			{
+				"buffer_size": 92,
+				"line_ending": "Unix"
+			}
+		},
+		{
+			"file": "Makefile",
+			"settings":
+			{
+				"buffer_size": 9520,
+				"line_ending": "Unix"
+			}
+		},
+		{
+			"file": "fabfile/provision.py",
+			"settings":
+			{
+				"buffer_size": 1600,
+				"line_ending": "Unix"
+			}
+		},
+		{
+			"file": "fabfile/services.py",
+			"settings":
+			{
+				"buffer_size": 1048,
+				"line_ending": "Unix"
+			}
+		},
+		{
+			"file": "fabfile/deploy.py",
+			"settings":
+			{
+				"buffer_size": 1903,
+				"line_ending": "Unix"
+			}
+		},
+		{
+			"file": "fabfile/settings.py",
+			"settings":
+			{
+				"buffer_size": 1700,
+				"line_ending": "Unix"
+			}
+		},
+		{
+			"settings":
+			{
+				"buffer_size": 0,
+				"line_ending": "Unix"
+			}
+		},
+		{
+			"file": "fabfile/keys/id_k9",
+			"settings":
+			{
+				"buffer_size": 3243,
+				"line_ending": "Unix"
+			}
+		},
+		{
+			"file": "fabfile/keys/id_k9.pub",
+			"settings":
+			{
+				"buffer_size": 736,
+				"line_ending": "Unix"
+			}
+		},
+		{
+			"file": "fatcatmap/config.py",
+			"settings":
+			{
+				"buffer_size": 2941,
+				"line_ending": "Unix"
+			}
+		},
+		{
+			"file": "fabfile/bootstrap.sh",
+			"settings":
+			{
+				"buffer_size": 92,
+				"line_ending": "Unix"
+			}
+		},
+		{
+			"file": "fabfile/gce.py",
+			"settings":
+			{
+				"buffer_size": 3239,
+				"line_ending": "Unix"
+			}
+		},
+		{
+			"file": "fabfile/helpers.py",
+			"settings":
+			{
+				"buffer_size": 1178,
+				"line_ending": "Unix"
+			}
+		},
+		{
+			"file": "scripts/compile_templates.py",
+			"settings":
+			{
+				"buffer_size": 11694,
+				"line_ending": "Unix"
+			}
+		},
+		{
+			"file": "/Users/sam/Downloads/Makefile",
+			"settings":
+			{
+				"buffer_size": 9430,
+				"line_ending": "Unix"
+			}
+		},
+		{
+			"contents": "\nexport CFLAGS=\"-Ofast -mtune=native -march=native -fomit-frame-pointer -fno-exceptions -fno-strict-aliasing -msse4.2 -flto -flto-report -fuse-linker-plugin -fPIC\"\n\n-I/base/software/zlib/include -I/base/software/pcre/include -I/base/software/openssl/include \n\nexport LDFLAGS=\"-I/base/software/zlib/lib -I/base/software/pcre/lib -I/base/software/openssl/lib\"\n\n# ZLIB\nCFLAGS=$CFLAGS ./configure \\\n                  --prefix=/base/software/zlib \\\n                  --static \\\n                  --64;\n\nmake && make install\n\n\n# PCRE\nCFLAGS=$CFLAGS LDFLAGS=$LDFLAGS ./configure \\\n                  --prefix=/base/software/pcre \\\n                  --enable-pcre16 \\\n                  --enable-pcre32 \\\n                  --enable-jit \\\n                  --enable-utf8 \\\n                  --disable-valgrind \\\n                  --disable-coverage;\n\nmake && make install\n\n\n## OPENSSL\n./config --prefix=/base/software/openssl \\\n          enable-rc5 enable-rfc3779 enable-ec_nistp_64_gcc_128 no-shared \\\n          no-threads no-krb5 zlib no-md2 no-jpake no-gmp no-ssl-trace \\\n          -DOPENSSL_EC_NISTP_64_GCC_128 -DOPENSSL_RC5 -DOPENSSL_NO_HEARTBEATS;\n\n# (rewrite CFLAG in makefile)\nmake depend && make\n\n# (remove LTO flags in makefile)\nmake && make install\n\n\n## APR\nCFLAGS=$CFLAGS LDFLAGS=$LDFLAGS ./configure \\\n                    --prefix=/base/software/apr \\\n                    --enable-nonportable-atomics \\\n                    --enable-threads \\\n                    --enable-posix-shm;\n\nmake && make install\n\n\n## APR-UTIL\nCFLAGS=$CFLAGS LDFLAGS=$LDFLAGS ./configure \\\n                    --prefix=/base/software/apr-util \\\n                    --with-apr=/base/software/apr \\\n                    --with-openssl=/base/software/openssl;\n\n\n## HTTPD 2.2\nCFLAGS=$CFLAGS LDFLAGS=$LDFLAGS ./configure \\\n                    --prefix=/base/software/httpd \\\n                    --with-apr=/base/software/apr \\\n                    --with-apr-util=/base/software/apr-util \\\n                    --with-mpm=worker \\\n                    --with-pcre=/base/software/pcre \\\n                    --with-z=/base/software/zlib \\\n                    --enable-layout=K9 \\\n                    --enable-pie \\\n                    --disable-authn-file \\\n                    --disable-auth-basic \\\n                    --disable-include \\\n                    --disable-charset-lite \\\n                    --disable-userdir \\\n                    --disable-negotiation \\\n                    --disable-autoindex \\\n                    --disable-cgid \\\n                    --disable-cgi \\\n                    --enable-auth-digest=static \\\n                    --enable-file-cache=static \\\n                    --enable-cache=static \\\n                    --enable-mem-cache=static \\\n                    --enable-disk-cache=static \\\n                    --enable-filter=static \\\n                    --enable-deflate=static \\\n                    --enable-expires=static \\\n                    --enable-headers=static \\\n                    --enable-unique-id=static \\\n                    --enable-proxy=static \\\n                    --enable-proxy-http=static \\\n                    --enable-proxy-balancer=static \\\n                    --enable-http=static \\\n                    --enable-status=static \\\n                    --enable-info=static \\\n                    --enable-suexec=static \\\n                    --enable-vhost-alias=static \\\n                    --enable-asis=static \\\n                    --enable-rewrite=static \\\n                    --enable-so \\\n                    --enable-static-support;\n \n",
+			"settings":
+			{
+				"buffer_size": 3563,
+				"line_ending": "Unix"
+			}
+		}
+	],
+	"build_system": "",
+	"command_palette":
+	{
+		"height": 49.0,
+		"selected_items":
+		[
+			[
+				"install",
+				"Package Control: Install Package"
+			],
+			[
+				"list pack",
+				"Package Control: List Packages"
+			],
+			[
+				"package",
+				"Preferences: Browse Packages"
+			],
+			[
+				"package ",
+				"Package Control: Install Package"
+			],
+			[
+				"insta",
+				"Package Control: Install Package"
+			],
+			[
+				"instl",
+				"Package Control: Install Package"
+			],
+			[
+				"instal",
+				"Package Control: Install Package"
+			],
+			[
+				"pack",
+				"Package Control: Install Package"
+			]
+		],
+		"width": 435.0
+	},
+	"console":
+	{
+		"height": 126.0,
+		"history":
+		[
+			"import urllib.request,os,hashlib; h = '7183a2d3e96f11eeadd761d777e62404' + 'e330c659d4bb41d3bdf022e94cab3cd0'; pf = 'Package Control.sublime-package'; ipp = sublime.installed_packages_path(); urllib.request.install_opener( urllib.request.build_opener( urllib.request.ProxyHandler()) ); by = urllib.request.urlopen( 'http://sublime.wbond.net/' + pf.replace(' ', '%20')).read(); dh = hashlib.sha256(by).hexdigest(); print('Error validating download (got %s instead of %s), please try manual install' % (dh, h)) if dh != h else open(os.path.join( ipp, pf), 'wb' ).write(by)"
+		]
+	},
+	"distraction_free":
+	{
+		"menu_visible": true,
+		"show_minimap": false,
+		"show_open_files": false,
+		"show_tabs": true,
+		"side_bar_visible": false,
+		"status_bar_visible": false
+	},
+	"file_history":
+	[
+		"/Users/sam/Workspace/fatcatmap/fabfile/bootstrap.sh",
+		"/Users/sam/Workspace/fatcatmap/fabfile/settings.py",
+		"/Users/sam/Workspace/fatcatmap/.git/MERGE_MSG",
+		"/Users/sam/Workspace/fatcatmap/.git/COMMIT_EDITMSG",
+		"/Users/sam/Workspace/fatcatmap/fabfile/credentials/identity.crt.pem",
+		"/Users/sam/Workspace/fatcatmap/fabfile/gce.py",
+		"/Users/sam/Workspace/fatcatmap/fabfile/credentials/identity.pem",
+		"/Users/sam/Workspace/fatcatmap/fabfile/keys/id_rsa",
+		"/Users/sam/Workspace/fatcatmap/conf/appserver/pagespeed.conf",
+		"/Users/sam/Workspace/fatcatmap/conf/appserver/static.conf",
+		"/Users/sam/Workspace/fatcatmap/conf/appserver/paths.conf",
+		"/Users/sam/Workspace/fatcatmap/conf/appserver/app.conf",
+		"/Users/sam/Workspace/fatcatmap/conf/apache2.conf",
+		"/Users/sam/Workspace/fatcatmap/fabfile/helpers.py",
+		"/Users/sam/Workspace/fatcatmap/fabfile/provision.py",
+		"/Users/sam/Workspace/fatcatmap/fabfile/services.py",
+		"/Users/sam/Workspace/fatcatmap/Makefile",
+		"/Users/sam/Workspace/fatcatmap/fabfile/deploy.py",
+		"/Users/sam/Workspace/fatcatmap/fabfile/__init__.py",
+		"/Users/sam/Workspace/brigade/.git/COMMIT_EDITMSG",
+		"/Users/sam/Workspace/brigade-ios/Agora/main.m",
+		"/Users/sam/Workspace/brigade-ios/.git/COMMIT_EDITMSG",
+		"/Users/sam/Workspace/kitchen/cookbooks/nginx_wrapper/attributes/default.rb",
+		"/Users/sam/Workspace/kitchen/cookbooks/brigade_load_balancer_role/attributes/default.rb",
+		"/Users/sam/Workspace/kitchen/cookbooks/brigade_load_balancer_role/recipes/default.rb",
+		"/Users/sam/Workspace/brigade-ios/Podfile",
+		"/Users/sam/Workspace/brigade/app/assets/javascripts/collections/recommendation_list.js",
+		"/Users/sam/Workspace/brigade/Gemfile",
+		"/Users/sam/Workspace/brigade/app/assets/javascripts/collections/recommendations.js",
+		"/Users/sam/Workspace/brigade/script/record-api-examples",
+		"/Users/sam/Workspace/brigade/app/controllers/api/v0/recommendations_controller.rb",
+		"/Users/sam/Workspace/brigade/Rakefile",
+		"/Users/sam/Workspace/brigade/app/serializers/application_serializer.rb",
+		"/Users/sam/Workspace/kitchen/cookbooks/devbox/scripts/make_image.sh",
+		"/Users/sam/Workspace/kitchen/roles/mysql_innodb.rb",
+		"/Users/sam/Workspace/brigade/app/controllers/api/v0/admin/topics_controller.rb",
+		"/Users/sam/Workspace/brigade/app/controllers/api/v0/admin/positions_controller.rb",
+		"/Users/sam/Workspace/brigade/app/controllers/api/v0/admin/organizations_controller.rb",
+		"/Users/sam/Workspace/brigade/app/controllers/api/v0/admin/categories_controller.rb",
+		"/Users/sam/Workspace/brigade/app/controllers/api/v0/admin/notifiers_controller.rb",
+		"/Users/sam/Workspace/brigade/config/environment.rb",
+		"/Users/sam/Workspace/brigade/app/controllers/api/v0/api_controller.rb",
+		"/Users/sam/Workspace/brigade/app/controllers/api/v0/communication_preferences_controller.rb",
+		"/Users/sam/Workspace/brigade/app/controllers/api/v0/contacts_controller.rb",
+		"/Users/sam/Workspace/brigade/app/controllers/api/v0/me_controller.rb",
+		"/Users/sam/Workspace/brigade/app/controllers/api/v0/mobile_devices_controller.rb",
+		"/Users/sam/Workspace/brigade/app/controllers/api/v0/position_discussion_comments_controller.rb",
+		"/Users/sam/Workspace/brigade/app/controllers/api/v0/position_discussions_controller.rb",
+		"/Users/sam/Workspace/brigade/app/controllers/api/v0/position_responses_controller.rb",
+		"/Users/sam/Workspace/brigade/app/controllers/api/v0/profiles/comparison/recommendations_controller.rb",
+		"/Users/sam/Workspace/brigade/app/controllers/api/v0/profiles/comparison_controller.rb",
+		"/Users/sam/Workspace/brigade/app/controllers/api/v0/recommendations/actions_controller.rb",
+		"/Users/sam/Workspace/brigade/app/controllers/api/v0/recommendations/positions_controller.rb",
+		"/Users/sam/Workspace/brigade/app/controllers/api/v0/recommendations/profiles_controller.rb",
+		"/Users/sam/Workspace/brigade/app/controllers/api/v0/sessions_controller.rb",
+		"/Users/sam/Workspace/brigade/app/controllers/api/v0/supports_controller.rb",
+		"/Users/sam/Workspace/brigade/app/controllers/api/v0/webhooks_controller.rb",
+		"/Users/sam/Workspace/brigade/app/controllers/api/v0/admin/campaigns_controller.rb",
+		"/Users/sam/Workspace/brigade/app/controllers/api/v0/admin/campaign_screener_positions_controller.rb",
+		"/Users/sam/Workspace/brigade/app/controllers/api/v0/admin/actions_controller.rb",
+		"/Users/sam/Workspace/brigade/app/controllers/api/v0/actions_controller.rb",
+		"/Users/sam/Workspace/brigade/app/controllers/api/v0/actions/invitations_controller.rb",
+		"/Users/sam/Workspace/brigade/app/controllers/api/v0/action_credits_controller.rb",
+		"/Users/sam/Workspace/brigade/app/controllers/api/v0/accounts_controller.rb",
+		"/Users/sam/Workspace/brigade/node_modules/webpack-dev-server/node_modules/webpack-dev-middleware/middleware.js",
+		"/Users/sam/Workspace/kitchen/cookbooks/yumrepo/files/default/epel-nodejs.repo",
+		"/Users/sam/Workspace/brigade-ios/.git/rebase-merge/git-rebase-todo",
+		"/var/folders/jx/78xzhg4s53sd0nq01wx9nrg00000gn/T/knife-edit-20140702-21673-1efct21.json",
+		"/Users/sam/Workspace/kitchen/cookbooks/nginx_wrapper/definitions/nginx_vhost.rb",
+		"/Users/sam/Desktop/sandbox-rsa.pem",
+		"/usr/local/Library/Formula/libxml2.rb",
+		"/Users/sam/Workspace/kitchen/.git/COMMIT_EDITMSG",
+		"/Users/sam/Workspace/kitchen/cookbooks/nginx_wrapper/recipes/default.rb",
+		"/Users/sam/Workspace/kitchen/cookbooks/brigade/recipes/app_server.rb",
+		"/Users/sam/Workspace/kitchen/cookbooks/nginx_wrapper/metadata.rb",
+		"/Users/sam/Workspace/kitchen/cookbooks/brigade/metadata.rb",
+		"/Users/sam/Workspace/kitchen/cookbooks/foghorn_app_role/metadata.rb",
+		"/Users/sam/Workspace/kitchen/cookbooks/gerrit/metadata.rb",
+		"/Users/sam/Workspace/kitchen/cookbooks/gerrit/attributes/default.rb",
+		"/Users/sam/Workspace/kitchen/cookbooks/foghorn_app_role/attributes/default.rb",
+		"/Users/sam/Workspace/kitchen/cookbooks/djbdns/recipes/dnscache.rb",
+		"/var/folders/jx/78xzhg4s53sd0nq01wx9nrg00000gn/T/knife-edit-20140630-54980-to441c.json",
+		"/Users/sam/Workspace/finnalytics/.git/COMMIT_EDITMSG",
+		"/Users/sam/Workspace/canteen/canteen/runtime/__init__.py",
+		"/Users/sam/Workspace/canteen/requirements.txt",
+		"/Users/sam/Workspace/canteen/canteen/runtime/uwsgi.py",
+		"/Users/sam/Workspace/canteen/canteen/core/hooks.py",
+		"/Users/sam/Workspace/canteen/canteen/rpc/__init__.py",
+		"/Users/sam/Workspace/canteen/canteen/runtime/werkzeug.py",
+		"/Users/sam/Workspace/canteen/canteen/core/api/session.py",
+		"/Users/sam/Workspace/canteen/canteen/core/runtime.py",
+		"/Users/sam/Workspace/canteen/canteen/base/handler.py",
+		"/Users/sam/Workspace/canteen/canteen/util/logging.py",
+		"/Users/sam/Workspace/canteen/canteen/model/adapter/redis.py",
+		"/Users/sam/Workspace/canteen/canteen/model/adapter/abstract.py",
+		"/Users/sam/Workspace/canteen/canteen/logic/http/redirects.py",
+		"/Users/sam/Workspace/canteen/README.md",
+		"/Users/sam/Workspace/canteen/tox.ini",
+		"/Users/sam/Workspace/rpc-sample/sample/templates/base.html",
+		"/Users/sam/Workspace/rpc-sample/sample/base.py",
+		"/Users/sam/Workspace/rpc-sample/sample/logic/auth.py",
+		"/Users/sam/Workspace/rpc-sample/sample/pages.py",
+		"/Users/sam/Workspace/rpc-sample/sample/services/campaigns.py",
+		"/Users/sam/Workspace/rpc-sample/sample/__init__.py",
+		"/Users/sam/Workspace/rpc-sample/sample/config.py",
+		"/Users/sam/Workspace/rpc-sample/sample/dispatch.py",
+		"/Users/sam/Workspace/rpc-sample/sample/logic/__init__.py",
+		"/Users/sam/Workspace/rpc-sample/sample/logic/lowlevel.py",
+		"/Users/sam/Workspace/rpc-sample/sample/logic/provider.py",
+		"/Users/sam/Workspace/rpc-sample/sample/models.py",
+		"/Users/sam/Workspace/rpc-sample/sample/services/__init__.py",
+		"/Users/sam/Workspace/rpc-sample/sample/services/placements.py",
+		"/Users/sam/Library/Application Support/Sublime Text 3/Packages/User/Default (OSX).sublime-keymap",
+		"/Users/sam/Library/Application Support/Sublime Text 3/Packages/User/Preferences.sublime-settings",
+		"/Users/sam/Workspace/rpc-sample/tox.ini",
+		"/Users/sam/Library/Application Support/Sublime Text 3/Packages/User/Python Module.sublime-snippet",
+		"/Users/sam/Workspace/rpc-sample/rpc-sample.sublime-project",
+		"/Users/sam/Library/Application Support/Sublime Text 3/Packages/User/Python Header.sublime-snippet",
+		"/Users/sam/Library/Application Support/Sublime Text 3/Packages/User/RPC Service.sublime-snippet",
+		"/Users/sam/Library/Application Support/Sublime Text 3/Packages/User/Python 2.7.sublime-build",
+		"/Users/sam/Library/Application Support/Sublime Text 3/Packages/Default/Preferences.sublime-settings"
+	],
+	"find":
+	{
+		"height": 37.0
+	},
+	"find_in_files":
+	{
+		"height": 95.0,
+		"where_history":
+		[
+			"/Users/sam/Workspace/fatcatmap/fabfile",
+			"/Users/sam/Workspace/fatcatmap",
+			"/Users/sam/Workspace/brigade/app",
+			"/Users/sam/Workspace/brigade/app/controllers/api",
+			"/Users/sam/Workspace/brigade/app",
+			"/Users/sam/Workspace/brigade",
+			"/Users/sam/Workspace/kitchen",
+			"/Users/sam/Workspace/rpc-sample"
+		]
+	},
+	"find_state":
+	{
+		"case_sensitive": false,
+		"find_history":
+		[
+			"g1",
+			"pip install",
+			"initial",
+			"settings.",
+			"mkdir",
+			"build",
+			"default",
+			"application/msgpack",
+			"response_hash",
+			"JSON.parse",
+			"json:",
+			"json",
+			"force_format_to_json",
+			"response_to",
+			":upstreams",
+			":upstream",
+			"Claim",
+			"Keen IO",
+			"theme"
+		],
+		"highlight": true,
+		"in_selection": false,
+		"preserve_case": false,
+		"regex": false,
+		"replace_history":
+		[
+			"payload:",
+			"momentum labs"
+		],
+		"reverse": false,
+		"show_context": true,
+		"use_buffer2": true,
+		"whole_word": false,
+		"wrap": true
+	},
+	"groups":
+	[
+		{
+			"selected": 5,
+			"sheets":
+			[
+				{
+					"buffer": 0,
+					"semi_transient": false,
+					"settings":
+					{
+						"buffer_size": 636,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								636,
+								636
+							]
+						],
+						"settings":
+						{
+							"auto_name": "",
+							"syntax": "Packages/Text/Plain text.tmLanguage"
+						},
+						"translation.x": 0.0,
+						"translation.y": 0.0,
+						"zoom_level": 1.0
+					},
+					"stack_index": 13,
+					"type": "text"
+				},
+				{
+					"buffer": 1,
+					"file": "requirements.txt",
+					"semi_transient": false,
+					"settings":
+					{
+						"buffer_size": 92,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								92,
+								92
+							]
+						],
+						"settings":
+						{
+							"syntax": "Packages/Text/Plain text.tmLanguage"
+						},
+						"translation.x": 0.0,
+						"translation.y": 0.0,
+						"zoom_level": 1.0
+					},
+					"stack_index": 12,
+					"type": "text"
+				},
+				{
+					"buffer": 2,
+					"file": "Makefile",
+					"semi_transient": false,
+					"settings":
+					{
+						"buffer_size": 9520,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								4401,
+								4401
+							]
+						],
+						"settings":
+						{
+							"syntax": "Packages/Makefile/Makefile.tmLanguage"
+						},
+						"translation.x": 0.0,
+						"translation.y": 2892.0,
+						"zoom_level": 1.0
+					},
+					"stack_index": 11,
+					"type": "text"
+				},
+				{
+					"buffer": 3,
+					"file": "fabfile/provision.py",
+					"semi_transient": false,
+					"settings":
+					{
+						"buffer_size": 1600,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								886,
+								886
+							]
+						],
+						"settings":
+						{
+							"syntax": "Packages/Python/Python.tmLanguage",
+							"tab_size": 2,
+							"translate_tabs_to_spaces": true
+						},
+						"translation.x": 0.0,
+						"translation.y": 0.0,
+						"zoom_level": 1.0
+					},
+					"stack_index": 3,
+					"type": "text"
+				},
+				{
+					"buffer": 4,
+					"file": "fabfile/services.py",
+					"semi_transient": false,
+					"settings":
+					{
+						"buffer_size": 1048,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								268,
+								268
+							]
+						],
+						"settings":
+						{
+							"syntax": "Packages/Python/Python.tmLanguage",
+							"tab_size": 2,
+							"translate_tabs_to_spaces": true
+						},
+						"translation.x": 0.0,
+						"translation.y": 0.0,
+						"zoom_level": 1.0
+					},
+					"stack_index": 4,
+					"type": "text"
+				},
+				{
+					"buffer": 5,
+					"file": "fabfile/deploy.py",
+					"semi_transient": false,
+					"settings":
+					{
+						"buffer_size": 1903,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								629,
+								629
+							]
+						],
+						"settings":
+						{
+							"syntax": "Packages/Python/Python.tmLanguage",
+							"tab_size": 2,
+							"translate_tabs_to_spaces": true
+						},
+						"translation.x": 0.0,
+						"translation.y": 0.0,
+						"zoom_level": 1.0
+					},
+					"stack_index": 0,
+					"type": "text"
+				},
+				{
+					"buffer": 6,
+					"file": "fabfile/settings.py",
+					"semi_transient": false,
+					"settings":
+					{
+						"buffer_size": 1700,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								181,
+								181
+							]
+						],
+						"settings":
+						{
+							"syntax": "Packages/Python/Python.tmLanguage",
+							"tab_size": 2,
+							"translate_tabs_to_spaces": true
+						},
+						"translation.x": 0.0,
+						"translation.y": 0.0,
+						"zoom_level": 1.0
+					},
+					"stack_index": 6,
+					"type": "text"
+				},
+				{
+					"buffer": 7,
+					"semi_transient": false,
+					"settings":
+					{
+						"buffer_size": 0,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								0,
+								0
+							]
+						],
+						"settings":
+						{
+							"default_dir": "/Users/sam/Workspace/fatcatmap/fabfile/credentials",
+							"syntax": "Packages/Text/Plain text.tmLanguage"
+						},
+						"translation.x": 0.0,
+						"translation.y": 0.0,
+						"zoom_level": 1.0
+					},
+					"stack_index": 10,
+					"type": "text"
+				},
+				{
+					"buffer": 8,
+					"file": "fabfile/keys/id_k9",
+					"semi_transient": false,
+					"settings":
+					{
+						"buffer_size": 3243,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								1301,
+								1301
+							]
+						],
+						"settings":
+						{
+							"syntax": "Packages/Text/Plain text.tmLanguage"
+						},
+						"translation.x": 0.0,
+						"translation.y": 0.0,
+						"zoom_level": 1.0
+					},
+					"stack_index": 9,
+					"type": "text"
+				},
+				{
+					"buffer": 9,
+					"file": "fabfile/keys/id_k9.pub",
+					"semi_transient": false,
+					"settings":
+					{
+						"buffer_size": 736,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								736,
+								736
+							]
+						],
+						"settings":
+						{
+							"syntax": "Packages/Text/Plain text.tmLanguage"
+						},
+						"translation.x": 0.0,
+						"translation.y": 0.0,
+						"zoom_level": 1.0
+					},
+					"stack_index": 8,
+					"type": "text"
+				},
+				{
+					"buffer": 10,
+					"file": "fatcatmap/config.py",
+					"semi_transient": false,
+					"settings":
+					{
+						"buffer_size": 2941,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								1284,
+								1284
+							]
+						],
+						"settings":
+						{
+							"syntax": "Packages/Python/Python.tmLanguage",
+							"tab_size": 2,
+							"translate_tabs_to_spaces": true
+						},
+						"translation.x": 0.0,
+						"translation.y": 835.0,
+						"zoom_level": 1.0
+					},
+					"stack_index": 7,
+					"type": "text"
+				},
+				{
+					"buffer": 11,
+					"file": "fabfile/bootstrap.sh",
+					"semi_transient": true,
+					"settings":
+					{
+						"buffer_size": 92,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								0,
+								0
+							]
+						],
+						"settings":
+						{
+							"syntax": "Packages/ShellScript/Shell-Unix-Generic.tmLanguage"
+						},
+						"translation.x": 0.0,
+						"translation.y": 0.0,
+						"zoom_level": 1.0
+					},
+					"stack_index": 2,
+					"type": "text"
+				},
+				{
+					"buffer": 12,
+					"file": "fabfile/gce.py",
+					"semi_transient": false,
+					"settings":
+					{
+						"buffer_size": 3239,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								944,
+								944
+							]
+						],
+						"settings":
+						{
+							"syntax": "Packages/Python/Python.tmLanguage",
+							"tab_size": 2,
+							"translate_tabs_to_spaces": true
+						},
+						"translation.x": 0.0,
+						"translation.y": 344.0,
+						"zoom_level": 1.0
+					},
+					"stack_index": 5,
+					"type": "text"
+				},
+				{
+					"buffer": 13,
+					"file": "fabfile/helpers.py",
+					"semi_transient": false,
+					"settings":
+					{
+						"buffer_size": 1178,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								467,
+								467
+							]
+						],
+						"settings":
+						{
+							"syntax": "Packages/Python/Python.tmLanguage",
+							"tab_size": 2,
+							"translate_tabs_to_spaces": true
+						},
+						"translation.x": 0.0,
+						"translation.y": 0.0,
+						"zoom_level": 1.0
+					},
+					"stack_index": 1,
+					"type": "text"
+				},
+				{
+					"buffer": 14,
+					"file": "scripts/compile_templates.py",
+					"semi_transient": false,
+					"settings":
+					{
+						"buffer_size": 11694,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								4237,
+								4237
+							]
+						],
+						"settings":
+						{
+							"syntax": "Packages/Python/Python.tmLanguage",
+							"tab_size": 4,
+							"translate_tabs_to_spaces": true
+						},
+						"translation.x": 0.0,
+						"translation.y": 1007.0,
+						"zoom_level": 1.0
+					},
+					"stack_index": 15,
+					"type": "text"
+				},
+				{
+					"buffer": 15,
+					"file": "/Users/sam/Downloads/Makefile",
+					"semi_transient": false,
+					"settings":
+					{
+						"buffer_size": 9430,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								2901,
+								2901
+							]
+						],
+						"settings":
+						{
+							"syntax": "Packages/Makefile/Makefile.tmLanguage"
+						},
+						"translation.x": 0.0,
+						"translation.y": 1685.0,
+						"zoom_level": 1.0
+					},
+					"stack_index": 14,
+					"type": "text"
+				},
+				{
+					"buffer": 16,
+					"semi_transient": false,
+					"settings":
+					{
+						"buffer_size": 3563,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								1608,
+								1608
+							]
+						],
+						"settings":
+						{
+							"auto_name": "",
+							"syntax": "Packages/Text/Plain text.tmLanguage"
+						},
+						"translation.x": 0.0,
+						"translation.y": 410.0,
+						"zoom_level": 1.0
+					},
+					"stack_index": 16,
+					"type": "text"
+				}
+			]
+		}
+	],
+	"incremental_find":
+	{
+		"height": 25.0
+	},
+	"input":
+	{
+		"height": 31.0
+	},
+	"layout":
+	{
+		"cells":
+		[
+			[
+				0,
+				0,
+				1,
+				1
+			]
+		],
+		"cols":
+		[
+			0.0,
+			1.0
+		],
+		"rows":
+		[
+			0.0,
+			1.0
+		]
+	},
+	"menu_visible": true,
+	"output.find_results":
+	{
+		"height": 0.0
+	},
+	"project": "fatcatmap.sublime-project",
+	"replace":
+	{
+		"height": 46.0
+	},
+	"save_all_on_build": true,
+	"select_file":
+	{
+		"height": 0.0,
+		"selected_items":
+		[
+			[
+				"mime",
+				"brigade/config/initializers/mime_types.rb"
+			],
+			[
+				"environment.rb",
+				"brigade/config/environment.rb"
+			],
+			[
+				"recomment",
+				"brigade/app/controllers/api/v0/recommendations_controller.rb"
+			],
+			[
+				"mime_type",
+				"brigade/config/initializers/mime_types.rb"
+			],
+			[
+				"environ",
+				"brigade/config/environment.rb"
+			],
+			[
+				"hooks.py",
+				"canteen/core/hooks.py"
+			],
+			[
+				"redis.py",
+				"canteen/model/adapter/redis.py"
+			],
+			[
+				"base",
+				"sample/base.py"
+			],
+			[
+				"provi",
+				"sample/logic/provider.py"
+			]
+		],
+		"width": 0.0
+	},
+	"select_project":
+	{
+		"height": 0.0,
+		"selected_items":
+		[
+		],
+		"width": 0.0
+	},
+	"select_symbol":
+	{
+		"height": 0.0,
+		"selected_items":
+		[
+		],
+		"width": 0.0
+	},
+	"settings":
+	{
+	},
+	"show_minimap": false,
+	"show_open_files": false,
+	"show_tabs": true,
+	"side_bar_visible": true,
+	"side_bar_width": 320.0,
+	"status_bar_visible": true,
+	"template_settings":
+	{
+	}
+}
