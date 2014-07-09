@@ -21,3 +21,4 @@ pubspec.lock
 packages/*
 .coverage
 .idea
+fatcatmap.sublime-workspace

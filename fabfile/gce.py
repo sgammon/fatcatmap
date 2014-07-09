@@ -33,7 +33,7 @@ class Deploy(object):
   NETWORK = settings.NETWORK
   node_class = GCENode  # used for cross-cloud compatability
 
-  def __init__(self, environment="prod", group="web", names=None):
+  def __init__(self, environment="production", group="app", names=None):
 
     '''  '''
 
@@ -77,11 +77,43 @@ class Deploy(object):
     if len(n) > 0:
       node_n = max(n) + 1
 
-    name = "{group}-{env}-{n}".format(group=self.group, env=self.environment, n=node_n)
-    node = self.driver.create_node(name=name,
-                     image=self.image, size=self.size,
+    name = "{env}-{group}-{n}".format(group=self.group, env=self.environment, n=node_n)
+
+    # create boot volume
+    snapshot = settings.GROUP_SETTINGS[self.group].get('disk_snap', None)
+
+    boot_kwargs = {
+      'name': name,
+      'location': self.REGION,
+      'size': settings.GROUP_SETTINGS[self.group].get('disk_size', 10),
+      'type': settings.GROUP_SETTINGS[self.group].get('disk_type', None)
+    }
+
+    if snapshot:
+      boot_kwargs['snapshot'] = snapshot
+    else:
+      boot_kwargs['image'] = settings.GROUP_SETTINGS[self.group].get('image', settings.IMAGE)
+    boot_volume = self.driver.create_volume(**boot_kwargs)
+
+    # create node
+    node = self.driver.create_node(
+                     name=name,
+                     image=self.image,
+                     size=self.size,
+                     location=self.REGION,
+                     ex_tags=(
+                      settings.GROUP_SETTINGS[self.group].get('tags', []) +
+                      settings.ENV_TAGS[self.environment]
+                     ),
                      ex_network=self.NETWORK,
-                     ex_metadata={'group': self.group, 'environment': self.environment})
+                     ex_boot_disk=boot_volume,
+                     ex_service_scopes=settings.GROUP_SETTINGS[self.group].get('services', []),
+                     ex_boot_disk_auto_delete=True,
+                     ex_metadata={
+                      'group': self.group,
+                      'environment': self.environment,
+                      'startup-script-url': settings.STARTUP_SCRIPT_URL
+                                  })
     print node
 
   def deploy_many(self, n=3):

@@ -9,6 +9,7 @@
 
 # local
 import time
+import settings
 from .gce import Deploy
 from .helpers import get_node
 from .deploy import bootstrap
@@ -20,9 +21,9 @@ from fabric.api import task
 
 
 group = "app"  # default group
-environment = "production"  # default environment
-env.user = "fabric"  # username to use for GCE...should match key name
-env.key_filename = ['fabfile/keys/id_rsa']
+environment = "sandbox"  # default environment
+env.user = settings.USER  # username to use for GCE...should match key name
+env.key_filename = settings.KEY  # SSH key to use for GCE
 
 
 @task
@@ -38,13 +39,7 @@ def create_nodes(n=3, environment=environment, group=group):
   hosts(environment, group)
 
   print "Waiting for instance to finish provisioning..."
-  time.sleep(15)
-  bootstrap(environment, group)
-
-
-@task
-def libcloud():
-  pass
+  time.sleep(30)
 
 
 @task

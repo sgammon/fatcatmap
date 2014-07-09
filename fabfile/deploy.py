@@ -12,7 +12,6 @@ import os
 import services, settings
 from services import service
 from helpers import get_node
-from settings import GROUP_PACKAGES
 
 # fabric
 from fabric import colors, api
@@ -21,37 +20,29 @@ from fabtools import require, deb
 
 
 @task
-def bootstrap(environment, group):
+def bootstrap(_hosts=True):
 
   '''  '''
 
-  import provision
-
-  # set up our env
-  env.user = settings.USER
-  env.disable_known_hosts = True
-  env.key_filename = os.path.join(os.path.dirname(__file__), "keys", "id_k9")
-
-  provision.hosts()
   node = get_node()
-  env.host_string = "k9@%s:22" % node.ip
+  env.disable_known_hosts = True
 
-  if group == 'app':
+  if node.group == 'app':
 
     ## ~~ install apps ~~ ##
-    fatcatmap(environment)
+    fatcatmap(node.environment)
 
     ## ~~ install appserver stuff ~~ ##
     services.setup_haproxy()
     services.setup_httpd()
-    services.setup_k9()
     services.setup_redis()
+    services.setup_k9()
 
     ## ~~ enable & start appserver stuff ~~ ##
-    service('haproxy', 'start')
-    service('httpd', 'start')
-    service('k9', 'start')
-    service('redis', 'start')
+    service('start', 'redis:redis-server')
+    service('start', 'k9')
+    service('start', 'httpd')
+    service('start', 'haproxy')
 
 
 def fatcatmap(environment):
@@ -67,46 +58,6 @@ def fatcatmap(environment):
 
   # fix permissions
   api.sudo("chown k9:runtime -R /base/apps/fatcatmap")
-
-
-@task
-def install_haproxy():
-
-    '''  '''
-
-    pass
-
-
-@task
-def install_nginx():
-
-  '''  '''
-
-  pass
-
-
-@task
-def initial_packages():
-
-  '''  '''
-
-  node = env.node()
-
-  try:
-    package_dict = GROUP_PACKAGES[node.group]
-    print colors.yellow("installing apt keys and sources")
-    for key in package_dict['apt_keys']:
-      deb.add_apt_key(url=key)
-    for source in package_dict['apt_sources']:
-      require.deb.source(*source)
-    print deb.install(package_dict['packages'], update=True)
-  except:
-    print colors.green('skipping apt')
-
-  #if node.group == "lb":
-  #  require.files.file(path="/etc/default/haproxy", contents="ENABLED=1", use_sudo=True)
-  #  services.service('nginx', 'restart')
-  #  services.service('haproxy', 'restart')
 
 
 def mariadb():

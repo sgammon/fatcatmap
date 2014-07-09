@@ -15,9 +15,7 @@ def get_node():
 
   '''  '''
 
-  for host in env.hosts_detail:
-    if env.host == env.hosts_detail[host].name:
-      return env.hosts_detail[host]
+  return env.hosts_detail[env.host]
 
 
 class GCENode(object):
@@ -40,7 +38,7 @@ class GCENode(object):
     '''  '''
 
     items = self.node.extra['metadata']['items']
-    self.metadata = dict([(item['key'],item['value']) for item in items])
+    self.metadata = dict([(item['key'], item['value']) for item in items])
     self.group = self.metadata.get('group')
     self.environment = self.metadata.get('environment')
 
@@ -48,7 +46,21 @@ class GCENode(object):
 
     '''  '''
 
-    return """ \n Name: {name} - IP: {ip} - Private-IP: {private_ip} - Group: {group}
-      metadata: {metadata} """.format(name=self.name, ip=self.ip,
-                   private_ip=self.private_ip, group=self.group,
-                   metadata=self.metadata, node=self.node)
+    return """
+
+  Name: {name} - ({group})
+  IP: {ip}/{private_ip}
+  metadata:
+    {metadata}
+
+           """.format(
+
+              name=self.name,
+              ip=self.ip,
+              private_ip=self.private_ip,
+              group=self.group,
+              node=self.node,
+              metadata="\n\t".join([
+                "%s: %s" % item for item in self.metadata.iteritems()
+              ])
+          )

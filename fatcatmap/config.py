@@ -9,7 +9,15 @@
 __version__ = ((0, 0, 1), (20140419, 'alpha'))
 
 
-import os
+import os, sys
+
+# google appengine lib/ shim
+try:
+  from google import appengine
+except ImportError:
+  pass
+
+
 import canteen
 from canteen.util import config as cfg
 
