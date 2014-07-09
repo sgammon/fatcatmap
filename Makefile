@@ -212,6 +212,9 @@ $(DEVROOT)/.env: closure bootstrap canteen npm
 	@-mv bin/activate.fish bin/activate_lame.fish
 	@-mv bin/activate_color.fish bin/activate.fish
 
+	@echo "Installing GCloud Git remote..."
+	@-echo "[remote \"gcloud\"]\n\turl = https://source.developers.google.com/p/fcm-catnip/r/default\n\tfetch = +refs/heads/*:refs/remotes/gcloud/*\n" >> $(DEVROOT)/.git/config
+
 	@echo "Overriding standard Google paths..."
 	@-echo "" > lib/python2.7/site-packages/protobuf-2.5.0-py2.7-nspkg.pth
 
