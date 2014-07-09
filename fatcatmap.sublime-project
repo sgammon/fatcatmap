@@ -1,8 +1,17 @@
 {
-  "folders": [{"follow_symlinks": true, "path": "."}],
-
-  "settings":
-  {
-    "python_interpreter_path": "/usr/bin/python"
-  }
+	"folders":
+	[
+		{
+			"follow_symlinks": true,
+			"path": "."
+		},
+		{
+			"follow_symlinks": true,
+			"path": "/Users/sam/Desktop/assets"
+		}
+	],
+	"settings":
+	{
+		"python_interpreter_path": "/usr/bin/python"
+	}
 }

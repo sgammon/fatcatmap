@@ -4,6 +4,21 @@ runtime: python27
 api_version: 1
 threadsafe: true
 
+default_expiration: "1h"
+
+#
+# skip files
+#
+
+skip_files:
+- ^(.*/)?#.*#$
+- ^(.*/)?.*~$
+- ^(.*/)?.*\.less$
+- ^(.*/)?.*\.py[co]$
+- ^(.*/)?.*\.coffee$
+- node_modules\/^(.*/)?
+
+
 #
 # scaling
 #
@@ -64,6 +79,19 @@ libraries:
 #
 
 handlers:
+
+- url: /assets/js
+  static_dir: fatcatmap/assets/js
+
+- url: /assets/ext
+  static_dir: fatcatmap/assets/ext
+
+- url: /assets/img
+  static_dir: fatcatmap/assets/img
+
+- url: /assets/style
+  static_dir: fatcatmap/assets/style
+
 - url: /.*
   script: dispatch.application
   login: admin
