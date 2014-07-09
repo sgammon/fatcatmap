@@ -22,3 +22,4 @@ packages/*
 .coverage
 .idea
 fatcatmap.sublime-workspace
+.gcloud/logs
