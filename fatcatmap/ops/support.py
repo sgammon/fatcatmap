@@ -18,7 +18,6 @@ from fabric.api import task, sudo
 _SERVICE_NAMES = {
   'proxy': settings.Components.PROXY,
   'http': settings.Components.WEBSERVER,
-  'apphosting': settings.Components.APPHOSTING,
   'database': settings.Components.DATABASE
 }
 
@@ -32,13 +31,15 @@ def setup_for_group(group):
 
   ''' Setup services for a specific group. '''
 
-  for service in settings.GROUP_SETTINGS[group].get('services', []):
-    {
+  services_installed = []
+  for service in (_SERVICES_BY_NAME[s] for s in
+          settings.GROUP_SETTINGS[group].get('services', [])):
+    services_installed.append({
       'proxy': setup_proxy,
       'http': setup_http,
-      'apphosting': setup_apphosting,
       'database': setup_db
-    }[service]()  # dispatch proper setup routine
+    }[service]() or service)  # dispatch proper setup routine
+  return services_installed
 
 
 @task
@@ -46,39 +47,43 @@ def service(name, action="restart"):
 
   ''' Perform an action on a service by name. '''
 
-  sudo("supervisorctl {0} {1}".format(name, action))
+  sudo("supervisorctl {1} {0}".format(name, action))
 
 
 @task
-def stop(name):
+def stop(*names):
 
   ''' Stop a service manually. '''
 
-  service(name, "stop")
+  for name in names:
+    service(name, "stop")
 
 
 @task
-def start(name):
+def start(*names):
 
   ''' Start a service manually. '''
 
-  service(name, "start")
+  for name in names:
+    service(name, "start")
 
 
 @task
-def reload(name):
+def reload(*names):
 
   ''' Reload a service manually. '''
 
-  service(name, "reload")
+  for name in names:
+    service(name, "reload")
 
 
 @task
-def restart(name):
+def restart(*names):
 
   ''' Restart a service manually. '''
 
-  service(name, "restart")
+  for name in names:
+    service(name, "restart")
 
 
 def setup_service(service):

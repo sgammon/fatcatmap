@@ -12,7 +12,7 @@ import os
 
 # local
 from . import support
-from . import settings
+from . import helpers
 from .support import service
 from .helpers import get_node
 
@@ -29,19 +29,28 @@ def bootstrap(_hosts=True):
 
   node = get_node()
 
+  ## ~~ install services-n-stuff ~~ ##
+  services = support.setup_for_group(group=node.group)
+
   ## ~~ app nodes ~~ ##
   if node.group == 'app':
 
     ## ~~ install apps ~~ ##
     fatcatmap(node.environment)
 
-  ## ~~ install services-n-stuff ~~ ##
-  support.start(support.setup_for_node(group=node.group))
+    ## ~~ start k9 ~~ ##
+    api.sudo("/base/software/k9/sbin/k9 --ini /base/software/k9/apphosting/master.ini")
+
+  ## ~~ start supporting services ~~ ##
+  support.start(*services)
 
 
 def fatcatmap(environment):
 
   '''  '''
+
+  print colors.yellow('Deploying fatcatmap...')
+  helpers.pause()
 
   install_fcm = """
   cd /base/apps;

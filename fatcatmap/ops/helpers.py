@@ -7,7 +7,12 @@
 
 '''
 
+# stdlib
+import sys
+import time
+
 # fabric
+from fabric import colors
 from fabric.api import env
 
 
@@ -16,6 +21,18 @@ def get_node():
   '''  '''
 
   return env.hosts_detail[env.host]
+
+
+def pause():
+
+  '''  '''
+
+  try:
+    for i, color in zip(reversed(xrange(3)), (colors.green, colors.yellow, colors.red)):
+      print color("%s..." % str(i + 1))
+      time.sleep(1)
+  except KeyboardInterrupt:
+    sys.exit(1)
 
 
 class GCENode(object):

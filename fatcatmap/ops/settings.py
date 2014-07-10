@@ -23,7 +23,7 @@ STARTUP_SCRIPT_URL = 'https://storage.googleapis.com/fcm-dev/base/bootstrap.sh'
 PROJECT_ID = '489276160057-dffvig7s5uoqg0em72ndnsuvc72jb6m6@developer.gserviceaccount.com'
 NETWORK = 'backend'
 BASE_SERVICE_SCOPES = [
-  "compute.readonly",
+  "compute.read_only",
   "devstorage.read_only"
 ]
 
@@ -43,7 +43,6 @@ class Components(object):
 
   PROXY = 'haproxy'
   WEBSERVER = 'httpd'
-  APPHOSTING = 'k9'
   DATABASE = 'redis'
 
 
@@ -113,7 +112,6 @@ ENV_TAGS, GROUP_SETTINGS = {
     'services': [
       Components.PROXY,  # @TODO(sgammon): split out proxy role
       Components.WEBSERVER,  # @TODO(sgammon): delegate webserver to lb role
-      Components.APPHOSTING,
       Components.DATABASE
     ],
     'disk': {
