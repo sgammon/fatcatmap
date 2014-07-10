@@ -75,53 +75,49 @@ class Deploy(object):
 
     '''  '''
 
-    if self.config.get('enabled', False):
+    nodes = self.get_nodes()
+    n = [int(node.name.split('-')[-1])
+        for node in nodes if not node.node.state == 2]
+    node_n = 1
+    if len(n) > 0:
+      node_n = max(n) + 1
 
-      nodes = self.get_nodes()
-      n = [int(node.name.split('-')[-1])
-          for node in nodes if not node.node.state == 2]
-      node_n = 1
-      if len(n) > 0:
-        node_n = max(n) + 1
+    name = "{env}-{group}-{n}".format(group=self.group, env=self.environment, n=node_n)
 
-      name = "{env}-{group}-{n}".format(group=self.group, env=self.environment, n=node_n)
+    # create boot volume
+    snapshot = self.config.get('disk', {}).get('snap', None)
 
-      # create boot volume
-      snapshot = self.config.get('disk', {}).get('snap', None)
+    boot_kwargs = {
+      'name': name,
+      'location': self.REGION,
+      'size': self.config.get('disk', {}).get('size', 10),
+      'type': self.config.get('disk', {}).get('type', None)
+    }
 
-      boot_kwargs = {
-        'name': name,
-        'location': self.REGION,
-        'size': self.config.get('disk', {}).get('size', 10),
-        'type': self.config.get('disk', {}).get('type', None)
-      }
+    if snapshot:
+      boot_kwargs['snapshot'] = snapshot
+    else:
+      boot_kwargs['image'] = self.config['image']
+    boot_volume = self.driver.create_volume(**boot_kwargs)
 
-      if snapshot:
-        boot_kwargs['snapshot'] = snapshot
-      else:
-        boot_kwargs['image'] = self.config['image']
-      boot_volume = self.driver.create_volume(**boot_kwargs)
-
-      # create node
-      node = self.driver.create_node(
-                       name=name,
-                       size=self.config['size'],
-                       image=self.config['image'],
-                       location=self.REGION,
-                       ex_tags=(
-                        settings.GROUP_SETTINGS[self.group].get('tags', []) +
-                        settings.ENV_TAGS[self.environment]
-                       ),
-                       ex_network=self.environment,
-                       ex_boot_disk=boot_volume,
-                       ex_service_scopes=self.config.get('scopes', []),
-                       ex_boot_disk_auto_delete=True,
-                       ex_metadata={'group': self.group,
-                                    'environment': self.environment,
-                                    'startup-script-url': settings.STARTUP_SCRIPT_URL})
-      print node
-
-    print "Skipping disabled role: '%s'." % self.group
+    # create node
+    node = self.driver.create_node(
+                     name=name,
+                     size=self.config['size'],
+                     image=self.config['image'],
+                     location=self.REGION,
+                     ex_tags=(
+                      settings.GROUP_SETTINGS[self.group].get('tags', []) +
+                      settings.ENV_TAGS[self.environment]
+                     ),
+                     ex_network=self.environment,
+                     ex_boot_disk=boot_volume,
+                     ex_service_scopes=self.config.get('scopes', []),
+                     ex_boot_disk_auto_delete=True,
+                     ex_metadata={'group': self.group,
+                                  'environment': self.environment,
+                                  'startup-script-url': settings.STARTUP_SCRIPT_URL})
+    print node
 
   def deploy_many(self, n=3):
 

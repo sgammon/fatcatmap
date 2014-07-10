@@ -84,7 +84,6 @@ ENV_TAGS, GROUP_SETTINGS = {
   # ~~ settings by role ~~ ##
 
   'lb': {
-    'enabled': False,
     'size': 'g1-small',
     'image': 'debian-7-wheezy-v20140606',
     'ip_forwarding': True,
@@ -99,7 +98,6 @@ ENV_TAGS, GROUP_SETTINGS = {
   },
 
   'app': {
-    'enabled': True,
     'size': 'g1-small',
     'image': 'debian-7-wheezy-v20140606',
     'ip_forwarding': False,
@@ -126,7 +124,6 @@ ENV_TAGS, GROUP_SETTINGS = {
   },
 
   'db': {
-    'enabled': False,
     'size': 'g1-small',
     'image': 'debian-7-wheezy-v20140606',
     'ip_forwarding': False,
