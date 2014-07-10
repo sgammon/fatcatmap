@@ -87,13 +87,13 @@ class Deploy(object):
       name = "{env}-{group}-{n}".format(group=self.group, env=self.environment, n=node_n)
 
       # create boot volume
-      snapshot = settings.GROUP_SETTINGS[self.group].get('disk_snap', None)
+      snapshot = self.config.get('disk', {}).get('snap', None)
 
       boot_kwargs = {
         'name': name,
         'location': self.REGION,
-        'size': settings.GROUP_SETTINGS[self.group].get('disk_size', 10),
-        'type': settings.GROUP_SETTINGS[self.group].get('disk_type', None)
+        'size': self.config.get('disk', {}).get('size', 10),
+        'type': self.config.get('disk', {}).get('type', None)
       }
 
       if snapshot:
