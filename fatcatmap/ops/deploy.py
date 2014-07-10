@@ -7,11 +7,14 @@
 
 '''
 
-# local
+# stdlib
 import os
-import services, settings
-from services import service
-from helpers import get_node
+
+# local
+from . import support
+from . import settings
+from .support import service
+from .helpers import get_node
 
 # fabric
 from fabric import colors, api
@@ -22,27 +25,18 @@ from fabtools import require, deb
 @task
 def bootstrap(_hosts=True):
 
-  '''  '''
+  ''' Prepare a newly-provisioned node with supporting software. '''
 
   node = get_node()
-  env.disable_known_hosts = True
 
+  ## ~~ app nodes ~~ ##
   if node.group == 'app':
 
     ## ~~ install apps ~~ ##
     fatcatmap(node.environment)
 
-    ## ~~ install appserver stuff ~~ ##
-    services.setup_proxy()
-    services.setup_http()
-    services.setup_db()
-    services.setup_apphosting()
-
-    ## ~~ enable & start appserver stuff ~~ ##
-    service.start('redis:redis-server')
-    service.start('apphosting')
-    service.start('http')
-    service.start('proxy')
+  ## ~~ install services-n-stuff ~~ ##
+  support.start(support.setup_for_node(group=node.group))
 
 
 def fatcatmap(environment):

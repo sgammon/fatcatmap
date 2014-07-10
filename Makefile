@@ -20,23 +20,15 @@
 ### === VARS === ###
 
 ## == defaults == ##
-HOST?=127.0.0.1
-PORT?=9000
+BREW?=1
 DEBUG?=1
-USER?=`whoami`
 SANDBOX?=0
-SANDBOX_GIT?=$(USER)@sandbox
+BUILDBOX?=0
+USER?=`whoami`
 CANTEEN_BRANCH?=master
 BOOTSTRAP_BRANCH?=master
-BUILDBOX?=0
-BREW?=1
+SANDBOX_GIT?=$(USER)@sandbox
 BREWDEPS=openssl python haproxy redis nginx pypy
-
-ifeq ($(DEBUG),0)
-LESS_ARGS=--no-ie-compat --include-path=fatcatmap/assets/less:fatcatmap/assets/bootstrap --compress --clean-css -O2
-else
-LESS_ARGS=--no-ie-compat --include-path=fatcatmap/assets/less:fatcatmap/assets/bootstrap --source-map-basepath=.develop/maps
-endif
 
 ## == optionals == ##
 extensions=on
@@ -46,8 +38,10 @@ compass=on
 redis=on
 
 ## == environment == ##
-ENVIRONMENT?=debug
 OS?=Mac
+DEVROOT=$(PWD)
+ENVIRONMENT?=debug
+LIBROOT=$(DEVROOT)/lib
 
 
 ifeq ($(extensions),on)
@@ -62,9 +56,6 @@ endif
 ifeq ($(BUILDBOX),1)
 LIBROOT=$(BUILDROOT)/lib
 DEVROOT=$(BUILDROOT)
-else
-LIBROOT=$(PWD)/lib
-DEVROOT=$(PWD)
 endif
 
 
@@ -233,10 +224,6 @@ $(DEVROOT)/.env: closure bootstrap canteen npm
 
 	@echo "Building Canteen..."
 	@-cd lib/canteen; $(MAKE) DEPS=0 VIRTUALENV=0 TESTS=0 package
-
-devserver:
-	@echo "Running development server..."
-	@web run --companion --port $(PORT) --interface $(HOST)
 
 
 ### === dependencies === ###

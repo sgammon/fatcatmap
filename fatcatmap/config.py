@@ -6,7 +6,7 @@
 
 '''
 
-__version__ = ((0, 0, 1), (20140708, 'alpha'))
+__version__ = ((0, 0, 1), (20140709, 'alpha'))
 
 
 import os, sys
@@ -129,7 +129,7 @@ config = cfg.Config(app={
 
     'minified': False,
     'serving_mode': 'cdn',
-    'cdn_prefix': ['https://storage.googleapis.com/fcm-dev'],
+    'cdn_prefix': ['//storage.googleapis.com/fcm-dev'],
 
     'asset_prefix': {
       'style': 'assets/style',

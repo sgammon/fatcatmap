@@ -23,3 +23,5 @@ packages/*
 .idea
 fatcatmap.sublime-workspace
 .gcloud/logs
+build/
+fatcatmap.sublime-project

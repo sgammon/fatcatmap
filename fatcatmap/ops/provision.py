@@ -2,17 +2,17 @@
 
 '''
 
-  fabric: provision tools
-  ~~~~~~~~~~~~~~~~~~~~~~~
+  fcm ops: provisioning tools
 
 '''
 
-# local
+# stdlib
 import time
 import settings
+
+# local
 from .gce import Deploy
 from .helpers import get_node
-from .deploy import bootstrap
 
 # fabric
 from fabric import colors
@@ -20,8 +20,10 @@ from fabric.api import env
 from fabric.api import task
 
 
+## Globals
 group = "app"  # default group
 environment = "sandbox"  # default environment
+env.disable_known_hosts = True  # known hosts sucks though right
 env.user = settings.USER  # username to use for GCE...should match key name
 env.key_filename = settings.KEY  # SSH key to use for GCE
 
@@ -29,30 +31,28 @@ env.key_filename = settings.KEY  # SSH key to use for GCE
 @task
 def create(n=3, environment=environment, group=group):
 
-  ''' Create new nodes allows chaining of deployment commands
+  ''' Create new nodes allows chaining of deployment commands.
 
       :param n: number of nodes to create
       :param group: which group are these servers '''
 
   env.d = Deploy(environment, group)
   env.d.deploy_many(n)
-  hosts(environment, group)
 
   print "Waiting for instance to finish provisioning..."
   time.sleep(30)
 
 
 @task
-def hosts(environment=environment, group=group, name=None):
+def nodes(environment=environment, group=group, name=None):
 
-  ''' lists and selects nodes based on specified group
+  ''' Lists and selects nodes based on specified group.
 
       :param group: group to select '''
 
   env.d = Deploy(environment, group)
   env.node = lambda: get_node()  # set env.node for easy access to node object
-  if name:
-    env.d.names = [name]
+  if name: env.d.names = [name]
   env.hosts_detail = {}
   _nodes = env.d.get_nodes()
   for node in _nodes:
@@ -63,10 +63,37 @@ def hosts(environment=environment, group=group, name=None):
 
 
 @task
+def status():
+
+  ''' Get status for existing nodes. '''
+
+  node = env.node().node
+  print colors.green("status for node " + str(node))
+
+
+@task
 def destroy():
 
-  '''  '''
+  ''' Destroy existing nodes. '''
 
   node = env.node().node
   print colors.red("destroying node " + str(node))
   env.d.driver.destroy_node(node)
+
+
+@task
+def activate():
+
+  ''' Activate nodes for live traffic. '''
+
+  node = env.node().node
+  print colors.yellow("activating node " + str(node))
+
+
+@task
+def deactivate():
+
+  ''' Deactivate nodes for live traffic. '''
+
+  node = env.node().node
+  print colors.yellow("deactivating node " + str(node))
