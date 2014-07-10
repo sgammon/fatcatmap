@@ -12,6 +12,14 @@ from fabric.api import env, task, run, sudo
 from fabtools import require
 
 
+_SERVICE_NAMES = {
+  'proxy': 'haproxy',
+  'http': 'httpd',
+  'apphosting': 'k9',
+  'database': 'redis:redis-server'
+}
+
+
 @task
 def service(name, action="restart"):
 
@@ -21,7 +29,39 @@ def service(name, action="restart"):
 
 
 @task
-def setup_haproxy():
+def stop(name):
+
+  '''  '''
+
+  service(name, "stop")
+
+
+@task
+def start(name):
+
+  '''  '''
+
+  service(name, "start")
+
+
+@task
+def reload(name):
+
+  '''  '''
+
+  service(name, "reload")
+
+
+@task
+def restart(name):
+
+  '''  '''
+
+  service(name, "restart")
+
+
+@task
+def setup_proxy():
 
   '''  '''
 
@@ -34,7 +74,7 @@ def setup_haproxy():
 
 
 @task
-def setup_httpd():
+def setup_http():
 
   '''  '''
 
@@ -47,7 +87,7 @@ def setup_httpd():
 
 
 @task
-def setup_k9():
+def setup_apphosting():
 
   '''  '''
 
@@ -60,7 +100,7 @@ def setup_k9():
 
 
 @task
-def setup_redis():
+def setup_db():
 
   '''  '''
 

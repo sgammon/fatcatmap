@@ -33,16 +33,16 @@ def bootstrap(_hosts=True):
     fatcatmap(node.environment)
 
     ## ~~ install appserver stuff ~~ ##
-    services.setup_haproxy()
-    services.setup_httpd()
-    services.setup_redis()
-    services.setup_k9()
+    services.setup_proxy()
+    services.setup_http()
+    services.setup_db()
+    services.setup_apphosting()
 
     ## ~~ enable & start appserver stuff ~~ ##
-    service('start', 'redis:redis-server')
-    service('start', 'k9')
-    service('start', 'httpd')
-    service('start', 'haproxy')
+    service.start('redis:redis-server')
+    service.start('apphosting')
+    service.start('http')
+    service.start('proxy')
 
 
 def fatcatmap(environment):

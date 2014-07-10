@@ -27,7 +27,7 @@ env.key_filename = settings.KEY  # SSH key to use for GCE
 
 
 @task
-def create_nodes(n=3, environment=environment, group=group):
+def create(n=3, environment=environment, group=group):
 
   ''' Create new nodes allows chaining of deployment commands
 
