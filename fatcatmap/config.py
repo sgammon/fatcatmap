@@ -6,10 +6,11 @@
 
 '''
 
-__version__ = ((0, 0, 1), (20140419, 'alpha'))
+__version__ = ((0, 0, 1), (20140709, 'alpha'))
 
 
-import os
+import os, sys
+
 import canteen
 from canteen.util import config as cfg
 
@@ -29,7 +30,7 @@ config = cfg.Config(app={
   'name': 'fatcatmap',
 
   # Main app settings
-  'debug': True,
+  'debug': __debug__,
 
   # App paths
   'paths': {
@@ -87,7 +88,7 @@ config = cfg.Config(app={
 
   ## - Redis
   'RedisAdapter': {
-    'debug': True,
+    'debug': False,
 
     'servers': {
 
@@ -127,8 +128,8 @@ config = cfg.Config(app={
   'config': {
 
     'minified': False,
-    'serving_mode': 'local' if __debug__ else 'cdn',
-    'cdn_prefix': ['//deliver.fcm-static.org'],
+    'serving_mode': 'cdn',
+    'cdn_prefix': ['//storage.googleapis.com/fcm-dev'],
 
     'asset_prefix': {
       'style': 'assets/style',

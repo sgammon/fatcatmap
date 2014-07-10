@@ -6,8 +6,24 @@
 
 '''
 
+# stdlib
+import os, sys, hashlib, random
+
+# google appengine lib/ shim
+try:
+  from google import appengine
+except ImportError:
+  pass
+else:
+  app_root = os.path.dirname(os.path.dirname(__file__))
+  libpath = os.path.abspath(os.path.join(app_root, 'lib'))
+  canteen = os.path.abspath(os.path.join(app_root, 'lib', 'canteen'))
+  packages = os.path.abspath(os.path.join(app_root, 'lib', 'python2.7', 'site-packages'))
+  for path in (libpath, canteen, packages):
+    if path not in sys.path:
+      sys.path.insert(0, path)
+
 # exports
-import hashlib, random
 from canteen import url
 from canteen import Page as RawPage
 
@@ -26,8 +42,8 @@ class Page(RawPage):
 
     # JavaScript
     'script-src': (
-      ('self', 'https://deliver.fcm-static.org', 'http://localhost:5000', 'unsafe-eval') if __debug__ else (
-      ('self', 'https:', 'deliver.fcm-static.org')
+      ('self', 'https://deliver.fcm-static.org', 'https://storage.googleapis.com', 'http://localhost:5000', 'unsafe-eval') if __debug__ else (
+      ('self', 'https:', 'deliver.fcm-static.org', 'storage.googleapis.com')
     )),
 
     # WebSocket / RPC

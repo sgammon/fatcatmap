@@ -1,6 +1,6 @@
 
 #
-#    fatcatmap: makefile
+#   fatcatmap: makefile
 #
 #   :author: Sam Gammon <sam@momentum.io>
 #   :author: Alex Rosner <alex@momentum.io>
@@ -20,34 +20,27 @@
 ### === VARS === ###
 
 ## == defaults == ##
-HOST?=127.0.0.1
-PORT?=9000
+BREW?=1
 DEBUG?=1
-USER?=`whoami`
 SANDBOX?=0
-SANDBOX_GIT?=$(USER)@sandbox
+BUILDBOX?=0
+USER?=`whoami`
 CANTEEN_BRANCH?=master
 BOOTSTRAP_BRANCH?=master
-BUILDBOX?=0
-BREW?=1
+SANDBOX_GIT?=$(USER)@sandbox
 BREWDEPS=openssl python haproxy redis nginx pypy
-
-ifeq ($(DEBUG),0)
-LESS_ARGS=--no-ie-compat --include-path=fatcatmap/assets/less:fatcatmap/assets/bootstrap --compress --clean-css -O2
-else
-LESS_ARGS=--no-ie-compat --include-path=fatcatmap/assets/less:fatcatmap/assets/bootstrap --source-map-basepath=.develop/maps
-endif
 
 ## == optionals == ##
 extensions=on
 gevent=off
 logbook=off
-compass=on
-redis=on
 
 ## == environment == ##
-ENVIRONMENT?=debug
 OS?=Mac
+DEVROOT=$(PWD)
+ENVIRONMENT?=debug
+LIBROOT=$(DEVROOT)/lib
+
 
 ifeq ($(extensions),on)
 ifeq ($(gevent),on)
@@ -61,9 +54,6 @@ endif
 ifeq ($(BUILDBOX),1)
 LIBROOT=$(BUILDROOT)/lib
 DEVROOT=$(BUILDROOT)
-else
-LIBROOT=$(PWD)/lib
-DEVROOT=$(PWD)
 endif
 
 
@@ -94,12 +84,12 @@ develop: .develop js styles templates coverage
 canteen: lib/canteen
 
 js:
-	@echo "Compiling Coffee..."
-	@node_modules/grunt-cli/bin/grunt coffee
+	@echo "Minifying Javascript..."
+	@-node_modules/gulp/bin/gulp.js closure
 
 styles:
 	@echo "Compiling Less..."
-	@node_modules/grunt-cli/bin/grunt less
+	@-node_modules/gulp/bin/gulp.js less
 
 ifeq ($(BREW),1)
 brew:
@@ -129,8 +119,10 @@ endif
 
 test:
 	@-bin/pip install nose coverage
-	@echo "Running testsuite..."
+	@echo "Running python testsuite..."
 	@-bin/nosetests canteen_tests fatcatmap_tests --verbose
+	@echo "Running javascript testsuite..."
+	@-ENV=$(ENVIRONMENT) gulp test
 
 coverage:
 	@-bin/pip install nose coverage
@@ -209,6 +201,9 @@ $(DEVROOT)/.env: closure bootstrap canteen npm
 	@-mv bin/activate.fish bin/activate_lame.fish
 	@-mv bin/activate_color.fish bin/activate.fish
 
+	@echo "Installing GCloud Git remote..."
+	@-grep gcloud .git/config > /dev/null || echo "[remote \"gcloud\"]\n\turl = https://source.developers.google.com/p/fcm-catnip/r/default\n\tfetch = +refs/heads/*:refs/remotes/gcloud/*\n" >> $(DEVROOT)/.git/config
+
 	@echo "Overriding standard Google paths..."
 	@-echo "" > lib/python2.7/site-packages/protobuf-2.5.0-py2.7-nspkg.pth
 
@@ -219,6 +214,7 @@ $(DEVROOT)/.env: closure bootstrap canteen npm
 	@bin/pip install -r lib/canteen/dev_requirements.txt
 
 	@echo "Installing Pip dependencies..."
+	@bin/pip install "git+https://github.com/sgammon/libcloud.git#egg=libcloud-0.15.1"
 	@-bin/pip install -r ./requirements.txt
 	@-mkdir -p .develop
 	@-mkdir -p .develop/maps/fatcatmap/assets/{js,less,style,coffee}/site
@@ -226,10 +222,6 @@ $(DEVROOT)/.env: closure bootstrap canteen npm
 
 	@echo "Building Canteen..."
 	@-cd lib/canteen; $(MAKE) DEPS=0 VIRTUALENV=0 TESTS=0 package
-
-devserver:
-	@echo "Running development server..."
-	@web run --companion --port $(PORT) --interface $(HOST)
 
 
 ### === dependencies === ###
@@ -329,12 +321,12 @@ bootstrap: fatcatmap/assets/bootstrap/package.json
 	@echo "Bootstrap is ready."
 
 ifeq ($(DEBUG),1)
-grunt: npm
+gulp: npm
 	@-mkdir -p .develop/maps/fatcatmap/assets/js/site
 	@-mkdir -p .develop/maps/fatcatmap/assets/coffee/site
-	@grunt
+	@-gulp
 endif
 ifeq ($(DEBUG),0)
-grunt: npm
-	@node_modules/grunt-cli/bin/grunt release
+gulp: npm
+	@node_modules/gulp/bin/gulp.js release
 endif

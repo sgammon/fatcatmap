@@ -10,6 +10,7 @@
 # stdlib
 import os
 import sys
+import errno
 import jinja2
 import py_compile
 
@@ -46,6 +47,14 @@ try:
 except ImportError:
     _extensions.append(hamlish_jinja.HamlishExtension)
 
+
+def mkdir_p(path):
+    try:
+        os.makedirs(path)
+    except OSError as exc: # Python >2.5
+        if exc.errno == errno.EEXIST and os.path.isdir(path):
+            pass
+        else: raise
 
 
 def compile_file(env, src_path, dst_path, encoding='utf-8', base_dir='', as_module=False):
@@ -132,7 +141,7 @@ def compile_dir(env, src_path, dst_path, pattern=r'^.*\.(html|js|haml|svg|css|sa
         print 'Compiling %s...' % filename
 
         if path.isdir(src_name):
-            mkdir(dst_name)
+            mkdir_p(dst_name)
             _import_paths += compile_dir(env, src_name, dst_name, encoding=encoding,
                 base_dir=base_dir, as_module=as_module, _root_path=_root_path)
         elif path.isfile(src_name) and re.match(pattern, filename):

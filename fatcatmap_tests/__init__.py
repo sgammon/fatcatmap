@@ -2,7 +2,7 @@
 
 '''
 
-  fcm tests
+  fcm testrunner
 
 '''
 

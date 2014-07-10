@@ -1,13 +1,5 @@
-Jinja2
-MarkupSafe
-Werkzeug
 redis
-coverage
 nose
-wsgiref
-webob
-protorpc
 uwsgi
 fabtools
 fabric
-apache-libcloud
