@@ -29,8 +29,10 @@ SIZE = 'g1-small'
 IMAGE = 'debian-7-wheezy-v20140606'
 NETWORK = 'backend'
 BASE_SERVICE_SCOPES = [
-  "compute.readonly"
+  "compute.readonly",
+  "devstorage.read_only"
 ]
+
 
 class BootDisk(object):
 
@@ -56,7 +58,7 @@ ENV_TAGS, GROUP_SETTINGS = {
     'disk_snap': BootDisk.NAME,
     'disk_type': BootDisk.SSD,
     'tags': ['lb', 'http-server', 'https-server'],
-    'services': ["devstorage.read_only"] + BASE_SERVICE_SCOPES
+    'services': BASE_SERVICE_SCOPES
   },
 
   'app': {
@@ -67,7 +69,6 @@ ENV_TAGS, GROUP_SETTINGS = {
     'disk_type': BootDisk.SSD,
     'services': [
       "userinfo.email",
-      "compute",
       "devstorage.read_write",
       "taskqueue",
       "bigquery",
