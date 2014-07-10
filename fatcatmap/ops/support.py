@@ -39,7 +39,7 @@ def setup_for_group(group):
       'http': setup_http,
       'database': setup_db
     }[service]() or service)  # dispatch proper setup routine
-  return services_installed
+  return [_SERVICE_NAMES[s] for x in services_installed]
 
 
 @task

@@ -29,9 +29,6 @@ def bootstrap(_hosts=True):
 
   node = get_node()
 
-  ## ~~ install services-n-stuff ~~ ##
-  services = support.setup_for_group(group=node.group)
-
   ## ~~ app nodes ~~ ##
   if node.group == 'app':
 
@@ -40,6 +37,9 @@ def bootstrap(_hosts=True):
 
     ## ~~ start k9 ~~ ##
     api.sudo("/base/software/k9/sbin/k9 --ini /base/software/k9/apphosting/master.ini")
+
+  ## ~~ install services-n-stuff ~~ ##
+  services = support.setup_for_group(group=node.group)
 
   ## ~~ start supporting services ~~ ##
   support.start(*services)
