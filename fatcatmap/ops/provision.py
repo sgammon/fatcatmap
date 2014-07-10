@@ -7,6 +7,7 @@
 '''
 
 # stdlib
+import sys
 import time
 import settings
 
@@ -29,17 +30,28 @@ env.key_filename = settings.KEY  # SSH key to use for GCE
 
 
 @task
-def create(n=3, environment=environment, group=group):
+def create(n=1, environment=environment, group=group):
 
   ''' Create new nodes allows chaining of deployment commands.
 
       :param n: number of nodes to create
       :param group: which group are these servers '''
 
+  print "About to deploy %s %s %s %s..." % (
+    n, environment, group, 'instances' if n > 1 else 'instance'
+  )
+
+  try:
+    for i, color in zip(reversed(xrange(3)), (colors.green, colors.yellow, colors.red)):
+      print color("%s..." % str(i + 1))
+      time.sleep(1)
+  except KeyboardInterrupt:
+    sys.exit(1)
+
   env.d = Deploy(environment, group)
   env.d.deploy_many(n)
 
-  print "Waiting for instance to finish provisioning..."
+  print colors.yellow("Waiting for instance to finish provisioning...")
   time.sleep(30)
 
 

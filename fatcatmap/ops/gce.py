@@ -10,7 +10,8 @@
 from . import settings
 from .helpers import GCENode
 
-# libcloud
+# libcloud + fabric
+from fabric import colors
 from libcloud import security
 from libcloud.compute.types import Provider
 from libcloud.compute.providers import get_driver
@@ -85,10 +86,11 @@ class Deploy(object):
     name = "{env}-{group}-{n}".format(group=self.group, env=self.environment, n=node_n)
 
     # create boot volume
+    print colors.yellow('Creating boot volume "%s"...' % '-'.join((name, 'boot')))
     snapshot = self.config.get('disk', {}).get('snap', None)
 
     boot_kwargs = {
-      'name': name,
+      'name': '-'.join((name, 'boot')),
       'location': self.REGION,
       'size': self.config.get('disk', {}).get('size', 10),
       'type': self.config.get('disk', {}).get('type', None)
@@ -99,8 +101,10 @@ class Deploy(object):
     else:
       boot_kwargs['image'] = self.config['image']
     boot_volume = self.driver.create_volume(**boot_kwargs)
+    print colors.green('Volume created: %s' % boot_volume)
 
     # create node
+    print colors.yellow('Creating node "%s" of size "%s"...' % (name, self.config['size']))
     node = self.driver.create_node(
                      name=name,
                      size=self.config['size'],
@@ -117,7 +121,7 @@ class Deploy(object):
                      ex_metadata={'group': self.group,
                                   'environment': self.environment,
                                   'startup-script-url': settings.STARTUP_SCRIPT_URL})
-    print node
+    print colors.green('Node created: %s' % node)
 
   def deploy_many(self, n=3):
 
