@@ -40,7 +40,7 @@ with open(os.path.join(os.path.dirname(__file__), 'requirements.txt')) as requir
 tools.setup(
       name="fatcatmap",
       version="0.1-alpha",
-      description="Minimally complicated, maximally blasphemous approach to app development",
+      description="coming soon to a riot near you",
       author="momentum labs",
       author_email="info@momentum.io",
       url="https://fatcatmap.org",
