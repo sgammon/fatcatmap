@@ -55,15 +55,16 @@ def fatcatmap(environment):
   install_fcm = """
   cd /base/apps;
   gsutil cp gs://fcm-dev/%s/%s/app/latest.tar.gz - | tar -xvz;
-  rm -fr /base/apps/fatcatmap/lib/python2.7;
+  rm -fr /base/apps/fatcatmap/lib/python2.7 /base/apps/fatcatmap/bin;
   virtualenv --python=/usr/bin/python /base/apps/fatcatmap;
-  /base/apps/fatcatmap/bin/pip install -r /base/apps/fatcatmap/requirements.txt;
   """ % (environment, 'builds' if environment == 'sandbox' else 'releases')
 
   api.run(install_fcm)
 
-  # fix permissions
+  # fix permissions & install deps
   api.sudo("chown k9:runtime -R /base/apps/fatcatmap")
+  api.sudo("chmod +x /base/apps/fatcatmap/bin/*")
+  api.run("/base/apps/fatcatmap/bin/pip install -r /base/apps/fatcatmap/requirements.txt")
 
 
 def mariadb():
