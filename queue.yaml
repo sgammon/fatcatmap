@@ -1,5 +1,5 @@
 
-total_storage_limit: 120M
+total_storage_limit: 100M
 
 queue:
 - name: intake
@@ -28,6 +28,5 @@ queue:
   mode: pull
   acl:
   - user_email: 202645915037@project.gserviceaccount.com
-  - user_email: 489276160057@project.gserviceaccount.com
   - user_email: 489276160057@developer.gserviceaccount.com
   - user_email: 489276160057-dffvig7s5uoqg0em72ndnsuvc72jb6m6@developer.gserviceaccount.com

@@ -16,7 +16,7 @@ skip_files:
 - ^(.*/)?.*\.less$
 - ^(.*/)?.*\.py[co]$
 - ^(.*/)?.*\.coffee$
-- node_modules\/^(.*/)?
+- node_modules/.*
 
 
 #
