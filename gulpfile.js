@@ -25,7 +25,7 @@ var path = require('path'),
   merge = function (obj1, obj2) {
     for (var k in obj2) {
       if (obj2.hasOwnProperty(k)) {
-        obj1[k] = obj2[k]
+        obj1[k] = obj2[k];
       }
     }
     return obj1;
@@ -124,10 +124,12 @@ config = {
       summary_detail_level: 3,
       warning_level: 'VERBOSE',
       language_in: 'ECMASCRIPT5',
-      closure_entry_point: 'app.main',
-      use_types_for_optimization: null,
+      closure_entry_point: 'init',
+      only_closure_dependencies: true,
       process_closure_primitives: true,
-      compilation_level: 'ADVANCED_OPTIMIZATIONS'
+      use_types_for_optimization: null,
+      compilation_level: 'ADVANCED_OPTIMIZATIONS',
+      output_wrapper: '(function() {%output%})();'
     },
 
     // Debug compile settings
@@ -139,10 +141,12 @@ config = {
       warning_level: 'VERBOSE',
       language_in: 'ECMASCRIPT5',
       formatting: 'PRETTY_PRINT',
-      closure_entry_point: 'app.main',
-      use_types_for_optimization: null,
+      closure_entry_point: 'init',
+      only_closure_dependencies: true,
       process_closure_primitives: true,
-      compilation_level: 'SIMPLE_OPTIMIZATIONS'
+      use_types_for_optimization: null,
+      compilation_level: 'SIMPLE_OPTIMIZATIONS',
+      output_wrapper: '(function() {\n%output%\n})();'
     }
   },
 

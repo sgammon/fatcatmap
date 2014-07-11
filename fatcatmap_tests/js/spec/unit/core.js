@@ -3,8 +3,8 @@
  *
  * @author  David Rekow <david@momentum.io>,
  *          Sam Gammon <sam@momentum.io>,
- *          Ian Weisberger <ian@momentum.io>,
- *          Alex Rosner <alex@momentum.io>
+ *          Alex Rosner <alex@momentum.io>,
+ *          Ian Weisberger <ian@momentum.io>
  * @copyright (c) momentum labs, 2014
  * @license The inspection, use, distribution, modification or implementation
  *          of this source code is governed by a private license - all rights
