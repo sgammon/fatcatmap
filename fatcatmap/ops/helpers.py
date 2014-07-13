@@ -11,9 +11,16 @@
 import sys
 import time
 
+# local
+from . import settings
+
 # fabric
 from fabric import colors
 from fabric.api import env
+
+# fabric integration
+from dogapi.fab import setup, notify
+setup(settings.DATADOG_KEY)
 
 
 def get_node():

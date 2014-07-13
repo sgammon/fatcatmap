@@ -18,6 +18,7 @@ USER = 'k9'
 PROJECT = 'fcm-catnip'
 REGION = 'us-central1-a'
 KEY = ['conf/keys/id_k9']
+DATADOG_KEY = "ac728205a32668467a1e4c4f16f61501"
 PEM = 'conf/credentials/identity.pem'
 STARTUP_SCRIPT_URL = 'https://storage.googleapis.com/fcm-dev/base/bootstrap.sh'
 PROJECT_ID = '489276160057-dffvig7s5uoqg0em72ndnsuvc72jb6m6@developer.gserviceaccount.com'

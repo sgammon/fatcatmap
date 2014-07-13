@@ -13,6 +13,7 @@ import os
 # local
 from . import support
 from . import helpers
+from .helpers import notify
 from .support import service
 from .helpers import get_node
 
@@ -22,6 +23,7 @@ from fabric.api import env, task
 from fabtools import require, deb
 
 
+@notify
 @task
 def bootstrap(_hosts=True):
 
@@ -45,6 +47,8 @@ def bootstrap(_hosts=True):
   support.start(*services)
 
 
+@notify
+@task
 def fatcatmap(environment):
 
   '''  '''
@@ -66,7 +70,11 @@ def fatcatmap(environment):
   api.sudo("chmod +x /base/apps/fatcatmap/bin/*")
   api.run("/base/apps/fatcatmap/bin/pip install -r /base/apps/fatcatmap/requirements.txt")
 
+  api.sudo("touch /base/ns/trigger/k9.reload /base/ns/trigger/apps/fatcatmap.reload")
 
+
+@notify
+@task
 def mariadb():
 
   '''  '''
@@ -80,6 +88,8 @@ def mariadb():
   api.run(add_repo)
 
 
+@notify
+@task
 def rexter():
 
   '''  '''

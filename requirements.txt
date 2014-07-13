@@ -3,3 +3,4 @@ nose
 uwsgi
 fabtools
 fabric
+dogapi
