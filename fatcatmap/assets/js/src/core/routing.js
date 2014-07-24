@@ -1,5 +1,5 @@
 /**
- * @fileoverview localStorage and sessionStorage adapters.
+ * @fileoverview Routing module, using HTML5 history manager.
  *
  * @author  David Rekow <david@momentum.io>,
  *          Sam Gammon <sam@momentum.io>,
@@ -11,14 +11,6 @@
 
 goog.require('supports');
 
-goog.provide('storage');
+goog.provide('routing');
 
-var storage = {};
-
-if (supports.storage.local) {
-  storage.local = {};
-}
-
-if (supports.storage.session) {
-  storage.session = {};
-}
+var routing = {};

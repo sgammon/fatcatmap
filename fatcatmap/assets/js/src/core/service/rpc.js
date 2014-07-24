@@ -1,5 +1,5 @@
 /**
- * @fileoverview Lightweight wrapper for WebSockets.
+ * @fileoverview Lightweight service wrapper for fatcatmap RPC.
  *
  * @author  David Rekow <david@momentum.io>,
  *          Sam Gammon <sam@momentum.io>,
@@ -9,6 +9,4 @@
  * copyright (c) momentum labs, 2014
  */
 
-goog.provide('socket');
-
-var socket = {};
+goog.provide('service.rpc');

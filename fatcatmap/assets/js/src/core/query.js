@@ -17,9 +17,9 @@ goog.provide('$');
  */
 var toArray = function (list) {
   var arr = [], i;
-  for (i = 0; i < list.length; arr.push(list[i++]));
+  for (i = 0; i < list.length; arr.push(list[i++])) {}
   return arr;
-}
+};
 
 /**
  * @param {string|Node} query CSS selector.
@@ -32,7 +32,7 @@ var $ = function (query) {
   }
   if (typeof query === 'string') {
     if (query.charAt(0) === '#') {
-      return document.querySelector(query);
+      return document.getElementById(query.slice(1));
     }
     return toArray(document.querySelectorAll(query));
   }

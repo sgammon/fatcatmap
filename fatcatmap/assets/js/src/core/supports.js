@@ -54,9 +54,12 @@ var supports = /** @struct */{
   touch: navigator.maxTouchPoints > 0,
 
   /**
-   * @type {boolean}
+   * @type {{html5: boolean, hash: boolean}}
    */
-  history: !!(window.history.pushState),
+  history: {
+    html5: !!window.history.pushState,
+    hash: !!window.onhashchange
+  },
 
   /**
    * @type {{local: boolean, session: boolean, indexed: boolean}}

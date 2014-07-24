@@ -13,4 +13,3 @@ goog.require('$');
 
 goog.provide('mapper');
 
-var mapper = {};

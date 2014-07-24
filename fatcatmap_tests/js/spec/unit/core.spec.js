@@ -1,16 +1,15 @@
 /**
- * @fileoverview HTML5 history manager.
+ * @fileoverview Unit tests for the fatcatmap core platform.
  *
  * @author  David Rekow <david@momentum.io>,
  *          Sam Gammon <sam@momentum.io>,
  *          Alex Rosner <alex@momentum.io>,
  *          Ian Weisberger <ian@momentum.io>
- * 
  * copyright (c) momentum labs, 2014
  */
 
-goog.require('supports');
-
-goog.provide('history');
-
-var history = {};
+describe("Tests should exist", function () {
+  it("should not be crazy", function () {
+    expect(true).toBe(true);
+  });
+});

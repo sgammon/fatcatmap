@@ -1,5 +1,5 @@
 /**
- * @fileoverview Fatcatmap data processor pipeline.
+ * @fileoverview Fatcatmap graph processor pipeline.
  *
  * @author  David Rekow <david@momentum.io>,
  *          Sam Gammon <sam@momentum.io>,
@@ -9,10 +9,13 @@
  * copyright (c) momentum labs, 2014
  */
 
-goog.require('http');
-goog.require('socket');
-goog.require('storage');
+goog.require('service');
 
-goog.provide('data');
+goog.provide('graph');
 
-var data = {};
+/**
+ * @this {Client}
+ */
+var graph = /** @this {Client} */function () {
+
+}.service('graph');

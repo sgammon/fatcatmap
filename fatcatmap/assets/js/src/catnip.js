@@ -10,8 +10,16 @@
  */
 
 goog.require('supports');
-goog.require('history');
+goog.require('service');
+goog.require('mapper');
+goog.require('graph');
 
 goog.provide('catnip');
 
-var catnip = {};
+/**
+ * @this {Client}
+ */
+var catnip = function () {
+  this.graph();
+  return {};
+}.client();

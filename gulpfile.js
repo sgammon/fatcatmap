@@ -60,7 +60,7 @@ outputs = {
     light: ASSET_PREFIX + 'style/themes/light/',
     scaffold: ASSET_PREFIX + 'style/themes/scaffold/'
   },
-  templates: 'fatcatmap/templates/compiled/*',
+  templates: 'fatcatmap/templates/compiled',
   sourcemaps: '../../../../../.develop/maps/'
 };
 
@@ -147,6 +147,22 @@ config = {
       use_types_for_optimization: null,
       compilation_level: 'SIMPLE_OPTIMIZATIONS',
       output_wrapper: '(function() {\n%output%\n})();'
+    },
+
+    // Pretty compile settings
+    pretty: {
+      jar: 'lib/closure/build/compiler.jar',
+      js_output_file: outputs.js.app + 'app.js',
+      summary_detail_level: 3,
+      warning_level: 'VERBOSE',
+      language_in: 'ECMASCRIPT5',
+      formatting: 'PRETTY_PRINT',
+      closure_entry_point: 'init',
+      only_closure_dependencies: true,
+      process_closure_primitives: true,
+      use_types_for_optimization: null,
+      compilation_level: 'SIMPLE_OPTIMIZATIONS',
+      output_wrapper: '(function() {\n%output%\n})();'
     }
   },
 
@@ -218,6 +234,14 @@ gulp.task('closure:debug', function () {
     .pipe(closure(config.closure.debug));
 });
 
+// Compile JS with Closure Compiler in pretty mode
+gulp.task('closure:pretty', function () {
+  return gulp.src(inputs.js.app)
+    .pipe(closure(config.closure.pretty));
+});
+
+gulp.task('closure:all', ['closure', 'closure:debug', 'closure:pretty']);
+
 // Clean compiled JS files
 gulp.task('closure:clean', function () {
   return gulp.src(outputs.js.app + '/*')
@@ -231,7 +255,7 @@ gulp.task('templates:build', function (cb) {
 
 // Clean templates
 gulp.task('templates:clean', function () {
-  return gulp.src(outputs.templates)
+  return gulp.src(outputs.templates + '/*')
     .pipe(rmrf());
 });
 
@@ -275,7 +299,7 @@ gulp.task('test:clean', function () {
 // Default task - runs with bare 'gulp'.
 gulp.task('default', [
   'less',
-  'test:debug',
+
 ]);
 
 // Develop task
