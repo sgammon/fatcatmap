@@ -1,0 +1,32 @@
+
+total_storage_limit: 100M
+
+queue:
+- name: intake
+  rate: 10/s
+  bucket_size: 20
+  max_concurrent_requests: 10
+  retry_parameters:
+    min_backoff_seconds: 10
+    max_backoff_seconds: 300
+    max_doublings: 3
+    task_retry_limit: 5
+    task_age_limit: 7d
+
+- name: object
+  rate: 10/s
+  bucket_size: 20
+  max_concurrent_requests: 10
+  retry_parameters:
+    min_backoff_seconds: 10
+    max_backoff_seconds: 300
+    max_doublings: 3
+    task_retry_limit: 3
+    task_age_limit: 7d
+
+- name: analyzer
+  mode: pull
+  acl:
+  - user_email: 202645915037@project.gserviceaccount.com
+  - user_email: 489276160057@developer.gserviceaccount.com
+  - user_email: 489276160057-dffvig7s5uoqg0em72ndnsuvc72jb6m6@developer.gserviceaccount.com

@@ -7,8 +7,20 @@
 
 '''
 
+# stdlib
+import sys
+import time
+
+# local
+from . import settings
+
 # fabric
+from fabric import colors
 from fabric.api import env
+
+# fabric integration
+from dogapi.fab import setup, notify
+setup(settings.DATADOG_KEY)
 
 
 def get_node():
@@ -16,6 +28,18 @@ def get_node():
   '''  '''
 
   return env.hosts_detail[env.host]
+
+
+def pause():
+
+  '''  '''
+
+  try:
+    for i, color in zip(reversed(xrange(3)), (colors.green, colors.yellow, colors.red)):
+      print color("%s..." % str(i + 1))
+      time.sleep(1)
+  except KeyboardInterrupt:
+    sys.exit(1)
 
 
 class GCENode(object):
@@ -46,7 +70,21 @@ class GCENode(object):
 
     '''  '''
 
-    return """ \n Name: {name} - IP: {ip} - Private-IP: {private_ip} - Group: {group}
-      metadata: {metadata} """.format(name=self.name, ip=self.ip,
-                   private_ip=self.private_ip, group=self.group,
-                   metadata=self.metadata, node=self.node)
+    return """
+
+  Name: {name} - ({group})
+  IP: {ip}/{private_ip}
+  metadata:
+    {metadata}
+
+           """.format(
+
+              name=self.name,
+              ip=self.ip,
+              private_ip=self.private_ip,
+              group=self.group,
+              node=self.node,
+              metadata="\n\t".join([
+                "%s: %s" % item for item in self.metadata.iteritems()
+              ])
+          )

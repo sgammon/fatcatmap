@@ -21,3 +21,7 @@ pubspec.lock
 packages/*
 .coverage
 .idea
+fatcatmap.sublime-workspace
+.gcloud/logs
+build/
+fatcatmap.sublime-project
