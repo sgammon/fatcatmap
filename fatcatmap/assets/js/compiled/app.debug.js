@@ -15,11 +15,7 @@ var toArray = function $toArray$($list$$) {
   throw new TypeError("Invalid document query string.");
 };
 var mapper = {};
-var supports = {cookies:navigator.cookieEnabled, retina:2 == window.devicePixelRatio, workers:!!window.Worker, sharedWorkers:!!window.SharedWorker, sockets:!!window.WebSocket, sse:!!window.EventSource, geo:!!navigator.geolocation, touch:0 < navigator.maxTouchPoints, history:{html5:!!window.history.pushState, hash:!!window.onhashchange}, storage:{local:!!window.localStorage, session:!!window.sessionStorage, indexed:!!window.IDBFactory}}, Stub = function $Stub$($feature$$) {
-  return function() {
-    throw Error($feature$$ + " is not supported");
-  };
-};
+var supports = {cookies:navigator.cookieEnabled, retina:2 == window.devicePixelRatio, workers:!!window.Worker, sharedWorkers:!!window.SharedWorker, sockets:!!window.WebSocket, sse:!!window.EventSource, geo:!!navigator.geolocation, touch:0 < navigator.maxTouchPoints, history:{html5:!!window.history.pushState, hash:!!window.onhashchange}, storage:{local:!!window.localStorage, session:!!window.sessionStorage, indexed:!!window.IDBFactory}};
 var urlutil = {encode:encodeURIComponent, addParams:function($url$$, $params$$) {
   -1 === $url$$.indexOf("?") && ($url$$ += "?");
   for (var $k$$ in $params$$) {
@@ -28,7 +24,7 @@ var urlutil = {encode:encodeURIComponent, addParams:function($url$$, $params$$) 
   return $url$$;
 }, parseParams:function($url$$) {
   for (var $params$$ = {}, $tuples$$ = $url$$.split("?").pop().split("&"), $tuple$$, $v$$, $i$$ = 0;$i$$ < $tuples$$.length;$i$$++) {
-    $tuple$$ = $tuples$$[$i$$].split("="), $v$$ = $tuple$$[1], $params$$[$tuple$$[0]] = "true" === $v$$ || "false" === $v$$ ? Boolean($v$$) : /^[0-9]+$/.test($url$$) ? +$v$$ : $v$$;
+    $tuple$$ = $tuples$$[$i$$].split("="), $v$$ = unescape($tuple$$[1]), $params$$[$tuple$$[0]] = "true" === $v$$ || "false" === $v$$ ? Boolean($v$$) : /^[0-9]+$/.test($url$$) ? +$v$$ : $v$$;
   }
   return $params$$;
 }, parse:function($url$$) {
@@ -42,7 +38,7 @@ var urlutil = {encode:encodeURIComponent, addParams:function($url$$, $params$$) 
     if (1 === $chunks$$.length) {
       $parsed$$.protocol = "";
     } else {
-      throw new SyntaxError("Malformed URL: " + $url$$);
+      throw Error("Can't parse malformed URL: " + $url$$);
     }
   }
   $chunks$$ = $chunks$$.shift().split("/");
@@ -111,13 +107,13 @@ service.sse = {};
 service.storage = {};
 var StringStore;
 StringStore = function() {
-  var $serialize$$, $deserialize$$;
+  var $digitMatcher$$ = /^[0-9]+$/, $serialize$$, $deserialize$$;
   $serialize$$ = function $$serialize$$$($item$$) {
     return "string" === typeof $item$$ ? $item$$ : null == $item$$ ? "" : "object" === typeof $item$$ ? JSON.stringify($item$$) : String($item$$);
   };
   $deserialize$$ = function $$deserialize$$$($item$$) {
     var $char1$$ = $item$$.charAt(0);
-    return "{" === $char1$$ || "[" === $char1$$ ? JSON.parse($item$$) : $item$$ ? "true" === $item$$ || "false" === $item$$ ? Boolean($item$$) : /^[0-9]+$/.test($item$$) ? +$item$$ : $item$$ : null;
+    return "{" === $char1$$ || "[" === $char1$$ ? JSON.parse($item$$) : $item$$ ? "true" === $item$$ || "false" === $item$$ ? Boolean($item$$) : $digitMatcher$$.test($item$$) ? +$item$$ : $item$$ : null;
   };
   return function StringStore($backend$$) {
     this.get = function $this$get$($key$$) {
@@ -133,15 +129,18 @@ StringStore = function() {
 }();
 service.storage.local = supports.storage.local ? new StringStore(window.localStorage) : null;
 service.storage.session = supports.storage.session ? new StringStore(window.sessionStorage) : null;
+var Client = function $Client$() {
+};
+Client.prototype = service;
 Function.prototype.client = function $Function$$client$() {
   var $fn$$ = this;
   return function() {
-    return $fn$$.apply(service, arguments);
+    return $fn$$.apply(new Client, arguments);
   };
 };
 Function.prototype.service = function $Function$$service$($name$$) {
-  service[$name$$] = this.client();
-  return service[$name$$];
+  Client.prototype[$name$$] = this.client();
+  return Client.prototype[$name$$];
 };
 var graph = function() {
 }.service("graph");

@@ -48,7 +48,7 @@ var urlutil = {
 
     for (var i = 0; i < tuples.length; i++) {
       tuple = tuples[i].split('=');
-      v = tuple[1];
+      v = unescape(tuple[1]);
       params[tuple[0]] = (v === 'true' || v === 'false') ? Boolean(v) :
                           /^[0-9]+$/.test(url) ? +v :
                           v;
@@ -67,7 +67,7 @@ var urlutil = {
    *   url: string,
    *   params: Object.<string, string>
    * }}
-   * @throws {SyntaxError}
+   * @throws {Error}
    */
   parse: function (url) {
     var parsed = {},
@@ -83,7 +83,7 @@ var urlutil = {
     } else if (chunks.length === 1) {
       parsed.protocol = '';
     } else {
-      throw new SyntaxError('Malformed URL: ' + url);
+      throw new Error('Can\'t parse malformed URL: ' + url);
     }
 
     chunks = chunks.shift().split('/');
