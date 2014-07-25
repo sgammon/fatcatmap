@@ -36,8 +36,9 @@ class Page(RawPage):
   __js_context__ = {}  # holds javascript context items
 
   # Content Security Policy
+  enable_csp = __debug__  # only enable CSP in debug
   content_nonce = True
-  content_security_report_only = False
+  content_security_report_only = True
   content_security_policy = {
 
     # JavaScript
@@ -71,10 +72,11 @@ class Page(RawPage):
 
       _csp_header.append('%s %s' % (stanza, ' '.join(("'%s'" % i if not i.startswith('http') else i) for i in content)))
 
-    if not self.content_security_report_only:
-      self.response.headers['Content-Security-Policy'] = ' '.join(_csp_header)
-    else:
-      self.response.headers['Content-Security-Policy-Report-Only'] = ' '.join(_csp_header)
+    if self.enable_csp:
+      if not self.content_security_report_only:
+        self.response.headers['Content-Security-Policy'] = ' '.join(_csp_header)
+      else:
+        self.response.headers['Content-Security-Policy-Report-Only'] = ' '.join(_csp_header)
 
     # set extra security headers
     self.response.headers['X-Frame-Options'] = 'DENY'

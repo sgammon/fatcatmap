@@ -14,12 +14,12 @@ from canteen import remote, Service, model
 from fatcatmap.models.graph import node
 
 
-@remote.public('graph')
+@remote.service('graph')
 class GraphService(Service):
 
   ''' '''
 
-  @remote.public(messages.GraphRequest, messages.CompiledGraph)
+  @remote.method(messages.GraphRequest, messages.CompiledGraph)
   def construct(self, request):
 
     ''' '''

@@ -47,6 +47,8 @@ def service(name, action="restart"):
 
   ''' Perform an action on a service by name. '''
 
+  # corner case: redis is moody
+  if name == 'redis': name == 'redis:redis-server'
   sudo("supervisorctl {1} {0}".format(name, action))
 
 

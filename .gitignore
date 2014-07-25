@@ -25,3 +25,5 @@ fatcatmap.sublime-workspace
 .gcloud/logs
 build/
 fatcatmap.sublime-project
+doc/
+.gcloud/properties

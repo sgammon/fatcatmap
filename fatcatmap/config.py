@@ -88,11 +88,11 @@ config = cfg.Config(app={
 
   ## - Redis
   'RedisAdapter': {
-    'debug': False,
+    'debug': True,
 
     'servers': {
 
-      'default': 'local',
+      'default': 'sandbox',
 
       # Redis Instances
       'local': {'host': '127.0.0.1', 'port': 6379},

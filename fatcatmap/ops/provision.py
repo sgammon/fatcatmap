@@ -32,35 +32,35 @@ env.key_filename = settings.KEY  # SSH key to use for GCE
 
 @notify
 @task
-def create(n=1, environment=environment, group=group):
+def create(n=1, region=settings.REGION, environment=environment, group=group):
 
   ''' Create new nodes allows chaining of deployment commands.
 
       :param n: number of nodes to create
       :param group: which group are these servers '''
 
-  print "Provisioning %s %s %s %s..." % (
-    n, environment, group, 'instances' if n > 1 else 'instance'
+  print "Provisioning %s %s %s %s in %s..." % (
+    n, environment, group, 'instances' if n > 1 else 'instance', region
   )
 
   pause()  # 3 second chance to exit
 
-  env.d = Deploy(environment, group)
+  env.d = Deploy(environment, group, region)
   env.d.deploy_many(n)
 
-  print colors.yellow("Waiting for instance to finish provisioning...")
+  print colors.yellow("Waiting for %s to finish provisioning..." % 'instances' if n > 1 else 'instance')
   time.sleep(30)
   nodes(environment, group)
 
 
 @task
-def nodes(environment=environment, group=group, name=None):
+def nodes(environment=environment, group=group, name=None, region=settings.REGION):
 
   ''' Lists and selects nodes based on specified group.
 
       :param group: group to select '''
 
-  env.d = Deploy(environment, group)
+  env.d = Deploy(environment, group, region)
   env.node = lambda: get_node()  # set env.node for easy access to node object
   if name: env.d.names = [name]
   env.hosts_detail = {}

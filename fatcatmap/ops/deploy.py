@@ -53,7 +53,7 @@ def fatcatmap(environment):
 
   '''  '''
 
-  print colors.yellow('Deploying fatcatmap...')
+  print colors.yellow('Deploying fatcatmap on host %s...' % get_node())
   helpers.pause()
 
   install_fcm = """

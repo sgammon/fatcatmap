@@ -1,5 +1,6 @@
 application: fcm-catnip
 version: alpha-1a
+vm: true
 runtime: python27
 api_version: 1
 threadsafe: true

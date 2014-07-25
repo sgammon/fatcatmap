@@ -29,10 +29,9 @@ class Deploy(object):
   ID = settings.PROJECT_ID
   PEM = settings.PEM
   PROJECT = settings.PROJECT
-  REGION = settings.REGION
   node_class = GCENode  # used for cross-cloud compatability
 
-  def __init__(self, environment, group, names=None):
+  def __init__(self, environment, group, region, names=None):
 
     '''  '''
 
@@ -40,6 +39,7 @@ class Deploy(object):
       raise Exception("invalid group or environment specified")
     self.names = names
     self.group = group
+    self.region = region
     self.environment = environment
     self._setup()
 
@@ -55,20 +55,27 @@ class Deploy(object):
     '''  '''
 
     driver = get_driver(Provider.GCE)
-    self.driver = driver(self.ID, self.PEM, self.REGION, self.PROJECT)
+    self.driver = driver(self.ID, self.PEM, self.region, self.PROJECT)
     self.image = self.driver.ex_get_image(self.config['image'])
     self.size = self.driver.ex_get_size(self.config['size'])
 
-  def get_nodes(self):
+  def get_nodes(self, all_regions=False):
 
     ''' filters nodes and converts libcloud nodes into our node object as '''
 
+    driver = get_driver(Provider.GCE)
+
     nodes = []
-    iterator = (self.node_class(node) for node in self.driver.list_nodes())
-    for node in iterator:
-      if self.group and node.group == self.group:
-        nodes.append(node)
-      elif self.names and any(name in node.name for name in self.names):
+    if all_regions:
+      regions = settings.ENABLED_REGIONS
+    else:
+      regions = [self.region]
+    for region in regions:
+      iterator = (self.node_class(node) for node in driver(self.ID, self.PEM, region, self.PROJECT).list_nodes())
+      for node in iterator:
+        if self.group and node.group == self.group:
+          nodes.append(node)
+        elif self.names and any(name in node.name for name in self.names):
           nodes.append(node)
     return nodes
 
@@ -76,7 +83,7 @@ class Deploy(object):
 
     '''  '''
 
-    nodes = self.get_nodes()
+    nodes = self.get_nodes(all_regions=True)
     n = [int(node.name.split('-')[-1])
         for node in nodes if not node.node.state == 2]
     node_n = 1
@@ -89,11 +96,17 @@ class Deploy(object):
     print colors.yellow('Creating boot volume "%s"...' % '-'.join((name, 'boot')))
     snapshot = self.config.get('disk', {}).get('snap', None)
 
+    disktype = self.config.get('disk', {}).get('type', None)
+    if disktype:
+      disktype = (
+        "https://www.googleapis.com/compute/v1/projects/%s/zones/%s/diskTypes/" % (self.PROJECT, self.region)
+      ) + disktype
+
     boot_kwargs = {
       'name': '-'.join((name, 'boot')),
-      'location': self.REGION,
+      'location': self.region,
       'size': self.config.get('disk', {}).get('size', 10),
-      'type': self.config.get('disk', {}).get('type', None)
+      'type': disktype
     }
 
     if snapshot:
@@ -109,7 +122,7 @@ class Deploy(object):
                      name=name,
                      size=self.config['size'],
                      image=self.config['image'],
-                     location=self.REGION,
+                     location=self.region,
                      ex_tags=(
                       settings.GROUP_SETTINGS[self.group].get('tags', []) +
                       settings.ENV_TAGS[self.environment]
