@@ -31,15 +31,17 @@ def setup_for_group(group):
 
   ''' Setup services for a specific group. '''
 
-  services_installed = []
-  for service in (_SERVICES_BY_NAME[s] for s in
-          settings.GROUP_SETTINGS[group].get('services', [])):
-    services_installed.append({
-      'proxy': setup_proxy,
-      'http': setup_http,
-      'database': setup_db
-    }[service]() or service)  # dispatch proper setup routine
-  return [_SERVICE_NAMES[x] for x in services_installed]
+  sudo("supervisorctl reload")
+
+  # services_installed = []
+  # for service in (_SERVICES_BY_NAME[s] for s in
+  #         settings.GROUP_SETTINGS[group].get('services', [])):
+  #   services_installed.append({
+  #     'proxy': setup_proxy,
+  #     'http': setup_http,
+  #     'database': setup_db
+  #   }[service]() or service)  # dispatch proper setup routine
+  # return [_SERVICE_NAMES[x] for x in services_installed]
 
 
 @task
@@ -100,7 +102,8 @@ def setup_proxy():
 
   ''' Setup proxy services. '''
 
-  setup_service(settings.Components.PROXY)
+  #setup_service(settings.Components.PROXY)
+  # currently preinstalled
 
 
 @task
@@ -108,7 +111,8 @@ def setup_http():
 
   ''' Setup webserver services. '''
 
-  setup_service(settings.Components.WEBSERVER)
+  #setup_service(settings.Components.WEBSERVER)
+  # currently preinstalled
 
 
 @task
@@ -116,7 +120,8 @@ def setup_apphosting():
 
   ''' Setup apphosting services. '''
 
-  setup_service(settings.Components.APPHOSTING)
+  #setup_service(settings.Components.APPHOSTING)
+  # currently preinstalled
 
 
 @task
@@ -124,4 +129,5 @@ def setup_db():
 
   ''' Setup database services. '''
 
-  setup_service(settings.Components.DATABASE)
+  #setup_service(settings.Components.DATABASE)
+  # currently preinstalled
