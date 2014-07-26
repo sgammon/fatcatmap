@@ -11,7 +11,7 @@
 
 goog.require('supports');
 
-goog.provide('service.storage');
+goog.provide('services.storage');
 
 var StringStore;
 
@@ -95,11 +95,18 @@ StringStore = (function () {
 })();
 
 /**
- * @type {?StringStore}
+ * @expose
  */
-service.storage.local = supports.storage.local ? new StringStore(window.localStorage) : null;
+services.storage = {};
 
 /**
  * @type {?StringStore}
+ * @expose
  */
-service.storage.session = supports.storage.session ? new StringStore(window.sessionStorage) : null;
+services.storage.local = supports.storage.local ? new StringStore(window.localStorage) : null;
+
+/**
+ * @expose
+ * @type {?StringStore}
+ */
+services.storage.session = supports.storage.session ? new StringStore(window.sessionStorage) : null;

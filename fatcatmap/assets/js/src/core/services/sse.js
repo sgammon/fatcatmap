@@ -1,5 +1,5 @@
 /**
- * @fileoverview Fatcatmap graph processor pipeline.
+ * @fileoverview Lightweight service wrapper for server-sent events.
  *
  * @author  David Rekow <david@momentum.io>,
  *          Sam Gammon <sam@momentum.io>,
@@ -9,13 +9,4 @@
  * copyright (c) momentum labs, 2014
  */
 
-goog.require('service');
-
-goog.provide('graph');
-
-/**
- * @this {Client}
- */
-var graph = /** @this {Client} */function () {
-
-}.service('graph');
+goog.provide('services.sse');

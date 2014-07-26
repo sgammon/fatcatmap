@@ -10,6 +10,17 @@
  */
 
 goog.require('$');
+goog.require('services');
 
-goog.provide('mapper');
+goog.provide('services.map');
 
+var map = {
+  /**
+   * @expose
+   * @this {Client}
+   * @return {service.map}
+   */
+  draw: function () {
+
+  }
+}.service('map');

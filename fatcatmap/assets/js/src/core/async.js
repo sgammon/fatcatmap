@@ -13,6 +13,7 @@ goog.provide('async');
 
 
 /**
+ * Represents an asynchronous callback object.
  * @typedef {{
  *    success: function(Object),
  *    error: function(Error)

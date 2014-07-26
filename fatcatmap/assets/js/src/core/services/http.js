@@ -12,7 +12,7 @@
 goog.require('async');
 goog.require('urlutil');
 
-goog.provide('service.http');
+goog.provide('services.http');
 
 /**
  * @typedef {{
@@ -66,24 +66,26 @@ prepareRequest = function (method, request, handlers) {
     }
   }
 
+  xhr.data = request.data;
+
   if (handlers) {
     xhr.onerror = handlers.error;
     xhr.onloadend = function () {
-      this.responseJSON = parseResponse(this);
-      handlers.success(this.responseJSON);
+      xhr.responseJSON = parseResponse(xhr);
+      handlers.success(xhr.responseJSON);
     };
   } else {
     xhr.onerror = function (e) {
       /**
        * @expose
        */
-      this.error = e;
+      xhr.error = e;
     };
     xhr.onloadend = function () {
       /**
        * @expose
        */
-      this.responseJSON = parseResponse(this);
+      xhr.responseJSON = parseResponse(xhr);
     };
   }
 
@@ -133,7 +135,10 @@ parseResponse = function (response) {
   return resp;
 };
 
-service.http = {
+/**
+ * @expose
+ */
+services.http = {
   /**
    * @param {Request} request
    * @param {CallbackMap=} handlers If not passed, executes synchronously.
@@ -165,6 +170,7 @@ service.http = {
    * @param {Request} request
    * @param {CallbackMap=} handlers If not passed, executes synchronously.
    * @return {XMLHttpRequest|Response} XHR, or response if no handlers were passed.
+   * @expose
    */
   post: function (request, handlers) {
     return dispatch('POST', request, handlers);
@@ -183,6 +189,7 @@ service.http = {
    * @param {Request} request
    * @param {CallbackMap=} handlers If not passed, executes synchronously.
    * @return {XMLHttpRequest|Response} XHR, or response if no handlers were passed.
+   * @expose
    */
   patch: function (request, handlers) {
     return dispatch('PATCH', request, handlers);

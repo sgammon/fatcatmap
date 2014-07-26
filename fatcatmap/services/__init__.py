@@ -8,7 +8,11 @@
 
 # submodules
 from . import graph
+from . import content
+
+# sub-submodules
 from .graph import *
+from .content import *
 
 
 __all__ = (

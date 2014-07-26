@@ -13,4 +13,7 @@ goog.require('catnip');
 
 goog.provide('init');
 
-window['catnip'] = catnip();
+/**
+ * @expose
+ */
+window.catnip_beta = catnip();

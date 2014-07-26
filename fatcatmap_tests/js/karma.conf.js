@@ -17,14 +17,14 @@ module.exports = {
 
   _releaseFiles: [
     JS_BASE + 'lib/closure/base.js',
-    JS_BASE + 'compiled/*.min.js',
+    JS_BASE + 'compiled/app.min.js',
     'simulate/mocks.js',
     'spec/unit/**/*.spec.js'
   ],
 
   _debugFiles: [
     JS_BASE + 'lib/closure/base.js',
-    JS_BASE + 'compiled/*.debug.js',
+    JS_BASE + 'compiled/app.js',
     'simulate/mocks.js',
     'spec/unit/**/*.spec.js'
   ],
@@ -42,7 +42,7 @@ module.exports = {
   ],
 
   preprocessors: {
-    '../../fatcatmap/assets/js/compiled/*.js': ['coverage']
+    '../../fatcatmap/assets/js/compiled/app*.js': ['coverage']
   },
 
   coverageReporter: {

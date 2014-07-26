@@ -14,23 +14,26 @@ goog.provide('urlutil');
 var urlutil = {
 
   /**
-   * @type {function(string)}
-   */
-  encode: encodeURIComponent,
-
-  /**
+   * Encodes & appends a param object to a url.
    * @param {string} url
    * @param {Object.<string, string>} params
    * @return {string}
    */
   addParams: function (url, params) {
+    var needsAmp = true;
     if (url.indexOf('?') === -1) {
       url += '?';
+      needsAmp = false;
     }
 
     for (var k in params) {
       if (params.hasOwnProperty(k)) {
-        url += '&' + this.encode(k) + '=' + this.encode(params[k]);
+        if (needsAmp === true) {
+          url += '&';
+        } else {
+          needsAmp = true;
+        }
+        url += encodeURIComponent(k) + '=' + encodeURIComponent(params[k]);
       }
     }
 
@@ -38,6 +41,7 @@ var urlutil = {
   },
 
   /**
+   * Parses & inflates a query param object from a url.
    * @param {string} url
    * @return {Object.<string, string>} params
    */
@@ -50,7 +54,7 @@ var urlutil = {
       tuple = tuples[i].split('=');
       v = unescape(tuple[1]);
       params[tuple[0]] = (v === 'true' || v === 'false') ? Boolean(v) :
-                          /^[0-9]+$/.test(url) ? +v :
+                          /^\d*$/.test(v) ? +v :
                           v;
     }
 
@@ -58,6 +62,7 @@ var urlutil = {
   },
 
   /**
+   * Parses a URL into easily-consumable parts.
    * @param {string} url
    * @return {{
    *   protocol: string,
@@ -74,12 +79,12 @@ var urlutil = {
       chunks, host;
 
     parsed.url = url;
-    parsed.params = this.parseParams(url);
+    parsed.params = urlutil.parseParams(url);
 
     chunks = url.split('//');
 
     if (chunks.length === 2) {
-      parsed.protocol = chunks.shift();
+      parsed.protocol = chunks.shift().slice(0, -1);
     } else if (chunks.length === 1) {
       parsed.protocol = '';
     } else {
@@ -92,13 +97,51 @@ var urlutil = {
     if (host.charAt(0) === '/') {
       parsed.hostname = parsed.port = '';
     } else {
-      host = chunks.shift().split(':')
-      parsed.hostname = chunks[0];
-      parsed.port = chunks[1] || '';
+      host = chunks.shift().split('?').shift().split(':')
+      parsed.hostname = host[0];
+      parsed.port = host[1] || '';
     }
 
     parsed.path = chunks.join('/').split('?').shift();
 
     return parsed;
+  },
+
+  /**
+   * Joins path fragments into a path.
+   * @param {...string} var_args
+   * @return {string}
+   */
+  join: function (var_args) {
+    var paths = Array.prototype.slice.call(arguments),
+      base = paths.shift(),
+      parts = [],
+      path;
+
+    if (!paths.length) {
+      return base;
+    }
+
+    if (base.charAt(base.length - 1) === '/') {
+      base = base.slice(0, -1);
+    }
+
+    parts.push(base);
+
+    while (paths.length) {
+      path = paths.shift();
+      if (!path) {
+        continue;
+      }
+      if (path.charAt(0) === '/') {
+        path = path.slice(1);
+      }
+      if (path.charAt(path.length - 1) === '/') {
+        path = path.slice(0, -1);
+      }
+      parts.push(path);
+    }
+
+    return parts.join('/');
   }
-}
+};

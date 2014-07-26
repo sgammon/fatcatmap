@@ -7,7 +7,7 @@ var path = require('path'),
   imagemin = require('gulp-imagemin'),
   sourcemaps = require('gulp-sourcemaps'),
   karma = require('karma').server,
-  exec = require('child_process').exec,
+  spawn = require('child_process').spawn,
 
   ASSET_PREFIX = 'fatcatmap/assets/',
   DEBUG = (process.env.ENV === 'debug'),
@@ -15,21 +15,33 @@ var path = require('path'),
   getExecCb = function (cb) {
     return function (e, out, err) {
       if (out)
-        console.log(out);
+        process.stdout.write(out);
       if (err)
-        throw err;
-      cb(e);
+        process.stderr.write(err);
+      if (cb)
+        cb(e);
     };
   },
 
   merge = function (obj1, obj2) {
-    for (var k in obj2) {
-      if (obj2.hasOwnProperty(k)) {
-        obj1[k] = obj2[k];
+    var obj = {};
+    for (var k in obj1) {
+      if (obj1.hasOwnProperty(k)) {
+        obj[k] = obj1[k];
       }
     }
-    return obj1;
+    for (var k in obj2) {
+      if (obj2.hasOwnProperty(k)) {
+        obj[k] = obj2[k];
+      }
+    }
+    return obj;
   },
+
+  src = gulp.src.bind(gulp),
+  dest = gulp.dest.bind(gulp),
+  task = gulp.task.bind(gulp),
+  watch = gulp.watch.bind(gulp),
 
   inputs, outputs, config;
 
@@ -42,7 +54,7 @@ inputs = {
     lib: ASSET_PREFIX + 'js/lib/**/*.js',
     closure: ASSET_PREFIX + 'js/lib/closure/base.js',
     externs: ASSET_PREFIX + 'js/externs/*.js',
-    test: 'fatcatmap_tests/js/spec'
+    test: 'fatcatmap_tests/js/spec/unit/**/*.spec.js'
   },
   themes: ASSET_PREFIX + 'less/site/home.less',
   templates: 'fatcatmap/templates/source/**/*',
@@ -53,7 +65,8 @@ outputs = {
   img: ASSET_PREFIX + 'img',
   css: ASSET_PREFIX + 'style',
   js: {
-    app: ASSET_PREFIX + 'js/compiled/'
+    app: ASSET_PREFIX + 'js/compiled/',
+    test: 'fatcatmap_tests/js/spec/compiled/'
   },
   themes: {
     dark: ASSET_PREFIX + 'style/themes/dark/',
@@ -116,11 +129,8 @@ config = {
   // Closure Compiler
   closure: {
 
-    // Prod compile settings
-    app: {
+    common: {
       jar: 'lib/closure/build/compiler.jar',
-      js_output_file: outputs.js.app + 'app.min.js',
-      debug: false,
       summary_detail_level: 3,
       warning_level: 'VERBOSE',
       language_in: 'ECMASCRIPT5',
@@ -128,41 +138,39 @@ config = {
       only_closure_dependencies: true,
       process_closure_primitives: true,
       use_types_for_optimization: null,
+      generate_exports: null
+    },
+
+    // Prod compile settings
+    min: {
+      js_output_file: outputs.js.app + 'app.min.js',
+      debug: false,
       compilation_level: 'ADVANCED_OPTIMIZATIONS',
       output_wrapper: '(function() {%output%})();'
     },
 
     // Debug compile settings
     debug: {
-      jar: 'lib/closure/build/compiler.jar',
       js_output_file: outputs.js.app + 'app.debug.js',
       debug: true,
-      summary_detail_level: 3,
-      warning_level: 'VERBOSE',
-      language_in: 'ECMASCRIPT5',
       formatting: 'PRETTY_PRINT',
-      closure_entry_point: 'init',
-      only_closure_dependencies: true,
-      process_closure_primitives: true,
-      use_types_for_optimization: null,
       compilation_level: 'SIMPLE_OPTIMIZATIONS',
       output_wrapper: '(function() {\n%output%\n})();'
     },
 
     // Pretty compile settings
     pretty: {
-      jar: 'lib/closure/build/compiler.jar',
       js_output_file: outputs.js.app + 'app.js',
-      summary_detail_level: 3,
-      warning_level: 'VERBOSE',
-      language_in: 'ECMASCRIPT5',
       formatting: 'PRETTY_PRINT',
-      closure_entry_point: 'init',
-      only_closure_dependencies: true,
-      process_closure_primitives: true,
-      use_types_for_optimization: null,
       compilation_level: 'SIMPLE_OPTIMIZATIONS',
       output_wrapper: '(function() {\n%output%\n})();'
+    },
+
+    test: {
+      only_closure_dependencies: false,
+      externs: [
+        ASSET_PREFIX + 'js/lib/externs/jasmine.js'
+      ]
     }
   },
 
@@ -174,108 +182,137 @@ config = {
 };
 
 // Compile less source to css
-gulp.task('less', [
+task('less', [
   'less:dark',
   'less:light',
   'less:scaffold'
 ]);
 
 // Compile dark theme
-gulp.task('less:dark', function () {
-  var opts = merge(merge({}, config.less.options), config.less.themes.dark);
-  return gulp.src(inputs.themes)
+task('less:dark', function () {
+  var opts = merge(config.less.options, config.less.themes.dark);
+  return src(inputs.themes)
     .pipe(sourcemaps.init())
     .pipe(less(opts))
     .pipe(sourcemaps.write(
       outputs.sourcemaps + ASSET_PREFIX + 'style/themes/dark/',
       config.sourcemaps))
-    .pipe(gulp.dest(outputs.themes.dark));
+    .pipe(dest(outputs.themes.dark));
 });
 
 // Compile light theme
-gulp.task('less:light', function () {
-  var opts = merge(merge({}, config.less.options), config.less.themes.light);
-  return gulp.src(inputs.themes)
+task('less:light', function () {
+  var opts = merge(config.less.options, config.less.themes.light);
+  return src(inputs.themes)
     .pipe(sourcemaps.init())
     .pipe(less(opts))
     .pipe(sourcemaps.write(
       outputs.sourcemaps + ASSET_PREFIX + 'style/themes/light/',
       config.sourcemaps))
-    .pipe(gulp.dest(outputs.themes.light));
+    .pipe(dest(outputs.themes.light));
 });
 
 // Compile scaffold theme
-gulp.task('less:scaffold', function () {
-  var opts = merge(merge({}, config.less.options), config.less.themes.scaffold);
-  return gulp.src(inputs.themes)
+task('less:scaffold', function () {
+  var opts = merge(config.less.options, config.less.themes.scaffold);
+  return src(inputs.themes)
     .pipe(sourcemaps.init())
     .pipe(less(opts))
     .pipe(sourcemaps.write(
       outputs.sourcemaps + ASSET_PREFIX + 'style/themes/scaffold/',
       config.sourcemaps))
-    .pipe(gulp.dest(outputs.themes.scaffold));
+    .pipe(dest(outputs.themes.scaffold));
 });
 
 // Clean compiled css files
-gulp.task('less:clean', function () {
-  return gulp.src(outputs.css + '/*')
+task('less:clean', function () {
+  return src(outputs.css + '/*')
     .pipe(rmrf());
 });
 
 // Compile JS with Closure Compiler in production mode
-gulp.task('closure', function () {
-  return gulp.src(inputs.js.app)
-    .pipe(closure(config.closure.app));
+task('closure:min', function () {
+  return src(inputs.js.app)
+    .pipe(closure(merge(config.closure.common, config.closure.min)));
 });
 
 // Compile JS with Closure Compiler in debug mode
-gulp.task('closure:debug', function () {
-  return gulp.src(inputs.js.app)
-    .pipe(closure(config.closure.debug));
+task('closure:debug', function () {
+  return src(inputs.js.app)
+    .pipe(closure(merge(config.closure.common, config.closure.debug)));
 });
 
 // Compile JS with Closure Compiler in pretty mode
-gulp.task('closure:pretty', function () {
-  return gulp.src(inputs.js.app)
-    .pipe(closure(config.closure.pretty));
+task('closure:pretty', function () {
+  return src(inputs.js.app)
+    .pipe(closure(merge(config.closure.common, config.closure.pretty)));
 });
 
-gulp.task('closure:all', ['closure', 'closure:debug', 'closure:pretty']);
+// Compile source JS with tests for release.
+task('closure:tests', function () {
+  return src([inputs.js.app, inputs.js.test])
+    .pipe(closure(merge(
+      merge(config.closure.common, config.closure.min), config.closure.test
+    )));
+});
 
 // Clean compiled JS files
-gulp.task('closure:clean', function () {
-  return gulp.src(outputs.js.app + '/*')
+task('closure:clean', function () {
+  return src(outputs.js.app + '/*')
     .pipe(rmrf());
 });
 
+task('closure', ['closure:min']);
+task('closure:all', ['closure:min', 'closure:debug', 'closure:pretty']);
+
 // Build templates
-gulp.task('templates:build', function (cb) {
-  exec('bin/fcm build --templates', getExecCb(cb));
+task('templates:build', function (cb) {
+  var sh = spawn('bin/fcm', ['build', '--templates'], {stdio: 'inherit'})
+    .on('exit', function () {
+      sh = null;
+    });
+  process.on('exit', function () {
+    if (sh)
+      sh.kill();
+  });
+  cb();
 });
 
 // Clean templates
-gulp.task('templates:clean', function () {
-  return gulp.src(outputs.templates + '/*')
+task('templates:clean', function () {
+  return src(outputs.templates + '/*')
     .pipe(rmrf());
 });
 
 // Run dev server
-gulp.task('serve', function (cb) {
-  exec('bin/fcm run', getExecCb(cb));
+task('serve', function (cb) {
+  var killSh = function () {
+    if (sh)
+      sh.kill();
+  },
+  sh = spawn('bin/fcm', ['run'], {stdio: 'inherit'})
+    .on('error', killSh)
+    .on('exit', function () {
+      sh = null;
+    });
+  process.on('exit', killSh)
+    .on('error', killSh);
+  cb();
 });
 
 // Watch assets & recompile on change
-gulp.task('watch', function (cb) {
-  gulp.watch(inputs.less, ['less']);
-  gulp.watch(inputs.templates, ['templates:build']);
+task('watch', function (cb) {
+  watch(inputs.less, ['less']);
+  watch(inputs.templates, ['templates:build']);
+  watch(inputs.js.app, ['closure:pretty'])
   cb();
 });
 
 // Run JS tests based on environment
-gulp.task('test', [DEBUG ? 'test:debug' : 'test:release']);
+task('test', [DEBUG ? 'test:debug' : 'test:release']);
 
 // Run JS tests in dev mode
-gulp.task('test:debug', ['closure:debug'], function (cb) {
+task('test:debug', ['closure:debug'], function (cb) {
   var cfg = merge({}, config.karma);
   cfg.files = cfg._debugFiles;
   karma.start(cfg);
@@ -283,42 +320,44 @@ gulp.task('test:debug', ['closure:debug'], function (cb) {
 });
 
 // Run JS tests in release mode
-gulp.task('test:release', ['closure'], function (cb) {
-  var cfg = merge({}, config.karma);
-  cfg.files = cfg._releaseFiles;
-  karma.start(cfg);
+task('test:release', ['closure:tests'], function (cb) {
+  setTimeout(function () {
+    var cfg = merge({}, config.karma);
+    cfg.files = cfg._releaseFiles;
+    karma.start(cfg);
+  }, 1000);
   cb();
 });
 
 // Clean JS test output
-gulp.task('test:clean', function () {
-  return gulp.src(['.develop/coverage/js/*', '.develop/test-reports/js/*'])
+task('test:clean', function () {
+  return src(['.develop/coverage/js/*', '.develop/test-reports/js/*'])
     .pipe(rmrf());
 });
 
 // Default task - runs with bare 'gulp'.
-gulp.task('default', [
+task('default', [
   'less',
-
+  'closure:all'
 ]);
 
 // Develop task
-gulp.task('develop', [
+task('dev', [
   'less',
-  'test:debug',
-  'serve',
-  'watch'
+  'closure:pretty',
+  'watch',
+  'serve'
 ]);
 
 // Release task
-gulp.task('release', [
+task('release', [
   'less',
-  'closure',
+  'closure:min',
   'test:release'
 ]);
 
 // Clean task
-gulp.task('clean', [
+task('clean', [
   'less:clean',
   'closure:clean',
   'templates:clean'
