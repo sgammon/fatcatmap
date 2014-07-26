@@ -34,7 +34,7 @@ class BootDisk(object):
 
   ''' Boot disk type enum '''
 
-  NAME = 'boot-v10-prerelease-5'
+  NAME = 'boot-v10'
   SSD = 'pd-ssd'
   MAGNETIC = None
 
