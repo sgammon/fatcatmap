@@ -115,7 +115,7 @@ class Page(RawPage):
       'pagedata': self.__page_data__,
       'js_context': self._collapse_js_context(),
       'k9': {
-        'tools': config.config['fcm'].get('tools', {}).get('enabled', False),
+        'tools': self.request.args.get('tools') or config.config['fcm'].get('tools', {}).get('enabled', False),
         'metadata': k9env,
         'instance': k9env['instance']
       },
