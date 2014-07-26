@@ -1,4 +1,12 @@
 (function() {
+var ROUTES = {"/":function($request$$) {
+}, "/login":function($request$$) {
+}, "/settings":function($request$$) {
+}, "/dev":function($request$$) {
+}, "/404":function($request$$) {
+}, "/<key>":function($request$$) {
+}, "/<key1>/and/<key2>":function($request$$) {
+}};
 var async = {}, CallbackMap;
 var toArray = function $toArray$($list$$) {
   var $arr$$ = [], $i$$;
@@ -14,39 +22,54 @@ var toArray = function $toArray$($list$$) {
   }
   throw new TypeError("Invalid document query string.");
 };
-var mapper = {};
 var supports = {cookies:navigator.cookieEnabled, retina:2 == window.devicePixelRatio, workers:!!window.Worker, sharedWorkers:!!window.SharedWorker, sockets:!!window.WebSocket, sse:!!window.EventSource, geo:!!navigator.geolocation, touch:0 < navigator.maxTouchPoints, history:{html5:!!window.history.pushState, hash:!!window.onhashchange}, storage:{local:!!window.localStorage, session:!!window.sessionStorage, indexed:!!window.IDBFactory}};
-var urlutil = {encode:encodeURIComponent, addParams:function($url$$, $params$$) {
-  -1 === $url$$.indexOf("?") && ($url$$ += "?");
+var urlutil = {addParams:function($url$$, $params$$) {
+  var $needsAmp$$ = !0;
+  -1 === $url$$.indexOf("?") && ($url$$ += "?", $needsAmp$$ = !1);
   for (var $k$$ in $params$$) {
-    $params$$.hasOwnProperty($k$$) && ($url$$ += "&" + this.encode($k$$) + "=" + this.encode($params$$[$k$$]));
+    $params$$.hasOwnProperty($k$$) && (!0 === $needsAmp$$ ? $url$$ += "&" : $needsAmp$$ = !0, $url$$ += encodeURIComponent($k$$) + "=" + encodeURIComponent($params$$[$k$$]));
   }
   return $url$$;
-}, parseParams:function($url$$) {
-  for (var $params$$ = {}, $tuples$$ = $url$$.split("?").pop().split("&"), $tuple$$, $v$$, $i$$ = 0;$i$$ < $tuples$$.length;$i$$++) {
-    $tuple$$ = $tuples$$[$i$$].split("="), $v$$ = unescape($tuple$$[1]), $params$$[$tuple$$[0]] = "true" === $v$$ || "false" === $v$$ ? Boolean($v$$) : /^[0-9]+$/.test($url$$) ? +$v$$ : $v$$;
+}, parseParams:function($tuples_url$$) {
+  var $params$$ = {};
+  $tuples_url$$ = $tuples_url$$.split("?").pop().split("&");
+  for (var $tuple$$, $v$$, $i$$ = 0;$i$$ < $tuples_url$$.length;$i$$++) {
+    $tuple$$ = $tuples_url$$[$i$$].split("="), $v$$ = unescape($tuple$$[1]), $params$$[$tuple$$[0]] = "true" === $v$$ || "false" === $v$$ ? Boolean($v$$) : /^\d*$/.test($v$$) ? +$v$$ : $v$$;
   }
   return $params$$;
-}, parse:function($url$$) {
+}, parse:function($host_url$$) {
   var $parsed$$ = {}, $chunks$$;
-  $parsed$$.url = $url$$;
-  $parsed$$.params = this.parseParams($url$$);
-  $chunks$$ = $url$$.split("//");
+  $parsed$$.url = $host_url$$;
+  $parsed$$.params = urlutil.parseParams($host_url$$);
+  $chunks$$ = $host_url$$.split("//");
   if (2 === $chunks$$.length) {
-    $parsed$$.protocol = $chunks$$.shift();
+    $parsed$$.protocol = $chunks$$.shift().slice(0, -1);
   } else {
     if (1 === $chunks$$.length) {
       $parsed$$.protocol = "";
     } else {
-      throw Error("Can't parse malformed URL: " + $url$$);
+      throw Error("Can't parse malformed URL: " + $host_url$$);
     }
   }
   $chunks$$ = $chunks$$.shift().split("/");
-  "/" === $chunks$$[0].charAt(0) ? $parsed$$.hostname = $parsed$$.port = "" : ($chunks$$.shift().split(":"), $parsed$$.hostname = $chunks$$[0], $parsed$$.port = $chunks$$[1] || "");
+  $host_url$$ = $chunks$$[0];
+  "/" === $host_url$$.charAt(0) ? $parsed$$.hostname = $parsed$$.port = "" : ($host_url$$ = $chunks$$.shift().split("?").shift().split(":"), $parsed$$.hostname = $host_url$$[0], $parsed$$.port = $host_url$$[1] || "");
   $parsed$$.path = $chunks$$.join("/").split("?").shift();
   return $parsed$$;
+}, join:function($var_args$$) {
+  var $paths$$ = Array.prototype.slice.call(arguments), $base$$1_path$$ = $paths$$.shift(), $parts$$ = [];
+  if (!$paths$$.length) {
+    return $base$$1_path$$;
+  }
+  "/" === $base$$1_path$$.charAt($base$$1_path$$.length - 1) && ($base$$1_path$$ = $base$$1_path$$.slice(0, -1));
+  for ($parts$$.push($base$$1_path$$);$paths$$.length;) {
+    if ($base$$1_path$$ = $paths$$.shift()) {
+      "/" === $base$$1_path$$.charAt(0) && ($base$$1_path$$ = $base$$1_path$$.slice(1)), "/" === $base$$1_path$$.charAt($base$$1_path$$.length - 1) && ($base$$1_path$$ = $base$$1_path$$.slice(0, -1)), $parts$$.push($base$$1_path$$);
+    }
+  }
+  return $parts$$.join("/");
 }};
-var service = {}, Request, Response, splitter, prepareRequest, dispatch, parseResponse;
+var services = {}, Request, Response, splitter, prepareRequest, dispatch, parseResponse;
 splitter = /^([^:]+):\s*/;
 prepareRequest = function $prepareRequest$($headers_method$$, $request$$, $handlers$$) {
   var $xhr$$ = new XMLHttpRequest, $url$$;
@@ -58,13 +81,14 @@ prepareRequest = function $prepareRequest$($headers_method$$, $request$$, $handl
       $headers_method$$.hasOwnProperty($k$$) && $xhr$$.setRequestHeader($k$$, $headers_method$$[$k$$]);
     }
   }
+  $xhr$$.data = $request$$.data;
   $handlers$$ ? ($xhr$$.onerror = $handlers$$.error, $xhr$$.onloadend = function $$xhr$$$onloadend$() {
-    this.responseJSON = parseResponse(this);
-    $handlers$$.success(this.responseJSON);
+    $xhr$$.responseJSON = parseResponse($xhr$$);
+    $handlers$$.success($xhr$$.responseJSON);
   }) : ($xhr$$.onerror = function $$xhr$$$onerror$($e$$) {
-    this.error = $e$$;
+    $xhr$$.error = $e$$;
   }, $xhr$$.onloadend = function $$xhr$$$onloadend$() {
-    this.responseJSON = parseResponse(this);
+    $xhr$$.responseJSON = parseResponse($xhr$$);
   });
   return $xhr$$;
 };
@@ -87,24 +111,43 @@ parseResponse = function $parseResponse$($chunks$$) {
   }
   return $resp$$;
 };
-service.http = {get:function $service$http$get$($request$$, $handlers$$) {
+services.http = {get:function $services$http$get$($request$$, $handlers$$) {
   return dispatch("GET", $request$$, $handlers$$);
-}, delete:function $service$http$delete$($request$$, $handlers$$) {
+}, delete:function $services$http$delete$($request$$, $handlers$$) {
   return dispatch("DELETE", $request$$, $handlers$$);
-}, head:function $service$http$head$($request$$, $handlers$$) {
+}, head:function $services$http$head$($request$$, $handlers$$) {
   return dispatch("HEAD", $request$$, $handlers$$);
-}, post:function $service$http$post$($request$$, $handlers$$) {
+}, post:function $services$http$post$($request$$, $handlers$$) {
   return dispatch("POST", $request$$, $handlers$$);
-}, put:function $service$http$put$($request$$, $handlers$$) {
+}, put:function $services$http$put$($request$$, $handlers$$) {
   return dispatch("PUT", $request$$, $handlers$$);
-}, patch:function $service$http$patch$($request$$, $handlers$$) {
+}, patch:function $services$http$patch$($request$$, $handlers$$) {
   return dispatch("PATCH", $request$$, $handlers$$);
-}, options:function $service$http$options$($request$$, $handlers$$) {
+}, options:function $services$http$options$($request$$, $handlers$$) {
   return dispatch("OPTIONS", $request$$, $handlers$$);
 }};
-service.socket = {};
-service.sse = {};
-service.storage = {};
+var baseURL = "/_rpc/v1/", RPCAPI;
+RPCAPI = function $RPCAPI$($name$$, $methods$$, $config$$) {
+  var $rpc$$ = this;
+  $rpc$$.name = $name$$;
+  $rpc$$.config = $config$$;
+  $methods$$.forEach(function($method$$) {
+    var $endpoint$$ = urlutil.join(baseURL, $rpc$$.name + "." + $method$$);
+    $rpc$$[$method$$] = function $$rpc$$$$method$$$($request$$, $handlers$$) {
+      var $req$$ = {url:$endpoint$$, headers:$request$$.headers || {}, data:$request$$};
+      $req$$.headers.Accept = "application/json";
+      $req$$.headers["Content-Type"] = "application/json";
+      return services.http.post($req$$, $handlers$$);
+    };
+  });
+};
+services.rpc = {factory:function $services$rpc$factory$($manifest$$) {
+  var $name$$ = $manifest$$[0];
+  services.rpc[$name$$] = new RPCAPI($name$$, $manifest$$[1], $manifest$$[2]);
+  return services.rpc;
+}, init:function $services$rpc$init$($manifests$$) {
+  $manifests$$.forEach(services.rpc.factory);
+}};
 var StringStore;
 StringStore = function() {
   var $digitMatcher$$ = /^[0-9]+$/, $serialize$$, $deserialize$$;
@@ -127,11 +170,12 @@ StringStore = function() {
     };
   };
 }();
-service.storage.local = supports.storage.local ? new StringStore(window.localStorage) : null;
-service.storage.session = supports.storage.session ? new StringStore(window.sessionStorage) : null;
+services.storage = {};
+services.storage.local = supports.storage.local ? new StringStore(window.localStorage) : null;
+services.storage.session = supports.storage.session ? new StringStore(window.sessionStorage) : null;
 var Client = function $Client$() {
 };
-Client.prototype = service;
+Client.prototype = services;
 Function.prototype.client = function $Function$$client$() {
   var $fn$$ = this;
   return function() {
@@ -142,13 +186,129 @@ Function.prototype.service = function $Function$$service$($name$$) {
   Client.prototype[$name$$] = this.client();
   return Client.prototype[$name$$];
 };
-var graph = function() {
-}.service("graph");
+Object.defineProperty(Object.prototype, "service", {value:function($name$$) {
+  var $method$$;
+  if (!$name$$ || "string" !== typeof $name$$) {
+    throw new TypeError("service() requires a string name.");
+  }
+  if (this.constructor !== Object) {
+    throw Error("service() can only be invoked on native objects.");
+  }
+  for (var $prop$$ in this) {
+    this.hasOwnProperty($prop$$) && ($method$$ = this[$prop$$], $method$$ instanceof Function && (this[$prop$$] = $method$$.client()));
+  }
+  Client.prototype[$name$$] = this;
+  return Client.prototype[$name$$];
+}});
+services.data = {};
+var data = {normalize:function($raw$$) {
+}}.service("data");
+services.graph = {};
+var graph = {init:function($raw$$) {
+  return this.graph.construct(this.data.normalize($raw$$));
+}, construct:function($data$$) {
+}}.service("graph");
+services.map = {};
+var map = {draw:function() {
+}}.service("map");
+services.router = {};
+var keyMatcher = /\/<(\w+)>/, routes = {resolved:[], dynamic:[]}, queues = {route:[], routed:[], error:[]}, Route, router;
+Route = function $Route$($path$$, $handler$$) {
+  var $rt$$ = this;
+  $rt$$.keys = [];
+  $rt$$.id = $path$$.replace(keyMatcher, function($_$$, $leading$$, $key$$) {
+    $rt$$.keys.push($key$$);
+    return "/(\\w+)";
+  });
+  $rt$$.matcher = new RegExp($rt$$.id);
+  $rt$$.handler = $handler$$;
+  $rt$$.resolved = 0 < $rt$$.keys.length;
+};
+router = {register:function($path$$, $handler$$) {
+  var $inserted$$ = !1, $k$$, $_route$$, $_routes$$, $i$$;
+  if ($handler$$ || "object" !== typeof $path$$) {
+    if ($k$$ = new Route($path$$, $handler$$), $_routes$$ = $k$$.resolved ? routes.resolved : routes.dynamic, $_routes$$.length) {
+      for ($i$$ = 0;$i$$ < $_routes$$.length;$i$$++) {
+        if ($_route$$ = $_routes$$[$i$$], !($_route$$.id < $k$$.id)) {
+          $_routes$$.splice($i$$, 0, $k$$);
+          $inserted$$ = !0;
+          break;
+        }
+      }
+      !1 === $inserted$$ && $_routes$$.push($k$$);
+    } else {
+      $_routes$$.push($k$$);
+    }
+  } else {
+    for ($k$$ in $path$$) {
+      this.router.register($k$$, $path$$[$k$$]);
+    }
+  }
+}, route:function($path$$, $request$$) {
+  var $matched$$ = !1, $findRoute$$, $_routes$$, $response$$0$$;
+  $request$$ = $request$$ || {};
+  $request$$.params = $request$$.params || {};
+  queues.route.forEach(function($fn$$) {
+    $fn$$($path$$, $request$$);
+  });
+  $findRoute$$ = function $$findRoute$$$() {
+    for (var $i$$0$$ = 0, $setParam$$ = function $$setParam$$$($key$$, $i$$) {
+      $request$$.params[$route$$.keys[$i$$]] = $key$$;
+    }, $triggerRouted$$ = function $$triggerRouted$$$($fn$$) {
+      $fn$$($path$$, $request$$, $response$$);
+    }, $route$$, $response$$;($route$$ = $_routes$$[$i$$0$$++]) && $route$$.id < $path$$;) {
+      if ($route$$.matcher.test($path$$)) {
+        return $matched$$ = !0, $i$$0$$ = $path$$.match($route$$.matcher).slice(1), $i$$0$$.forEach($setParam$$), $response$$ = $route$$.handler($request$$), queues.routed.forEach($triggerRouted$$), 404 === $response$$.status ? ($response$$.path = $path$$, this.router.route("/404", $response$$)) : $response$$;
+      }
+    }
+  };
+  $_routes$$ = routes.resolved;
+  $response$$0$$ = $findRoute$$();
+  if ($matched$$) {
+    return $response$$0$$;
+  }
+  $_routes$$ = routes.dynamic;
+  $response$$0$$ = $findRoute$$();
+  if ($matched$$) {
+    return $response$$0$$;
+  }
+  $response$$0$$ = {status:404};
+  queues.error.forEach(function($fn$$) {
+    $fn$$($path$$, $request$$, $response$$0$$);
+  });
+  return $response$$0$$;
+}, on:function($event$$, $callback$$) {
+  queues[$event$$] || (queues[$event$$] = []);
+  queues[$event$$].push($callback$$);
+}, off:function($event$$, $callback$$) {
+  var $i$$;
+  $callback$$ ? ($i$$ = queues[$event$$].indexOf($callback$$), -1 < $i$$ && queues[$event$$].splice($i$$, 1)) : queues[$event$$] = [];
+}}.service("router");
+services.history = {};
+var history = {push:supports.history.html5 ? function($url$$, $state$$) {
+  window.history.pushState($state$$, "", $url$$);
+} : function($url$$, $state$$) {
+}, start:function() {
+  var $hist$$ = this;
+  $hist$$.router.on("routed", function($url$$, $request$$, $response$$) {
+    "history" !== $request$$.source && $hist$$.push($url$$, $request$$.state);
+  });
+  supports.history.html5 && (window.onpopstate = function $window$onpopstate$($event$$) {
+    $hist$$.router.route(window.location.pathname, {source:"history", state:$event$$.state || {}});
+  });
+  $hist$$.start = function $$hist$$$start$() {
+    throw Error("History already started");
+  };
+}}.service("history");
 var catnip = function() {
-  this.graph();
-  return{};
+  var $context$$ = this.context = JSON.parse($("#js-context").textContent);
+  $context$$.services && this.rpc.init($context$$.services);
+  this.session = $context$$.session && $context$$.session.established ? $context$$.session.payload : {};
+  this.router.register(ROUTES);
+  this.history.start();
+  return this;
 }.client();
 var init = {};
-window.catnip = catnip();
+window.catnip_beta = catnip();
 
 })();
