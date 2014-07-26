@@ -63,7 +63,7 @@ Route = function (path, handler) {
   /**
    * @type {boolean}
    */
-  rt.resolved = rt.keys.length > 0;
+  rt.resolved = rt.keys.length === 0;
 };
 
 
