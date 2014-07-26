@@ -25,7 +25,7 @@ from fabtools import require, deb
 
 @notify
 @task
-def bootstrap(_hosts=True):
+def bootstrap():
 
   ''' Prepare a newly-provisioned node with supporting software. '''
 
