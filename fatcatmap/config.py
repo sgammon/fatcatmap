@@ -92,7 +92,7 @@ config = cfg.Config(app={
 
     'servers': {
 
-      'default': 'local',
+      'default': 'sandbox' if __debug__ else 'local',
 
       # Redis Instances
       'local': {'host': '127.0.0.1', 'port': 6379},
