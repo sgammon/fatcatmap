@@ -47,6 +47,17 @@ config = cfg.Config(app={
 
 }, config={
 
+  #### ==== FCM CONFIGURATION === ####
+
+  'fcm': {
+
+    # In-page Devtools
+    'tools': {
+      'enabled': True
+    },
+
+  },
+
   #### ==== CANTEEN CONFIGURATION ==== ####
 
   ## - HTTP Semantics
@@ -127,7 +138,7 @@ config = cfg.Config(app={
   ## - Asset Configuration
   'config': {
 
-    'minified': False,
+    'minified': True,
     'serving_mode': 'cdn',
     'cdn_prefix': ['//storage.googleapis.com/fcm-dev'],
 

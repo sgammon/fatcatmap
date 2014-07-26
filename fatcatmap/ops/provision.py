@@ -62,13 +62,16 @@ def nodes(environment=environment, group=group, name=None, region=settings.REGIO
 
   env.d = Deploy(environment, group, region)
   env.node = lambda: get_node()  # set env.node for easy access to node object
-  if name: env.d.names = [name]
+  if name:
+    env.d.names = [name]
   env.hosts_detail = {}
   _nodes = env.d.get_nodes()
   for node in _nodes:
-    env.hosts.append(node.ip)
-    env.hosts_detail[node.ip] = node
-  print colors.green([node for node in _nodes])
+    if (not name) or (name and (node.name == name or name in node.name)):
+      env.hosts.append(node.ip)
+      env.hosts_detail[node.ip] = node
+
+  print colors.green([node for ip, node in env.hosts_detail.iteritems()])
   return env
 
 

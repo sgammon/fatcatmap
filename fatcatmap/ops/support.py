@@ -42,6 +42,7 @@ def setup_for_group(group):
   #     'database': setup_db
   #   }[service]() or service)  # dispatch proper setup routine
   # return [_SERVICE_NAMES[x] for x in services_installed]
+  return []
 
 
 @task

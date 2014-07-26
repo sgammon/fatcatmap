@@ -60,6 +60,8 @@ class Page(RawPage):
 
     '''  '''
 
+    from fatcatmap import config
+
     # CSP nonce
     _script_nonce = hashlib.md5(str(random.randint(0, 1e4) * random.randint(0, 1e4))).hexdigest()[-8:]
 
@@ -83,16 +85,43 @@ class Page(RawPage):
     self.response.headers['X-XSS-Protection'] = '1; mode=block'
     self.response.headers['X-Content-Type-Options'] = 'nosniff'
 
+    # read K9 environment, if any
+    k9env = {
+      'group': 'local',
+      'environment': 'dev',
+      'instance': {
+        'id': '__virtual__',
+        'zone': 'fcm.local',
+        'hostname': 'localhost'
+      }
+    }
+
+    environ = self.environ
+    global_environ = os.environ
+
+    for env_source in (environ, global_environ):
+      for env_k, env_v in ((k, v) for (k, v) in env_source.iteritems() if k.startswith('K9')):
+
+        # mount instance variables on instance env
+        base = k9env['instance'] if 'INSTANCE' in env_k else k9env
+        if 'ZONE' in env_k: env_v = env_v.split('/')[-1]  # fix zone names
+        if 'HOSTNAME' in env_k: env_v = env_v.split('.')[0]  # grab leaf
+        base[env_k.lower().split('_')[-1]] = env_v
+
+
     supercontext = super(Page, self).template_context
     return (supercontext.update({
-
       # javascript context variables
       'pagedata': self.__page_data__,
       'js_context': self._collapse_js_context(),
+      'k9': {
+        'tools': config.config['fcm'].get('tools', {}).get('enabled', False),
+        'metadata': k9env,
+        'instance': k9env['instance']
+      },
       'nonce': {
         'script': _script_nonce
       }
-
     }) or supercontext)
 
   def staple_data(self, data):
