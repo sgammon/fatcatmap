@@ -70,5 +70,40 @@
   }
 }
 
+// dev tools
+section.debug.tools {
+
+  /* box styles */
+  background: #111;
+  width: 300px;
+  position: fixed;
+  bottom: 100px;
+  left: 2em;
+  border-radius: 3px;
+  opacity: 0.65;
+
+  h2 {
+    color: white;
+    margin-bottom: -10px;
+    font-size: 90%;
+    padding-left: 10px;
+  }
+
+  ul li h5 {
+    color: #DDD;
+    display: inline;
+    margin-right: 5px;
+  }
+
+  ul li h5:after {
+    content: ':'
+  }
+
+  ul li span {
+    color: #EEE;
+  }
+
+}
+
 @import "core/media-queries.less";
 @import "layouts/mapper.less";

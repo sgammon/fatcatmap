@@ -25,7 +25,7 @@
 
     <!-- stylesheets -->
     {%- block stylesheets %}
-    <link rel="stylesheet" href="{{ asset.style('themes/' + (theme or 'scaffold') + '/home.css') }}" type="text/css">
+    <link rel="stylesheet" href="/assets/style/themes/scaffold/home.css" type="text/css">
     <link rel="stylesheet" href="//cloud.typography.com/6717292/775624/css/fonts.css" type="text/css">
     {% endblock %}
 
@@ -60,6 +60,23 @@
     <div id="appstage" class="container-fluid">
       {% block appstage %}<h2>appstage</h2>{% endblock %}
     </div><!-- end #appstage -->
+
+    {% if k9.tools %}
+    <section class="debug tools">
+      <h2>debug tools</h2>
+      <ul> <!-- buncha metadata -->
+          <li><h5>env</h5><span>{{ k9.metadata.environment }}</span></li>
+          <li><h5>group</h5><span>{{ k9.metadata.group }}</span></li>
+          <li><h5>instance</h5>
+              <ul>  <!-- buncha instance stuff -->
+                  <li><h5>id</h5><span>{{ k9.instance.id }}</span></li>
+                  <li><h5>zone</h5><span>{{ k9.instance.zone }}</span></li>
+                  <li><h5>host</h5><span>{{ k9.instance.hostname }}</span></li>
+              </ul>
+          </li>
+      </ul>
+    </section><!-- end section.debug.tools -->
+    {% endif %}
 
     <!-- JS -->
     <div id="js-south" class="hidden">

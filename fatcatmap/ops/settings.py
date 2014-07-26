@@ -18,6 +18,7 @@ USER = 'k9'
 PROJECT = 'fcm-catnip'
 REGION = 'us-central1-a'
 KEY = ['conf/keys/id_k9']
+ENABLED_REGIONS = ['us-central1-a', 'us-central1-testingf', 'europe-west1-a']
 DATADOG_KEY = "ac728205a32668467a1e4c4f16f61501"
 PEM = 'conf/credentials/identity.pem'
 STARTUP_SCRIPT_URL = 'https://storage.googleapis.com/fcm-dev/base/bootstrap.sh'
@@ -33,8 +34,8 @@ class BootDisk(object):
 
   ''' Boot disk type enum '''
 
-  NAME = 'boot-v9'
-  SSD = 'https://www.googleapis.com/compute/v1/projects/fcm-catnip/zones/us-central1-a/diskTypes/pd-ssd'
+  NAME = 'boot-v10-prerelease-5'
+  SSD = 'pd-ssd'
   MAGNETIC = None
 
 
@@ -84,7 +85,8 @@ ENV_TAGS, GROUP_SETTINGS = {
   # ~~ settings by role ~~ ##
 
   'lb': {
-    'size': 'g1-small',
+    #'size': 'n1-standard-2-1x-ssd',
+    'size': 'n1-standard-2',
     'image': 'debian-7-wheezy-v20140606',
     'ip_forwarding': True,
     'tags': ['frontline', 'http-server', 'https-server'],
@@ -98,7 +100,8 @@ ENV_TAGS, GROUP_SETTINGS = {
   },
 
   'app': {
-    'size': 'g1-small',
+    #'size': 'n1-standard-2-1x-ssd',
+    'size': 'n1-standard-2',
     'image': 'debian-7-wheezy-v20140606',
     'ip_forwarding': False,
     'tags': ['app', 'db'],  # @TODO(sgammon): split out DB role
@@ -123,7 +126,8 @@ ENV_TAGS, GROUP_SETTINGS = {
   },
 
   'db': {
-    'size': 'g1-small',
+    #'size': 'n1-highcpu-2-1x-ssd',
+    'size': 'n1-standard-2',
     'image': 'debian-7-wheezy-v20140606',
     'ip_forwarding': False,
     'tags': ['db'],

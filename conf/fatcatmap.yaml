@@ -7,7 +7,13 @@ uwsgi:
 
   # ~ hostnames ~ #
   host: fatcatmap.org
+  host: api.fatcatmap.org
   host: beta.fatcatmap.org
+  host: api.beta.fatcatmap.org
+  host: staging.fatcatmap.org
+  host: api.staging.fatcatmap.org
+  host: sandbox.fatcatmap.org
+  host: api.sandbox.fatcatmap.org
 
   # ~ python ~ #
   module: dispatch:application

@@ -6,7 +6,7 @@
 
 '''
 
-__version__ = ((0, 0, 1), (20140709, 'alpha'))
+__version__ = ((0, 0, 1), (20140726, 'alpha'))
 
 
 import os, sys
@@ -47,6 +47,17 @@ config = cfg.Config(app={
   }
 
 }, config={
+
+  #### ==== FCM CONFIGURATION === ####
+
+  'fcm': {
+
+    # In-page Devtools
+    'tools': {
+      'enabled': True
+    },
+
+  },
 
   #### ==== CANTEEN CONFIGURATION ==== ####
 
@@ -89,11 +100,11 @@ config = cfg.Config(app={
 
   ## - Redis
   'RedisAdapter': {
-    'debug': False,
+    'debug': True,
 
     'servers': {
 
-      'default': 'local',
+      'default': 'sandbox' if __debug__ else 'local',
 
       # Redis Instances
       'local': {'host': '127.0.0.1', 'port': 6379},
@@ -128,8 +139,8 @@ config = cfg.Config(app={
   ## - Asset Configuration
   'config': {
 
-    'minified': False,
-    'serving_mode': 'local',
+    'minified': True,
+    'serving_mode': 'cdn',
     'cdn_prefix': ['//storage.googleapis.com/fcm-dev'],
 
     'asset_prefix': {
