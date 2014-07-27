@@ -7,13 +7,6 @@ var ROUTES = {"/":function(a) {
 }, "/<key>":function(a) {
 }, "/<key1>/and/<key2>":function(a) {
 }};
-var types = {};
-function JSContext() {
-}
-function PageData() {
-}
-PageData.prototype.meta;
-PageData.prototype.data;
 var async = {}, CallbackMap;
 var toArray = function(a) {
   var b = [], c;
@@ -29,6 +22,7 @@ var toArray = function(a) {
   }
   throw new TypeError("Invalid document query string.");
 };
+var config = {context:JSON.parse($("#js-context").textContent || "{}"), data:JSON.parse($("#js-data").textContent || "{}")};
 var supports = {cookies:navigator.cookieEnabled, retina:2 == window.devicePixelRatio, workers:!!window.Worker, sharedWorkers:!!window.SharedWorker, sockets:!!window.WebSocket, sse:!!window.EventSource, geo:!!navigator.geolocation, touch:0 < navigator.maxTouchPoints, history:{html5:!!window.history.pushState, hash:!!window.onhashchange}, storage:{local:!!window.localStorage, session:!!window.sessionStorage, indexed:!!window.IDBFactory}};
 var urlutil = {addParams:function(a, b) {
   var c = !0;
@@ -80,7 +74,7 @@ var services = {}, Request, Response, splitter, prepareRequest, dispatch, parseR
 splitter = /^([^:]+):\s*/;
 prepareRequest = function(a, b, c) {
   var d = new XMLHttpRequest, f;
-  f = b.params ? urlutil.addParams(b.url, b.params) : "string" !== typeof b ? b.url : b;
+  f = b.params ? urlutil.addParams(b.url, b.params) : b.url;
   d.open(a.toUpperCase(), f, !!c);
   if (b.headers) {
     a = b.headers;
@@ -101,9 +95,9 @@ prepareRequest = function(a, b, c) {
 };
 dispatch = function(a, b, c) {
   var d = "object" === typeof b.data ? JSON.stringify(b.data) : "string" === typeof b.data ? b.data : null == b.data ? null : "" + b.data;
-  b = prepareRequest(a, b, c);
-  b.send(d);
-  return b;
+  a = prepareRequest(a, b, c);
+  a.send(d);
+  return a;
 };
 parseResponse = function(a) {
   var b = {}, c = a.getAllResponseHeaders().split("\n");
@@ -141,7 +135,7 @@ RPCAPI = function(a, b, c) {
   b.forEach(function(a) {
     var b = urlutil.join(baseURL, d.name + "." + a);
     d[a] = function(a, c) {
-      var d = {url:b, headers:a.headers || {}, data:a.data};
+      var d = {url:b, data:a.data || {}, params:a.params || {}, headers:a.headers || {}};
       d.headers.Accept = "application/json";
       d.headers["Content-Type"] = "application/json";
       return services.http.post(d, c);
@@ -151,48 +145,40 @@ RPCAPI = function(a, b, c) {
 services.rpc = {factory:function(a) {
   var b = a[0];
   services.rpc[b] = new RPCAPI(b, a[1], a[2]);
-  return services.rpc;
 }, init:function(a) {
   a.forEach(services.rpc.factory);
 }};
-var StringStore;
-StringStore = function() {
-  var a = /^[0-9]+$/, b, c;
-  b = function(a) {
-    return "string" === typeof a ? a : null == a ? "" : "object" === typeof a ? JSON.stringify(a) : String(a);
+var StringStore, digitMatcher = /^[0-9]+$/, serialize = function(a) {
+  return "string" === typeof a ? a : null == a ? "" : "object" === typeof a ? JSON.stringify(a) : String(a);
+}, deserialize = function(a) {
+  var b = a.charAt(0);
+  return "{" === b || "[" === b ? JSON.parse(a) : a ? "true" === a || "false" === a ? Boolean(a) : digitMatcher.test(a) ? +a : a : "" === a ? a : null;
+};
+StringStore = function(a) {
+  this.get = function(b) {
+    return deserialize(a.getItem(b) || "");
   };
-  c = function(b) {
-    var c = b.charAt(0);
-    return "{" === c || "[" === c ? JSON.parse(b) : b ? "true" === b || "false" === b ? Boolean(b) : a.test(b) ? +b : b : "" === b ? b : null;
+  this.put = function(b, c) {
+    a.setItem(b, serialize(c));
   };
-  return function(a) {
-    this.get = function(b) {
-      return c(a.getItem(b));
-    };
-    this.put = function(c, e) {
-      a.setItem(c, b(e));
-    };
-    this.del = function(b) {
-      a.removeItem(b);
-    };
+  this.del = function(b) {
+    a.removeItem(b);
   };
-}();
-services.storage = {};
-services.storage.local = supports.storage.local ? new StringStore(window.localStorage) : null;
-services.storage.session = supports.storage.session ? new StringStore(window.sessionStorage) : null;
+};
+services.storage = {local:supports.storage.local ? new StringStore(window.localStorage) : null, session:supports.storage.session ? new StringStore(window.sessionStorage) : null};
 var Client = function() {
 };
 Client.prototype = services;
-Object.defineProperty(Function.prototype, "client", {value:function() {
+Function.prototype.client = function() {
   var a = this;
   return function() {
     return a.apply(new Client, arguments);
   };
-}});
-Object.defineProperty(Function.prototype, "service", {value:function(a) {
+};
+Function.prototype.service = function(a) {
   Client.prototype[a] = this.client();
   return Client.prototype[a];
-}});
+};
 Object.defineProperty(Object.prototype, "service", {value:function(a) {
   var b;
   if (!a || "string" !== typeof a) {
@@ -212,12 +198,26 @@ var data = {normalize:function(a) {
 }}.service("data");
 services.graph = {};
 var graph = {init:function(a) {
-  return this.graph.construct(this.data.normalize(a));
+  return graph.construct(data.normalize(a));
 }, construct:function(a) {
+  return{};
 }}.service("graph");
 services.map = {};
 var map = {draw:function() {
 }}.service("map");
+services.template = {};
+var _templates = {}, template = {put:function(a, b) {
+  "string" === typeof a && "string" === typeof b && (_templates[a] = b);
+}, get:function(a, b) {
+  if ("string" !== typeof a || "function" !== typeof b.success || "function" !== typeof b.error) {
+    throw new TypeError("template.get() requires a filename and CallbackMap.");
+  }
+  return _templates[a] ? b.success({data:_templates[a]}) : this.rpc.content.template({data:{path:a}}, b);
+}, init:function(a) {
+  for (var b in a) {
+    a.hasOwnProperty(b) && "string" === typeof a[b] && template.put(b, a[b]);
+  }
+}}.service("template");
 services.router = {};
 var keyMatcher = /\/<(\w+)>/, routes = {resolved:[], dynamic:[]}, queues = {route:[], routed:[], error:[]}, Route, router;
 Route = function(a, b) {
@@ -233,23 +233,19 @@ Route = function(a, b) {
 };
 router = {register:function(a, b) {
   var c = !1, d, f, e, k;
-  if (b || "object" !== typeof a) {
-    if (d = new Route(a, b), e = d.resolved ? routes.resolved : routes.dynamic, e.length) {
-      for (k = 0;k < e.length;k++) {
-        if (f = e[k], !(f.id < d.id)) {
-          e.splice(k, 0, d);
-          c = !0;
-          break;
-        }
+  d = new Route(a, b);
+  e = d.resolved ? routes.resolved : routes.dynamic;
+  if (e.length) {
+    for (k = 0;k < e.length;k++) {
+      if (f = e[k], !(f.id < d.id)) {
+        e.splice(k, 0, d);
+        c = !0;
+        break;
       }
-      !1 === c && e.push(d);
-    } else {
-      e.push(d);
     }
+    !1 === c && e.push(d);
   } else {
-    for (d in a) {
-      this.router.register(d, a[d]);
-    }
+    e.push(d);
   }
 }, route:function(a, b) {
   var c = !1, d, f, e;
@@ -265,7 +261,7 @@ router = {register:function(a, b) {
       c(a, b, h);
     }, g, h;(g = f[d++]) && g.id < a;) {
       if (g.matcher.test(a)) {
-        return c = !0, d = a.match(g.matcher).slice(1), d.forEach(e), h = g.handler(b), queues.routed.forEach(l), 404 === h.status ? (h.path = a, this.router.route("/404", h)) : h;
+        return c = !0, d = a.match(g.matcher).slice(1), d.forEach(e), h = g.handler(b), queues.routed.forEach(l), 404 === h.status ? (h.path = a, router.route("/404", h)) : h;
       }
     }
   };
@@ -290,6 +286,10 @@ router = {register:function(a, b) {
 }, off:function(a, b) {
   var c;
   b ? (c = queues[a].indexOf(b), -1 < c && queues[a].splice(c, 1)) : queues[a] = [];
+}, init:function(a) {
+  for (var b in a) {
+    a.hasOwnProperty(b) && "function" === typeof a[b] && router.register(b, a[b]);
+  }
 }}.service("router");
 services.history = {};
 var history = {push:supports.history.html5 ? function(a, b) {
@@ -307,16 +307,18 @@ var history = {push:supports.history.html5 ? function(a, b) {
     throw Error("History already started");
   };
 }}.service("history");
-var catnip = function() {
-  var a;
-  this.context = a = JSON.parse($("#js-context").textContent);
-  a.services && a.protocol.rpc.enabled && this.rpc.init(a.services, a.protocol.rpc.host);
-  this.session = a.session && a.session.established ? a.session.payload : {};
-  this.router.register(ROUTES);
+var catnip = function(a, b) {
+  this._context = a;
+  this.session = null;
+  a.session && a.session.established && (this.session = a.session.payload);
+  a.services && a.protocol.rpc.enabled && this.rpc.init(a.services);
+  a.template.manifest && this.template.init(a.template.manifest);
+  this.router.init(ROUTES);
   this.history.start();
+  this.graph.init(b);
   return this;
 }.client();
 var init = {};
-window.catnip_beta = catnip();
+window.catnip_beta = catnip(config.context, config.data);
 
 })();

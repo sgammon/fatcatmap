@@ -135,7 +135,7 @@ RPCAPI = function $RPCAPI$($name$$, $methods$$, $config$$) {
   $methods$$.forEach(function($method$$) {
     var $endpoint$$ = urlutil.join(baseURL, $api$$.name + "." + $method$$);
     $api$$[$method$$] = function $$api$$$$method$$$($request$$, $handlers$$) {
-      var $req$$ = {url:$endpoint$$, data:$request$$.data, params:$request$$.params, headers:$request$$.headers};
+      var $req$$ = {url:$endpoint$$, data:$request$$.data || {}, params:$request$$.params || {}, headers:$request$$.headers || {}};
       $req$$.headers.Accept = "application/json";
       $req$$.headers["Content-Type"] = "application/json";
       return services.http.post($req$$, $handlers$$);
@@ -145,8 +145,7 @@ RPCAPI = function $RPCAPI$($name$$, $methods$$, $config$$) {
 services.rpc = {factory:function $services$rpc$factory$($manifest$$) {
   var $name$$ = $manifest$$[0];
   services.rpc[$name$$] = new RPCAPI($name$$, $manifest$$[1], $manifest$$[2]);
-}, init:function $services$rpc$init$($manifests$$, $_baseURL$$) {
-  $_baseURL$$ && "string" === typeof $_baseURL$$ && (baseURL = $_baseURL$$);
+}, init:function $services$rpc$init$($manifests$$) {
   $manifests$$.forEach(services.rpc.factory);
 }};
 var StringStore, digitMatcher = /^[0-9]+$/, serialize = function $serialize$($item$$) {
@@ -206,6 +205,19 @@ var graph = {init:function($raw$$) {
 services.map = {};
 var map = {draw:function() {
 }}.service("map");
+services.template = {};
+var _templates = {}, template = {put:function($filename$$, $source$$) {
+  "string" === typeof $filename$$ && "string" === typeof $source$$ && (_templates[$filename$$] = $source$$);
+}, get:function($filename$$, $callbacks$$) {
+  if ("string" !== typeof $filename$$ || "function" !== typeof $callbacks$$.success || "function" !== typeof $callbacks$$.error) {
+    throw new TypeError("template.get() requires a filename and CallbackMap.");
+  }
+  return _templates[$filename$$] ? $callbacks$$.success({data:_templates[$filename$$]}) : this.rpc.content.template({data:{path:$filename$$}}, $callbacks$$);
+}, init:function($manifest$$) {
+  for (var $k$$ in $manifest$$) {
+    $manifest$$.hasOwnProperty($k$$) && "string" === typeof $manifest$$[$k$$] && template.put($k$$, $manifest$$[$k$$]);
+  }
+}}.service("template");
 services.router = {};
 var keyMatcher = /\/<(\w+)>/, routes = {resolved:[], dynamic:[]}, queues = {route:[], routed:[], error:[]}, Route, router;
 Route = function $Route$($path$$, $handler$$) {
@@ -299,7 +311,8 @@ var catnip = function($context$$, $data$$) {
   this._context = $context$$;
   this.session = null;
   $context$$.session && $context$$.session.established && (this.session = $context$$.session.payload);
-  $context$$.services && $context$$.protocol.rpc.enabled && this.rpc.init($context$$.services, $context$$.protocol.rpc.host);
+  $context$$.services && $context$$.protocol.rpc.enabled && this.rpc.init($context$$.services);
+  $context$$.template.manifest && this.template.init($context$$.template.manifest);
   this.router.init(ROUTES);
   this.history.start();
   this.graph.init($data$$);

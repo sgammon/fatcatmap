@@ -42,7 +42,7 @@ class ClientTemplate(Logic):
   ''' does stuffs '''
 
   known_templates = {
-    path: _read_template(path) for path in _templates
+    path.replace(template_path + '/', ''): _read_template(path) for path in _templates
   }
 
   @staticmethod

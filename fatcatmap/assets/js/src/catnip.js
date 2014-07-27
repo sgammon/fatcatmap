@@ -14,6 +14,7 @@ goog.require('supports');
 goog.require('services');
 goog.require('services.router');
 goog.require('services.history');
+goog.require('services.template');
 goog.require('services.graph');
 goog.require('services.map');
 
@@ -42,7 +43,10 @@ var catnip = function (context, data) {
     this.session = context.session.payload;
 
   if (context.services && context.protocol.rpc.enabled)
-    this.rpc.init(context.services, context.protocol.rpc.host);
+    this.rpc.init(context.services);
+
+  if (context.template.manifest)
+    this.template.init(context.template.manifest);
 
   this.router.init(ROUTES);
   this.history.start();

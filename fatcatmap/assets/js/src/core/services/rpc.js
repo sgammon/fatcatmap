@@ -41,9 +41,9 @@ RPCAPI = function (name, methods, config) {
     api[method] = function (request, handlers) {
       var req = {
         url: endpoint,
-        data: request.data,
-        params: request.params,
-        headers: request.headers,
+        data: request.data || {},
+        params: request.params || {},
+        headers: request.headers || {},
       };
 
       req.headers['Accept'] = 'application/json';
@@ -74,10 +74,7 @@ services.rpc = {
    * @param {Array} manifests
    * @expose
    */
-  init: function (manifests, _baseURL) {
-    if (_baseURL && typeof _baseURL === 'string')
-      baseURL = _baseURL;
-
+  init: function (manifests) {
     manifests.forEach(services.rpc.factory);
   }
 };

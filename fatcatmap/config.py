@@ -140,7 +140,7 @@ config = cfg.Config(app={
   'config': {
 
     'minified': True,
-    'serving_mode': 'cdn',
+    'serving_mode': 'local',
     'cdn_prefix': ['//storage.googleapis.com/fcm-dev'],
 
     'asset_prefix': {

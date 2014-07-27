@@ -76,6 +76,12 @@ JSContext.agent.capabilities.webm;
 /** @type {Array.<Array.<(string|Array.<string>|Object.<string, string>)>>} */
 JSContext.services;
 
+/** @type {Object} */
+JSContext.template;
+
+/** @type {Object.<string, string>} */
+JSContext.template.manifest;
+
 
 /** @typedef {Object} */
 var PageData = {};
