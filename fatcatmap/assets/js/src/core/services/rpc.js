@@ -25,24 +25,25 @@ var baseURL = '/_rpc/v1/',
  * @param {Object=} config
  */
 RPCAPI = function (name, methods, config) {
-  var rpc = this;
+  var api = this;
 
-  rpc.name = name;
-  rpc.config = config;
+  api.name = name;
+  api.config = config;
 
   methods.forEach(function (method) {
 
-    var endpoint = urlutil.join(baseURL, rpc.name + '.' + method);
+    var endpoint = urlutil.join(baseURL, api.name + '.' + method);
 
     /**
-     * @param {Object} request
+     * @param {Request} request
      * @param {CallbackMap=} handlers
      */
-    rpc[method] = function (request, handlers) {
+    api[method] = function (request, handlers) {
       var req = {
         url: endpoint,
-        headers: request.headers || {},
-        data: request
+        data: request.data,
+        params: request.params,
+        headers: request.headers,
       };
 
       req.headers['Accept'] = 'application/json';
@@ -62,18 +63,15 @@ services.rpc = {
 
   /**
    * @param {Array} manifest
-   * @return {services.rpc}
    * @expose
    */
   factory: function (manifest) {
     var name = manifest[0];
     services.rpc[name] = new RPCAPI(name, manifest[1], manifest[2]);
-    return services.rpc;
   },
 
   /**
    * @param {Array} manifests
-   * @return {services.rpc}
    * @expose
    */
   init: function (manifests) {

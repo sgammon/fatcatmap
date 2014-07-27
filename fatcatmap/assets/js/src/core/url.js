@@ -97,7 +97,7 @@ var urlutil = {
     if (host.charAt(0) === '/') {
       parsed.hostname = parsed.port = '';
     } else {
-      host = chunks.shift().split('?').shift().split(':')
+      host = chunks.shift().split('?').shift().split(':');
       parsed.hostname = host[0];
       parsed.port = host[1] || '';
     }
@@ -118,27 +118,26 @@ var urlutil = {
       parts = [],
       path;
 
-    if (!paths.length) {
+    if (!paths.length)
       return base;
-    }
 
-    if (base.charAt(base.length - 1) === '/') {
+    if (base.charAt(base.length - 1) === '/')
       base = base.slice(0, -1);
-    }
 
     parts.push(base);
 
     while (paths.length) {
       path = paths.shift();
-      if (!path) {
+
+      if (!path)
         continue;
-      }
-      if (path.charAt(0) === '/') {
+
+      if (path.charAt(0) === '/')
         path = path.slice(1);
-      }
-      if (path.charAt(path.length - 1) === '/') {
+
+      if (path.charAt(path.length - 1) === '/')
         path = path.slice(0, -1);
-      }
+
       parts.push(path);
     }
 

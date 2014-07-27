@@ -14,11 +14,10 @@ goog.require('services');
 
 goog.provide('services.map');
 
-var map = {
+var map = /** @lends {Client.prototype.map} */ {
   /**
    * @expose
    * @this {Client}
-   * @return {service.map}
    */
   draw: function () {
 

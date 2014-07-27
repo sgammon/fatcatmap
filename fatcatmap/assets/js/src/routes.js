@@ -13,7 +13,7 @@ goog.provide('routes');
 
 var ROUTES = {
   /**
-   * @param {Object}
+   * @param {Object} request
    * @return {?Object}
    */
   '/': function (request) {
@@ -21,7 +21,7 @@ var ROUTES = {
   },
 
   /**
-   * @param {Object}
+   * @param {Object} request
    * @return {?Object}
    */
   '/login': function (request) {
@@ -29,7 +29,7 @@ var ROUTES = {
   },
 
   /**
-   * @param {Object}
+   * @param {Object} request
    * @return {?Object}
    */
   '/settings': function (request) {
@@ -37,7 +37,7 @@ var ROUTES = {
   },
 
   /**
-   * @param {Object}
+   * @param {Object} request
    * @return {?Object}
    */
   '/dev': function (request) {
@@ -45,7 +45,7 @@ var ROUTES = {
   },
 
   /**
-   * @param {Object}
+   * @param {Object} request
    * @return {?Object}
    */
   '/404': function (request) {
@@ -53,7 +53,7 @@ var ROUTES = {
   },
 
   /**
-   * @param {Object}
+   * @param {Object} request
    * @return {?Object}
    */
   '/<key>': function (request) {
@@ -61,7 +61,7 @@ var ROUTES = {
   },
 
   /**
-   * @param {Object}
+   * @param {Object} request
    * @return {?Object}
    */
   '/<key1>/and/<key2>': function (request) {

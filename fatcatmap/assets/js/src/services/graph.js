@@ -14,15 +14,15 @@ goog.require('services.data');
 
 goog.provide('services.graph');
 
-var graph = {
+var graph = /** @lends {Client.prototype.graph} */ {
   /**
    * @expose
-   * @param {Object|string} raw Raw data to initialize with.
+   * @param {Object|PageData} raw Raw data to initialize with.
    * @return {Object} Constructed graph object.
    * @this {Client}
    */
   init: function (raw) {
-    return this.graph.construct(this.data.normalize(raw));
+    return graph.construct(data.normalize(raw));
   },
 
   /**
@@ -32,6 +32,6 @@ var graph = {
    * @this {Client}
    */
   construct: function (data) {
-
+    return {};
   }
 }.service('graph');

@@ -9,7 +9,6 @@
  * copyright (c) momentum labs, 2014
  */
 
-goog.require('$');
 goog.require('routes');
 goog.require('supports');
 goog.require('services');
@@ -21,23 +20,31 @@ goog.require('services.map');
 goog.provide('catnip');
 
 /**
- * @this {service}
+ * @param {JSContext} context
+ * @param {PageData} data
+ * @this {Client}
+ * @return {Client}
  */
-var catnip = function () {
-  var context = this.context = JSON.parse($('#js-context').textContent);
+var catnip = function (context, data) {
+  /**
+   * @expose
+   * @type {JSContext}
+   */
+  this._context = context;
 
-  if (context['services']) {
-    this.rpc.init(context['services']);
-  }
+  if (context.services && context.protocol.rpc.enabled)
+    this.rpc.init(context.services, context.protocol.rpc.host);
 
-  if (context['session'] && context['session']['established']) {
-    this.session = context['session']['payload'];
+  if (context.session && context.session.established) {
+    this.session = context.session.payload;
   } else {
     this.session = {};
   }
 
-  this.router.register(ROUTES);
+  this.router.init(ROUTES);
   this.history.start();
+
+  this.graph.init(data);
 
   return this;
 }.client();

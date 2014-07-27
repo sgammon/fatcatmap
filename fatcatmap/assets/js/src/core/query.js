@@ -23,17 +23,17 @@ var toArray = function (list) {
 
 /**
  * @param {string|Node} query CSS selector.
- * @return {(Node|Array.<Node>)} Found elements.
+ * @return {(Node|Array.<Node>|string)} Found elements.
  * @throws {TypeError} If query is not an element or string.
  */
 var $ = function (query) {
-  if (query && query.querySelector) {
+  if (query && query.querySelector)
     return query;
-  }
+
   if (typeof query === 'string') {
-    if (query.charAt(0) === '#') {
+    if (query.charAt(0) === '#')
       return document.getElementById(query.slice(1));
-    }
+
     return toArray(document.querySelectorAll(query));
   }
   throw new TypeError('Invalid document query string.');

@@ -10,10 +10,11 @@
  */
 
 goog.require('catnip');
+goog.require('config');
 
 goog.provide('init');
 
 /**
  * @expose
  */
-window.catnip_beta = catnip();
+window.catnip_beta = catnip(config.context, config.data);

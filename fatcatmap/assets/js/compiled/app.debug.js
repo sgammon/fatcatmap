@@ -7,6 +7,13 @@ var ROUTES = {"/":function($request$$) {
 }, "/<key>":function($request$$) {
 }, "/<key1>/and/<key2>":function($request$$) {
 }};
+var types = {};
+function JSContext() {
+}
+function PageData() {
+}
+PageData.prototype.meta;
+PageData.prototype.data;
 var async = {}, CallbackMap;
 var toArray = function $toArray$($list$$) {
   var $arr$$ = [], $i$$;
@@ -128,13 +135,13 @@ services.http = {get:function $services$http$get$($request$$, $handlers$$) {
 }};
 var baseURL = "/_rpc/v1/", RPCAPI;
 RPCAPI = function $RPCAPI$($name$$, $methods$$, $config$$) {
-  var $rpc$$ = this;
-  $rpc$$.name = $name$$;
-  $rpc$$.config = $config$$;
+  var $api$$ = this;
+  $api$$.name = $name$$;
+  $api$$.config = $config$$;
   $methods$$.forEach(function($method$$) {
-    var $endpoint$$ = urlutil.join(baseURL, $rpc$$.name + "." + $method$$);
-    $rpc$$[$method$$] = function $$rpc$$$$method$$$($request$$, $handlers$$) {
-      var $req$$ = {url:$endpoint$$, headers:$request$$.headers || {}, data:$request$$};
+    var $endpoint$$ = urlutil.join(baseURL, $api$$.name + "." + $method$$);
+    $api$$[$method$$] = function $$api$$$$method$$$($request$$, $handlers$$) {
+      var $req$$ = {url:$endpoint$$, headers:$request$$.headers || {}, data:$request$$.data};
       $req$$.headers.Accept = "application/json";
       $req$$.headers["Content-Type"] = "application/json";
       return services.http.post($req$$, $handlers$$);
@@ -156,7 +163,7 @@ StringStore = function() {
   };
   $deserialize$$ = function $$deserialize$$$($item$$) {
     var $char1$$ = $item$$.charAt(0);
-    return "{" === $char1$$ || "[" === $char1$$ ? JSON.parse($item$$) : $item$$ ? "true" === $item$$ || "false" === $item$$ ? Boolean($item$$) : $digitMatcher$$.test($item$$) ? +$item$$ : $item$$ : null;
+    return "{" === $char1$$ || "[" === $char1$$ ? JSON.parse($item$$) : $item$$ ? "true" === $item$$ || "false" === $item$$ ? Boolean($item$$) : $digitMatcher$$.test($item$$) ? +$item$$ : $item$$ : "" === $item$$ ? $item$$ : null;
   };
   return function StringStore($backend$$) {
     this.get = function $this$get$($key$$) {
@@ -176,16 +183,16 @@ services.storage.session = supports.storage.session ? new StringStore(window.ses
 var Client = function $Client$() {
 };
 Client.prototype = services;
-Function.prototype.client = function $Function$$client$() {
+Object.defineProperty(Function.prototype, "client", {value:function() {
   var $fn$$ = this;
   return function() {
     return $fn$$.apply(new Client, arguments);
   };
-};
-Function.prototype.service = function $Function$$service$($name$$) {
+}});
+Object.defineProperty(Function.prototype, "service", {value:function($name$$) {
   Client.prototype[$name$$] = this.client();
   return Client.prototype[$name$$];
-};
+}});
 Object.defineProperty(Object.prototype, "service", {value:function($name$$) {
   var $method$$;
   if (!$name$$ || "string" !== typeof $name$$) {
@@ -222,7 +229,7 @@ Route = function $Route$($path$$, $handler$$) {
   });
   $rt$$.matcher = new RegExp($rt$$.id);
   $rt$$.handler = $handler$$;
-  $rt$$.resolved = 0 < $rt$$.keys.length;
+  $rt$$.resolved = 0 === $rt$$.keys.length;
 };
 router = {register:function($path$$, $handler$$) {
   var $inserted$$ = !1, $k$$, $_route$$, $_routes$$, $i$$;
@@ -301,8 +308,9 @@ var history = {push:supports.history.html5 ? function($url$$, $state$$) {
   };
 }}.service("history");
 var catnip = function() {
-  var $context$$ = this.context = JSON.parse($("#js-context").textContent);
-  $context$$.services && this.rpc.init($context$$.services);
+  var $context$$;
+  this.context = $context$$ = JSON.parse($("#js-context").textContent);
+  $context$$.services && $context$$.protocol.rpc.enabled && this.rpc.init($context$$.services, $context$$.protocol.rpc.host);
   this.session = $context$$.session && $context$$.session.established ? $context$$.session.payload : {};
   this.router.register(ROUTES);
   this.history.start();

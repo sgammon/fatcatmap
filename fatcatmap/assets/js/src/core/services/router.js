@@ -32,7 +32,7 @@ var keyMatcher = /\/<(\w+)>/,
 /**
  * @constructor
  * @param {string} path
- * @param {function} handler
+ * @param {function(Object)} handler
  */
 Route = function (path, handler) {
   var rt = this;
@@ -56,7 +56,7 @@ Route = function (path, handler) {
   rt.matcher = new RegExp(rt.id);
 
   /**
-   * @type {function}
+   * @type {function(Object)}
    */
   rt.handler = handler;
 
@@ -70,22 +70,15 @@ Route = function (path, handler) {
 /**
  * @expose
  */
-router = {
+router = /** @lends {Client.prototype.router} */ {
   /**
    * @expose
-   * @param {string|Object.<string, function>} path
-   * @param {function=} handler
+   * @param {string} path
+   * @param {function(Object)} handler
    */
   register: function (path, handler) {
     var inserted = false,
       route, _route, _routes, i;
-
-    if (!handler && typeof path === 'object') {
-      for (var k in path) {
-        this.router.register(k, path[k]);
-      }
-      return;
-    }
 
     route = new Route(path, handler);
     _routes = route.resolved ? routes.resolved : routes.dynamic;
@@ -97,17 +90,16 @@ router = {
 
     for (i = 0; i < _routes.length; i++) {
       _route = _routes[i];
-      if (_route.id < route.id) {
+      if (_route.id < route.id)
         continue;
-      }
+
       _routes.splice(i, 0, route);
       inserted = true;
       break;
     }
 
-    if (inserted === false) {
+    if (inserted === false)
       _routes.push(route);
-    }
   },
 
   /**
@@ -135,6 +127,7 @@ router = {
           fn(path, request, response);
         },
         route, match, response;
+
       while ((route = _routes[i++]) && route.id < path) {
         if (route.matcher.test(path)) {
           matched = true;
@@ -148,7 +141,7 @@ router = {
 
           if (response.status === 404) {
             response.path = path;
-            return this.router.route('/404', response);
+            return router.route('/404', response);
           }
 
           return response;
@@ -159,16 +152,14 @@ router = {
     _routes = routes.resolved;
     response = findRoute();
 
-    if (matched) {
+    if (matched)
       return response;
-    }
 
     _routes = routes.dynamic;
     response = findRoute();
 
-    if (matched) {
+    if (matched)
       return response;
-    }
 
     response = {
       status: 404
@@ -187,9 +178,9 @@ router = {
    * @param {function(string, Object=, Object=)} callback
    */
   on: function (event, callback) {
-    if (!queues[event]) {
+    if (!queues[event])
       queues[event] = [];
-    }
+
     queues[event].push(callback);
   },
 
@@ -204,8 +195,19 @@ router = {
       queues[event] = [];
     } else {
       i = queues[event].indexOf(callback);
-      if (i > -1) {
+      if (i > -1)
         queues[event].splice(i, 1);
+    }
+  },
+
+  /**
+   * @expose
+   * @param {Object.<string, function(Object)>} routes
+   */
+  init: function (routes) {
+    for (var k in routes) {
+      if (routes.hasOwnProperty(k) && typeof routes[k] === 'function') {
+        router.register(k, routes[k]);
       }
     }
   }

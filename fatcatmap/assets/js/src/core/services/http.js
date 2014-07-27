@@ -26,7 +26,7 @@ var Request;
 
 /**
  * @typedef {{
- *    data: (Object|string),
+ *    data: *,
  *    headers: Object.<string, string>
  * }}
  */
@@ -49,10 +49,8 @@ prepareRequest = function (method, request, handlers) {
 
   if (request.params) {
     url = urlutil.addParams(request.url, request.params);
-  } else if (typeof request !== 'string') {
-    url = request.url;
   } else {
-    url = request;
+    url = request.url;
   }
 
   xhr.open(method.toUpperCase(), url, !!handlers);
@@ -60,9 +58,8 @@ prepareRequest = function (method, request, handlers) {
   if (request.headers) {
     headers = request.headers;
     for (var k in headers) {
-      if (headers.hasOwnProperty(k)) {
+      if (headers.hasOwnProperty(k))
         xhr.setRequestHeader(k, headers[k]);
-      }
     }
   }
 
@@ -96,19 +93,20 @@ prepareRequest = function (method, request, handlers) {
  * @param {string} method
  * @param {Request} request
  * @param {CallbackMap=} handlers
- * @return {XMLHttpRequest|Response}
+ * @return {XMLHttpRequest}
  */
 dispatch = function (method, request, handlers) {
   var data = typeof request.data === 'object' ? JSON.stringify(request.data) :
     typeof request.data === 'string' ? request.data :
-      request.data == null ? null : '' + request.data;
-  request = prepareRequest(method, request, handlers);
-  request.send(data);
-  return request;
+      request.data == null ? null : '' + request.data,
+
+    req = prepareRequest(method, request, handlers);
+  req.send(data);
+  return req;
 };
 
 /**
- * @param {string} response
+ * @param {XMLHttpRequest} response
  * @return {Response}
  */
 parseResponse = function (response) {
@@ -125,9 +123,9 @@ parseResponse = function (response) {
   resp.headers = {};
 
   for (var i = 0; i < headers.length; i++) {
-    if (!headers[i]) {
+    if (!headers[i])
       continue;
-    }
+
     chunks = headers[i].split(splitter);
     resp.headers[chunks[1]] = chunks[2];
   }

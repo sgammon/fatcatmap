@@ -7,6 +7,13 @@ var ROUTES = {"/":function(a) {
 }, "/<key>":function(a) {
 }, "/<key1>/and/<key2>":function(a) {
 }};
+var types = {};
+function JSContext() {
+}
+function PageData() {
+}
+PageData.prototype.meta;
+PageData.prototype.data;
 var async = {}, CallbackMap;
 var toArray = function(a) {
   var b = [], c;
@@ -134,7 +141,7 @@ RPCAPI = function(a, b, c) {
   b.forEach(function(a) {
     var b = urlutil.join(baseURL, d.name + "." + a);
     d[a] = function(a, c) {
-      var d = {url:b, headers:a.headers || {}, data:a};
+      var d = {url:b, headers:a.headers || {}, data:a.data};
       d.headers.Accept = "application/json";
       d.headers["Content-Type"] = "application/json";
       return services.http.post(d, c);
@@ -156,7 +163,7 @@ StringStore = function() {
   };
   c = function(b) {
     var c = b.charAt(0);
-    return "{" === c || "[" === c ? JSON.parse(b) : b ? "true" === b || "false" === b ? Boolean(b) : a.test(b) ? +b : b : null;
+    return "{" === c || "[" === c ? JSON.parse(b) : b ? "true" === b || "false" === b ? Boolean(b) : a.test(b) ? +b : b : "" === b ? b : null;
   };
   return function(a) {
     this.get = function(b) {
@@ -176,16 +183,16 @@ services.storage.session = supports.storage.session ? new StringStore(window.ses
 var Client = function() {
 };
 Client.prototype = services;
-Function.prototype.client = function() {
+Object.defineProperty(Function.prototype, "client", {value:function() {
   var a = this;
   return function() {
     return a.apply(new Client, arguments);
   };
-};
-Function.prototype.service = function(a) {
+}});
+Object.defineProperty(Function.prototype, "service", {value:function(a) {
   Client.prototype[a] = this.client();
   return Client.prototype[a];
-};
+}});
 Object.defineProperty(Object.prototype, "service", {value:function(a) {
   var b;
   if (!a || "string" !== typeof a) {
@@ -222,7 +229,7 @@ Route = function(a, b) {
   });
   c.matcher = new RegExp(c.id);
   c.handler = b;
-  c.resolved = 0 < c.keys.length;
+  c.resolved = 0 === c.keys.length;
 };
 router = {register:function(a, b) {
   var c = !1, d, f, e, k;
@@ -301,8 +308,9 @@ var history = {push:supports.history.html5 ? function(a, b) {
   };
 }}.service("history");
 var catnip = function() {
-  var a = this.context = JSON.parse($("#js-context").textContent);
-  a.services && this.rpc.init(a.services);
+  var a;
+  this.context = a = JSON.parse($("#js-context").textContent);
+  a.services && a.protocol.rpc.enabled && this.rpc.init(a.services, a.protocol.rpc.host);
   this.session = a.session && a.session.established ? a.session.payload : {};
   this.router.register(ROUTES);
   this.history.start();

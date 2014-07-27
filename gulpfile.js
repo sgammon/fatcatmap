@@ -138,7 +138,13 @@ config = {
       only_closure_dependencies: true,
       process_closure_primitives: true,
       use_types_for_optimization: null,
-      generate_exports: null
+      generate_exports: null,
+      externs: [
+        ASSET_PREFIX + 'js/lib/externs/jasmine/jasmine.js',
+        ASSET_PREFIX + 'js/lib/externs/w3c/EventSource.js',
+        ASSET_PREFIX + 'js/lib/externs/w3c/pointer-events.js',
+        ASSET_PREFIX + 'js/lib/externs/canteen/jsconfig.js'
+      ]
     },
 
     // Prod compile settings
@@ -169,7 +175,7 @@ config = {
     test: {
       only_closure_dependencies: false,
       externs: [
-        ASSET_PREFIX + 'js/lib/externs/jasmine.js'
+        
       ]
     }
   },

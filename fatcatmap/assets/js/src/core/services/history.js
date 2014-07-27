@@ -18,22 +18,25 @@ goog.provide('services.history');
 /**
  * @expose
  */
-var history = {
+var history = /** @lends {Client.prototype.history} */ {
   /**
+   * @expose
    * @param {string} url
-   * @param {object} state
+   * @param {Object} state
    */
   push: supports.history.html5 ? function (url, state) {
     window.history.pushState(state, '', url);
   } : function (url, state) {},
 
+  /**
+   * @expose
+   */
   start: function () {
     var hist = this;
 
     hist.router.on('routed', function (url, request, response) {
-      if (request.source !== 'history') {
+      if (request.source !== 'history')
         hist.push(url, request.state);
-      }
     });
 
     if (supports.history.html5) {
