@@ -95,7 +95,7 @@ class Graph(object):
         node = Node.get(node_key)  # retrieve node
 
         if node:
-          for artifact in self._traverse(node, _current_depth+1):
+          for artifact in self._traverse(node, _current_depth + 1):
             yield artifact
 
     raise StopIteration()  # recursion has finished: return

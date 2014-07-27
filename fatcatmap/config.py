@@ -22,7 +22,7 @@ except ImportError:
 
 ## Globals
 _custom_jinja2_extensions = filter(lambda x: x is not None, [HamlishExtension if HAML else None])
-app = os.path.abspath(os.path.dirname(__file__))
+app = os.path.dirname(__file__)
 project = os.path.dirname(app)
 
 config = cfg.Config(app={
@@ -35,6 +35,7 @@ config = cfg.Config(app={
   # App paths
   'paths': {
 
+    'app': app,
     'assets': os.path.join(app, 'assets'),
     'favicon': os.path.join(app, 'assets', 'img', 'favicon.ico'),
 
@@ -152,7 +153,7 @@ config = cfg.Config(app={
     'extra_assets': {
       'develop-less': ('/assets/less', os.path.join(app, 'assets', 'less')),
       'develop-sources': ('/.develop', os.path.join(os.path.dirname(app), '.develop')),
-      'less-sourcs': ('/.develop/maps/fatcatmap/assets/less', os.path.join(app, 'assets', 'less')),
+      'less-sources': ('/.develop/maps/fatcatmap/assets/less', os.path.join(app, 'assets', 'less')),
       'develop-coffee': ('/.develop/maps/fatcatmap/assets/coffee', os.path.join(app, 'assets', 'js'))
     }
 
