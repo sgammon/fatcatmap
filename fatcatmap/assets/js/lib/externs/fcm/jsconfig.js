@@ -76,6 +76,7 @@ JSContext.agent.capabilities.webm;
 /** @type {Array.<Array.<(string|Array.<string>|Object.<string, string>)>>} */
 JSContext.services;
 
+
 /** @typedef {Object} */
 var PageData = {};
 

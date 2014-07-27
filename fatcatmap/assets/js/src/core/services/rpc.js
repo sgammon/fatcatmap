@@ -74,7 +74,10 @@ services.rpc = {
    * @param {Array} manifests
    * @expose
    */
-  init: function (manifests) {
+  init: function (manifests, _baseURL) {
+    if (_baseURL && typeof _baseURL === 'string')
+      baseURL = _baseURL;
+
     manifests.forEach(services.rpc.factory);
   }
 };

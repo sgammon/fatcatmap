@@ -32,14 +32,17 @@ var catnip = function (context, data) {
    */
   this._context = context;
 
+  /**
+   * @expose
+   * @type {?Object}
+   */
+  this.session = null;
+
+  if (context.session && context.session.established)
+    this.session = context.session.payload;
+
   if (context.services && context.protocol.rpc.enabled)
     this.rpc.init(context.services, context.protocol.rpc.host);
-
-  if (context.session && context.session.established) {
-    this.session = context.session.payload;
-  } else {
-    this.session = {};
-  }
 
   this.router.init(ROUTES);
   this.history.start();

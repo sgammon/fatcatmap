@@ -67,9 +67,6 @@ Route = function (path, handler) {
 };
 
 
-/**
- * @expose
- */
 router = /** @lends {Client.prototype.router} */ {
   /**
    * @expose
