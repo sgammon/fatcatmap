@@ -18,6 +18,9 @@ from . import settings
 from fabric import colors
 from fabric.api import env
 
+#libcloud
+from libcloud.common.google import ResourceNotFoundError
+
 # fabric integration
 from dogapi.fab import setup, notify
 setup(settings.DATADOG_KEY)
@@ -42,14 +45,25 @@ def pause():
     sys.exit(1)
 
 
+class GCEPool(object):
+
+  def __init__(self,environment,group):
+    self.environment = environment
+    self.group = group
+
+  def create(self):
+    pass
+
+
+
 class GCENode(object):
 
   ''' Class that provides a standard node object for the GCE libcloud provider '''
 
-  def __init__(self, node):
+  def __init__(self, node,driver):
 
     '''  '''
-
+    self.driver = driver
     self.node = node
     self.name = node.name
     self.ip = self.node.public_ips[0]
@@ -65,6 +79,34 @@ class GCENode(object):
     self.metadata = dict([(item['key'], item['value']) for item in items])
     self.group = self.metadata.get('group')
     self.environment = self.metadata.get('environment')
+
+  def _targetpool_name(self):
+    '''Helper function to return unique name for targetpool / LB '''
+    name = (self.environment,'_',self.group,'_',self.driver.zone.name)
+    return "".join(name).replace('_','-') # make the name safe for google
+
+  def _targetpool_create(self):
+    return self.driver.ex_create_targetpool(self._targetpool_name())
+
+  def targetpool_get(self):
+    name = self._targetpool_name()
+    try:
+      return self.driver.ex_get_targetpool(name)
+    except ResourceNotFoundError:
+      print "targetpool not found, creating...."
+    return self._targetpool_create()
+
+
+  def targetpool_add(self):
+    pool = self.targetpool_get()
+    self.driver.ex_targetpool_add_node(pool,self.node)
+
+  def targetpool_remove(self):
+    pool = self.targetpool_get()
+    self.driver.ex_targetpool_remove_node(pool,self.node)
+
+
+
 
   def __repr__(self):
 
