@@ -101,8 +101,9 @@ def activate():
 
   ''' Activate nodes for live traffic. '''
 
-  node = env.node().node
+  node = env.node()
   print colors.yellow("activating node " + str(node))
+  node.targetpool_add()
 
 
 @notify
@@ -111,5 +112,6 @@ def deactivate():
 
   ''' Deactivate nodes for live traffic. '''
 
-  node = env.node().node
+  node = env.node()
   print colors.yellow("deactivating node " + str(node))
+  node.targetpool_remove()

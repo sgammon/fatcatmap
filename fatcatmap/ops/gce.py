@@ -71,7 +71,8 @@ class Deploy(object):
     else:
       regions = [self.region]
     for region in regions:
-      iterator = (self.node_class(node) for node in driver(self.ID, self.PEM, region, self.PROJECT).list_nodes())
+      _driver = driver(self.ID, self.PEM, region, self.PROJECT)
+      iterator = (self.node_class(node, _driver) for node in _driver.list_nodes())
       for node in iterator:
         if self.group and node.group == self.group:
           nodes.append(node)
