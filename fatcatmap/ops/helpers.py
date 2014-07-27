@@ -7,6 +7,8 @@
 
 '''
 
+from __future__ import print_function
+
 # stdlib
 import sys
 import time
@@ -22,7 +24,7 @@ from fabric.api import env
 from libcloud.common.google import ResourceNotFoundError
 
 # fabric integration
-from dogapi.fab import setup, notify
+from dogapi.fab import setup
 setup(settings.DATADOG_KEY)
 
 
@@ -39,7 +41,7 @@ def pause():
 
   try:
     for i, color in zip(reversed(xrange(3)), (colors.green, colors.yellow, colors.red)):
-      print color("%s..." % str(i + 1))
+      print(color("%s..." % str(i + 1)))
       time.sleep(1)
   except KeyboardInterrupt:
     sys.exit(1)
@@ -47,20 +49,21 @@ def pause():
 
 class GCEPool(object):
 
-  def __init__(self,environment,group):
+  '''  '''
+
+  def __init__(self, environment, group):
+
+    '''  '''
+
     self.environment = environment
     self.group = group
-
-  def create(self):
-    pass
-
 
 
 class GCENode(object):
 
   ''' Class that provides a standard node object for the GCE libcloud provider '''
 
-  def __init__(self, node,driver):
+  def __init__(self, node, driver):
 
     '''  '''
     self.driver = driver
@@ -82,31 +85,40 @@ class GCENode(object):
 
   def _targetpool_name(self):
     '''Helper function to return unique name for targetpool / LB '''
-    name = (self.environment,'_',self.group,'_',self.driver.zone.name)
-    return "".join(name).replace('_','-') # make the name safe for google
+
+    name = (self.environment, '_', self.group, '_', self.driver.zone.name)
+    return "".join(name).replace('_', '-')  # make the name safe for google
 
   def _targetpool_create(self):
+
+    '''  '''
+
     return self.driver.ex_create_targetpool(self._targetpool_name())
 
   def targetpool_get(self):
+
+    '''  '''
+
     name = self._targetpool_name()
     try:
       return self.driver.ex_get_targetpool(name)
     except ResourceNotFoundError:
-      print "targetpool not found, creating...."
+      print("targetpool not found, creating....")
     return self._targetpool_create()
 
-
   def targetpool_add(self):
+
+    '''  '''
+
     pool = self.targetpool_get()
-    self.driver.ex_targetpool_add_node(pool,self.node)
+    self.driver.ex_targetpool_add_node(pool, self.node)
 
   def targetpool_remove(self):
+
+    '''  '''
+
     pool = self.targetpool_get()
-    self.driver.ex_targetpool_remove_node(pool,self.node)
-
-
-
+    self.driver.ex_targetpool_remove_node(pool, self.node)
 
   def __repr__(self):
 
