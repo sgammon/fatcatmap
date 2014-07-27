@@ -11,12 +11,10 @@
 '''
 
 
-# STD lib
+# stdlib
 import datetime
 
-# canteen
-from canteen import model
-
+# fatcatmap
 from fatcatmap.models import AppModel
 
 
@@ -28,9 +26,9 @@ class Edge(AppModel):
 
     # Edge Data
     label = basestring, {'indexed': True, 'required': False, 'verbose_name': 'Label'}
-    node = basestring, {'indexed': True, 'repeated': True, 'verbose_name':'Nodes'}
-    native = basestring, {'indexed': True, 'required': False, 'verbose_name':'Native'}
+    node = basestring, {'indexed': True, 'repeated': True, 'verbose_name': 'Nodes'}
+    native = basestring, {'indexed': True, 'required': False, 'verbose_name': 'Native'}
 
     # Timestamps
-    modified = datetime.datetime, {'indexed':True, 'auto_now': True}
-    created = datetime.datetime, {'indexed': True, 'auto_now_add':True}
+    modified = datetime.datetime, {'indexed': True, 'auto_now': True}
+    created = datetime.datetime, {'indexed': True, 'auto_now_add': True}

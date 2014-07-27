@@ -176,7 +176,11 @@ class Page(RawPage):
       },
 
       ## == services == ##
-      'services': ServiceHandler.describe(json=False, javascript=False)
+      'services': ServiceHandler.describe(json=False, javascript=False),
+
+      'template': {
+        'manifest': self.views.describe()
+      }
 
     }
 

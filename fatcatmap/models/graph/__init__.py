@@ -9,9 +9,13 @@
 # submodules
 from . import edge
 from . import node
+from . import hint
+from . import graph
 
 
 __all__ = (
   'edge',
-  'node'
+  'node',
+  'hint',
+  'graph'
 )

@@ -17,13 +17,10 @@
 
 '''
 
-
-# STD lib
+# stdlib
 import datetime
 
-# canteen
-from canteen import model
-
+# app model
 from fatcatmap.models import AppModel
 
 
@@ -35,8 +32,8 @@ class Node(AppModel):
 
     # Node Data
     label = basestring, {'indexed': True, 'required': True, 'verbose_name': 'Label'}
-    native = basestring, {'indexed' : True, 'required': False, 'default' : None, 'verbose_name':'Native'}
+    native = basestring, {'indexed': True, 'required': False, 'default': None, 'verbose_name': 'Native'}
 
     # Timestamps
-    modified = datetime.datetime, {'indexed': True, 'auto_now':True }
-    created = datetime.datetime, { 'indexed': True, 'auto_now_add':True }
+    modified = datetime.datetime, {'indexed': True, 'auto_now': True}
+    created = datetime.datetime, {'indexed': True, 'auto_now_add': True}
