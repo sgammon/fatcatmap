@@ -6,12 +6,12 @@
 
 '''
 
-# views
-from . import views
-
 # db
 from . import db
 from .db import *
+
+# views
+from . import views
 
 # grapher
 from . import grapher

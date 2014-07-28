@@ -10,7 +10,9 @@
 import abc
 
 # canteen
+from canteen.model.adapter import redis
 from canteen.model.adapter import abstract
+from canteen.model.adapter import inmemory
 
 
 class WarehouseAdapter(abstract.GraphModelAdapter):
@@ -167,6 +169,49 @@ class WarehouseAdapter(abstract.GraphModelAdapter):
     raise NotImplemented('`descriptors` is abstract.')
 
 
+class InMemoryWarehouse(WarehouseAdapter, inmemory.InMemoryAdapter):
+
+  '''  '''
+
+  ## +=+=+ Graph Methods +=+=+ ##
+  def edges(self, key1, key2=None, type=None, **kwargs):
+
+    ''' Retrieve edges for ``key1``, or between ``key1`` and ``key2``,
+        optionally filtered by ``type``, from memory. '''
+
+    raise NotImplemented('`memory` graph support not yet implemented.')
+
+  def neighbors(self, key, type=None, **kwargs):
+
+    ''' Retrieve neighbor nodes, which are peers across ``edges``,
+        for ``key``, optionally filtered by ``type``, from memory. '''
+
+    raise NotImplemented('`memory` graph support not yet implemented.')
+
+  ## +=+=+ Proprietary Methods +=+=+ ##
+  def native(self, subject, version=None, **kwargs):
+
+    ''' Retrieve an object's ``Native``, which contains implmentation
+        data for a given ``subject`` key, optionally by ``version``,
+        from memory. '''
+
+    raise NotImplemented('`memory` graph support not yet implemented.')
+
+  def attach(self, subject, descriptor, **kwargs):
+
+    ''' Attach a new ``descriptor`` object to a ``subject`` key,
+        which contains extra ancillary data, in memory. '''
+
+    raise NotImplemented('`memory` graph support is not yet implemented.')
+
+  def descriptors(self, subject, type=None, **kwargs):
+
+    ''' Retrieve attached ``Descriptor`` objects for a given ``subject``
+        key, optionally filtered by ``type``, from memory. '''
+
+    raise NotImplemented('`memory` graph support not yet implemented.')
+
+
 class DatastoreWarehouse(WarehouseAdapter):
 
   '''  '''
@@ -210,7 +255,7 @@ class DatastoreWarehouse(WarehouseAdapter):
     raise NotImplemented('`Datastore` graph support not yet implemented.')
 
 
-class RedisWarehouse(WarehouseAdapter):
+class RedisWarehouse(WarehouseAdapter, redis.RedisAdapter):
 
   '''  '''
 
