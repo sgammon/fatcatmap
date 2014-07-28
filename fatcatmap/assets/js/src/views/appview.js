@@ -24,7 +24,7 @@ views.AppView = Vue.extend({});
  * @static
  * @override
  * @param {VueOptions=} options
- * @return {function(new:view.AppView, VueOptions=)}
+ * @return {function(new:views.AppView, VueOptions=)}
  * @throws {Error} When child view name is not passed.
  */
 views.AppView.extend = function (options) {

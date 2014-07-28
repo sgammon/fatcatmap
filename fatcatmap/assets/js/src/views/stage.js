@@ -13,6 +13,11 @@ goog.require('views.AppView');
 
 goog.provide('views.Stage');
 
+/**
+ * @constructor
+ * @extends {views.AppView}
+ * @param {VueOptions=} options
+ */
 views.Stage = views.AppView.extend({
   /**
    * @expose

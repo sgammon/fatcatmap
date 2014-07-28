@@ -13,6 +13,11 @@ goog.require('views.AppView');
 
 goog.provide('views.Header');
 
+/**
+ * @constructor
+ * @extends {views.AppView}
+ * @param {VueOptions=} options
+ */
 views.Header = views.AppView.extend({
   /**
    * @expose

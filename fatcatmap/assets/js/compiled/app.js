@@ -167,13 +167,18 @@ StringStore = function(a) {
   };
 };
 services.storage = {local:supports.storage.local ? new StringStore(window.localStorage) : null, session:supports.storage.session ? new StringStore(window.sessionStorage) : null};
-var Client = function() {
+var Client = function(a) {
+  if (a) {
+    for (var b in a) {
+      a.hasOwnProperty(b) && (this[b] = a[b]);
+    }
+  }
 };
 Client.prototype = services;
-Function.prototype.client = function() {
-  var a = this;
+Function.prototype.client = function(a) {
+  var b = this;
   return function() {
-    return a.apply(new Client, arguments);
+    return b.apply(new Client(a), arguments);
   };
 };
 Function.prototype.service = function(a) {
@@ -224,23 +229,21 @@ services.view = {register:function(a, b) {
   return VIEWS[a] = b;
 }, get:function(a) {
   if ("string" !== typeof a) {
-    throw new TypeError("services.view.register() takes a string name.");
+    throw new TypeError("services.view.get() takes a string name.");
   }
   return VIEWS[a];
+}, init:function(a) {
 }}.service("view");
-var view = {};
-view.AppView = Vue.extend({});
-view.AppView.extend = function(a) {
+var views = {};
+views.AppView = Vue.extend({});
+views.AppView.extend = function(a) {
   var b = a.viewname;
   if (!b || "string" !== typeof b) {
-    throw Error('AppView.extend() requires a "viewName" to be passed as an option.');
+    throw Error('AppView.extend() requires a "viewname" option to be passed.');
   }
   return services.view.register(b, Vue.component(b, Vue.extend(a)));
 };
-view.Header = view.AppView.extend({viewname:"header"});
-view.Stage = view.AppView.extend({viewname:"stage"});
-view.Container = view.AppView.extend({viewname:"container", children:["header", "stage"]});
-services.router = {};
+views.Container = views.AppView.extend({viewname:"container"});
 var ROUTES = {resolved:[], dynamic:[]}, _routeEvents = {route:[], routed:[], error:[]}, _findRoute, Route, router;
 _findRoute = function(a, b, c) {
   for (var d = 0, e, f, g, h = function(a, c) {
@@ -267,7 +270,7 @@ Route = function(a, b) {
   c.handler = b;
   c.resolved = 0 === c.keys.length;
 };
-router = {register:function(a, b) {
+services.router = {register:function(a, b) {
   var c = !1, d, e, f, g;
   d = new Route(a, b);
   f = d.resolved ? ROUTES.resolved : ROUTES.dynamic;
@@ -313,10 +316,11 @@ router = {register:function(a, b) {
 }, off:function(a, b) {
   var c;
   b ? (c = _routeEvents[a].indexOf(b), -1 < c && _routeEvents[a].splice(c, 1)) : _routeEvents[a] = [];
-}, init:function(a) {
-  for (var b in a) {
-    a.hasOwnProperty(b) && "function" === typeof a[b] && router.register(b, a[b]);
+}, init:function(a, b) {
+  for (var c in a) {
+    a.hasOwnProperty(c) && "function" === typeof a[c] && router.register(c, a[c]);
   }
+  b && b(window.location.pathname.split("?").shift());
 }}.service("router");
 services.history = {push:supports.history.html5 ? function(a, b) {
   window.history.pushState(b, "", a);
@@ -333,17 +337,40 @@ services.history = {push:supports.history.html5 ? function(a, b) {
     throw Error("History already started");
   };
 }}.service("history");
-var catnip = function(a, b) {
-  this._context = a;
-  this.session = null;
-  a.session && a.session.established && (this.session = a.session.payload);
-  a.services && a.protocol.rpc.enabled && this.rpc.init(a.services);
-  a.template.manifest && this.template.init(a.template.manifest);
-  this.router.init(routes);
-  this.history.start();
-  this.graph.init(b);
+var _ready, _go, catnip;
+_ready = [];
+_go = function() {
+  var a = _ready;
+  _ready = null;
+  a.forEach(function(a) {
+    a();
+  });
+};
+catnip = function(a, b) {
+  var c = this;
+  c._context = a;
+  c.session = null;
+  a.session && a.session.established && (c.session = a.session.payload);
+  a.services && a.protocol.rpc.enabled && c.rpc.init(a.services);
+  a.template.manifest && c.template.init(a.template.manifest);
+  c.view.init("container", function() {
+    _go();
+  });
+  c.router.init(routes, function(a) {
+    c.ready(function() {
+      c.history.start();
+    });
+  });
+  c.graph.init(b);
   return this;
-}.client();
+}.client({ready:function(a) {
+  if (a) {
+    if (!_ready) {
+      return a();
+    }
+    _ready.push(a);
+  }
+}});
 var init = {};
 window.catnip_beta = catnip(config.context, config.data);
 

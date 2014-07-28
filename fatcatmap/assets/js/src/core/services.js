@@ -18,20 +18,29 @@ goog.provide('services');
 /**
  * Service-injected class.
  * @constructor
+ * @param {Object.<string, function(...)>=} methods
  */
-var Client = function () {};
+var Client = function (methods) {
+  if (methods) {
+    for (var k in methods) {
+      if (methods.hasOwnProperty(k))
+        this[k] = methods[k];
+    }
+  }
+};
 
 Client.prototype = services;
 
 /**
  * @expose
+ * @param {Object.<string, function(...)>=} methods
  * @return {function(...)}
  */
-Function.prototype.client = function () {
+Function.prototype.client = function (methods) {
   var fn = this;
 
   return function () {
-    return fn.apply(new Client(), arguments);
+    return fn.apply(new Client(methods), arguments);
   };
 };
 

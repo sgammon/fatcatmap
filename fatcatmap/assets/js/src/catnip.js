@@ -19,10 +19,24 @@ goog.require('services.template');
 goog.require('services.graph');
 goog.require('services.map');
 
-goog.require('view.Container');
+goog.require('views.Container');
 
 
 goog.provide('catnip');
+
+var _ready, _go, catnip;
+
+_ready = [];
+
+_go = function () {
+  var cbs = _ready;
+
+  _ready = null;
+
+  cbs.forEach(function (fn) {
+    fn();
+  });
+};
 
 /**
  * @param {JSContext} context
@@ -30,7 +44,7 @@ goog.provide('catnip');
  * @this {Client}
  * @return {Client}
  */
-var catnip = function (context, data) {
+catnip = function (context, data) {
   var fcm = this;
 
   /**
@@ -54,10 +68,36 @@ var catnip = function (context, data) {
   if (context.template.manifest)
     fcm.template.init(context.template.manifest);
 
-  fcm.router.init(routes);
-  fcm.history.start();
+  fcm.view.init('container', function () {
+    _go();
+  });
+
+  fcm.router.init(routes, function (initialRoute) {
+    
+    fcm.ready(function () {
+      
+      fcm.history.start();
+
+      // if (initialRoute)
+      //   fcm.router.route(initialRoute);
+    });
+  });
 
   fcm.graph.init(data);
 
   return this;
-}.client();
+}.client(/** @lends {catnip} */{
+  /**
+   * @expose
+   * @param {function()} cb
+   */
+  ready: function (cb) {
+    if (!cb)
+      return;
+
+    if (!_ready)
+      return cb();
+
+    _ready.push(cb);
+  }
+});

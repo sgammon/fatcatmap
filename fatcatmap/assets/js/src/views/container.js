@@ -11,16 +11,13 @@
 
 goog.require('services');
 goog.require('services.template');
-
-goog.require('views.AppView')
-goog.require('views.Header');
-goog.require('views.Stage');
+goog.require('views.AppView');
 
 goog.provide('views.Container');
 
 /**
  * @constructor
- * @extends {view.AppView}
+ * @extends {views.AppView}
  * @param {VueOptions=} options
  */
 views.Container = views.AppView.extend({
@@ -28,11 +25,5 @@ views.Container = views.AppView.extend({
    * @expose
    * @type {string}
    */
-  viewname: 'container',
-
-  /**
-   * @expose
-   * @type {Array.<string>}
-   */
-  children: ['header', 'stage']
+  viewname: 'container'
 });

@@ -47,5 +47,13 @@ services.view = /** @lends {Client.prototype.view} */{
       throw new TypeError('services.view.get() takes a string name.');
 
     return VIEWS[viewname];
+  },
+
+  /**
+   * @expose
+   * @param {string=} rootname
+   */
+  init: function (rootname) {
+    
   }
 }.service('view')

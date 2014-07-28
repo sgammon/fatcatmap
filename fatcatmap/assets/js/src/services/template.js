@@ -7,6 +7,7 @@
  *          Ian Weisberger <ian@momentum.io>
  * 
  * copyright (c) momentum labs, 2014
+ * @todo batched requests
  */
 
 goog.require('async');
@@ -49,9 +50,7 @@ services.template = /** @lends {Client.prototype.template} */ {
       return callbacks.success({ data: TEMPLATES[filename] });
 
     return this.rpc.content.template({
-      data: {
-        path: filename
-      }
+      data: { path: filename }
     }, callbacks);
   },
 

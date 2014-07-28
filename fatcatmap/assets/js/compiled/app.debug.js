@@ -167,13 +167,18 @@ StringStore = function $StringStore$($backend$$) {
   };
 };
 services.storage = {local:supports.storage.local ? new StringStore(window.localStorage) : null, session:supports.storage.session ? new StringStore(window.sessionStorage) : null};
-var Client = function $Client$() {
+var Client = function $Client$($methods$$) {
+  if ($methods$$) {
+    for (var $k$$ in $methods$$) {
+      $methods$$.hasOwnProperty($k$$) && (this[$k$$] = $methods$$[$k$$]);
+    }
+  }
 };
 Client.prototype = services;
-Function.prototype.client = function $Function$$client$() {
+Function.prototype.client = function $Function$$client$($methods$$) {
   var $fn$$ = this;
   return function() {
-    return $fn$$.apply(new Client, arguments);
+    return $fn$$.apply(new Client($methods$$), arguments);
   };
 };
 Function.prototype.service = function $Function$$service$($name$$) {
@@ -224,23 +229,21 @@ services.view = {register:function($viewname$$, $viewclass$$) {
   return VIEWS[$viewname$$] = $viewclass$$;
 }, get:function($viewname$$) {
   if ("string" !== typeof $viewname$$) {
-    throw new TypeError("services.view.register() takes a string name.");
+    throw new TypeError("services.view.get() takes a string name.");
   }
   return VIEWS[$viewname$$];
+}, init:function($rootname$$) {
 }}.service("view");
-var view = {};
-view.AppView = Vue.extend({});
-view.AppView.extend = function $view$AppView$extend$($options$$) {
+var views = {};
+views.AppView = Vue.extend({});
+views.AppView.extend = function $views$AppView$extend$($options$$) {
   var $viewname$$ = $options$$.viewname;
   if (!$viewname$$ || "string" !== typeof $viewname$$) {
-    throw Error('AppView.extend() requires a "viewName" to be passed as an option.');
+    throw Error('AppView.extend() requires a "viewname" option to be passed.');
   }
   return services.view.register($viewname$$, Vue.component($viewname$$, Vue.extend($options$$)));
 };
-view.Header = view.AppView.extend({viewname:"header"});
-view.Stage = view.AppView.extend({viewname:"stage"});
-view.Container = view.AppView.extend({viewname:"container", children:["header", "stage"]});
-services.router = {};
+views.Container = views.AppView.extend({viewname:"container"});
 var ROUTES = {resolved:[], dynamic:[]}, _routeEvents = {route:[], routed:[], error:[]}, _findRoute, Route, router;
 _findRoute = function $_findRoute$($match_path$$, $request$$, $_routes$$) {
   for (var $i$$0$$ = 0, $route$$, $matched$$, $response$$, $setParam$$ = function $$setParam$$$($key$$, $i$$) {
@@ -267,7 +270,7 @@ Route = function $Route$($path$$, $handler$$) {
   $rt$$.handler = $handler$$;
   $rt$$.resolved = 0 === $rt$$.keys.length;
 };
-router = {register:function($path$$, $handler$$) {
+services.router = {register:function($path$$, $handler$$) {
   var $inserted$$ = !1, $route$$, $_route$$, $_routes$$, $i$$;
   $route$$ = new Route($path$$, $handler$$);
   $_routes$$ = $route$$.resolved ? ROUTES.resolved : ROUTES.dynamic;
@@ -313,10 +316,11 @@ router = {register:function($path$$, $handler$$) {
 }, off:function($event$$, $callback$$) {
   var $i$$;
   $callback$$ ? ($i$$ = _routeEvents[$event$$].indexOf($callback$$), -1 < $i$$ && _routeEvents[$event$$].splice($i$$, 1)) : _routeEvents[$event$$] = [];
-}, init:function($_routes$$) {
+}, init:function($_routes$$, $handleInitial$$) {
   for (var $k$$ in $_routes$$) {
     $_routes$$.hasOwnProperty($k$$) && "function" === typeof $_routes$$[$k$$] && router.register($k$$, $_routes$$[$k$$]);
   }
+  $handleInitial$$ && $handleInitial$$(window.location.pathname.split("?").shift());
 }}.service("router");
 services.history = {push:supports.history.html5 ? function($url$$, $state$$) {
   window.history.pushState($state$$, "", $url$$);
@@ -333,17 +337,40 @@ services.history = {push:supports.history.html5 ? function($url$$, $state$$) {
     throw Error("History already started");
   };
 }}.service("history");
-var catnip = function($context$$, $data$$) {
-  this._context = $context$$;
-  this.session = null;
-  $context$$.session && $context$$.session.established && (this.session = $context$$.session.payload);
-  $context$$.services && $context$$.protocol.rpc.enabled && this.rpc.init($context$$.services);
-  $context$$.template.manifest && this.template.init($context$$.template.manifest);
-  this.router.init(routes);
-  this.history.start();
-  this.graph.init($data$$);
+var _ready, _go, catnip;
+_ready = [];
+_go = function $_go$() {
+  var $cbs$$ = _ready;
+  _ready = null;
+  $cbs$$.forEach(function($fn$$) {
+    $fn$$();
+  });
+};
+catnip = function($context$$, $data$$) {
+  var $fcm$$ = this;
+  $fcm$$._context = $context$$;
+  $fcm$$.session = null;
+  $context$$.session && $context$$.session.established && ($fcm$$.session = $context$$.session.payload);
+  $context$$.services && $context$$.protocol.rpc.enabled && $fcm$$.rpc.init($context$$.services);
+  $context$$.template.manifest && $fcm$$.template.init($context$$.template.manifest);
+  $fcm$$.view.init("container", function() {
+    _go();
+  });
+  $fcm$$.router.init(routes, function($initialRoute$$) {
+    $fcm$$.ready(function() {
+      $fcm$$.history.start();
+    });
+  });
+  $fcm$$.graph.init($data$$);
   return this;
-}.client();
+}.client({ready:function($cb$$) {
+  if ($cb$$) {
+    if (!_ready) {
+      return $cb$$();
+    }
+    _ready.push($cb$$);
+  }
+}});
 var init = {};
 window.catnip_beta = catnip(config.context, config.data);
 

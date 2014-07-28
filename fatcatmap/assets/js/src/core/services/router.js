@@ -100,8 +100,10 @@ Route = function (path, handler) {
   rt.resolved = rt.keys.length === 0;
 };
 
-
-router = /** @lends {Client.prototype.router} */ {
+/**
+ * @expose
+ */
+services.router = /** @lends {Client.prototype.router} */ {
   /**
    * @expose
    * @param {string} path
@@ -215,12 +217,17 @@ router = /** @lends {Client.prototype.router} */ {
   /**
    * @expose
    * @param {Object.<string, function(Object)>} _routes
+   * @param {function(string=)=} handleInitial
    */
-  init: function (_routes) {
+  init: function (_routes, handleInitial) {
     for (var k in _routes) {
       if (_routes.hasOwnProperty(k) && typeof _routes[k] === 'function') {
         router.register(k, _routes[k]);
       }
+    }
+
+    if (handleInitial) {
+      handleInitial(window.location.pathname.split('?').shift());
     }
   }
 
