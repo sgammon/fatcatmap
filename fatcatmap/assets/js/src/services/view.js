@@ -44,7 +44,7 @@ services.view = /** @lends {Client.prototype.view} */{
    */
   get: function (viewname) {
     if (typeof viewname !== 'string')
-      throw new TypeError('services.view.register() takes a string name.');
+      throw new TypeError('services.view.get() takes a string name.');
 
     return VIEWS[viewname];
   }

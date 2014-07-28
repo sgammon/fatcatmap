@@ -9,11 +9,11 @@
  * copyright (c) momentum labs, 2014
  */
 
-goog.require('view.AppView');
+goog.require('views.AppView');
 
-goog.provide('view.Header');
+goog.provide('views.Header');
 
-view.Header = view.AppView.extend({
+views.Header = views.AppView.extend({
   /**
    * @expose
    * @type {string}

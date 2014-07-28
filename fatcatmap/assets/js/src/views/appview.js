@@ -11,14 +11,14 @@
 
 goog.require('services.view');
 
-goog.provide('view.AppView');
+goog.provide('views.AppView');
 
 /**
  * @constructor
  * @extends {ViewModel}
  * @param {VueOptions=} options
  */
-view.AppView = Vue.extend({});
+views.AppView = Vue.extend({});
 
 /**
  * @static
@@ -27,12 +27,12 @@ view.AppView = Vue.extend({});
  * @return {function(new:view.AppView, VueOptions=)}
  * @throws {Error} When child view name is not passed.
  */
-view.AppView.extend = function (options) {
+views.AppView.extend = function (options) {
   var viewname = options.viewname,
     view;
 
   if (!viewname || typeof viewname !== 'string')
-    throw new Error('AppView.extend() requires a "viewName" to be passed as an option.');
+    throw new Error('AppView.extend() requires a "viewname" option to be passed.');
 
   view = services.view.register(viewname,
     Vue.component(viewname, Vue.extend(options)));

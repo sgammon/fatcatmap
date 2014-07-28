@@ -9,11 +9,11 @@
  * copyright (c) momentum labs, 2014
  */
 
-goog.require('view.AppView');
+goog.require('views.AppView');
 
-goog.provide('view.Stage');
+goog.provide('views.Stage');
 
-view.Stage = view.AppView.extend({
+views.Stage = views.AppView.extend({
   /**
    * @expose
    * @type {string}
