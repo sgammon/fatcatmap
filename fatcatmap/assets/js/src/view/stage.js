@@ -1,5 +1,5 @@
 /**
- * @fileoverview fatcatmap mapper.
+ * @fileoverview View for the fcm stage.
  *
  * @author  David Rekow <david@momentum.io>,
  *          Sam Gammon <sam@momentum.io>,
@@ -9,20 +9,14 @@
  * copyright (c) momentum labs, 2014
  */
 
-goog.require('$');
-goog.require('services');
+goog.require('view.AppView');
 
-goog.provide('services.map');
+goog.provide('view.Stage');
 
-/**
- * @expose
- */
-services.map = /** @lends {Client.prototype.map} */ {
+view.Stage = view.AppView.extend({
   /**
    * @expose
-   * @this {Client}
+   * @type {string}
    */
-  draw: function () {
-
-  }
-}.service('map');
+  viewname: 'stage'
+});

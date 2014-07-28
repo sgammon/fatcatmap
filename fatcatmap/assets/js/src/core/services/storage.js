@@ -13,46 +13,45 @@ goog.require('supports');
 
 goog.provide('services.storage');
 
-var StringStore,
-  digitMatcher = /^[0-9]+$/,
+var StringStore, _serialize, _deserialize;
 
-  /**
-   * @param {*} item
-   * @return {string}
-   */
-  serialize = function (item) {
-    if (typeof item === 'string')
-      return item;
-
-    if (item == null)
-      return "";
-
-    if (typeof item === 'object')
-      return JSON.stringify(item);
-
-    return String(item);
-  },
-
-  /**
-   * @param {string} item
-   * @return {*}
-   */
-  deserialize = function (item) {
-    var char1 = item.charAt(0);
-    if (char1 === '{' || char1 === '[')
-      return JSON.parse(item);
-
-    if (!item)
-      return item === '' ? item : null;
-
-    if (item === 'true' || item === 'false')
-      return Boolean(item);
-
-    if (digitMatcher.test(item))
-      return +item;
-
+/**
+ * @param {*} item
+ * @return {string}
+ */
+_serialize = function (item) {
+  if (typeof item === 'string')
     return item;
-  };
+
+  if (item == null)
+    return "";
+
+  if (typeof item === 'object')
+    return JSON.stringify(item);
+
+  return String(item);
+};
+
+/**
+ * @param {string} item
+ * @return {*}
+ */
+_deserialize = function (item) {
+  var char1 = item.charAt(0);
+  if (char1 === '{' || char1 === '[')
+    return JSON.parse(item);
+
+  if (!item)
+    return item === '' ? item : null;
+
+  if (item === 'true' || item === 'false')
+    return Boolean(item);
+
+  if (/^[0-9]+$/.test(item))
+    return +item;
+
+  return item;
+};
 
 /**
  * @constructor
@@ -64,7 +63,7 @@ StringStore = function (backend) {
    * @return {*}
    */
   this.get = function (key) {
-    return deserialize(backend.getItem(key) || '');
+    return _deserialize(backend.getItem(key) || '');
   };
 
   /**
@@ -72,7 +71,7 @@ StringStore = function (backend) {
    * @param {*} value
    */
   this.put = function (key, value) {
-    backend.setItem(key, serialize(value));
+    backend.setItem(key, _serialize(value));
   };
 
   /**

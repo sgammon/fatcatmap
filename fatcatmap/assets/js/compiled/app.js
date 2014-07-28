@@ -1,5 +1,5 @@
 (function() {
-var ROUTES = {"/":function(a) {
+var routes = {"/":function(a) {
 }, "/login":function(a) {
 }, "/settings":function(a) {
 }, "/dev":function(a) {
@@ -34,8 +34,8 @@ var urlutil = {addParams:function(a, b) {
 }, parseParams:function(a) {
   var b = {};
   a = a.split("?").pop().split("&");
-  for (var c, d, f = 0;f < a.length;f++) {
-    c = a[f].split("="), d = unescape(c[1]), b[c[0]] = "true" === d || "false" === d ? Boolean(d) : /^\d*$/.test(d) ? +d : d;
+  for (var c, d, e = 0;e < a.length;e++) {
+    c = a[e].split("="), d = unescape(c[1]), b[c[0]] = "true" === d || "false" === d ? Boolean(d) : /^\d*$/.test(d) ? +d : d;
   }
   return b;
 }, parse:function(a) {
@@ -70,36 +70,35 @@ var urlutil = {addParams:function(a, b) {
   }
   return d.join("/");
 }};
-var services = {}, Request, Response, splitter, prepareRequest, dispatch, parseResponse;
-splitter = /^([^:]+):\s*/;
-prepareRequest = function(a, b, c) {
-  var d = new XMLHttpRequest, f;
-  f = b.params ? urlutil.addParams(b.url, b.params) : b.url;
-  d.open(a.toUpperCase(), f, !!c);
+var services = {}, Request, Response, _prepareRequest, _dispatch, _parseResponse;
+_prepareRequest = function(a, b, c) {
+  var d = new XMLHttpRequest, e;
+  e = b.params ? urlutil.addParams(b.url, b.params) : b.url;
+  d.open(a.toUpperCase(), e, !!c);
   if (b.headers) {
     a = b.headers;
-    for (var e in a) {
-      a.hasOwnProperty(e) && d.setRequestHeader(e, a[e]);
+    for (var f in a) {
+      a.hasOwnProperty(f) && d.setRequestHeader(f, a[f]);
     }
   }
   d.data = b.data;
   c ? (d.onerror = c.error, d.onloadend = function() {
-    d.responseJSON = parseResponse(d);
+    d.responseJSON = _parseResponse(d);
     c.success(d.responseJSON);
   }) : (d.onerror = function(a) {
     d.error = a;
   }, d.onloadend = function() {
-    d.responseJSON = parseResponse(d);
+    d.responseJSON = _parseResponse(d);
   });
   return d;
 };
-dispatch = function(a, b, c) {
+_dispatch = function(a, b, c) {
   var d = "object" === typeof b.data ? JSON.stringify(b.data) : "string" === typeof b.data ? b.data : null == b.data ? null : "" + b.data;
-  a = prepareRequest(a, b, c);
+  a = _prepareRequest(a, b, c);
   a.send(d);
   return a;
 };
-parseResponse = function(a) {
+_parseResponse = function(a) {
   var b = {}, c = a.getAllResponseHeaders().split("\n");
   try {
     b.data = JSON.parse(a.responseText);
@@ -107,33 +106,33 @@ parseResponse = function(a) {
     b.data = a.responseText || "";
   }
   b.headers = {};
-  for (var f = 0;f < c.length;f++) {
-    c[f] && (a = c[f].split(splitter), b.headers[a[1]] = a[2]);
+  for (var e = 0;e < c.length;e++) {
+    c[e] && (a = c[e].split(/^([^:]+):\s*/), b.headers[a[1]] = a[2]);
   }
   return b;
 };
 services.http = {get:function(a, b) {
-  return dispatch("GET", a, b);
+  return _dispatch("GET", a, b);
 }, delete:function(a, b) {
-  return dispatch("DELETE", a, b);
+  return _dispatch("DELETE", a, b);
 }, head:function(a, b) {
-  return dispatch("HEAD", a, b);
+  return _dispatch("HEAD", a, b);
 }, post:function(a, b) {
-  return dispatch("POST", a, b);
+  return _dispatch("POST", a, b);
 }, put:function(a, b) {
-  return dispatch("PUT", a, b);
+  return _dispatch("PUT", a, b);
 }, patch:function(a, b) {
-  return dispatch("PATCH", a, b);
+  return _dispatch("PATCH", a, b);
 }, options:function(a, b) {
-  return dispatch("OPTIONS", a, b);
+  return _dispatch("OPTIONS", a, b);
 }};
-var baseURL = "/_rpc/v1/", RPCAPI;
+var _baseURL = "/_rpc/v1/", RPCAPI;
 RPCAPI = function(a, b, c) {
   var d = this;
   d.name = a;
   d.config = c;
   b.forEach(function(a) {
-    var b = urlutil.join(baseURL, d.name + "." + a);
+    var b = urlutil.join(_baseURL, d.name + "." + a);
     d[a] = function(a, c) {
       var d = {url:b, data:a.data || {}, params:a.params || {}, headers:a.headers || {}};
       d.headers.Accept = "application/json";
@@ -148,18 +147,20 @@ services.rpc = {factory:function(a) {
 }, init:function(a) {
   a.forEach(services.rpc.factory);
 }};
-var StringStore, digitMatcher = /^[0-9]+$/, serialize = function(a) {
+var StringStore, _serialize, _deserialize;
+_serialize = function(a) {
   return "string" === typeof a ? a : null == a ? "" : "object" === typeof a ? JSON.stringify(a) : String(a);
-}, deserialize = function(a) {
+};
+_deserialize = function(a) {
   var b = a.charAt(0);
-  return "{" === b || "[" === b ? JSON.parse(a) : a ? "true" === a || "false" === a ? Boolean(a) : digitMatcher.test(a) ? +a : a : "" === a ? a : null;
+  return "{" === b || "[" === b ? JSON.parse(a) : a ? "true" === a || "false" === a ? Boolean(a) : /^[0-9]+$/.test(a) ? +a : a : "" === a ? a : null;
 };
 StringStore = function(a) {
   this.get = function(b) {
-    return deserialize(a.getItem(b) || "");
+    return _deserialize(a.getItem(b) || "");
   };
   this.put = function(b, c) {
-    a.setItem(b, serialize(c));
+    a.setItem(b, _serialize(c));
   };
   this.del = function(b) {
     a.removeItem(b);
@@ -193,112 +194,137 @@ Object.defineProperty(Object.prototype, "service", {value:function(a) {
   Client.prototype[a] = this;
   return Client.prototype[a];
 }});
-services.data = {};
-var data = {normalize:function(a) {
+services.data = {normalize:function(a) {
 }}.service("data");
-services.graph = {};
-var graph = {init:function(a) {
-  return graph.construct(data.normalize(a));
+services.graph = {init:function(a) {
+  return this.graph.construct(this.data.normalize(a));
 }, construct:function(a) {
   return{};
 }}.service("graph");
-services.map = {};
-var map = {draw:function() {
+services.map = {draw:function() {
 }}.service("map");
-services.template = {};
-var _templates = {}, template = {put:function(a, b) {
-  "string" === typeof a && "string" === typeof b && (_templates[a] = b);
+var TEMPLATES = {};
+services.template = {put:function(a, b) {
+  "string" === typeof a && "string" === typeof b && (TEMPLATES[a] = b);
 }, get:function(a, b) {
   if ("string" !== typeof a || "function" !== typeof b.success || "function" !== typeof b.error) {
     throw new TypeError("template.get() requires a filename and CallbackMap.");
   }
-  return _templates[a] ? b.success({data:_templates[a]}) : this.rpc.content.template({data:{path:a}}, b);
+  return TEMPLATES[a] ? b.success({data:TEMPLATES[a]}) : this.rpc.content.template({data:{path:a}}, b);
 }, init:function(a) {
   for (var b in a) {
-    a.hasOwnProperty(b) && "string" === typeof a[b] && template.put(b, a[b]);
+    a.hasOwnProperty(b) && "string" === typeof a[b] && services.template.put(b, a[b]);
   }
 }}.service("template");
+var VIEWS = {};
+services.view = {register:function(a, b) {
+  if ("string" !== typeof a || "function" !== typeof b) {
+    throw new TypeError("services.view.register() takes a string name and constructor.");
+  }
+  return VIEWS[a] = b;
+}, get:function(a) {
+  if ("string" !== typeof a) {
+    throw new TypeError("services.view.register() takes a string name.");
+  }
+  return VIEWS[a];
+}}.service("view");
+var view = {};
+view.AppView = Vue.extend({});
+view.AppView.extend = function(a) {
+  var b = a.viewname;
+  if (!b || "string" !== typeof b) {
+    throw Error('AppView.extend() requires a "viewName" to be passed as an option.');
+  }
+  return services.view.register(b, Vue.component(b, Vue.extend(a)));
+};
+view.Header = view.AppView.extend({viewname:"header"});
+view.Stage = view.AppView.extend({viewname:"stage"});
+view.Container = view.AppView.extend({viewname:"container", children:["header", "stage"]});
 services.router = {};
-var keyMatcher = /\/<(\w+)>/, routes = {resolved:[], dynamic:[]}, queues = {route:[], routed:[], error:[]}, Route, router;
+var ROUTES = {resolved:[], dynamic:[]}, _routeEvents = {route:[], routed:[], error:[]}, _findRoute, Route, router;
+_findRoute = function(a, b, c) {
+  for (var d = 0, e, f, g, h = function(a, c) {
+    b.params[e.keys[c]] = a;
+  };(e = c[d++]) && e.id <= a;) {
+    if (e.matcher.test(a)) {
+      f = !0;
+      a = a.match(e.matcher).slice(1);
+      a.forEach(h);
+      g = e.handler(b);
+      break;
+    }
+  }
+  return{matched:f, response:g};
+};
 Route = function(a, b) {
   var c = this;
   c.keys = [];
-  c.id = a.replace(keyMatcher, function(a, b, e) {
-    c.keys.push(e);
+  c.id = a.replace(/\/<(\w+)>/, function(a, b, f) {
+    c.keys.push(f);
     return "/(\\w+)";
   });
-  c.matcher = new RegExp(c.id);
+  c.matcher = new RegExp("^" + c.id + "$");
   c.handler = b;
   c.resolved = 0 === c.keys.length;
 };
 router = {register:function(a, b) {
-  var c = !1, d, f, e, k;
+  var c = !1, d, e, f, g;
   d = new Route(a, b);
-  e = d.resolved ? routes.resolved : routes.dynamic;
-  if (e.length) {
-    for (k = 0;k < e.length;k++) {
-      if (f = e[k], !(f.id < d.id)) {
-        e.splice(k, 0, d);
+  f = d.resolved ? ROUTES.resolved : ROUTES.dynamic;
+  if (f.length) {
+    for (g = 0;g < f.length;g++) {
+      if (e = f[g], !(e.id < d.id)) {
+        f.splice(g, 0, d);
         c = !0;
         break;
       }
     }
-    !1 === c && e.push(d);
+    !1 === c && f.push(d);
   } else {
-    e.push(d);
+    f.push(d);
   }
 }, route:function(a, b) {
-  var c = !1, d, f, e;
+  var c;
   b = b || {};
   b.params = b.params || {};
-  queues.route.forEach(function(c) {
+  _routeEvents.route.forEach(function(c) {
     c(a, b);
   });
-  d = function() {
-    for (var d = 0, e = function(a, c) {
-      b.params[g.keys[c]] = a;
-    }, l = function(c) {
-      c(a, b, h);
-    }, g, h;(g = f[d++]) && g.id < a;) {
-      if (g.matcher.test(a)) {
-        return c = !0, d = a.match(g.matcher).slice(1), d.forEach(e), h = g.handler(b), queues.routed.forEach(l), 404 === h.status ? (h.path = a, router.route("/404", h)) : h;
-      }
-    }
-  };
-  f = routes.resolved;
-  e = d();
-  if (c) {
-    return e;
+  c = _findRoute(a, b, ROUTES.resolved);
+  if (c.matched) {
+    return c = c.response, _routeEvents.routed.forEach(function(d) {
+      d(a, b, c);
+    }), c;
   }
-  f = routes.dynamic;
-  e = d();
-  if (c) {
-    return e;
+  c = _findRoute(a, b, ROUTES.dynamic);
+  if (c.matched) {
+    return c = c.response, _routeEvents.routed.forEach(function(d) {
+      d(a, b, c);
+    }), c;
   }
-  e = {status:404};
-  queues.error.forEach(function(c) {
-    c(a, b, e);
+  c = {status:404};
+  _routeEvents.error.forEach(function(d) {
+    d(a, b, c);
   });
-  return e;
+  return c;
 }, on:function(a, b) {
-  queues[a] || (queues[a] = []);
-  queues[a].push(b);
+  _routeEvents[a] || (_routeEvents[a] = []);
+  _routeEvents[a].push(b);
 }, off:function(a, b) {
   var c;
-  b ? (c = queues[a].indexOf(b), -1 < c && queues[a].splice(c, 1)) : queues[a] = [];
+  b ? (c = _routeEvents[a].indexOf(b), -1 < c && _routeEvents[a].splice(c, 1)) : _routeEvents[a] = [];
 }, init:function(a) {
   for (var b in a) {
     a.hasOwnProperty(b) && "function" === typeof a[b] && router.register(b, a[b]);
   }
 }}.service("router");
-services.history = {};
-var history = {push:supports.history.html5 ? function(a, b) {
+services.history = {push:supports.history.html5 ? function(a, b) {
   window.history.pushState(b, "", a);
 } : function(a, b) {
 }, start:function() {
   var a = this;
-  a.router.on("routed", function(b, c, d) {
-    "history" !== c.source && a.push(b, c.state);
+  a.router.on("routed", function(a, c, d) {
+    "history" !== c.source && services.history.push(a, c.state);
   });
   supports.history.html5 && (window.onpopstate = function(b) {
     a.router.route(window.location.pathname, {source:"history", state:b.state || {}});
@@ -313,7 +339,7 @@ var catnip = function(a, b) {
   a.session && a.session.established && (this.session = a.session.payload);
   a.services && a.protocol.rpc.enabled && this.rpc.init(a.services);
   a.template.manifest && this.template.init(a.template.manifest);
-  this.router.init(ROUTES);
+  this.router.init(routes);
   this.history.start();
   this.graph.init(b);
   return this;

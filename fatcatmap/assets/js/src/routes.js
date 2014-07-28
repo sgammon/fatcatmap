@@ -11,7 +11,7 @@
 
 goog.provide('routes');
 
-var ROUTES = {
+var routes = {
   /**
    * @param {Object} request
    * @return {?Object}

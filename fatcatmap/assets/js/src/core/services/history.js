@@ -18,7 +18,7 @@ goog.provide('services.history');
 /**
  * @expose
  */
-var history = /** @lends {Client.prototype.history} */ {
+services.history = /** @lends {Client.prototype.history} */ {
   /**
    * @expose
    * @param {string} url
@@ -36,7 +36,7 @@ var history = /** @lends {Client.prototype.history} */ {
 
     hist.router.on('routed', function (url, request, response) {
       if (request.source !== 'history')
-        hist.push(url, request.state);
+        services.history.push(url, request.state);
     });
 
     if (supports.history.html5) {

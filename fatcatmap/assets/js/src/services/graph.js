@@ -14,7 +14,10 @@ goog.require('services.data');
 
 goog.provide('services.graph');
 
-var graph = /** @lends {Client.prototype.graph} */ {
+/**
+ * @expose
+ */
+services.graph = /** @lends {Client.prototype.graph} */ {
   /**
    * @expose
    * @param {Object|PageData} raw Raw data to initialize with.
@@ -22,7 +25,7 @@ var graph = /** @lends {Client.prototype.graph} */ {
    * @this {Client}
    */
   init: function (raw) {
-    return graph.construct(data.normalize(raw));
+    return this.graph.construct(this.data.normalize(raw));
   },
 
   /**

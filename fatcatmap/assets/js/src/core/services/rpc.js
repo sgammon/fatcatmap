@@ -15,7 +15,7 @@ goog.require('services.http');
 
 goog.provide('services.rpc');
 
-var baseURL = '/_rpc/v1/',
+var _baseURL = '/_rpc/v1/',
   RPCAPI;
 
 /**
@@ -32,7 +32,7 @@ RPCAPI = function (name, methods, config) {
 
   methods.forEach(function (method) {
 
-    var endpoint = urlutil.join(baseURL, api.name + '.' + method);
+    var endpoint = urlutil.join(_baseURL, api.name + '.' + method);
 
     /**
      * @param {Request} request

@@ -32,10 +32,7 @@ var Request;
  */
 var Response;
 
-var splitter, prepareRequest, dispatch, parseResponse;
-
-splitter = /^([^:]+):\s*/;
-
+var _prepareRequest, _dispatch, _parseResponse;
 
 /**
  * @param {string} method
@@ -43,7 +40,7 @@ splitter = /^([^:]+):\s*/;
  * @param {CallbackMap=} handlers
  * @return {XMLHttpRequest}
  */
-prepareRequest = function (method, request, handlers) {
+_prepareRequest = function (method, request, handlers) {
   var xhr = new XMLHttpRequest(),
     url, headers;
 
@@ -68,7 +65,7 @@ prepareRequest = function (method, request, handlers) {
   if (handlers) {
     xhr.onerror = handlers.error;
     xhr.onloadend = function () {
-      xhr.responseJSON = parseResponse(xhr);
+      xhr.responseJSON = _parseResponse(xhr);
       handlers.success(xhr.responseJSON);
     };
   } else {
@@ -82,7 +79,7 @@ prepareRequest = function (method, request, handlers) {
       /**
        * @expose
        */
-      xhr.responseJSON = parseResponse(xhr);
+      xhr.responseJSON = _parseResponse(xhr);
     };
   }
 
@@ -95,12 +92,12 @@ prepareRequest = function (method, request, handlers) {
  * @param {CallbackMap=} handlers
  * @return {XMLHttpRequest}
  */
-dispatch = function (method, request, handlers) {
+_dispatch = function (method, request, handlers) {
   var data = typeof request.data === 'object' ? JSON.stringify(request.data) :
     typeof request.data === 'string' ? request.data :
       request.data == null ? null : '' + request.data,
 
-    req = prepareRequest(method, request, handlers);
+    req = _prepareRequest(method, request, handlers);
   req.send(data);
   return req;
 };
@@ -109,7 +106,7 @@ dispatch = function (method, request, handlers) {
  * @param {XMLHttpRequest} response
  * @return {Response}
  */
-parseResponse = function (response) {
+_parseResponse = function (response) {
   var resp = {},
     headers = response.getAllResponseHeaders().split('\n'),
     chunks;
@@ -126,7 +123,7 @@ parseResponse = function (response) {
     if (!headers[i])
       continue;
 
-    chunks = headers[i].split(splitter);
+    chunks = headers[i].split(/^([^:]+):\s*/);
     resp.headers[chunks[1]] = chunks[2];
   }
 
@@ -143,7 +140,7 @@ services.http = {
    * @return {XMLHttpRequest|Response} XHR, or response if no handlers were passed. 
    */
   get: function (request, handlers) {
-    return dispatch('GET', request, handlers);
+    return _dispatch('GET', request, handlers);
   },
 
   /**
@@ -152,7 +149,7 @@ services.http = {
    * @return {XMLHttpRequest|Response} XHR, or response if no handlers were passed. 
    */
   delete: function (request, handlers) {
-    return dispatch('DELETE', request, handlers);
+    return _dispatch('DELETE', request, handlers);
   },
 
   /**
@@ -161,7 +158,7 @@ services.http = {
    * @return {XMLHttpRequest|Response} XHR, or response if no handlers were passed.
    */
   head: function (request, handlers) {
-    return dispatch('HEAD', request, handlers);
+    return _dispatch('HEAD', request, handlers);
   },
 
   /**
@@ -171,7 +168,7 @@ services.http = {
    * @expose
    */
   post: function (request, handlers) {
-    return dispatch('POST', request, handlers);
+    return _dispatch('POST', request, handlers);
   },
 
   /**
@@ -180,7 +177,7 @@ services.http = {
    * @return {XMLHttpRequest|Response} XHR, or response if no handlers were passed.
    */
   put: function (request, handlers) {
-    return dispatch('PUT', request, handlers);
+    return _dispatch('PUT', request, handlers);
   },
 
   /**
@@ -190,7 +187,7 @@ services.http = {
    * @expose
    */
   patch: function (request, handlers) {
-    return dispatch('PATCH', request, handlers);
+    return _dispatch('PATCH', request, handlers);
   },
 
   /**
@@ -199,6 +196,6 @@ services.http = {
    * @return {XMLHttpRequest|Response} XHR, or response if no handlers were passed.
    */
   options: function (request, handlers) {
-    return dispatch('OPTIONS', request, handlers);
+    return _dispatch('OPTIONS', request, handlers);
   }
 };

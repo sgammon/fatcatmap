@@ -143,7 +143,8 @@ config = {
         ASSET_PREFIX + 'js/lib/externs/jasmine/jasmine.js',
         ASSET_PREFIX + 'js/lib/externs/w3c/EventSource.js',
         ASSET_PREFIX + 'js/lib/externs/w3c/pointer-events.js',
-        ASSET_PREFIX + 'js/lib/externs/fcm/jsconfig.js'
+        ASSET_PREFIX + 'js/lib/externs/fcm/jsconfig.js',
+        ASSET_PREFIX + 'js/lib/externs/vue/vue.js'
       ]
     },
 

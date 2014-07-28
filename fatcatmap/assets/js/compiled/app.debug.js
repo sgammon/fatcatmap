@@ -1,5 +1,5 @@
 (function() {
-var ROUTES = {"/":function($request$$) {
+var routes = {"/":function($request$$) {
 }, "/login":function($request$$) {
 }, "/settings":function($request$$) {
 }, "/dev":function($request$$) {
@@ -70,9 +70,8 @@ var urlutil = {addParams:function($url$$, $params$$) {
   }
   return $parts$$.join("/");
 }};
-var services = {}, Request, Response, splitter, prepareRequest, dispatch, parseResponse;
-splitter = /^([^:]+):\s*/;
-prepareRequest = function $prepareRequest$($headers_method$$, $request$$, $handlers$$) {
+var services = {}, Request, Response, _prepareRequest, _dispatch, _parseResponse;
+_prepareRequest = function $_prepareRequest$($headers_method$$, $request$$, $handlers$$) {
   var $xhr$$ = new XMLHttpRequest, $url$$;
   $url$$ = $request$$.params ? urlutil.addParams($request$$.url, $request$$.params) : $request$$.url;
   $xhr$$.open($headers_method$$.toUpperCase(), $url$$, !!$handlers$$);
@@ -84,22 +83,22 @@ prepareRequest = function $prepareRequest$($headers_method$$, $request$$, $handl
   }
   $xhr$$.data = $request$$.data;
   $handlers$$ ? ($xhr$$.onerror = $handlers$$.error, $xhr$$.onloadend = function $$xhr$$$onloadend$() {
-    $xhr$$.responseJSON = parseResponse($xhr$$);
+    $xhr$$.responseJSON = _parseResponse($xhr$$);
     $handlers$$.success($xhr$$.responseJSON);
   }) : ($xhr$$.onerror = function $$xhr$$$onerror$($e$$) {
     $xhr$$.error = $e$$;
   }, $xhr$$.onloadend = function $$xhr$$$onloadend$() {
-    $xhr$$.responseJSON = parseResponse($xhr$$);
+    $xhr$$.responseJSON = _parseResponse($xhr$$);
   });
   return $xhr$$;
 };
-dispatch = function $dispatch$($method$$, $request$$, $handlers$$) {
+_dispatch = function $_dispatch$($method$$, $request$$, $handlers$$) {
   var $data$$ = "object" === typeof $request$$.data ? JSON.stringify($request$$.data) : "string" === typeof $request$$.data ? $request$$.data : null == $request$$.data ? null : "" + $request$$.data;
-  $method$$ = prepareRequest($method$$, $request$$, $handlers$$);
+  $method$$ = _prepareRequest($method$$, $request$$, $handlers$$);
   $method$$.send($data$$);
   return $method$$;
 };
-parseResponse = function $parseResponse$($chunks$$) {
+_parseResponse = function $_parseResponse$($chunks$$) {
   var $resp$$ = {}, $headers$$ = $chunks$$.getAllResponseHeaders().split("\n");
   try {
     $resp$$.data = JSON.parse($chunks$$.responseText);
@@ -108,32 +107,32 @@ parseResponse = function $parseResponse$($chunks$$) {
   }
   $resp$$.headers = {};
   for (var $i$$ = 0;$i$$ < $headers$$.length;$i$$++) {
-    $headers$$[$i$$] && ($chunks$$ = $headers$$[$i$$].split(splitter), $resp$$.headers[$chunks$$[1]] = $chunks$$[2]);
+    $headers$$[$i$$] && ($chunks$$ = $headers$$[$i$$].split(/^([^:]+):\s*/), $resp$$.headers[$chunks$$[1]] = $chunks$$[2]);
   }
   return $resp$$;
 };
 services.http = {get:function $services$http$get$($request$$, $handlers$$) {
-  return dispatch("GET", $request$$, $handlers$$);
+  return _dispatch("GET", $request$$, $handlers$$);
 }, delete:function $services$http$delete$($request$$, $handlers$$) {
-  return dispatch("DELETE", $request$$, $handlers$$);
+  return _dispatch("DELETE", $request$$, $handlers$$);
 }, head:function $services$http$head$($request$$, $handlers$$) {
-  return dispatch("HEAD", $request$$, $handlers$$);
+  return _dispatch("HEAD", $request$$, $handlers$$);
 }, post:function $services$http$post$($request$$, $handlers$$) {
-  return dispatch("POST", $request$$, $handlers$$);
+  return _dispatch("POST", $request$$, $handlers$$);
 }, put:function $services$http$put$($request$$, $handlers$$) {
-  return dispatch("PUT", $request$$, $handlers$$);
+  return _dispatch("PUT", $request$$, $handlers$$);
 }, patch:function $services$http$patch$($request$$, $handlers$$) {
-  return dispatch("PATCH", $request$$, $handlers$$);
+  return _dispatch("PATCH", $request$$, $handlers$$);
 }, options:function $services$http$options$($request$$, $handlers$$) {
-  return dispatch("OPTIONS", $request$$, $handlers$$);
+  return _dispatch("OPTIONS", $request$$, $handlers$$);
 }};
-var baseURL = "/_rpc/v1/", RPCAPI;
+var _baseURL = "/_rpc/v1/", RPCAPI;
 RPCAPI = function $RPCAPI$($name$$, $methods$$, $config$$) {
   var $api$$ = this;
   $api$$.name = $name$$;
   $api$$.config = $config$$;
   $methods$$.forEach(function($method$$) {
-    var $endpoint$$ = urlutil.join(baseURL, $api$$.name + "." + $method$$);
+    var $endpoint$$ = urlutil.join(_baseURL, $api$$.name + "." + $method$$);
     $api$$[$method$$] = function $$api$$$$method$$$($request$$, $handlers$$) {
       var $req$$ = {url:$endpoint$$, data:$request$$.data || {}, params:$request$$.params || {}, headers:$request$$.headers || {}};
       $req$$.headers.Accept = "application/json";
@@ -148,18 +147,20 @@ services.rpc = {factory:function $services$rpc$factory$($manifest$$) {
 }, init:function $services$rpc$init$($manifests$$) {
   $manifests$$.forEach(services.rpc.factory);
 }};
-var StringStore, digitMatcher = /^[0-9]+$/, serialize = function $serialize$($item$$) {
+var StringStore, _serialize, _deserialize;
+_serialize = function $_serialize$($item$$) {
   return "string" === typeof $item$$ ? $item$$ : null == $item$$ ? "" : "object" === typeof $item$$ ? JSON.stringify($item$$) : String($item$$);
-}, deserialize = function $deserialize$($item$$) {
+};
+_deserialize = function $_deserialize$($item$$) {
   var $char1$$ = $item$$.charAt(0);
-  return "{" === $char1$$ || "[" === $char1$$ ? JSON.parse($item$$) : $item$$ ? "true" === $item$$ || "false" === $item$$ ? Boolean($item$$) : digitMatcher.test($item$$) ? +$item$$ : $item$$ : "" === $item$$ ? $item$$ : null;
+  return "{" === $char1$$ || "[" === $char1$$ ? JSON.parse($item$$) : $item$$ ? "true" === $item$$ || "false" === $item$$ ? Boolean($item$$) : /^[0-9]+$/.test($item$$) ? +$item$$ : $item$$ : "" === $item$$ ? $item$$ : null;
 };
 StringStore = function $StringStore$($backend$$) {
   this.get = function $this$get$($key$$) {
-    return deserialize($backend$$.getItem($key$$) || "");
+    return _deserialize($backend$$.getItem($key$$) || "");
   };
   this.put = function $this$put$($key$$, $value$$) {
-    $backend$$.setItem($key$$, serialize($value$$));
+    $backend$$.setItem($key$$, _serialize($value$$));
   };
   this.del = function $this$del$($key$$) {
     $backend$$.removeItem($key$$);
@@ -193,48 +194,83 @@ Object.defineProperty(Object.prototype, "service", {value:function($name$$) {
   Client.prototype[$name$$] = this;
   return Client.prototype[$name$$];
 }});
-services.data = {};
-var data = {normalize:function($raw$$) {
+services.data = {normalize:function($raw$$) {
 }}.service("data");
-services.graph = {};
-var graph = {init:function($raw$$) {
-  return graph.construct(data.normalize($raw$$));
+services.graph = {init:function($raw$$) {
+  return this.graph.construct(this.data.normalize($raw$$));
 }, construct:function($data$$) {
   return{};
 }}.service("graph");
-services.map = {};
-var map = {draw:function() {
+services.map = {draw:function() {
 }}.service("map");
-services.template = {};
-var _templates = {}, template = {put:function($filename$$, $source$$) {
-  "string" === typeof $filename$$ && "string" === typeof $source$$ && (_templates[$filename$$] = $source$$);
+var TEMPLATES = {};
+services.template = {put:function($filename$$, $source$$) {
+  "string" === typeof $filename$$ && "string" === typeof $source$$ && (TEMPLATES[$filename$$] = $source$$);
 }, get:function($filename$$, $callbacks$$) {
   if ("string" !== typeof $filename$$ || "function" !== typeof $callbacks$$.success || "function" !== typeof $callbacks$$.error) {
     throw new TypeError("template.get() requires a filename and CallbackMap.");
   }
-  return _templates[$filename$$] ? $callbacks$$.success({data:_templates[$filename$$]}) : this.rpc.content.template({data:{path:$filename$$}}, $callbacks$$);
+  return TEMPLATES[$filename$$] ? $callbacks$$.success({data:TEMPLATES[$filename$$]}) : this.rpc.content.template({data:{path:$filename$$}}, $callbacks$$);
 }, init:function($manifest$$) {
   for (var $k$$ in $manifest$$) {
-    $manifest$$.hasOwnProperty($k$$) && "string" === typeof $manifest$$[$k$$] && template.put($k$$, $manifest$$[$k$$]);
+    $manifest$$.hasOwnProperty($k$$) && "string" === typeof $manifest$$[$k$$] && services.template.put($k$$, $manifest$$[$k$$]);
   }
 }}.service("template");
+var VIEWS = {};
+services.view = {register:function($viewname$$, $viewclass$$) {
+  if ("string" !== typeof $viewname$$ || "function" !== typeof $viewclass$$) {
+    throw new TypeError("services.view.register() takes a string name and constructor.");
+  }
+  return VIEWS[$viewname$$] = $viewclass$$;
+}, get:function($viewname$$) {
+  if ("string" !== typeof $viewname$$) {
+    throw new TypeError("services.view.register() takes a string name.");
+  }
+  return VIEWS[$viewname$$];
+}}.service("view");
+var view = {};
+view.AppView = Vue.extend({});
+view.AppView.extend = function $view$AppView$extend$($options$$) {
+  var $viewname$$ = $options$$.viewname;
+  if (!$viewname$$ || "string" !== typeof $viewname$$) {
+    throw Error('AppView.extend() requires a "viewName" to be passed as an option.');
+  }
+  return services.view.register($viewname$$, Vue.component($viewname$$, Vue.extend($options$$)));
+};
+view.Header = view.AppView.extend({viewname:"header"});
+view.Stage = view.AppView.extend({viewname:"stage"});
+view.Container = view.AppView.extend({viewname:"container", children:["header", "stage"]});
 services.router = {};
-var keyMatcher = /\/<(\w+)>/, routes = {resolved:[], dynamic:[]}, queues = {route:[], routed:[], error:[]}, Route, router;
+var ROUTES = {resolved:[], dynamic:[]}, _routeEvents = {route:[], routed:[], error:[]}, _findRoute, Route, router;
+_findRoute = function $_findRoute$($match_path$$, $request$$, $_routes$$) {
+  for (var $i$$0$$ = 0, $route$$, $matched$$, $response$$, $setParam$$ = function $$setParam$$$($key$$, $i$$) {
+    $request$$.params[$route$$.keys[$i$$]] = $key$$;
+  };($route$$ = $_routes$$[$i$$0$$++]) && $route$$.id <= $match_path$$;) {
+    if ($route$$.matcher.test($match_path$$)) {
+      $matched$$ = !0;
+      $match_path$$ = $match_path$$.match($route$$.matcher).slice(1);
+      $match_path$$.forEach($setParam$$);
+      $response$$ = $route$$.handler($request$$);
+      break;
+    }
+  }
+  return{matched:$matched$$, response:$response$$};
+};
 Route = function $Route$($path$$, $handler$$) {
   var $rt$$ = this;
   $rt$$.keys = [];
-  $rt$$.id = $path$$.replace(keyMatcher, function($_$$, $leading$$, $key$$) {
+  $rt$$.id = $path$$.replace(/\/<(\w+)>/, function($_$$, $leading$$, $key$$) {
     $rt$$.keys.push($key$$);
     return "/(\\w+)";
   });
-  $rt$$.matcher = new RegExp($rt$$.id);
+  $rt$$.matcher = new RegExp("^" + $rt$$.id + "$");
   $rt$$.handler = $handler$$;
   $rt$$.resolved = 0 === $rt$$.keys.length;
 };
 router = {register:function($path$$, $handler$$) {
   var $inserted$$ = !1, $route$$, $_route$$, $_routes$$, $i$$;
   $route$$ = new Route($path$$, $handler$$);
-  $_routes$$ = $route$$.resolved ? routes.resolved : routes.dynamic;
+  $_routes$$ = $route$$.resolved ? ROUTES.resolved : ROUTES.dynamic;
   if ($_routes$$.length) {
     for ($i$$ = 0;$i$$ < $_routes$$.length;$i$$++) {
       if ($_route$$ = $_routes$$[$i$$], !($_route$$.id < $route$$.id)) {
@@ -248,57 +284,47 @@ router = {register:function($path$$, $handler$$) {
     $_routes$$.push($route$$);
   }
 }, route:function($path$$, $request$$) {
-  var $matched$$ = !1, $findRoute$$, $_routes$$, $response$$0$$;
+  var $response$$;
   $request$$ = $request$$ || {};
   $request$$.params = $request$$.params || {};
-  queues.route.forEach(function($fn$$) {
+  _routeEvents.route.forEach(function($fn$$) {
     $fn$$($path$$, $request$$);
   });
-  $findRoute$$ = function $$findRoute$$$() {
-    for (var $i$$0$$ = 0, $setParam$$ = function $$setParam$$$($key$$, $i$$) {
-      $request$$.params[$route$$.keys[$i$$]] = $key$$;
-    }, $triggerRouted$$ = function $$triggerRouted$$$($fn$$) {
+  $response$$ = _findRoute($path$$, $request$$, ROUTES.resolved);
+  if ($response$$.matched) {
+    return $response$$ = $response$$.response, _routeEvents.routed.forEach(function($fn$$) {
       $fn$$($path$$, $request$$, $response$$);
-    }, $route$$, $response$$;($route$$ = $_routes$$[$i$$0$$++]) && $route$$.id < $path$$;) {
-      if ($route$$.matcher.test($path$$)) {
-        return $matched$$ = !0, $i$$0$$ = $path$$.match($route$$.matcher).slice(1), $i$$0$$.forEach($setParam$$), $response$$ = $route$$.handler($request$$), queues.routed.forEach($triggerRouted$$), 404 === $response$$.status ? ($response$$.path = $path$$, router.route("/404", $response$$)) : $response$$;
-      }
-    }
-  };
-  $_routes$$ = routes.resolved;
-  $response$$0$$ = $findRoute$$();
-  if ($matched$$) {
-    return $response$$0$$;
+    }), $response$$;
   }
-  $_routes$$ = routes.dynamic;
-  $response$$0$$ = $findRoute$$();
-  if ($matched$$) {
-    return $response$$0$$;
+  $response$$ = _findRoute($path$$, $request$$, ROUTES.dynamic);
+  if ($response$$.matched) {
+    return $response$$ = $response$$.response, _routeEvents.routed.forEach(function($fn$$) {
+      $fn$$($path$$, $request$$, $response$$);
+    }), $response$$;
   }
-  $response$$0$$ = {status:404};
-  queues.error.forEach(function($fn$$) {
-    $fn$$($path$$, $request$$, $response$$0$$);
+  $response$$ = {status:404};
+  _routeEvents.error.forEach(function($fn$$) {
+    $fn$$($path$$, $request$$, $response$$);
   });
-  return $response$$0$$;
+  return $response$$;
 }, on:function($event$$, $callback$$) {
-  queues[$event$$] || (queues[$event$$] = []);
-  queues[$event$$].push($callback$$);
+  _routeEvents[$event$$] || (_routeEvents[$event$$] = []);
+  _routeEvents[$event$$].push($callback$$);
 }, off:function($event$$, $callback$$) {
   var $i$$;
-  $callback$$ ? ($i$$ = queues[$event$$].indexOf($callback$$), -1 < $i$$ && queues[$event$$].splice($i$$, 1)) : queues[$event$$] = [];
-}, init:function($routes$$) {
-  for (var $k$$ in $routes$$) {
-    $routes$$.hasOwnProperty($k$$) && "function" === typeof $routes$$[$k$$] && router.register($k$$, $routes$$[$k$$]);
+  $callback$$ ? ($i$$ = _routeEvents[$event$$].indexOf($callback$$), -1 < $i$$ && _routeEvents[$event$$].splice($i$$, 1)) : _routeEvents[$event$$] = [];
+}, init:function($_routes$$) {
+  for (var $k$$ in $_routes$$) {
+    $_routes$$.hasOwnProperty($k$$) && "function" === typeof $_routes$$[$k$$] && router.register($k$$, $_routes$$[$k$$]);
   }
 }}.service("router");
-services.history = {};
-var history = {push:supports.history.html5 ? function($url$$, $state$$) {
+services.history = {push:supports.history.html5 ? function($url$$, $state$$) {
   window.history.pushState($state$$, "", $url$$);
 } : function($url$$, $state$$) {
 }, start:function() {
   var $hist$$ = this;
   $hist$$.router.on("routed", function($url$$, $request$$, $response$$) {
-    "history" !== $request$$.source && $hist$$.push($url$$, $request$$.state);
+    "history" !== $request$$.source && services.history.push($url$$, $request$$.state);
   });
   supports.history.html5 && (window.onpopstate = function $window$onpopstate$($event$$) {
     $hist$$.router.route(window.location.pathname, {source:"history", state:$event$$.state || {}});
@@ -313,7 +339,7 @@ var catnip = function($context$$, $data$$) {
   $context$$.session && $context$$.session.established && (this.session = $context$$.session.payload);
   $context$$.services && $context$$.protocol.rpc.enabled && this.rpc.init($context$$.services);
   $context$$.template.manifest && this.template.init($context$$.template.manifest);
-  this.router.init(ROUTES);
+  this.router.init(routes);
   this.history.start();
   this.graph.init($data$$);
   return this;

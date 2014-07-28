@@ -14,20 +14,54 @@ goog.require('services');
 
 goog.provide('services.router');
 
-var keyMatcher = /\/<(\w+)>/,
-
-  routes = {
+var ROUTES = {
     resolved: [],
     dynamic: []
   },
 
-  queues = {
+  _routeEvents = {
     route: [],
     routed: [],
     error: []
   },
 
-  Route, router;
+  _findRoute, Route, router;
+
+/**
+ * @param {string} path
+ * @param {Object} request
+ * @param {Array.<Route>} _routes
+ * @return {*}
+ */
+_findRoute = function (path, request, _routes) {
+  var i = 0,
+    route, matched, match, response,
+    /**
+     * @param {string} key
+     * @param {number} i
+     */
+    setParam = function (key, i) {
+      request.params[route.keys[i]] = key;
+    };
+
+  while ((route = _routes[i++]) && route.id <= path) {
+    if (route.matcher.test(path)) {
+      matched = true;
+
+      match = path.match(route.matcher).slice(1);
+      match.forEach(setParam);
+
+      response = route.handler(request);
+
+      break;
+    }
+  }
+
+  return {
+    matched: matched,
+    response: response
+  };
+};
 
 /**
  * @constructor
@@ -45,7 +79,7 @@ Route = function (path, handler) {
   /**
    * @type {string}
    */
-  rt.id = path.replace(keyMatcher, function (_, leading, key) {
+  rt.id = path.replace(/\/<(\w+)>/, function (_, leading, key) {
     rt.keys.push(key);
     return '/(\\w+)';
   });
@@ -53,7 +87,7 @@ Route = function (path, handler) {
   /**
    * @type {RegExp}
    */
-  rt.matcher = new RegExp(rt.id);
+  rt.matcher = new RegExp('^' + rt.id + '$');
 
   /**
    * @type {function(Object)}
@@ -78,7 +112,7 @@ router = /** @lends {Client.prototype.router} */ {
       route, _route, _routes, i;
 
     route = new Route(path, handler);
-    _routes = route.resolved ? routes.resolved : routes.dynamic;
+    _routes = route.resolved ? ROUTES.resolved : ROUTES.dynamic;
 
     if (!_routes.length) {
       _routes.push(route);
@@ -106,63 +140,44 @@ router = /** @lends {Client.prototype.router} */ {
    */
   route: function (path, request) {
     var matched = false,
-      findRoute, _routes, response;
+      findRoute, response;
 
     request = request || {};
     request.params = request.params || {};
 
-    queues.route.forEach(function (fn) {
+    _routeEvents.route.forEach(function (fn) {
       fn(path, request);
     });
 
-    findRoute = function () {
-      var i = 0,
-        setParam = function (key, i) {
-          request.params[route.keys[i]] = key;
-        },
-        triggerRouted = function (fn) {
-          fn(path, request, response);
-        },
-        route, match, response;
+    response = _findRoute(path, request, ROUTES.resolved);
 
-      while ((route = _routes[i++]) && route.id < path) {
-        if (route.matcher.test(path)) {
-          matched = true;
+    if (response.matched) {
+      response = response.response;
 
-          match = path.match(route.matcher).slice(1);
-          match.forEach(setParam);
+      _routeEvents.routed.forEach(function (fn) {
+        fn(path, request, response)
+      });
 
-          response = route.handler(request);
-
-          queues.routed.forEach(triggerRouted);
-
-          if (response.status === 404) {
-            response.path = path;
-            return router.route('/404', response);
-          }
-
-          return response;
-        }
-      }
-    };
-
-    _routes = routes.resolved;
-    response = findRoute();
-
-    if (matched)
       return response;
+    }
 
-    _routes = routes.dynamic;
-    response = findRoute();
+    response = _findRoute(path, request, ROUTES.dynamic);
 
-    if (matched)
+    if (response.matched) {
+      response = response.response;
+
+      _routeEvents.routed.forEach(function (fn) {
+        fn(path, request, response)
+      });
+
       return response;
+    }
 
     response = {
       status: 404
     };
 
-    queues.error.forEach(function (fn) {
+    _routeEvents.error.forEach(function (fn) {
       fn(path, request, response);
     });
 
@@ -175,10 +190,10 @@ router = /** @lends {Client.prototype.router} */ {
    * @param {function(string, Object=, Object=)} callback
    */
   on: function (event, callback) {
-    if (!queues[event])
-      queues[event] = [];
+    if (!_routeEvents[event])
+      _routeEvents[event] = [];
 
-    queues[event].push(callback);
+    _routeEvents[event].push(callback);
   },
 
   /**
@@ -189,22 +204,22 @@ router = /** @lends {Client.prototype.router} */ {
   off: function (event, callback) {
     var i;
     if (!callback) {
-      queues[event] = [];
+      _routeEvents[event] = [];
     } else {
-      i = queues[event].indexOf(callback);
+      i = _routeEvents[event].indexOf(callback);
       if (i > -1)
-        queues[event].splice(i, 1);
+        _routeEvents[event].splice(i, 1);
     }
   },
 
   /**
    * @expose
-   * @param {Object.<string, function(Object)>} routes
+   * @param {Object.<string, function(Object)>} _routes
    */
-  init: function (routes) {
-    for (var k in routes) {
-      if (routes.hasOwnProperty(k) && typeof routes[k] === 'function') {
-        router.register(k, routes[k]);
+  init: function (_routes) {
+    for (var k in _routes) {
+      if (_routes.hasOwnProperty(k) && typeof _routes[k] === 'function') {
+        router.register(k, _routes[k]);
       }
     }
   }

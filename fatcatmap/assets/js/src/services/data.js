@@ -13,7 +13,10 @@ goog.require('services');
 
 goog.provide('services.data');
 
-var data = /** @lends {Client.prototype.data} */ {
+/**
+ * @expose
+ */
+services.data = /** @lends {Client.prototype.data} */ {
   /**
    * @param {string|Object} raw Raw input.
    * @return {Object} Normalized data.

@@ -11,12 +11,16 @@
 
 goog.require('routes');
 goog.require('supports');
+
 goog.require('services');
 goog.require('services.router');
 goog.require('services.history');
 goog.require('services.template');
 goog.require('services.graph');
 goog.require('services.map');
+
+goog.require('view.Container');
+
 
 goog.provide('catnip');
 
@@ -27,31 +31,33 @@ goog.provide('catnip');
  * @return {Client}
  */
 var catnip = function (context, data) {
+  var fcm = this;
+
   /**
    * @expose
    * @type {JSContext}
    */
-  this._context = context;
+  fcm._context = context;
 
   /**
    * @expose
    * @type {?Object}
    */
-  this.session = null;
+  fcm.session = null;
 
   if (context.session && context.session.established)
-    this.session = context.session.payload;
+    fcm.session = context.session.payload;
 
   if (context.services && context.protocol.rpc.enabled)
-    this.rpc.init(context.services);
+    fcm.rpc.init(context.services);
 
   if (context.template.manifest)
-    this.template.init(context.template.manifest);
+    fcm.template.init(context.template.manifest);
 
-  this.router.init(ROUTES);
-  this.history.start();
+  fcm.router.init(routes);
+  fcm.history.start();
 
-  this.graph.init(data);
+  fcm.graph.init(data);
 
   return this;
 }.client();

@@ -15,9 +15,12 @@ goog.require('services.rpc');
 
 goog.provide('services.template');
 
-var _templates = {};
+var TEMPLATES = {};
 
-var template = /** @lends {Client.prototype.template} */ {
+/**
+ * @expose
+ */
+services.template = /** @lends {Client.prototype.template} */ {
   /**
    * @expose
    * @param {string} filename
@@ -26,7 +29,7 @@ var template = /** @lends {Client.prototype.template} */ {
    */
   put: function (filename, source) {
     if (typeof filename === 'string' && typeof source === 'string')
-      _templates[filename] = source;
+      TEMPLATES[filename] = source;
   },
 
   /**
@@ -42,8 +45,8 @@ var template = /** @lends {Client.prototype.template} */ {
           typeof callbacks.error === 'function'))
       throw new TypeError('template.get() requires a filename and CallbackMap.');
 
-    if (_templates[filename])
-      return callbacks.success({ data: _templates[filename] });
+    if (TEMPLATES[filename])
+      return callbacks.success({ data: TEMPLATES[filename] });
 
     return this.rpc.content.template({
       data: {
@@ -60,7 +63,7 @@ var template = /** @lends {Client.prototype.template} */ {
   init: function (manifest) {
     for (var k in manifest) {
       if (manifest.hasOwnProperty(k) && typeof manifest[k] === 'string')
-        template.put(k, manifest[k]);
+        services.template.put(k, manifest[k]);
     }
   }
 }.service('template');
