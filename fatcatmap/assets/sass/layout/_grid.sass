@@ -1,0 +1,17 @@
+@import "var/grid"
+@import "mixin/grid"
+
+.gridrow
+  position: relative
+  width: 100%
+
+  [class^="col"]
+    float: left
+    padding-left: $gutter-width
+
+    &:last-child
+      padding-right: $gutter-width
+
+  @for $i from 1 through 12
+    .col#{$i}
+      +column-span($i)

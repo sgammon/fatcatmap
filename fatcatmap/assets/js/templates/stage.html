@@ -1,6 +1,17 @@
-<div id="fcm-stage" class="stage" style="color: #eeeeee">
-  <h2>i am stage</h2>
-  <p>current route: {{ page.route }}</p>
-  <p>
-    <a href="/beta">go to beta</a>
+<div id="fcm-stage" class="stage" style="color: #eeeeee" v-with="page">
+  <div id="fcm-main" class="main hl-row">
+
+    <div class="col8" style="background-color: rgba(255,255,255,0.1)">
+      <h2>i am stage</h2>
+      <p>current route: {{ route }}</p>
+    </div>
+
+    <div class="col4">
+      <p>
+        <a href="/beta" v-if="route !== '/beta'">go to beta</a>
+        <a href="/" v-if="route === '/beta'">go home</a>
+      </p>
+    </div>
+
+  </div>
 </div>

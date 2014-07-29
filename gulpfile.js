@@ -50,7 +50,7 @@ var path = require('path'),
 inputs = {
   img: ASSET_PREFIX + 'img/**/*.{png,jpg,gif}',
   less: ASSET_PREFIX + 'less/**/*.less',
-  sass: ASSET_PREFIX + 'sass/**/*.sass',
+  sass: ASSET_PREFIX + 'sass/catnip.sass',
   js: {
     app: ASSET_PREFIX + 'js/src/**/*.js',
     lib: ASSET_PREFIX + 'js/lib/**/*.js',
@@ -134,7 +134,6 @@ config = {
       outputStyle: 'compressed',
       includePaths: [ASSET_PREFIX + 'sass/'],
     },
-    main: 'catnip.sass',
     output: outputs.css + '/catnip.css'
   },
 
@@ -295,7 +294,7 @@ task('closure', ['closure:min']);
 task('closure:all', ['closure:min', 'closure:debug', 'closure:pretty']);
 
 // Build templates
-task('templates:build', function (cb) {
+task('templates', function (cb) {
   var sh = spawn('bin/fcm', ['build', '--templates'], {stdio: 'inherit'})
     .on('exit', function () {
       sh = null;

@@ -1,1 +1,1 @@
-body{margin:50px;}.container{transition:opacity 0.3s ease;}.container.v-enter,.container.v-leave{opacity:0;}
+.container{transition:opacity 0.3s ease;}.container.v-enter,.container.v-leave{opacity:0;}.main{margin:0 auto;background-color:rgba(255, 255, 255, 0.1);}

@@ -6,6 +6,8 @@ var routes = {"/":function(a) {
 }, "/login":function(a) {
 }, "/settings":function(a) {
 }, "/beta":function(a) {
+  console.log("request: ");
+  console.log(a);
   this.catnip.app.$set("active", !0);
   this.catnip.app.$set("page.route", "/beta");
   return null;
@@ -366,7 +368,7 @@ views.Container = Vue.extend({data:{page:{route:"/"}, active:!1}, methods:{onCli
   a.stopPropagation();
   services.router.route(b);
 }}, services:services});
-services.view.register("container", views.Container);
+services.view.put("container", views.Container);
 views.Header = views.AppView.extend({viewname:"header", replace:!0});
 views.Stage = views.AppView.extend({viewname:"stage", replace:!0});
 var _ready, _go, catnip;
