@@ -12,6 +12,6 @@
     &:last-child
       padding-right: $gutter-width
 
-  @for $i from 1 through 12
+  @for $i from 1 through $columns
     .col#{$i}
       +column-span($i)
