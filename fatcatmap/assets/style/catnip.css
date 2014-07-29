@@ -1,0 +1,1 @@
+body{margin:50px;}.container{transition:opacity 0.3s ease;}.container.v-enter,.container.v-leave{opacity:0;}

@@ -9,21 +9,36 @@
  * copyright (c) momentum labs, 2014
  */
 
-goog.require('services');
-goog.require('services.template');
-goog.require('views.AppView');
+goog.require('services.router');
+goog.require('services.view');
 
 goog.provide('views.Container');
 
 /**
  * @constructor
- * @extends {views.AppView}
- * @param {VueOptions=} options
+ * @extends {Vue}
+ * @param {VueOptions} options
  */
-views.Container = views.AppView.extend({
-  /**
-   * @expose
-   * @type {string}
-   */
-  viewname: 'container'
+views.Container = Vue.extend({
+  data: {
+    page: {
+      route: '/'
+    },
+    active: false
+  },
+  methods: {
+    /**
+     * @expose
+     * @param {MouseEvent} e
+     */
+    onClick: function (e) {
+      var route = e.target.getAttribute('href');
+      e.preventDefault();
+      e.stopPropagation();
+      services.router.route(route);
+    }
+  },
+  services: services
 });
+
+services.view.put('container', views.Container)

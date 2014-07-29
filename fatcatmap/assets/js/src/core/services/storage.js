@@ -10,6 +10,7 @@
  */
 
 goog.require('supports');
+goog.require('services');
 
 goog.provide('services.storage');
 
@@ -85,16 +86,14 @@ StringStore = function (backend) {
 /**
  * @expose
  */
-services.storage = {
+services.storage = /** @lends {Client.prototype.storage} */{
   /**
    * @type {?StringStore}
-   * @expose
    */
   local: supports.storage.local ? new StringStore(window.localStorage) : null,
 
   /**
-   * @expose
    * @type {?StringStore}
    */
   session: supports.storage.session ? new StringStore(window.sessionStorage) : null
-};
+}.service('storage');

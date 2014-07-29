@@ -11,6 +11,7 @@
 
 goog.require('async');
 goog.require('urlutil');
+goog.require('services');
 goog.require('services.http');
 
 goog.provide('services.rpc');
@@ -20,6 +21,7 @@ var _baseURL = '/_rpc/v1/',
 
 /**
  * @constructor
+ * @extends {Client}
  * @param {string} name
  * @param {Array.<string>} methods
  * @param {Object=} config
@@ -37,6 +39,7 @@ RPCAPI = function (name, methods, config) {
     /**
      * @param {Request} request
      * @param {CallbackMap=} handlers
+     * @this {Client}
      */
     api[method] = function (request, handlers) {
       var req = {
@@ -49,8 +52,8 @@ RPCAPI = function (name, methods, config) {
       req.headers['Accept'] = 'application/json';
       req.headers['Content-Type'] = 'application/json';
 
-      return services.http.post(req, handlers)
-    };
+      return this.http.post(req, handlers)
+    }.client();
 
   });
 };
@@ -59,11 +62,10 @@ RPCAPI = function (name, methods, config) {
 /**
  * @expose
  */
-services.rpc = {
+services.rpc = /** @lends {Client.prototype.rpc} */{
 
   /**
    * @param {Array} manifest
-   * @expose
    */
   factory: function (manifest) {
     var name = manifest[0];
@@ -72,9 +74,8 @@ services.rpc = {
 
   /**
    * @param {Array} manifests
-   * @expose
    */
   init: function (manifests) {
     manifests.forEach(services.rpc.factory);
   }
-};
+}.service('rpc');

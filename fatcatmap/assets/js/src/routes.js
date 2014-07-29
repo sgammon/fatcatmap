@@ -15,9 +15,12 @@ var routes = {
   /**
    * @param {Object} request
    * @return {?Object}
+   * @this {Client}
    */
   '/': function (request) {
-
+    this.catnip.app.$set('active', true)
+    this.catnip.app.$set('page.route', '/');
+    return null;
   },
 
   /**
@@ -39,9 +42,12 @@ var routes = {
   /**
    * @param {Object} request
    * @return {?Object}
+   * @this {Client}
    */
-  '/dev': function (request) {
-
+  '/beta': function (request) {
+    this.catnip.app.$set('active', true)
+    this.catnip.app.$set('page.route', '/beta');
+    return null;
   },
 
   /**

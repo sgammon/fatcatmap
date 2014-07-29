@@ -1,5 +1,5 @@
 /**
- * @fileoverview Imports service as a directory.
+ * @fileoverview Core service injection.
  *
  * @author  David Rekow <david@momentum.io>,
  *          Sam Gammon <sam@momentum.io>,
@@ -8,10 +8,6 @@
  * 
  * copyright (c) momentum labs, 2014
  */
-
-goog.require('services.rpc');
-goog.require('services.http');
-goog.require('services.storage');
 
 goog.provide('services');
 
@@ -47,10 +43,11 @@ Function.prototype.client = function (methods) {
 /**
  * @expose
  * @param {string} name Service name.
+ * @param {Object.<string, function(...)>=} methods
  * @return {function(...)}
  */
-Function.prototype.service = function (name) {
-  Client.prototype[name] = this.client();
+Function.prototype.service = function (name, methods) {
+  Client.prototype[name] = this.client(methods);
   return Client.prototype[name];
 };
 
@@ -86,7 +83,7 @@ Object.defineProperty(Object.prototype, 'service', {
 /**
  * @expose
  * @param {string} name Service name.
- * @return {Object.<string, function(this:Client)>}
+ * @return {Object.<string, (function(this:Client)|Object.<string, function(this:Client)>)>}
  * @throws {Error|TypeError}
  */
 Object.prototype.service;

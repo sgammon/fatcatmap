@@ -11,6 +11,7 @@
 
 goog.require('async');
 goog.require('urlutil');
+goog.require('services');
 
 goog.provide('services.http');
 
@@ -133,7 +134,7 @@ _parseResponse = function (response) {
 /**
  * @expose
  */
-services.http = {
+services.http = /** @lends {Client.prototype.http} */{
   /**
    * @param {Request} request
    * @param {CallbackMap=} handlers If not passed, executes synchronously.
@@ -165,7 +166,6 @@ services.http = {
    * @param {Request} request
    * @param {CallbackMap=} handlers If not passed, executes synchronously.
    * @return {XMLHttpRequest|Response} XHR, or response if no handlers were passed.
-   * @expose
    */
   post: function (request, handlers) {
     return _dispatch('POST', request, handlers);
@@ -184,7 +184,6 @@ services.http = {
    * @param {Request} request
    * @param {CallbackMap=} handlers If not passed, executes synchronously.
    * @return {XMLHttpRequest|Response} XHR, or response if no handlers were passed.
-   * @expose
    */
   patch: function (request, handlers) {
     return _dispatch('PATCH', request, handlers);
@@ -198,4 +197,4 @@ services.http = {
   options: function (request, handlers) {
     return _dispatch('OPTIONS', request, handlers);
   }
-};
+}.service('http');

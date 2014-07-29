@@ -26,6 +26,7 @@
     <!-- stylesheets -->
     {%- block stylesheets %}
     <link rel="stylesheet" href="/assets/style/themes/scaffold/home.css" type="text/css">
+    <link rel="stylesheet" href="/assets/style/catnip.css" type="text/css">
     <link rel="stylesheet" href="//cloud.typography.com/6717292/775624/css/fonts.css" type="text/css">
     {% endblock %}
 
@@ -95,7 +96,7 @@
       <script id="js-context" type="application/json">{{ js_context|json|safe }}</script><!-- end #js-context -->
       {% if js_context.pagedata -%}<script id="js-data" type="application/json">{{ pagedata|json|safe }}</script><!-- end #js-data -->{%- endif %}
       {% if config.assets.config.serving_mode != "cdn" -%}
-        <script type="text/javascript" nonce="{{ nonce.script }}" src="{{ asset.script("compiled/app.js") }}"></script>
+        <script type="text/javascript" nonce="{{ nonce.script }}" src="{{ asset.script("compiled/app.min.js") }}"></script>
       {%- endif %}
       {%- endblock south %}
 

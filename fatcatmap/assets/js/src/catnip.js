@@ -16,10 +16,13 @@ goog.require('services');
 goog.require('services.router');
 goog.require('services.history');
 goog.require('services.template');
+goog.require('services.view');
 goog.require('services.graph');
 goog.require('services.map');
 
 goog.require('views.Container');
+goog.require('views.Header');
+goog.require('views.Stage');
 
 
 goog.provide('catnip');
@@ -39,56 +42,70 @@ _go = function () {
 };
 
 /**
- * @param {JSContext} context
- * @param {PageData} data
- * @this {Client}
- * @return {Client}
+ * @expose
  */
-catnip = function (context, data) {
-  var fcm = this;
-
+catnip = services.catnip = /** @lends {Client.prototype.catnip} */{
   /**
-   * @expose
-   * @type {JSContext}
+   * @param {JSContext} context
+   * @param {PageData} data
+   * @this {Client}
+   * @return {Client}
    */
-  fcm._context = context;
+  init: function (context, data) {
+    var fcm = this;
 
-  /**
-   * @expose
-   * @type {?Object}
-   */
-  fcm.session = null;
+    /**
+     * @type {JSContext}
+     */
+    fcm._context = context;
 
-  if (context.session && context.session.established)
-    fcm.session = context.session.payload;
+    /**
+     * @type {?Object}
+     */
+    fcm.session = null;
 
-  if (context.services && context.protocol.rpc.enabled)
-    fcm.rpc.init(context.services);
+    /**
+     * @type {?Vue}
+     */
+    fcm.app = null;
 
-  if (context.template.manifest)
-    fcm.template.init(context.template.manifest);
+    if (context.session && context.session.established)
+      fcm.session = context.session.payload;
 
-  fcm.view.init('container', function () {
-    _go();
-  });
+    if (context.services && context.protocol.rpc.enabled)
+      fcm.rpc.init(context.services);
 
-  fcm.router.init(routes, function (initialRoute) {
-    
-    fcm.ready(function () {
-      
-      fcm.history.start();
+    if (context.template.manifest)
+      fcm.template.init(context.template.manifest);
 
-      // if (initialRoute)
-      //   fcm.router.route(initialRoute);
+    fcm.view.init('container', /** @this {Vue} */function () {
+      services.catnip.app = this;
+      _go();
     });
-  });
 
-  fcm.graph.init(data);
+    fcm.router.init(routes, function (initialRoute) {
+      
+      fcm.catnip.ready(function () {
 
-  return this;
-}.client(/** @lends {catnip} */{
+        fcm.history.init();
+
+        if (initialRoute)
+          return fcm.router.route(initialRoute);
+
+        fcm.router.route('/beta');
+      });
+    });
+
+    fcm.graph.init(data);
+
+    services.catnip.init = function () {
+      return fcm;
+    };
+
+    return this;
+  },
+
   /**
-   * @expose
    * @param {function()} cb
    */
   ready: function (cb) {
@@ -100,4 +117,5 @@ catnip = function (context, data) {
 
     _ready.push(cb);
   }
-});
+
+}.service('catnip');

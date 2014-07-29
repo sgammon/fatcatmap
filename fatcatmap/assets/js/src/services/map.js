@@ -19,7 +19,6 @@ goog.provide('services.map');
  */
 services.map = /** @lends {Client.prototype.map} */ {
   /**
-   * @expose
    * @this {Client}
    */
   draw: function () {

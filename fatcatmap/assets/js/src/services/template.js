@@ -23,7 +23,6 @@ var TEMPLATES = {};
  */
 services.template = /** @lends {Client.prototype.template} */ {
   /**
-   * @expose
    * @param {string} filename
    * @param {string} source
    * @this {Client}
@@ -34,7 +33,6 @@ services.template = /** @lends {Client.prototype.template} */ {
   },
 
   /**
-   * @expose
    * @param {string} filename
    * @param {CallbackMap} callbacks
    * @throws {TypeError} If either param is missing.
@@ -55,7 +53,15 @@ services.template = /** @lends {Client.prototype.template} */ {
   },
 
   /**
-   * @expose
+   * @param {string} filename
+   * @return {boolean}
+   * @this {Client}
+   */
+  has: function (filename) {
+    return !!TEMPLATES[filename];
+  },
+
+  /**
    * @param {Object.<string, string>} manifest
    * @this {Client}
    */

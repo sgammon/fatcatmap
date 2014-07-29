@@ -16,12 +16,18 @@ goog.provide('views.Stage');
 /**
  * @constructor
  * @extends {views.AppView}
- * @param {VueOptions=} options
+ * @param {VueOptions} options
  */
 views.Stage = views.AppView.extend({
   /**
    * @expose
    * @type {string}
    */
-  viewname: 'stage'
+  viewname: 'stage',
+
+  /**
+   * @expose
+   * @type {boolean}
+   */
+  replace: true
 });

@@ -30,8 +30,9 @@ services.history = /** @lends {Client.prototype.history} */ {
 
   /**
    * @expose
+   * @this {Client}
    */
-  start: function () {
+  init: function () {
     var hist = this;
 
     hist.router.on('routed', function (url, request, response) {
@@ -50,7 +51,7 @@ services.history = /** @lends {Client.prototype.history} */ {
       };
     }
 
-    hist.start = function () {
+    hist.init = function () {
       throw new Error('History already started');
     };
   }

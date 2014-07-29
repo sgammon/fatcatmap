@@ -1,4 +1,4 @@
-<div id="fcm-container" v-cloak>
+<div id="fcm-container" class="container" v-on="click: onClick" v-if="active" v-transition>
   <div v-component="header"></div>
   <div v-component="stage"></div>
 </div>

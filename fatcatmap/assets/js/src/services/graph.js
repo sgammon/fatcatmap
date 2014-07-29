@@ -19,7 +19,6 @@ goog.provide('services.graph');
  */
 services.graph = /** @lends {Client.prototype.graph} */ {
   /**
-   * @expose
    * @param {Object|PageData} raw Raw data to initialize with.
    * @return {Object} Constructed graph object.
    * @this {Client}
@@ -29,7 +28,6 @@ services.graph = /** @lends {Client.prototype.graph} */ {
   },
 
   /**
-   * @expose
    * @param {Object} data Normalized dataset.
    * @return {Object} Graph object.
    * @this {Client}

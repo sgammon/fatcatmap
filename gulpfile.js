@@ -1,5 +1,6 @@
 var path = require('path'),
   less = require('less-stream'),
+  sass = require('sass-stream'),
   closure = require('closure-compiler-stream'),
   gulp = require('gulp'),
   rmrf = require('gulp-rimraf'),
@@ -49,6 +50,7 @@ var path = require('path'),
 inputs = {
   img: ASSET_PREFIX + 'img/**/*.{png,jpg,gif}',
   less: ASSET_PREFIX + 'less/**/*.less',
+  sass: ASSET_PREFIX + 'sass/**/*.sass',
   js: {
     app: ASSET_PREFIX + 'js/src/**/*.js',
     lib: ASSET_PREFIX + 'js/lib/**/*.js',
@@ -124,6 +126,16 @@ config = {
         modifyVars: { theme: 'scaffold' }
       }
     }
+  },
+
+  // Sass
+  sass: {
+    compileOptions: {
+      outputStyle: 'compressed',
+      includePaths: [ASSET_PREFIX + 'sass/'],
+    },
+    main: 'catnip.sass',
+    output: outputs.css + '/catnip.css'
   },
 
   // Closure Compiler
@@ -231,8 +243,18 @@ task('less:scaffold', function () {
     .pipe(dest(outputs.themes.scaffold));
 });
 
+// Compile sass
+task('sass', function (cb) {
+  src(inputs.sass)
+    .pipe(sass(config.sass));
+  cb();
+});
+
+// Overarching style task
+task('style', ['less', 'sass']);
+
 // Clean compiled css files
-task('less:clean', function () {
+task('style:clean', function () {
   return src(outputs.css + '/*')
     .pipe(rmrf());
 });
@@ -310,6 +332,7 @@ task('serve', function (cb) {
 // Watch assets & recompile on change
 task('watch', function (cb) {
   watch(inputs.less, ['less']);
+  watch(inputs.sass, ['sass']);
   watch(inputs.templates, ['templates:build']);
   watch(inputs.js.app, ['closure:pretty'])
   cb();
@@ -351,6 +374,7 @@ task('default', [
 // Develop task
 task('dev', [
   'less',
+  'sass',
   'closure:pretty',
   'watch',
   'serve'
@@ -359,13 +383,14 @@ task('dev', [
 // Release task
 task('release', [
   'less',
+  'sass',
   'closure:min',
   'test:release'
 ]);
 
 // Clean task
 task('clean', [
-  'less:clean',
+  'style:clean',
   'closure:clean',
   'templates:clean'
 ]);

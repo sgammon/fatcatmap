@@ -20,8 +20,11 @@ var ROUTES = {
   },
 
   _routeEvents = {
+    /** @expose */
     route: [],
+    /** @expose */
     routed: [],
+    /** @expose */
     error: []
   },
 
@@ -51,7 +54,7 @@ _findRoute = function (path, request, _routes) {
       match = path.match(route.matcher).slice(1);
       match.forEach(setParam);
 
-      response = route.handler(request);
+      response = route.handler.call(new Client(), request);
 
       break;
     }
@@ -105,7 +108,6 @@ Route = function (path, handler) {
  */
 services.router = /** @lends {Client.prototype.router} */ {
   /**
-   * @expose
    * @param {string} path
    * @param {function(Object)} handler
    */
@@ -136,7 +138,6 @@ services.router = /** @lends {Client.prototype.router} */ {
   },
 
   /**
-   * @expose
    * @param {string} path
    * @param {Object=} request
    */
@@ -187,7 +188,6 @@ services.router = /** @lends {Client.prototype.router} */ {
   },
 
   /**
-   * @expose
    * @param {string} event
    * @param {function(string, Object=, Object=)} callback
    */
@@ -199,7 +199,6 @@ services.router = /** @lends {Client.prototype.router} */ {
   },
 
   /**
-   * @expose
    * @param {string} event
    * @param {function (string, Object=, Object=)=} callback
    */
@@ -215,14 +214,14 @@ services.router = /** @lends {Client.prototype.router} */ {
   },
 
   /**
-   * @expose
    * @param {Object.<string, function(Object)>} _routes
    * @param {function(string=)=} handleInitial
+   * @this {Client}
    */
   init: function (_routes, handleInitial) {
     for (var k in _routes) {
       if (_routes.hasOwnProperty(k) && typeof _routes[k] === 'function') {
-        router.register(k, _routes[k]);
+        this.router.register(k, _routes[k]);
       }
     }
 

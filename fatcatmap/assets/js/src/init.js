@@ -17,4 +17,5 @@ goog.provide('init');
 /**
  * @expose
  */
-window.catnip_beta = catnip(config.context, config.data);
+window.catnip_beta = catnip.init(config.context, config.data);
+

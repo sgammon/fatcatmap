@@ -10,8 +10,6 @@
  * @externs
  */
 
-/** @typedef {Object} */
-var ViewModel;
 
 /** @typedef {Object} */
 var VueOptions;
@@ -85,11 +83,11 @@ VueOptions.transitions;
 /** @type {boolean} */
 VueOptions.lazy;
 
-/** @type {ViewModel} */
+/** @type {Vue} */
 VueOptions.parent;
 
 /**
- * @constructs {ViewModel}
+ * @constructor
  * @param {VueOptions=} options
  */
 var Vue = function(options) {}
@@ -110,7 +108,7 @@ Vue.prototype.$data;
 Vue.prototype.$options;
 
 /**
- * @type {ViewModel}
+ * @type {Vue}
  */
 Vue.prototype.$;
 
@@ -120,12 +118,12 @@ Vue.prototype.$;
 Vue.prototype.$index;
 
 /**
- * @type {ViewModel}
+ * @type {Vue}
  */
 Vue.prototype.$parent;
 
 /**
- * @type {ViewModel}
+ * @type {Vue}
  */
 Vue.prototype.$root;
 
@@ -216,7 +214,7 @@ Vue.prototype.$destroy = function () {};
 /**
  * @static
  * @param {VueOptions} options
- * @return {ViewModel}
+ * @return {function(new:Vue, VueOptions)}
  */
 Vue.extend = function(options) {};
 
@@ -224,7 +222,7 @@ Vue.extend = function(options) {};
  * @static
  * @param {Object|string} key
  * @param {*} value
- * @return {ViewModel}
+ * @return {Vue}
  */
 Vue.config = function(key, value) {};
 

@@ -104,7 +104,7 @@ config = cfg.Config(app={
 
     'servers': {
 
-      'default': 'sandbox' if __debug__ else 'local',
+      'default': 'local',
 
       # Redis Instances
       'local': {'host': '127.0.0.1', 'port': 6379},

@@ -16,12 +16,18 @@ goog.provide('views.Header');
 /**
  * @constructor
  * @extends {views.AppView}
- * @param {VueOptions=} options
+ * @param {VueOptions} options
  */
 views.Header = views.AppView.extend({
   /**
    * @expose
    * @type {string}
    */
-  viewname: 'header'
+  viewname: 'header',
+
+  /**
+   * @expose
+   * @type {boolean}
+   */
+  replace: true
 });

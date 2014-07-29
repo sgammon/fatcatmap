@@ -1,8 +1,14 @@
 (function() {
 var routes = {"/":function(a) {
+  this.catnip.app.$set("active", !0);
+  this.catnip.app.$set("page.route", "/");
+  return null;
 }, "/login":function(a) {
 }, "/settings":function(a) {
-}, "/dev":function(a) {
+}, "/beta":function(a) {
+  this.catnip.app.$set("active", !0);
+  this.catnip.app.$set("page.route", "/beta");
+  return null;
 }, "/404":function(a) {
 }, "/<key>":function(a) {
 }, "/<key1>/and/<key2>":function(a) {
@@ -23,6 +29,38 @@ var toArray = function(a) {
   throw new TypeError("Invalid document query string.");
 };
 var config = {context:JSON.parse($("#js-context").textContent || "{}"), data:JSON.parse($("#js-data").textContent || "{}")};
+var services = {}, Client = function(a) {
+  if (a) {
+    for (var b in a) {
+      a.hasOwnProperty(b) && (this[b] = a[b]);
+    }
+  }
+};
+Client.prototype = services;
+Function.prototype.client = function(a) {
+  var b = this;
+  return function() {
+    return b.apply(new Client(a), arguments);
+  };
+};
+Function.prototype.service = function(a, b) {
+  Client.prototype[a] = this.client(b);
+  return Client.prototype[a];
+};
+Object.defineProperty(Object.prototype, "service", {value:function(a) {
+  var b;
+  if (!a || "string" !== typeof a) {
+    throw new TypeError("service() requires a string name.");
+  }
+  if (this.constructor !== Object) {
+    throw Error("service() can only be invoked on native objects.");
+  }
+  for (var c in this) {
+    this.hasOwnProperty(c) && (b = this[c], b instanceof Function && (this[c] = b.client()));
+  }
+  Client.prototype[a] = this;
+  return Client.prototype[a];
+}});
 var supports = {cookies:navigator.cookieEnabled, retina:2 == window.devicePixelRatio, workers:!!window.Worker, sharedWorkers:!!window.SharedWorker, sockets:!!window.WebSocket, sse:!!window.EventSource, geo:!!navigator.geolocation, touch:0 < navigator.maxTouchPoints, history:{html5:!!window.history.pushState, hash:!!window.onhashchange}, storage:{local:!!window.localStorage, session:!!window.sessionStorage, indexed:!!window.IDBFactory}};
 var urlutil = {addParams:function(a, b) {
   var c = !0;
@@ -70,7 +108,16 @@ var urlutil = {addParams:function(a, b) {
   }
   return d.join("/");
 }};
-var services = {}, Request, Response, _prepareRequest, _dispatch, _parseResponse;
+services.data = {normalize:function(a) {
+}}.service("data");
+services.graph = {init:function(a) {
+  return this.graph.construct(this.data.normalize(a));
+}, construct:function(a) {
+  return{};
+}}.service("graph");
+services.map = {draw:function() {
+}}.service("map");
+var Request, Response, _prepareRequest, _dispatch, _parseResponse;
 _prepareRequest = function(a, b, c) {
   var d = new XMLHttpRequest, e;
   e = b.params ? urlutil.addParams(b.url, b.params) : b.url;
@@ -125,125 +172,7 @@ services.http = {get:function(a, b) {
   return _dispatch("PATCH", a, b);
 }, options:function(a, b) {
   return _dispatch("OPTIONS", a, b);
-}};
-var _baseURL = "/_rpc/v1/", RPCAPI;
-RPCAPI = function(a, b, c) {
-  var d = this;
-  d.name = a;
-  d.config = c;
-  b.forEach(function(a) {
-    var b = urlutil.join(_baseURL, d.name + "." + a);
-    d[a] = function(a, c) {
-      var d = {url:b, data:a.data || {}, params:a.params || {}, headers:a.headers || {}};
-      d.headers.Accept = "application/json";
-      d.headers["Content-Type"] = "application/json";
-      return services.http.post(d, c);
-    };
-  });
-};
-services.rpc = {factory:function(a) {
-  var b = a[0];
-  services.rpc[b] = new RPCAPI(b, a[1], a[2]);
-}, init:function(a) {
-  a.forEach(services.rpc.factory);
-}};
-var StringStore, _serialize, _deserialize;
-_serialize = function(a) {
-  return "string" === typeof a ? a : null == a ? "" : "object" === typeof a ? JSON.stringify(a) : String(a);
-};
-_deserialize = function(a) {
-  var b = a.charAt(0);
-  return "{" === b || "[" === b ? JSON.parse(a) : a ? "true" === a || "false" === a ? Boolean(a) : /^[0-9]+$/.test(a) ? +a : a : "" === a ? a : null;
-};
-StringStore = function(a) {
-  this.get = function(b) {
-    return _deserialize(a.getItem(b) || "");
-  };
-  this.put = function(b, c) {
-    a.setItem(b, _serialize(c));
-  };
-  this.del = function(b) {
-    a.removeItem(b);
-  };
-};
-services.storage = {local:supports.storage.local ? new StringStore(window.localStorage) : null, session:supports.storage.session ? new StringStore(window.sessionStorage) : null};
-var Client = function(a) {
-  if (a) {
-    for (var b in a) {
-      a.hasOwnProperty(b) && (this[b] = a[b]);
-    }
-  }
-};
-Client.prototype = services;
-Function.prototype.client = function(a) {
-  var b = this;
-  return function() {
-    return b.apply(new Client(a), arguments);
-  };
-};
-Function.prototype.service = function(a) {
-  Client.prototype[a] = this.client();
-  return Client.prototype[a];
-};
-Object.defineProperty(Object.prototype, "service", {value:function(a) {
-  var b;
-  if (!a || "string" !== typeof a) {
-    throw new TypeError("service() requires a string name.");
-  }
-  if (this.constructor !== Object) {
-    throw Error("service() can only be invoked on native objects.");
-  }
-  for (var c in this) {
-    this.hasOwnProperty(c) && (b = this[c], b instanceof Function && (this[c] = b.client()));
-  }
-  Client.prototype[a] = this;
-  return Client.prototype[a];
-}});
-services.data = {normalize:function(a) {
-}}.service("data");
-services.graph = {init:function(a) {
-  return this.graph.construct(this.data.normalize(a));
-}, construct:function(a) {
-  return{};
-}}.service("graph");
-services.map = {draw:function() {
-}}.service("map");
-var TEMPLATES = {};
-services.template = {put:function(a, b) {
-  "string" === typeof a && "string" === typeof b && (TEMPLATES[a] = b);
-}, get:function(a, b) {
-  if ("string" !== typeof a || "function" !== typeof b.success || "function" !== typeof b.error) {
-    throw new TypeError("template.get() requires a filename and CallbackMap.");
-  }
-  return TEMPLATES[a] ? b.success({data:TEMPLATES[a]}) : this.rpc.content.template({data:{path:a}}, b);
-}, init:function(a) {
-  for (var b in a) {
-    a.hasOwnProperty(b) && "string" === typeof a[b] && services.template.put(b, a[b]);
-  }
-}}.service("template");
-var VIEWS = {};
-services.view = {register:function(a, b) {
-  if ("string" !== typeof a || "function" !== typeof b) {
-    throw new TypeError("services.view.register() takes a string name and constructor.");
-  }
-  return VIEWS[a] = b;
-}, get:function(a) {
-  if ("string" !== typeof a) {
-    throw new TypeError("services.view.get() takes a string name.");
-  }
-  return VIEWS[a];
-}, init:function(a) {
-}}.service("view");
-var views = {};
-views.AppView = Vue.extend({});
-views.AppView.extend = function(a) {
-  var b = a.viewname;
-  if (!b || "string" !== typeof b) {
-    throw Error('AppView.extend() requires a "viewname" option to be passed.');
-  }
-  return services.view.register(b, Vue.component(b, Vue.extend(a)));
-};
-views.Container = views.AppView.extend({viewname:"container"});
+}}.service("http");
 var ROUTES = {resolved:[], dynamic:[]}, _routeEvents = {route:[], routed:[], error:[]}, _findRoute, Route, router;
 _findRoute = function(a, b, c) {
   for (var d = 0, e, f, g, h = function(a, c) {
@@ -253,7 +182,7 @@ _findRoute = function(a, b, c) {
       f = !0;
       a = a.match(e.matcher).slice(1);
       a.forEach(h);
-      g = e.handler(b);
+      g = e.handler.call(new Client, b);
       break;
     }
   }
@@ -318,14 +247,14 @@ services.router = {register:function(a, b) {
   b ? (c = _routeEvents[a].indexOf(b), -1 < c && _routeEvents[a].splice(c, 1)) : _routeEvents[a] = [];
 }, init:function(a, b) {
   for (var c in a) {
-    a.hasOwnProperty(c) && "function" === typeof a[c] && router.register(c, a[c]);
+    a.hasOwnProperty(c) && "function" === typeof a[c] && this.router.register(c, a[c]);
   }
   b && b(window.location.pathname.split("?").shift());
 }}.service("router");
 services.history = {push:supports.history.html5 ? function(a, b) {
   window.history.pushState(b, "", a);
 } : function(a, b) {
-}, start:function() {
+}, init:function() {
   var a = this;
   a.router.on("routed", function(a, c, d) {
     "history" !== c.source && services.history.push(a, c.state);
@@ -333,10 +262,113 @@ services.history = {push:supports.history.html5 ? function(a, b) {
   supports.history.html5 && (window.onpopstate = function(b) {
     a.router.route(window.location.pathname, {source:"history", state:b.state || {}});
   });
-  a.start = function() {
+  a.init = function() {
     throw Error("History already started");
   };
 }}.service("history");
+var _baseURL = "/_rpc/v1/", RPCAPI;
+RPCAPI = function(a, b, c) {
+  var d = this;
+  d.name = a;
+  d.config = c;
+  b.forEach(function(a) {
+    var b = urlutil.join(_baseURL, d.name + "." + a);
+    d[a] = function(a, c) {
+      var d = {url:b, data:a.data || {}, params:a.params || {}, headers:a.headers || {}};
+      d.headers.Accept = "application/json";
+      d.headers["Content-Type"] = "application/json";
+      return this.http.post(d, c);
+    }.client();
+  });
+};
+services.rpc = {factory:function(a) {
+  var b = a[0];
+  services.rpc[b] = new RPCAPI(b, a[1], a[2]);
+}, init:function(a) {
+  a.forEach(services.rpc.factory);
+}}.service("rpc");
+var TEMPLATES = {};
+services.template = {put:function(a, b) {
+  "string" === typeof a && "string" === typeof b && (TEMPLATES[a] = b);
+}, get:function(a, b) {
+  if ("string" !== typeof a || "function" !== typeof b.success || "function" !== typeof b.error) {
+    throw new TypeError("template.get() requires a filename and CallbackMap.");
+  }
+  return TEMPLATES[a] ? b.success({data:TEMPLATES[a]}) : this.rpc.content.template({data:{path:a}}, b);
+}, has:function(a) {
+  return!!TEMPLATES[a];
+}, init:function(a) {
+  for (var b in a) {
+    a.hasOwnProperty(b) && "string" === typeof a[b] && services.template.put(b, a[b]);
+  }
+}}.service("template");
+var VIEWS = {}, getSelfAndChildren = function(a, b) {
+  var c = a.replace(".", "/") + ".html";
+  services.template.get(c, {success:function(d) {
+    var e = [], f = d.data.replace(/v-component=("|')(\w+)\1/g, function(a, b, c) {
+      e.push(c);
+      return a;
+    }), g = e.length;
+    VIEWS[a] && (VIEWS[a].options.template = f);
+    services.template.put(c, f);
+    if (0 === g) {
+      return b();
+    }
+    e.forEach(function(a) {
+      getSelfAndChildren(a, function() {
+        g -= 1;
+        0 === g && b(f);
+      });
+    });
+  }, error:function(a) {
+    b(!1, a);
+  }});
+};
+services.view = {put:function(a, b) {
+  if ("string" !== typeof a || "function" !== typeof b) {
+    throw new TypeError("services.view.put() takes a string name and constructor.");
+  }
+  return VIEWS[a] = b;
+}, get:function(a) {
+  if ("string" !== typeof a) {
+    throw new TypeError("services.view.get() takes a string name.");
+  }
+  return VIEWS[a];
+}, init:function(a, b) {
+  var c = services.view.get(a);
+  if (!c) {
+    throw Error("view.init() cannot be called with unregistered view " + a);
+  }
+  getSelfAndChildren(a, function(d) {
+    document.body.innerHTML = "";
+    d && (c.options.template = d);
+    services.view.put(a, c);
+    d = new c({ready:b, el:"body"});
+    window.__ROOTVIEW = d;
+  });
+}}.service("view");
+window.__VIEWS = VIEWS;
+var views = {};
+views.AppView = Vue.extend({});
+views.AppView.extend = function(a) {
+  var b = a.viewname.toLowerCase();
+  if (!b || "string" !== typeof b) {
+    throw Error('AppView.extend() requires a "viewname" option to be passed.');
+  }
+  a = Vue.extend(a);
+  services.view.put(b, a);
+  Vue.component(b, a);
+  return a;
+};
+views.Container = Vue.extend({data:{page:{route:"/"}, active:!1}, methods:{onClick:function(a) {
+  var b = a.target.getAttribute("href");
+  a.preventDefault();
+  a.stopPropagation();
+  services.router.route(b);
+}}, services:services});
+services.view.register("container", views.Container);
+views.Header = views.AppView.extend({viewname:"header", replace:!0});
+views.Stage = views.AppView.extend({viewname:"stage", replace:!0});
 var _ready, _go, catnip;
 _ready = [];
 _go = function() {
@@ -346,32 +378,41 @@ _go = function() {
     a();
   });
 };
-catnip = function(a, b) {
+catnip = services.catnip = {init:function(a, b) {
   var c = this;
   c._context = a;
   c.session = null;
+  c.app = null;
   a.session && a.session.established && (c.session = a.session.payload);
   a.services && a.protocol.rpc.enabled && c.rpc.init(a.services);
   a.template.manifest && c.template.init(a.template.manifest);
   c.view.init("container", function() {
+    services.catnip.app = this;
     _go();
   });
   c.router.init(routes, function(a) {
-    c.ready(function() {
-      c.history.start();
+    c.catnip.ready(function() {
+      c.history.init();
+      if (a) {
+        return c.router.route(a);
+      }
+      c.router.route("/beta");
     });
   });
   c.graph.init(b);
+  services.catnip.init = function() {
+    return c;
+  };
   return this;
-}.client({ready:function(a) {
+}, ready:function(a) {
   if (a) {
     if (!_ready) {
       return a();
     }
     _ready.push(a);
   }
-}});
+}}.service("catnip");
 var init = {};
-window.catnip_beta = catnip(config.context, config.data);
+window.catnip_beta = catnip.init(config.context, config.data);
 
 })();

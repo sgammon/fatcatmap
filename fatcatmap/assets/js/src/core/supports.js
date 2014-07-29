@@ -54,7 +54,7 @@ var supports = /** @struct */{
   touch: navigator.maxTouchPoints > 0,
 
   /**
-   * @type {{html5: boolean, hash: boolean}}
+   * @type {Object.<{html5: boolean, hash: boolean}>}
    */
   history: {
     html5: !!window.history.pushState,
@@ -62,7 +62,7 @@ var supports = /** @struct */{
   },
 
   /**
-   * @type {{local: boolean, session: boolean, indexed: boolean}}
+   * @type {Object.<{local: boolean, session: boolean, indexed: boolean}>}
    */
   storage: {
     local: !!window.localStorage,
