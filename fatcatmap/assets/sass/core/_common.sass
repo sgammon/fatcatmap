@@ -1,5 +1,10 @@
+@import "var/font"
+@import "var/color"
 @import "mixin/transition"
 @import "mixin/animation"
+
+$logo-size: 3em
+$logo-slant: 45deg
 
 .hidden
   display: none
@@ -22,3 +27,15 @@
     font-size: 2.2em
     text-align: center
     opacity: 0.75
+
+.fcm-logo
+  z-index: 1000
+  position: fixed
+  text-rendering: geometricPrecision
+  font-family: $font-family-heading
+  font-weight: $font-weight-heading
+  color: transparent
+  background: linear-gradient($logo-slant, $logo-gradient-start, $logo-gradient-end)
+  -webkit-background-clip: text
+  -webkit-text-fill-color: transparent
+  -webkit-font-smoothing: subpixel-antialiased
