@@ -23,11 +23,17 @@ var VIEWS = {},
     services.template.get(filename, {
       success: function (resp) {
         var children = [],
-          source = resp.data.replace(/v-component=("|')(\w+)\1/g, function (_, __, childname) {
-            children.push(childname);
-            return _;
-          }),
-          count = children.length;
+          source, count;
+
+        if (typeof resp.data !== 'string')
+          return cb(false, resp);
+
+        source = resp.data.replace(/v-component=("|')(\w+)\1/g, function (_, __, childname) {
+          children.push(childname);
+          return _;
+        });
+
+        count = children.length;
 
         if (VIEWS[viewname])
           VIEWS[viewname].options.template = source;

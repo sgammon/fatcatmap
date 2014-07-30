@@ -20,10 +20,8 @@ goog.require('services.view');
 goog.require('services.graph');
 goog.require('services.map');
 
-goog.require('views.Container');
-goog.require('views.Header');
-goog.require('views.Stage');
-
+goog.require('views.Page');
+goog.require('views.Map');
 
 goog.provide('catnip');
 
@@ -78,7 +76,8 @@ catnip = services.catnip = /** @lends {Client.prototype.catnip} */{
     if (context.template.manifest)
       fcm.template.init(context.template.manifest);
 
-    fcm.view.init('container', /** @this {Vue} */function () {
+    fcm.view.init('page', /** @this {Vue} */function () {
+      this.$set('active', true);
       services.catnip.app = this;
       _go();
     });
@@ -95,8 +94,6 @@ catnip = services.catnip = /** @lends {Client.prototype.catnip} */{
         fcm.router.route('/beta');
       });
     });
-
-    fcm.graph.init(data);
 
     services.catnip.init = function () {
       return fcm;

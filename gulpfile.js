@@ -332,7 +332,7 @@ task('serve', function (cb) {
 task('watch', function (cb) {
   watch(inputs.less, ['less']);
   watch(inputs.sass, ['sass']);
-  watch(inputs.templates, ['templates:build']);
+  watch(inputs.templates, ['templates']);
   watch(inputs.js.app, ['closure:pretty'])
   cb();
 });
@@ -374,6 +374,7 @@ task('default', [
 task('dev', [
   'less',
   'sass',
+  'templates',
   'closure:pretty',
   'watch',
   'serve'

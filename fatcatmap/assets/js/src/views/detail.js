@@ -1,5 +1,5 @@
 /**
- * @fileoverview View for the fcm stage.
+ * @fileoverview Node detail view.
  *
  * @author  David Rekow <david@momentum.io>,
  *          Sam Gammon <sam@momentum.io>,
@@ -11,35 +11,17 @@
 
 goog.require('views.AppView');
 
-goog.provide('views.Stage');
+goog.provide('views.Detail');
 
 /**
  * @constructor
  * @extends {views.AppView}
  * @param {VueOptions} options
  */
-views.Stage = views.AppView.extend({
+views.Detail = views.AppView.extend({
   /**
    * @expose
    * @type {string}
    */
-  viewname: 'stage',
-
-  /**
-   * @expose
-   * @type {boolean}
-   */
-  replace: true,
-
-  /**
-   * @expose
-   * @type {Object}
-   */
-  data: {
-    /**
-     * @expose
-     * @type {boolean}
-     */
-    active: true
-  }
+  viewname: 'detail'
 });

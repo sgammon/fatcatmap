@@ -33,6 +33,6 @@ services.graph = /** @lends {Client.prototype.graph} */ {
    * @this {Client}
    */
   construct: function (data) {
-    return {};
+    return data;
   }
 }.service('graph');

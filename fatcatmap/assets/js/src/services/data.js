@@ -22,6 +22,13 @@ services.data = /** @lends {Client.prototype.data} */ {
    * @return {Object} Normalized data.
    */
   normalize: function (raw) {
-
+    if (typeof raw === 'string') {
+      try {
+        raw = JSON.parse(raw);
+      } catch (e) {
+        raw = {};
+      }
+    }
+    return raw;
   }
 }.service('data');

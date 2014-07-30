@@ -1,5 +1,5 @@
 /**
- * @fileoverview View for the fcm stage.
+ * @fileoverview Map view.
  *
  * @author  David Rekow <david@momentum.io>,
  *          Sam Gammon <sam@momentum.io>,
@@ -10,26 +10,21 @@
  */
 
 goog.require('views.AppView');
+goog.require('views.Detail');
 
-goog.provide('views.Stage');
+goog.provide('views.Map');
 
 /**
  * @constructor
  * @extends {views.AppView}
  * @param {VueOptions} options
  */
-views.Stage = views.AppView.extend({
+views.Map = views.AppView.extend({
   /**
    * @expose
    * @type {string}
    */
-  viewname: 'stage',
-
-  /**
-   * @expose
-   * @type {boolean}
-   */
-  replace: true,
+  viewname: 'map',
 
   /**
    * @expose
@@ -40,6 +35,26 @@ views.Stage = views.AppView.extend({
      * @expose
      * @type {boolean}
      */
-    active: true
+    active: true,
+
+    /**
+     * @expose
+     * @type {?Object}
+     */
+    selected: null
+  },
+
+  /**
+   * @expose
+   * @type {Object}
+   */
+  methods: {
+    /**
+     * @expose
+     * @param {MouseEvent} e
+     */
+    toggleDetail: function (e) {
+      
+    }
   }
 });

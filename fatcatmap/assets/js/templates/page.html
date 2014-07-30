@@ -1,0 +1,6 @@
+<div id="page" class="page container" v-on="click: route" v-if="active" v-transition>
+  <div v-component="header"></div>
+  <div v-component="stage"></div>
+</div>
+
+<section v-component="modal" v-with="modal" v-if="modal" v-ref="modal" v-transition></section>

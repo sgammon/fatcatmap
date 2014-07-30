@@ -18,7 +18,6 @@ var routes = {
    * @this {Client}
    */
   '/': function (request) {
-    this.catnip.app.$set('active', true)
     this.catnip.app.$set('page.route', '/');
     return null;
   },
@@ -45,7 +44,6 @@ var routes = {
    * @this {Client}
    */
   '/beta': function (request) {
-    this.catnip.app.$set('active', true)
     this.catnip.app.$set('page.route', '/beta');
     return null;
   },

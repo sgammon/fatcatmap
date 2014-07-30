@@ -1,5 +1,5 @@
 /**
- * @fileoverview View for the fcm stage.
+ * @fileoverview Modal view.
  *
  * @author  David Rekow <david@momentum.io>,
  *          Sam Gammon <sam@momentum.io>,
@@ -11,25 +11,19 @@
 
 goog.require('views.AppView');
 
-goog.provide('views.Stage');
+goog.provide('views.Modal');
 
 /**
  * @constructor
  * @extends {views.AppView}
  * @param {VueOptions} options
  */
-views.Stage = views.AppView.extend({
+views.Modal = views.AppView.extend({
   /**
    * @expose
    * @type {string}
    */
-  viewname: 'stage',
-
-  /**
-   * @expose
-   * @type {boolean}
-   */
-  replace: true,
+  viewname: 'modal',
 
   /**
    * @expose
@@ -40,6 +34,12 @@ views.Stage = views.AppView.extend({
      * @expose
      * @type {boolean}
      */
-    active: true
+    active: false,
+
+    /**
+     * @expose
+     * @type {string}
+     */
+    message: ''
   }
 });

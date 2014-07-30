@@ -1,0 +1,12 @@
+<svg id='catnip' class='transparent svg mapper viewport' version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink= "http://www.w3.org/1999/xlink">
+    <defs>
+        <filter id="blur-3p"><feGaussianBlur stdDeviation="3"/></filter>
+        <filter id="blur-5p"><feGaussianBlur stdDeviation="5"/></filter>
+        <filter id="blur-8p"><feGaussianBlur stdDeviation="8"/></filter>
+        <clipPath id='node-circle-mask'clipPathUnits="userSpaceOnUse"><circle r="20" cx="30" cy="30"></circle></clipPath>
+    </defs>
+
+    <svg id='map' class='transparent' v-if="active" v-on="click : toggleDetail" v-transition></svg>
+</svg>
+
+<section id="map_detail" v-component="detail" v-with="selected" v-if="selected" v-ref="detail" v-transition></section>

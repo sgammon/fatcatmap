@@ -1,4 +1,5 @@
 @import "mixin/layout"
+@import "core/transition"
 
 $node-fill: #ddd
 $node-stroke: #ddd
@@ -7,12 +8,12 @@ $node-stroke-width: 4px
 $democrat-stroke: #1A6CAC
 $republican-stroke: #AB1820
 
-
-.map
+#map
   +fillbox
   z-index: 500
+  +v-fade-in()
 
-.catnip
+#catnip
   +stretchbox
 
 // Nodes/edges
@@ -51,3 +52,5 @@ svg svg, .node,
 
 .senate
   stroke-width: $node-stroke-width * 2.25
+
+@import "component/detail"

@@ -1,5 +1,5 @@
 /**
- * @fileoverview Top-level view manager - root of the client app.
+ * @fileoverview Top-level page manager - root of the client app.
  *
  * @author  David Rekow <david@momentum.io>,
  *          Sam Gammon <sam@momentum.io>,
@@ -11,34 +11,64 @@
 
 goog.require('services.router');
 goog.require('services.view');
+goog.require('views.Modal');
+goog.require('views.Stage');
+goog.require('views.Header');
 
-goog.provide('views.Container');
+goog.provide('views.Page');
 
 /**
  * @constructor
  * @extends {Vue}
  * @param {VueOptions} options
  */
-views.Container = Vue.extend({
+views.Page = Vue.extend({
+  /**
+   * @expose
+   * @type {Object}
+   */
   data: {
+    /**
+     * @expose
+     * @type {Object}
+     */
     page: {
+      /**
+       * @expose
+       * @type {string}
+       */
       route: '/'
     },
-    active: false
+
+    /**
+     * @expose
+     * @type {boolean}
+     */
+    active: false,
+
+    /**
+     * @expose
+     * @type {?Object}
+     */
+    modal: null
   },
+
+  /**
+   * @expose
+   * @type {Object}
+   */
   methods: {
     /**
      * @expose
      * @param {MouseEvent} e
      */
-    onClick: function (e) {
+    route: function (e) {
       var route = e.target.getAttribute('href');
       e.preventDefault();
       e.stopPropagation();
       services.router.route(route);
     }
-  },
-  services: services
+  }
 });
 
-services.view.put('container', views.Container)
+services.view.put('page', views.Page);

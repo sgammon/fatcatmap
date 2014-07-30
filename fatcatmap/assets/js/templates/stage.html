@@ -1,17 +1,10 @@
-<div id="fcm-stage" class="stage" style="color: #eeeeee" v-with="page">
-  <div id="fcm-main" class="main hl-row">
+<section id="stage" class="stage" v-ref="stage">
 
-    <div class="col8" style="background-color: rgba(255,255,255,0.1)">
-      <h2>i am stage</h2>
-      <p>current route: {{ route }}</p>
-    </div>
+  <section class="main">
 
-    <div class="col4">
-      <p>
-        <a href="/beta" v-if="route !== '/beta'">go to beta</a>
-        <a href="/" v-if="route === '/beta'">go home</a>
-      </p>
-    </div>
+    <section id="mapper" v-if="active" v-transition>
+      <div v-component="map" v-ref="map"></div>
+    </section>
 
-  </div>
-</div>
+  </section>
+</section>

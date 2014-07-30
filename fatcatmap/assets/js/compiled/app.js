@@ -1,14 +1,10 @@
 (function() {
 var routes = {"/":function(a) {
-  this.catnip.app.$set("active", !0);
   this.catnip.app.$set("page.route", "/");
   return null;
 }, "/login":function(a) {
 }, "/settings":function(a) {
 }, "/beta":function(a) {
-  console.log("request: ");
-  console.log(a);
-  this.catnip.app.$set("active", !0);
   this.catnip.app.$set("page.route", "/beta");
   return null;
 }, "/404":function(a) {
@@ -111,11 +107,19 @@ var urlutil = {addParams:function(a, b) {
   return d.join("/");
 }};
 services.data = {normalize:function(a) {
+  if ("string" === typeof a) {
+    try {
+      a = JSON.parse(a);
+    } catch (b) {
+      a = {};
+    }
+  }
+  return a;
 }}.service("data");
 services.graph = {init:function(a) {
   return this.graph.construct(this.data.normalize(a));
 }, construct:function(a) {
-  return{};
+  return a;
 }}.service("graph");
 services.map = {draw:function() {
 }}.service("map");
@@ -307,10 +311,15 @@ services.template = {put:function(a, b) {
 var VIEWS = {}, getSelfAndChildren = function(a, b) {
   var c = a.replace(".", "/") + ".html";
   services.template.get(c, {success:function(d) {
-    var e = [], f = d.data.replace(/v-component=("|')(\w+)\1/g, function(a, b, c) {
+    var e = [], f, g;
+    if ("string" !== typeof d.data) {
+      return b(!1, d);
+    }
+    f = d.data.replace(/v-component=("|')(\w+)\1/g, function(a, b, c) {
       e.push(c);
       return a;
-    }), g = e.length;
+    });
+    g = e.length;
     VIEWS[a] && (VIEWS[a].options.template = f);
     services.template.put(c, f);
     if (0 === g) {
@@ -362,15 +371,19 @@ views.AppView.extend = function(a) {
   Vue.component(b, a);
   return a;
 };
-views.Container = Vue.extend({data:{page:{route:"/"}, active:!1}, methods:{onClick:function(a) {
+views.Detail = views.AppView.extend({viewname:"detail"});
+views.Header = views.AppView.extend({viewname:"header", replace:!0});
+views.Map = views.AppView.extend({viewname:"map", data:{active:!0, selected:null}, methods:{toggleDetail:function(a) {
+}}});
+views.Modal = views.AppView.extend({viewname:"modal", data:{active:!1, message:""}});
+views.Stage = views.AppView.extend({viewname:"stage", replace:!0, data:{active:!0}});
+views.Page = Vue.extend({data:{page:{route:"/"}, active:!1, modal:null}, methods:{route:function(a) {
   var b = a.target.getAttribute("href");
   a.preventDefault();
   a.stopPropagation();
   services.router.route(b);
-}}, services:services});
-services.view.put("container", views.Container);
-views.Header = views.AppView.extend({viewname:"header", replace:!0});
-views.Stage = views.AppView.extend({viewname:"stage", replace:!0});
+}}});
+services.view.put("page", views.Page);
 var _ready, _go, catnip;
 _ready = [];
 _go = function() {
@@ -388,7 +401,8 @@ catnip = services.catnip = {init:function(a, b) {
   a.session && a.session.established && (c.session = a.session.payload);
   a.services && a.protocol.rpc.enabled && c.rpc.init(a.services);
   a.template.manifest && c.template.init(a.template.manifest);
-  c.view.init("container", function() {
+  c.view.init("page", function() {
+    this.$set("active", !0);
     services.catnip.app = this;
     _go();
   });
@@ -401,7 +415,6 @@ catnip = services.catnip = {init:function(a, b) {
       c.router.route("/beta");
     });
   });
-  c.graph.init(b);
   services.catnip.init = function() {
     return c;
   };
