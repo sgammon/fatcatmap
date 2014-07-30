@@ -1,11 +1,9 @@
-@import "var/grid"
-@import "layout/grid"
+@import "core/transition"
+@import "core/common"
+@import "component/map"
 
 .container
-  transition: opacity .3s ease
-
-  &.v-enter, &.v-leave
-    opacity: 0
+  +v-fade-in(0.3s)
 
 .main
   margin: 0 auto

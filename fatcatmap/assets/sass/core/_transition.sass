@@ -1,0 +1,8 @@
+@import "var/transition"
+@import "mixin/transition"
+
+=v-fade-in($t: $transition-duration, $ease: $transition-ease)
+  +v-transition(opacity, 0, $t, $ease)
+
+=v-fade-out($t: $transition-duration, $ease: $transition-ease)
+  +v-transition(opacity, 1, $t, $ease)

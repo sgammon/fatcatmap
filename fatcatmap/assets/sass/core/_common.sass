@@ -1,0 +1,24 @@
+@import "mixin/transition"
+@import "mixin/animation"
+
+.hidden
+  display: none
+
+.transparent
+  opacity: 0 !important
+
+.fcm-pre
+  font-family: "fcm"
+  speak: none
+  text-transform: none
+  text-rendering: geometricPrecision
+  -webkit-font-smoothing: antialiased
+  +transition-property(color, opacity)
+  +transition-duration(0.3s)
+
+  &.loading.spinner
+    display: inline-block
+    +animation(rotate, 0.5s linear infinite)
+    font-size: 2.2em
+    text-align: center
+    opacity: 0.75

@@ -1,0 +1,22 @@
+@import "var/transition"
+
+=transition($transitions...)
+  transition: $transitions
+  -webkit-transition: $transitions
+
+
+=v-transition($prop, $initial, $t: $transition-duration, $ease: $transition-ease)
+  +transition($prop $t $ease)
+
+  &.v-enter, &.v-leave
+    #{$prop}: $initial
+
+
+=transition-property($props...)
+  transition-property: $props
+  -webkit-transition-property: $props
+
+
+=transition-duration($t: $transition-duration)
+  transition-duration: $t
+  -webkit-transition-duration: $t

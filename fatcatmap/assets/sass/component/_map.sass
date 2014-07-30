@@ -1,0 +1,53 @@
+@import "mixin/layout"
+
+$node-fill: #ddd
+$node-stroke: #ddd
+$node-stroke-width: 4px
+
+$democrat-stroke: #1A6CAC
+$republican-stroke: #AB1820
+
+
+.map
+  +fillbox
+  z-index: 500
+
+.catnip
+  +stretchbox
+
+// Nodes/edges
+circle
+  stroke-linecap: butt
+  stroke-rendering: crispEdges
+
+svg svg, .node,
+  cursor: pointer
+
+.node
+  fill: $node-fill
+  stroke: $node-stroke
+  stroke-opacity: .8
+  stroke-width: $node-stroke-width
+
+.node-group
+  &.legislator
+    circle
+      stroke-width: $node-stroke-width * 1.5
+
+    &.democrat
+      circle
+        stroke: $democrat-stroke
+
+    &.republican
+      circle
+        stroke: $republican-stroke
+
+.link
+  cursor: pointer
+  stroke-opacity: .6
+
+.congress
+  stroke-width: $node-stroke-width * 1.75
+
+.senate
+  stroke-width: $node-stroke-width * 2.25
