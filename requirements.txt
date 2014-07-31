@@ -4,4 +4,4 @@ uwsgi
 fabtools
 fabric
 dogapi
-msgpack
+msgpack-python
