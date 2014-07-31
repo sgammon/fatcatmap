@@ -28,7 +28,6 @@ from fatcatmap import logic
 from fatcatmap import pages
 from fatcatmap import services
 from fatcatmap import templates
-from fatcatmap import companion
 
 # preload all the things
 from fatcatmap.logic import *
