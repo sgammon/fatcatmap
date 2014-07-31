@@ -310,7 +310,7 @@ def load_environment():
     from jinja2 import compiler
     compiler.CodeGenerator.visit_Template = _visit_template_shim
 
-    return core.TemplateAPI().environment(base.Handler(), config)
+    return core.Templates().environment(base.Handler(), config)
 
 
 def run(module=None, sources=None, target=None):
