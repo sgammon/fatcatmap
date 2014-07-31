@@ -304,7 +304,7 @@ def load_environment():
 
     # base + core
     from canteen.base import handler as base
-    from canteen.core.api import template as core
+    from canteen.logic import template as core
 
     # compiler monkeypatch
     from jinja2 import compiler
