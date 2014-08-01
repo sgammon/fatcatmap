@@ -48,7 +48,7 @@ def create(n=1, region=settings.REGION, environment=environment, group=group):
   env.d = Deploy(environment, group, region)
   env.d.deploy_many(n)
 
-  print colors.yellow("Waiting for %s to finish provisioning..." % 'instances' if n > 1 else 'instance')
+  print colors.yellow("Waiting for %s to finish provisioning..." % ('instances' if n > 1 else 'instance'))
   time.sleep(30)
   nodes(environment, group)
 
