@@ -95,7 +95,7 @@ def compile_file(env, src_path, dst_path, encoding='utf-8', base_dir='', as_modu
                "so %s%s can't exist as a template." % (name, name, ext))
 
     # Save to the destination.
-    mkdir_p(os.path.join(*tuple(dst_path.split('/')[0:-1])))
+    mkdir_p('/' + os.path.join(*tuple(dst_path.split('/')[0:-1])))
     dst_file = open(dst_path, 'w')
     dst_file.write(raw)
     dst_file.close()
