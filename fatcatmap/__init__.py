@@ -193,8 +193,8 @@ class Page(RawPage):
 
 ## == preload all the things! == ##
 from .config import *
-from .models import *
 from .logic import *
+from .models import *
 from .pages import *
 from .services import *
 

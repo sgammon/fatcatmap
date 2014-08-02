@@ -8,8 +8,22 @@
 
 # stdlib
 import abc
+import json
+
+# redis
+try:
+  import redis
+except:
+  redis = False
+
+# msgpack
+try:
+  import msgpack
+except:
+  msgpack = False
 
 # canteen
+from canteen.model import adapter
 from canteen.model.adapter import redis
 from canteen.model.adapter import abstract
 from canteen.model.adapter import inmemory
@@ -171,7 +185,11 @@ class WarehouseAdapter(abstract.GraphModelAdapter):
 
 class InMemoryWarehouse(WarehouseAdapter, inmemory.InMemoryAdapter):
 
-  '''  '''
+  ''' In-memory implementation of the fcm-proprietary abstract
+      ``WarehouseAdapter``. Mostly used for testing against a
+      simple, known-good API. '''
+
+  is_supported = classmethod(lambda cls: True)  # always supported
 
   ## +=+=+ Graph Methods +=+=+ ##
   def edges(self, key1, key2=None, type=None, **kwargs):
@@ -211,10 +229,27 @@ class InMemoryWarehouse(WarehouseAdapter, inmemory.InMemoryAdapter):
 
     raise NotImplemented('`memory` graph support not yet implemented.')
 
+  def hint(self, subject, data=None, **kwargs):
+
+    ''' Retrieve graph ``Hint`` objects for a given ``subject`` key,
+        or store a ``Hint`` if ``data`` is provided, in memory. '''
+
+    raise NotImplemented('`memory` graph support not yet implemented.')
+
+  def connect(cls, key1, key2, edge, **kwargs):
+
+    ''' Connect two objects (expressed as ``key1`` and ``key2``) as
+        ``Vertexes`` by an ``Edge`` in memory. '''
+
+    raise NotImplemented('`memory` graph support not yet implemented.')
+
 
 class DatastoreWarehouse(WarehouseAdapter):
 
-  '''  '''
+  ''' Google Cloud Datastore-based implementation of the abstract
+      ``WarehouseAdapter``. '''
+
+  is_supported = classmethod(lambda cls: False)  # disabled, for now (@TODO(sgammon))
 
   ## +=+=+ Graph Methods +=+=+ ##
   def edges(self, key1, key2=None, type=None, **kwargs):
@@ -254,10 +289,35 @@ class DatastoreWarehouse(WarehouseAdapter):
 
     raise NotImplemented('`Datastore` graph support not yet implemented.')
 
+  def hint(self, subject, data=None, **kwargs):
+
+    ''' Retrieve graph ``Hint`` objects for a given ``subject`` key,
+        or store a ``Hint`` if ``data`` is provided, in the Datastore. '''
+
+    raise NotImplemented('`Datastore` graph support not yet implemented.')
+
+  def connect(cls, key1, key2, edge, **kwargs):
+
+    ''' Connect two objects (expressed as ``key1`` and ``key2``) as
+        ``Vertexes`` by an ``Edge`` in the Datastore. '''
+
+    raise NotImplemented('`Datastore` graph support not yet implemented.')
+
 
 class RedisWarehouse(WarehouseAdapter, redis.RedisAdapter):
 
-  '''  '''
+  ''' Redis-backed implementation of the fcm-proprietary abstract
+      ``WarehouseAdapter``. Powered by Canteen's builtin Redis
+      driver. '''
+
+  is_supported = classmethod(lambda cls: redis)
+
+  class EngineConfig(redis.RedisAdapter.EngineConfig):
+
+    ''' Configuration for the `RedisWarehouse` engine. '''
+
+    serializer = msgpack or json
+    mode = redis.RedisMode.hashkey_blob
 
   ## +=+=+ Graph Methods +=+=+ ##
   def edges(self, key1, key2=None, type=None, **kwargs):
@@ -296,3 +356,25 @@ class RedisWarehouse(WarehouseAdapter, redis.RedisAdapter):
         key, optionally filtered by ``type``, from Redis. '''
 
     raise NotImplemented('`Redis` graph support not yet implemented.')
+
+  def hint(self, subject, data=None, **kwargs):
+
+    ''' Retrieve graph ``Hint`` objects for a given ``subject`` key,
+        or store a ``Hint`` if ``data`` is provided, in Redis. '''
+
+    raise NotImplemented('`Redis` graph support not yet implemented.')
+
+  def connect(cls, key1, key2, edge, **kwargs):
+
+    ''' Connect two objects (expressed as ``key1`` and ``key2``) as
+        ``Vertexes`` by an ``Edge`` in Redis. '''
+
+    raise NotImplemented('`Redis` graph support not yet implemented.')
+
+
+# install adapters
+adapter.concrete += [
+  InMemoryWarehouse,
+  DatastoreWarehouse,
+  RedisWarehouse
+]

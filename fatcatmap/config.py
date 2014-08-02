@@ -25,6 +25,7 @@ _custom_jinja2_extensions = filter(lambda x: x is not None, [HamlishExtension if
 app = os.path.dirname(__file__)
 project = os.path.dirname(app)
 
+
 config = cfg.Config(app={
 
   'name': 'fatcatmap',
@@ -104,7 +105,21 @@ config = cfg.Config(app={
 
     'servers': {
 
-      'default': 'sandbox' if __debug__ else 'local',
+      'default': 'local',
+
+      # Redis Instances
+      'local': {'host': '127.0.0.1', 'port': 6379},
+      'sandbox': {'host': '10.0.5.5', 'port': 6379}
+    }
+  },
+
+  ## - Redis
+  'RedisWarehouse': {
+    'debug': True,
+
+    'servers': {
+
+      'default': 'local',
 
       # Redis Instances
       'local': {'host': '127.0.0.1', 'port': 6379},
