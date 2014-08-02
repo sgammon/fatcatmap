@@ -84,35 +84,60 @@ class GCENode(object):
     self.group = self.metadata.get('group')
     self.environment = self.metadata.get('environment')
 
-  def _targetpool_name(self):
+
+  @property
+  def healthcheck_name(self):
+    ''' returns the name for a groups healthcheck '''
+    return "check-" + self.group
+
+  @property
+  def targetpool_name(self):
+
     '''Helper function to return unique name for targetpool / LB '''
 
     name = (self.environment, '_', self.group, '_', self.driver.zone.name)
     return "".join(name).replace('_', '-')  # make the name safe for google
 
-  def _targetpool_create(self):
+  def healthcheck_create(self):
 
-    '''  '''
+    ''' creates and returns a healthcheck for this pool'''
 
-    return self.driver.ex_create_targetpool(self._targetpool_name())
+    return self.driver.ex_create_healthcheck(self.healthcheck_name,host="fatcatmap.org",port="80")
+
+  def targetpool_create(self):
+
+    ''' creates a targetpool and adds the appropriate healthcheck '''
+    healthcheck = self.healthcheck_get()
+    pool = self.driver.ex_create_targetpool(self.targetpool_name,healthchecks=[healthcheck])
+    return pool
+
+  def healthcheck_get(self):
+
+    ''' returns a healthcheck object creating one if it doesn't exist '''
+
+    try:
+      return self.driver.ex_get_healthcheck(self.healthcheck_name)
+    except ResourceNotFoundError:
+      print("healthcheck for group %s not found, creating...." % (self.group) )
+      return self.healthcheck_create()
 
   def targetpool_get(self):
 
-    '''  '''
+    ''' returns a targetpool object creating one if it doesnt exist '''
 
-    name = self._targetpool_name()
     try:
-      return self.driver.ex_get_targetpool(name)
+      return self.driver.ex_get_targetpool(self.targetpool_name)
     except ResourceNotFoundError:
       print("targetpool not found, creating....")
-    return self._targetpool_create()
+      return self.targetpool_create()
 
   def targetpool_add(self):
 
-    '''  '''
+    ''' adds node to targetpool  '''
 
     pool = self.targetpool_get()
     self.driver.ex_targetpool_add_node(pool, self.node)
+    self.driver.ex_targetpool_add_healthcheck(pool,self.healthcheck_get())
 
   def targetpool_remove(self):
 
