@@ -289,14 +289,14 @@ draw = @['draw'] = @['catnip']['graph']['draw'] = (_graph) =>
       # line tick callback
       line_tick = (direction, point, edge_data, edge_i) =>
         if config['origin']['snap']
-          if edge_data[direction]['index'] == graph.origin
+          if edge_data[direction]['index'] == _graph.origin
             return Math.floor(config['origin']['position'][point])
         return Math.floor(edge_data[direction][point] + (config['node']['radius'] / 2))
 
       # node tick callback
       node_tick = (point, node_data, node_i) =>
         if config['origin']['snap']
-          if node_i == graph.origin
+          if node_i == _graph.origin
             return Math.floor(config['origin']['position'][point] - (config['sprite'][point == 'x' and 'width' or 'height']) / 2)
         return Math.floor(node_data[point] - config['node']['radius'])
 
@@ -322,18 +322,18 @@ draw = @['draw'] = @['catnip']['graph']['draw'] = (_graph) =>
       return force.nodes(g['nodes']).links(g['edges']).start() or force
 
     console.log 'Drawing graph...', _graph
-    _load_graph = () => _load(graph)
+    _load_graph = () => _load(_graph)
     return setTimeout(_load_graph, 150)
 
   # ~~ incremental draw: graph's already here bruh ~~ #
-  console.log 'Incremental draw...', graph
+  console.log 'Incremental draw...', _graph
 
   _incremental_draw = () =>
 
     # redraws for now get rid of the current grapher
     @['catnip']['ui']['hide'](@['map']);
     @['catnip']['el']['map'].textContent = ''
-    @['catnip']['graph']['draw'](graph)
+    @['catnip']['graph']['draw'](_graph)
 
     _show_graph = () => @['catnip']['ui']['show'](@['map'])
     setTimeout(_show_graph, 250)

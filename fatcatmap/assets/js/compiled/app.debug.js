@@ -1,21 +1,25 @@
 (function() {
+var async = {}, CallbackMap;
 var routes = {"/":function($request$$) {
-  this.catnip.app.$set("active", !0);
   this.catnip.app.$set("page.route", "/");
   return null;
 }, "/login":function($request$$) {
 }, "/settings":function($request$$) {
 }, "/beta":function($request$$) {
-  console.log("request: ");
-  console.log($request$$);
-  this.catnip.app.$set("active", !0);
   this.catnip.app.$set("page.route", "/beta");
   return null;
 }, "/404":function($request$$) {
 }, "/<key>":function($request$$) {
+  var $_this$$ = this;
+  $_this$$.data.get($request$$.args.key, {success:function($data$$) {
+    this.catnip.app.$broadcast("detail", $data$$);
+  }, error:function($e$$) {
+    $request$$.error = $e$$;
+    $_this$$.router.route("/404", $request$$);
+  }});
+  return null;
 }, "/<key1>/and/<key2>":function($request$$) {
 }};
-var async = {}, CallbackMap;
 var toArray = function $toArray$($list$$) {
   var $arr$$ = [], $i$$;
   for ($i$$ = 0;$i$$ < $list$$.length;$arr$$.push($list$$[$i$$++])) {
@@ -39,16 +43,16 @@ var services = {}, Client = function $Client$($methods$$) {
   }
 };
 Client.prototype = services;
-Function.prototype.client = function $Function$$client$($methods$$) {
+Object.defineProperty(Function.prototype, "client", {value:function($methods$$) {
   var $fn$$ = this;
   return function() {
     return $fn$$.apply(new Client($methods$$), arguments);
   };
-};
-Function.prototype.service = function $Function$$service$($name$$, $methods$$) {
+}});
+Object.defineProperty(Function.prototype, "service", {value:function($name$$, $methods$$) {
   Client.prototype[$name$$] = this.client($methods$$);
   return Client.prototype[$name$$];
-};
+}});
 Object.defineProperty(Object.prototype, "service", {value:function($name$$) {
   var $method$$;
   if (!$name$$ || "string" !== typeof $name$$) {
@@ -110,12 +114,78 @@ var urlutil = {addParams:function($url$$, $params$$) {
   }
   return $parts$$.join("/");
 }};
-services.data = {normalize:function($raw$$) {
+var Diff, DIFF;
+Diff = function $Diff$() {
+  this._diff = {};
+};
+Diff.prototype.add = function $Diff$$add$($key$$, $diff$$) {
+  var $k$$, $obj$$;
+  if (this._diff[$key$$]) {
+    $obj$$ = this._diff[$key$$];
+    for ($k$$ in $diff$$) {
+      $diff$$.hasOwnProperty($k$$) && ($obj$$[$k$$] = $diff$$[$k$$]);
+    }
+    this._diff[$key$$] = $obj$$;
+  } else {
+    this._diff[$key$$] = $diff$$;
+  }
+};
+Diff.prototype.commit = function $Diff$$commit$() {
+  var $diff$$ = this._diff;
+  this._diff = !1;
+  this.add = function $this$add$() {
+    throw Error("Cannot add to committed diff.");
+  };
+  return $diff$$;
+};
+services.data = {init:function($raw$$) {
+  DIFF = new Diff;
+  this._watchers = {};
+}, normalize:function($raw$$) {
+  if ("string" === typeof $raw$$) {
+    try {
+      $raw$$ = JSON.parse($raw$$);
+    } catch ($e$$) {
+      $raw$$ = {};
+    }
+  }
+  return $raw$$;
+}, watch:function($key$$, $target$$, $fn$$) {
+  if (!$key$$) {
+    throw Error("services.data.watch() requires a string key.");
+  }
+  if (!$fn$$) {
+    if ("function" !== typeof $target$$) {
+      throw Error("services.data.watch() requires a watcher function.");
+    }
+    $fn$$ = $target$$;
+    $target$$ = null;
+  }
+  this._watchers[$key$$] || (this._watchers[$key$$] = []);
+  this._watchers[$key$$].push($target$$ ? $fn$$.bind($target$$) : function($obj$$) {
+    $fn$$.call($obj$$, $obj$$);
+  });
+}, unwatch:function($key$$, $fn$$) {
+  var $watchers$$, $i$$;
+  if (this._watchers[$key$$]) {
+    $watchers$$ = this._watchers[$key$$];
+    if ($fn$$) {
+      for ($i$$ = 0;$i$$ < $watchers$$.length;$i$$++) {
+        if ($fn$$ === $watchers$$[$i$$]) {
+          $watchers$$.splice($i$$, 1);
+          break;
+        }
+      }
+    } else {
+      $watchers$$ = [];
+    }
+    this._watchers[$key$$] = $watchers$$;
+  }
 }}.service("data");
 services.graph = {init:function($raw$$) {
   return this.graph.construct(this.data.normalize($raw$$));
 }, construct:function($data$$) {
-  return{};
+  return $data$$;
 }}.service("graph");
 services.map = {draw:function() {
 }}.service("map");
@@ -177,13 +247,13 @@ services.http = {get:function($request$$, $handlers$$) {
 }}.service("http");
 var ROUTES = {resolved:[], dynamic:[]}, _routeEvents = {route:[], routed:[], error:[]}, _findRoute, Route, router;
 _findRoute = function $_findRoute$($match_path$$, $request$$, $_routes$$) {
-  for (var $i$$0$$ = 0, $route$$, $matched$$, $response$$, $setParam$$ = function $$setParam$$$($key$$, $i$$) {
-    $request$$.params[$route$$.keys[$i$$]] = $key$$;
+  for (var $i$$0$$ = 0, $route$$, $matched$$, $response$$, $setArg$$ = function $$setArg$$$($key$$, $i$$) {
+    $request$$.args[$route$$.keys[$i$$]] = $key$$;
   };($route$$ = $_routes$$[$i$$0$$++]) && $route$$.id <= $match_path$$;) {
     if ($route$$.matcher.test($match_path$$)) {
       $matched$$ = !0;
       $match_path$$ = $match_path$$.match($route$$.matcher).slice(1);
-      $match_path$$.forEach($setParam$$);
+      $match_path$$.forEach($setArg$$);
       $response$$ = $route$$.handler.call(new Client, $request$$);
       break;
     }
@@ -218,9 +288,14 @@ services.router = {register:function($path$$, $handler$$) {
     $_routes$$.push($route$$);
   }
 }, route:function($path$$, $request$$) {
-  var $response$$;
+  var $params$$, $param$$, $response$$;
   $request$$ = $request$$ || {};
+  $request$$.args = {};
   $request$$.params = $request$$.params || {};
+  $params$$ = urlutil.parseParams($path$$);
+  for ($param$$ in $params$$) {
+    $params$$.hasOwnProperty($param$$) && ($request$$.params[$param$$] = $params$$[$param$$]);
+  }
   _routeEvents.route.forEach(function($fn$$) {
     $fn$$($path$$, $request$$);
   });
@@ -307,10 +382,15 @@ services.template = {put:function($filename$$, $source$$) {
 var VIEWS = {}, getSelfAndChildren = function $getSelfAndChildren$($viewname$$, $cb$$) {
   var $filename$$ = $viewname$$.replace(".", "/") + ".html";
   services.template.get($filename$$, {success:function($resp$$) {
-    var $children$$ = [], $source$$ = $resp$$.data.replace(/v-component=("|')(\w+)\1/g, function($_$$, $__$$, $childname$$) {
+    var $children$$ = [], $source$$, $count$$;
+    if ("string" !== typeof $resp$$.data) {
+      return $cb$$(!1, $resp$$);
+    }
+    $source$$ = $resp$$.data.replace(/v-component=("|')(\w+)\1/g, function($_$$, $__$$, $childname$$) {
       $children$$.push($childname$$);
       return $_$$;
-    }), $count$$ = $children$$.length;
+    });
+    $count$$ = $children$$.length;
     VIEWS[$viewname$$] && (VIEWS[$viewname$$].options.template = $source$$);
     services.template.put($filename$$, $source$$);
     if (0 === $count$$) {
@@ -350,27 +430,58 @@ services.view = {put:function($viewname$$, $viewclass$$) {
   });
 }}.service("view");
 window.__VIEWS = VIEWS;
-var views = {};
-views.AppView = Vue.extend({});
-views.AppView.extend = function $views$AppView$extend$($options$$5_view$$) {
-  var $viewname$$ = $options$$5_view$$.viewname.toLowerCase();
+var View = Vue.extend({});
+View.extend = function $View$extend$($options$$5_view$$) {
+  var $viewname$$ = $options$$5_view$$.viewname.toLowerCase(), $ready$$;
   if (!$viewname$$ || "string" !== typeof $viewname$$) {
     throw Error('AppView.extend() requires a "viewname" option to be passed.');
   }
+  $options$$5_view$$.ready && ($ready$$ = $options$$5_view$$.ready);
+  $options$$5_view$$.ready = function $$options$$5_view$$$ready$() {
+    this.$options.handler && this.$on(this.$options.viewname, this.$options.handler.bind(this));
+    $ready$$ && $ready$$.call(this);
+  };
   $options$$5_view$$ = Vue.extend($options$$5_view$$);
   services.view.put($viewname$$, $options$$5_view$$);
   Vue.component($viewname$$, $options$$5_view$$);
   return $options$$5_view$$;
 };
-views.Container = Vue.extend({data:{page:{route:"/"}, active:!1}, methods:{onClick:function($e$$) {
-  var $route$$ = $e$$.target.getAttribute("href");
-  $e$$.preventDefault();
-  $e$$.stopPropagation();
-  services.router.route($route$$);
-}}, services:services});
-services.view.put("container", views.Container);
-views.Header = views.AppView.extend({viewname:"header", replace:!0});
-views.Stage = views.AppView.extend({viewname:"stage", replace:!0});
+var views = {};
+views.Detail = View.extend({viewname:"detail", replace:!0, data:{view:"", selected:null}, handler:function($data$$) {
+  this.$set("view", $data$$.kind.toLowerCase());
+  this.$set("selected", $data$$);
+}});
+views.Header = View.extend({viewname:"header", replace:!0});
+views.Map = View.extend({viewname:"map", data:{active:!0, selected:null, config:{width:0, height:0, force:{alpha:.75, strength:1, friction:.9, theta:.7, gravity:.1, charge:-700, distance:180}, origin:{snap:!0, dynamic:!0, position:null}, node:{radius:20, classes:["node"]}, labels:{enable:!1, distance:0}, edge:{width:2, stroke:"#999", classes:["link"]}, sprite:{width:60, height:60}}}, methods:{toggleSelected:function($e$$) {
+}, addSelected:function($e$$) {
+}, browseTo:function($e$$) {
+}, draw:function($graph$$) {
+}}, attached:function() {
+  var $width$$ = this.$el.offsetWidth, $height$$ = this.$el.offsetHeight;
+  this.$set("config.width", $width$$);
+  this.$set("config.height", $height$$);
+  this.$set("config.origin.position", {x:$width$$ - 30, y:$height$$ - 30});
+}, ready:function() {
+  window.addEventListener("resize", function($e$$) {
+  });
+}});
+views.Modal = View.extend({viewname:"modal", data:{active:!1, message:""}});
+views.Stage = View.extend({viewname:"stage", replace:!0, data:{active:!0}});
+views.Page = Vue.extend({data:{page:{route:"/"}, active:!1, modal:null}, methods:{route:function($e$$) {
+  if ($e$$.target.hasAttribute("data-route")) {
+    var $route$$ = $e$$.target.getAttribute("href");
+    $e$$.preventDefault();
+    $e$$.stopPropagation();
+    services.router.route($route$$);
+  }
+}, child:function($ns_parts$$) {
+  $ns_parts$$ = $ns_parts$$.split(".");
+  for (var $child$$ = this, $part$$;$ns_parts$$.length;) {
+    $part$$ = $ns_parts$$.shift(), $child$$ = $child$$.$[$part$$];
+  }
+  return $child$$;
+}}});
+services.view.put("page", views.Page);
 var _ready, _go, catnip;
 _ready = [];
 _go = function $_go$() {
@@ -388,7 +499,8 @@ catnip = services.catnip = {init:function($context$$, $data$$) {
   $context$$.session && $context$$.session.established && ($fcm$$.session = $context$$.session.payload);
   $context$$.services && $context$$.protocol.rpc.enabled && $fcm$$.rpc.init($context$$.services);
   $context$$.template.manifest && $fcm$$.template.init($context$$.template.manifest);
-  $fcm$$.view.init("container", function() {
+  $fcm$$.view.init("page", function() {
+    this.$set("active", !0);
     services.catnip.app = this;
     _go();
   });
@@ -401,7 +513,6 @@ catnip = services.catnip = {init:function($context$$, $data$$) {
       $fcm$$.router.route("/beta");
     });
   });
-  $fcm$$.graph.init($data$$);
   services.catnip.init = function $services$catnip$init$() {
     return $fcm$$;
   };

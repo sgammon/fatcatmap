@@ -6,7 +6,11 @@
         <clipPath id='node-circle-mask'clipPathUnits="userSpaceOnUse"><circle r="20" cx="30" cy="30"></circle></clipPath>
     </defs>
 
-    <svg id='map' class='transparent' v-if="active" v-on="click : toggleDetail" v-transition></svg>
+    <svg id='map' class='transparent' v-if="active" v-ref="map" v-on="
+      click : toggleSelected,
+      click : addSelected | key 17,
+      dblclick: browseTo
+    " v-transition></svg>
 </svg>
 
-<section id="map_detail" v-component="detail" v-with="selected" v-if="selected" v-ref="detail" v-transition></section>
+<section v-component="detail"></section>

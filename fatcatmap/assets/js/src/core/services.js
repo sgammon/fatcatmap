@@ -1,5 +1,5 @@
 /**
- * @fileoverview Core service injection.
+ * @fileoverview Core service injection methods.
  *
  * @author  David Rekow <david@momentum.io>,
  *          Sam Gammon <sam@momentum.io>,
@@ -27,18 +27,42 @@ var Client = function (methods) {
 
 Client.prototype = services;
 
+
+Object.defineProperty(Function.prototype, 'client', {
+  /**
+   * @expose
+   * @param {Object.<string, function(...)>=} methods
+   * @return {function(...)}
+   */
+  value: /** @this {Function} */ function (methods) {
+    var fn = this;
+
+    return function () {
+      return fn.apply(new Client(methods), arguments);
+    };
+  }
+});
+
 /**
  * @expose
  * @param {Object.<string, function(...)>=} methods
  * @return {function(...)}
  */
-Function.prototype.client = function (methods) {
-  var fn = this;
+Function.prototype.client;
 
-  return function () {
-    return fn.apply(new Client(methods), arguments);
-  };
-};
+
+Object.defineProperty(Function.prototype, 'service', {
+  /**
+   * @expose
+   * @param {string} name Service name.
+   * @param {Object.<string, function(...)>=} methods
+   * @return {function(...)}
+   */
+   value: /** @this {Function} */ function (name, methods) {
+    Client.prototype[name] = this.client(methods);
+    return Client.prototype[name];
+  }
+});
 
 /**
  * @expose
@@ -46,14 +70,12 @@ Function.prototype.client = function (methods) {
  * @param {Object.<string, function(...)>=} methods
  * @return {function(...)}
  */
-Function.prototype.service = function (name, methods) {
-  Client.prototype[name] = this.client(methods);
-  return Client.prototype[name];
-};
+Function.prototype.service;
 
 
 Object.defineProperty(Object.prototype, 'service', {
   /**
+   * @expose
    * @param {string} name Service name.
    * @return {Object.<string, function(...)>}
    * @throws {Error|TypeError}

@@ -1,5 +1,5 @@
 /**
- * @fileoverview Node detail view.
+ * @fileoverview Router for node detail view.
  *
  * @author  David Rekow <david@momentum.io>,
  *          Sam Gammon <sam@momentum.io>,
@@ -9,19 +9,52 @@
  * copyright (c) momentum labs, 2014
  */
 
-goog.require('views.AppView');
+goog.require('View');
 
 goog.provide('views.Detail');
 
 /**
  * @constructor
- * @extends {views.AppView}
+ * @extends {View}
  * @param {VueOptions} options
  */
-views.Detail = views.AppView.extend({
+views.Detail = View.extend({
   /**
    * @expose
    * @type {string}
    */
-  viewname: 'detail'
+  viewname: 'detail',
+
+  /**
+   * @expose
+   * @type {boolean}
+   */
+  replace: true,
+
+  /**
+   * @expose
+   * @type {Object}
+   */
+  data: {
+    /**
+     * @expose
+     * @type {string}
+     */
+    view: '',
+
+    /**
+     * @expose
+     * @type {?Object}
+     */
+    selected: null
+  },
+
+  /**
+   * @expose
+   * @this {views.Detail}
+   */
+  handler: function (data) {
+    this.$set('view', data.kind.toLowerCase());
+    this.$set('selected', data);
+  }
 });

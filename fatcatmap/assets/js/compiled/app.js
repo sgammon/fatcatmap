@@ -1,4 +1,5 @@
 (function() {
+var async = {}, CallbackMap;
 var routes = {"/":function(a) {
   this.catnip.app.$set("page.route", "/");
   return null;
@@ -9,9 +10,16 @@ var routes = {"/":function(a) {
   return null;
 }, "/404":function(a) {
 }, "/<key>":function(a) {
+  var b = this;
+  b.data.get(a.args.key, {success:function(a) {
+    this.catnip.app.$broadcast("detail", a);
+  }, error:function(c) {
+    a.error = c;
+    b.router.route("/404", a);
+  }});
+  return null;
 }, "/<key1>/and/<key2>":function(a) {
 }};
-var async = {}, CallbackMap;
 var toArray = function(a) {
   var b = [], c;
   for (c = 0;c < a.length;b.push(a[c++])) {
@@ -35,16 +43,16 @@ var services = {}, Client = function(a) {
   }
 };
 Client.prototype = services;
-Function.prototype.client = function(a) {
+Object.defineProperty(Function.prototype, "client", {value:function(a) {
   var b = this;
   return function() {
     return b.apply(new Client(a), arguments);
   };
-};
-Function.prototype.service = function(a, b) {
+}});
+Object.defineProperty(Function.prototype, "service", {value:function(a, b) {
   Client.prototype[a] = this.client(b);
   return Client.prototype[a];
-};
+}});
 Object.defineProperty(Object.prototype, "service", {value:function(a) {
   var b;
   if (!a || "string" !== typeof a) {
@@ -106,7 +114,34 @@ var urlutil = {addParams:function(a, b) {
   }
   return d.join("/");
 }};
-services.data = {normalize:function(a) {
+var Diff, DIFF;
+Diff = function() {
+  this._diff = {};
+};
+Diff.prototype.add = function(a, b) {
+  var c, d;
+  if (this._diff[a]) {
+    d = this._diff[a];
+    for (c in b) {
+      b.hasOwnProperty(c) && (d[c] = b[c]);
+    }
+    this._diff[a] = d;
+  } else {
+    this._diff[a] = b;
+  }
+};
+Diff.prototype.commit = function() {
+  var a = this._diff;
+  this._diff = !1;
+  this.add = function() {
+    throw Error("Cannot add to committed diff.");
+  };
+  return a;
+};
+services.data = {init:function(a) {
+  DIFF = new Diff;
+  this._watchers = {};
+}, normalize:function(a) {
   if ("string" === typeof a) {
     try {
       a = JSON.parse(a);
@@ -115,6 +150,37 @@ services.data = {normalize:function(a) {
     }
   }
   return a;
+}, watch:function(a, b, c) {
+  if (!a) {
+    throw Error("services.data.watch() requires a string key.");
+  }
+  if (!c) {
+    if ("function" !== typeof b) {
+      throw Error("services.data.watch() requires a watcher function.");
+    }
+    c = b;
+    b = null;
+  }
+  this._watchers[a] || (this._watchers[a] = []);
+  this._watchers[a].push(b ? c.bind(b) : function(a) {
+    c.call(a, a);
+  });
+}, unwatch:function(a, b) {
+  var c, d;
+  if (this._watchers[a]) {
+    c = this._watchers[a];
+    if (b) {
+      for (d = 0;d < c.length;d++) {
+        if (b === c[d]) {
+          c.splice(d, 1);
+          break;
+        }
+      }
+    } else {
+      c = [];
+    }
+    this._watchers[a] = c;
+  }
 }}.service("data");
 services.graph = {init:function(a) {
   return this.graph.construct(this.data.normalize(a));
@@ -182,7 +248,7 @@ services.http = {get:function(a, b) {
 var ROUTES = {resolved:[], dynamic:[]}, _routeEvents = {route:[], routed:[], error:[]}, _findRoute, Route, router;
 _findRoute = function(a, b, c) {
   for (var d = 0, e, f, g, h = function(a, c) {
-    b.params[e.keys[c]] = a;
+    b.args[e.keys[c]] = a;
   };(e = c[d++]) && e.id <= a;) {
     if (e.matcher.test(a)) {
       f = !0;
@@ -222,29 +288,34 @@ services.router = {register:function(a, b) {
     f.push(d);
   }
 }, route:function(a, b) {
-  var c;
+  var c, d, e;
   b = b || {};
+  b.args = {};
   b.params = b.params || {};
+  c = urlutil.parseParams(a);
+  for (d in c) {
+    c.hasOwnProperty(d) && (b.params[d] = c[d]);
+  }
   _routeEvents.route.forEach(function(c) {
     c(a, b);
   });
-  c = _findRoute(a, b, ROUTES.resolved);
-  if (c.matched) {
-    return c = c.response, _routeEvents.routed.forEach(function(d) {
-      d(a, b, c);
-    }), c;
+  e = _findRoute(a, b, ROUTES.resolved);
+  if (e.matched) {
+    return e = e.response, _routeEvents.routed.forEach(function(c) {
+      c(a, b, e);
+    }), e;
   }
-  c = _findRoute(a, b, ROUTES.dynamic);
-  if (c.matched) {
-    return c = c.response, _routeEvents.routed.forEach(function(d) {
-      d(a, b, c);
-    }), c;
+  e = _findRoute(a, b, ROUTES.dynamic);
+  if (e.matched) {
+    return e = e.response, _routeEvents.routed.forEach(function(c) {
+      c(a, b, e);
+    }), e;
   }
-  c = {status:404};
-  _routeEvents.error.forEach(function(d) {
-    d(a, b, c);
+  e = {status:404};
+  _routeEvents.error.forEach(function(c) {
+    c(a, b, e);
   });
-  return c;
+  return e;
 }, on:function(a, b) {
   _routeEvents[a] || (_routeEvents[a] = []);
   _routeEvents[a].push(b);
@@ -359,29 +430,56 @@ services.view = {put:function(a, b) {
   });
 }}.service("view");
 window.__VIEWS = VIEWS;
-var views = {};
-views.AppView = Vue.extend({});
-views.AppView.extend = function(a) {
-  var b = a.viewname.toLowerCase();
+var View = Vue.extend({});
+View.extend = function(a) {
+  var b = a.viewname.toLowerCase(), c;
   if (!b || "string" !== typeof b) {
     throw Error('AppView.extend() requires a "viewname" option to be passed.');
   }
+  a.ready && (c = a.ready);
+  a.ready = function() {
+    this.$options.handler && this.$on(this.$options.viewname, this.$options.handler.bind(this));
+    c && c.call(this);
+  };
   a = Vue.extend(a);
   services.view.put(b, a);
   Vue.component(b, a);
   return a;
 };
-views.Detail = views.AppView.extend({viewname:"detail"});
-views.Header = views.AppView.extend({viewname:"header", replace:!0});
-views.Map = views.AppView.extend({viewname:"map", data:{active:!0, selected:null}, methods:{toggleDetail:function(a) {
-}}});
-views.Modal = views.AppView.extend({viewname:"modal", data:{active:!1, message:""}});
-views.Stage = views.AppView.extend({viewname:"stage", replace:!0, data:{active:!0}});
+var views = {};
+views.Detail = View.extend({viewname:"detail", replace:!0, data:{view:"", selected:null}, handler:function(a) {
+  this.$set("view", a.kind.toLowerCase());
+  this.$set("selected", a);
+}});
+views.Header = View.extend({viewname:"header", replace:!0});
+views.Map = View.extend({viewname:"map", data:{active:!0, selected:null, config:{width:0, height:0, force:{alpha:.75, strength:1, friction:.9, theta:.7, gravity:.1, charge:-700, distance:180}, origin:{snap:!0, dynamic:!0, position:null}, node:{radius:20, classes:["node"]}, labels:{enable:!1, distance:0}, edge:{width:2, stroke:"#999", classes:["link"]}, sprite:{width:60, height:60}}}, methods:{toggleSelected:function(a) {
+}, addSelected:function(a) {
+}, browseTo:function(a) {
+}, draw:function(a) {
+}}, attached:function() {
+  var a = this.$el.offsetWidth, b = this.$el.offsetHeight;
+  this.$set("config.width", a);
+  this.$set("config.height", b);
+  this.$set("config.origin.position", {x:a - 30, y:b - 30});
+}, ready:function() {
+  window.addEventListener("resize", function(a) {
+  });
+}});
+views.Modal = View.extend({viewname:"modal", data:{active:!1, message:""}});
+views.Stage = View.extend({viewname:"stage", replace:!0, data:{active:!0}});
 views.Page = Vue.extend({data:{page:{route:"/"}, active:!1, modal:null}, methods:{route:function(a) {
-  var b = a.target.getAttribute("href");
-  a.preventDefault();
-  a.stopPropagation();
-  services.router.route(b);
+  if (a.target.hasAttribute("data-route")) {
+    var b = a.target.getAttribute("href");
+    a.preventDefault();
+    a.stopPropagation();
+    services.router.route(b);
+  }
+}, child:function(a) {
+  a = a.split(".");
+  for (var b = this, c;a.length;) {
+    c = a.shift(), b = b.$[c];
+  }
+  return b;
 }}});
 services.view.put("page", views.Page);
 var _ready, _go, catnip;

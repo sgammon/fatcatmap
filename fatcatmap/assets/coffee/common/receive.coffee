@@ -107,4 +107,4 @@ receive = @['catnip']['data']['receive'] = (data) =>
           if not @['catnip']['data']['index']['adjacency'][source_k]?
             @['catnip']['data']['index']['adjacency'][source_k] = {}
           @['catnip']['data']['index']['adjacency'][source_k][target_k] = _i
-  return setTimeout (-> @['catnip']['graph']['draw'](graph)), 0
+  return setTimeout (=> @['catnip']['graph']['draw'](graph)), 0

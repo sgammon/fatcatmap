@@ -63,10 +63,28 @@ views.Page = Vue.extend({
      * @param {MouseEvent} e
      */
     route: function (e) {
-      var route = e.target.getAttribute('href');
-      e.preventDefault();
-      e.stopPropagation();
-      services.router.route(route);
+      if (e.target.hasAttribute('data-route')) {
+        var route = e.target.getAttribute('href');
+        e.preventDefault();
+        e.stopPropagation();
+        services.router.route(route);
+      }
+    },
+
+    /**
+     * @expose
+     * @param {string} ns
+     * @this {views.Page}
+     */
+    child: function (ns) {
+      var parts = ns.split('.'),
+        child = this,
+        part;
+      while (parts.length) {
+        part = parts.shift();
+        child = child.$[part];
+      }
+      return child;
     }
   }
 });

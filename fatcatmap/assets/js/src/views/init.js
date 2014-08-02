@@ -12,14 +12,14 @@
 goog.require('services.view');
 goog.require('services.template');
 
-goog.provide('views.AppView');
+goog.provide('View');
 
 /**
  * @constructor
  * @extends {Vue}
  * @param {VueOptions} options
  */
-views.AppView = Vue.extend({});
+View = Vue.extend({});
 
 /**
  * @static
@@ -28,12 +28,30 @@ views.AppView = Vue.extend({});
  * @return {function(new:Vue, VueOptions)}
  * @throws {Error} When child view name is not passed.
  */
-views.AppView.extend = function (options) {
+View.extend = function (options) {
   var viewname = options.viewname.toLowerCase(),
-    view;
+    ready, view;
 
   if (!viewname || typeof viewname !== 'string')
     throw new Error('AppView.extend() requires a "viewname" option to be passed.');
+
+  if (options.ready) {
+    ready = options.ready;
+  }
+
+  /**
+   * @this {View}
+   */
+  options.ready = function () {
+    var view = this;
+
+    if (view.$options.handler) {
+      view.$on(view.$options.viewname, view.$options.handler.bind(view));
+    }
+
+    if (ready)
+      ready.call(view);
+  }
 
   view = Vue.extend(options);
 

@@ -9,16 +9,16 @@
  * copyright (c) momentum labs, 2014
  */
 
-goog.require('views.AppView');
+goog.require('View');
 
 goog.provide('views.Modal');
 
 /**
  * @constructor
- * @extends {views.AppView}
+ * @extends {View}
  * @param {VueOptions} options
  */
-views.Modal = views.AppView.extend({
+views.Modal = View.extend({
   /**
    * @expose
    * @type {string}

@@ -9,6 +9,7 @@
  * copyright (c) momentum labs, 2014
  */
 
+goog.require('urlutil');
 goog.require('supports');
 goog.require('services');
 
@@ -43,8 +44,8 @@ _findRoute = function (path, request, _routes) {
      * @param {string} key
      * @param {number} i
      */
-    setParam = function (key, i) {
-      request.params[route.keys[i]] = key;
+    setArg = function (key, i) {
+      request.args[route.keys[i]] = key;
     };
 
   while ((route = _routes[i++]) && route.id <= path) {
@@ -52,7 +53,7 @@ _findRoute = function (path, request, _routes) {
       matched = true;
 
       match = path.match(route.matcher).slice(1);
-      match.forEach(setParam);
+      match.forEach(setArg);
 
       response = route.handler.call(new Client(), request);
 
@@ -143,10 +144,19 @@ services.router = /** @lends {Client.prototype.router} */ {
    */
   route: function (path, request) {
     var matched = false,
-      findRoute, response;
+      params, param, findRoute, response;
 
     request = request || {};
+    request.args = {};
     request.params = request.params || {};
+
+    params = urlutil.parseParams(path);
+
+    for (param in params) {
+      if (params.hasOwnProperty(param)) {
+        request.params[param] = params[param];
+      }
+    }
 
     _routeEvents.route.forEach(function (fn) {
       fn(path, request);

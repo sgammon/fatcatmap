@@ -5,6 +5,8 @@ var path = require('path'),
   gulp = require('gulp'),
   rmrf = require('gulp-rimraf'),
   svgmin = require('gulp-svgmin'),
+  coffee = require('gulp-coffee'),
+  concat = require('gulp-concat'),
   imagemin = require('gulp-imagemin'),
   sourcemaps = require('gulp-sourcemaps'),
   karma = require('karma').server,
@@ -54,10 +56,12 @@ inputs = {
   js: {
     app: ASSET_PREFIX + 'js/src/**/*.js',
     lib: ASSET_PREFIX + 'js/lib/**/*.js',
+    legacy: ASSET_PREFIX + 'js/*.js',
     closure: ASSET_PREFIX + 'js/lib/closure/base.js',
     externs: ASSET_PREFIX + 'js/externs/*.js',
     test: 'fatcatmap_tests/js/spec/unit/**/*.spec.js'
   },
+  coffee: ASSET_PREFIX + 'coffee/',
   themes: ASSET_PREFIX + 'less/site/home.less',
   templates: 'fatcatmap/templates/source/**/*',
 };
@@ -189,7 +193,24 @@ config = {
       externs: [
         
       ]
+    },
+
+    legacy: {
+      jar: 'lib/closure/build/compiler.jar',
+      summary_detail_level: 3,
+      warning_level: 'VERBOSE',
+      language_in: 'ECMASCRIPT5',
+      compilation_level: 'SIMPLE_OPTIMIZATIONS',
+      externs: [
+        ASSET_PREFIX + 'js/lib/externs/jquery/jquery.js',
+        ASSET_PREFIX + 'js/lib/externs/apptools/apptools.js',
+      ]
     }
+  },
+
+  // Coffeescript compile options
+  coffee: {
+    bare: true
   },
 
   // SVG minification
@@ -284,14 +305,49 @@ task('closure:tests', function () {
     )));
 });
 
+// Compile legacy common JS.
+task('closure:_common', function () {
+  var opts = config.closure.legacy;
+  opts.js_output_file = ASSET_PREFIX + 'js/common.min.js';
+  return src([ASSET_PREFIX + '/js/common.js'])
+    .pipe(closure(opts));
+})
+
+// Compile legacy mapper JS.
+task('closure:_mapper', function () {
+  var opts = config.closure.legacy;
+  opts.js_output_file = ASSET_PREFIX + 'js/mapper.min.js';
+  return src([ASSET_PREFIX + '/js/mapper.js'])
+    .pipe(closure(opts));
+})
+
 // Clean compiled JS files
 task('closure:clean', function () {
-  return src(outputs.js.app + '/*')
+  return src([outputs.js.app + '/*', ASSET_PREFIX + 'js/*.js'])
     .pipe(rmrf());
 });
 
 task('closure', ['closure:min']);
 task('closure:all', ['closure:min', 'closure:debug', 'closure:pretty']);
+
+// Compile coffeescript 'common' module
+task('coffee:common', function () {
+  return src(inputs.coffee + 'common/*.coffee')
+    .pipe(coffee(config.coffee))
+    .pipe(concat('common.js'))
+    .pipe(dest(ASSET_PREFIX + 'js/'));
+});
+
+// Compile coffeescript 'mapper' module
+task('coffee:mapper', function () {
+  return src(inputs.coffee + 'mapper.coffee')
+    .pipe(coffee(config.coffee))
+    .pipe(concat('mapper.js'))
+    .pipe(dest(ASSET_PREFIX + 'js/'));
+});
+
+// Compile legacy coffeescript codebase
+task('coffee', ['coffee:common', 'coffee:mapper']);
 
 // Build templates
 task('templates', function (cb) {

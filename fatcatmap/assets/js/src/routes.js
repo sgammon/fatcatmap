@@ -9,6 +9,8 @@
  * copyright (c) momentum labs, 2014
  */
 
+goog.require('async');
+
 goog.provide('routes');
 
 var routes = {
@@ -59,9 +61,31 @@ var routes = {
   /**
    * @param {Object} request
    * @return {?Object}
+   * @this {Client}
    */
   '/<key>': function (request) {
+    var _this = this;
 
+    _this.data.get(request.args.key, {
+      /**
+       * @expose
+       * @param {Object} data
+       */
+      success: function (data) {
+        this.catnip.app.$broadcast('detail', data);
+      },
+
+      /**
+       * @expose
+       * @param {Error} e
+       */
+      error: function (e) {
+        request.error = e;
+        _this.router.route('/404', request);
+      }
+    });
+
+    return null;
   },
 
   /**

@@ -1,0 +1,10 @@
+<div id="detail-{{key}}" class="{{class}}" data-kind="{{kind|lowercase}}">
+  <section class="byline">
+    <h2>{{firstname}} {{lastname}}</h2>
+    <h3>{{office}}, {{state}}<span v-if="district">-{{district}}</span></h3>
+  </section>
+
+  <section class="portrait">
+    <img class="{{kind|lowercase}} govtrack thumbnail" alt="{{title}}. {{firstname}} {{lastname}} [{{state}}]" src="{{portrait_url}}" />
+  </section>
+</div>
