@@ -22,6 +22,7 @@ except ImportError:
 
 ## Globals
 _custom_jinja2_extensions = filter(lambda x: x is not None, [HamlishExtension if HAML else None])
+
 app = os.path.abspath(os.path.dirname(__file__))
 project = os.path.dirname(app)
 
