@@ -208,6 +208,7 @@ $(DEVROOT)/.env: closure bootstrap canteen npm
 	@-echo "" > lib/python2.7/site-packages/protobuf-2.5.0-py2.7-nspkg.pth
 
 	@echo "Installing Canteen dependencies..."
+	@bin/pip install msgpack-python
 	@bin/pip install "git+https://github.com/sgammon/protobuf.git#egg=protobuf-2.5.2-canteen"
 	@bin/pip install "git+https://github.com/sgammon/hamlish-jinja.git#egg=hamlish_jinja-0.3.4-canteen"
 	@bin/pip install -r lib/canteen/requirements.txt
