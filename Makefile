@@ -131,6 +131,7 @@ coverage:
 	@mkdir -p .develop/coverage/python/xunit .develop/coverage/js
 	@-bin/nosetests canteen_tests fatcatmap_tests --with-coverage \
 							 --cover-package=fatcatmap \
+							 --cover-package=canteen \
 							 --cover-html \
 							 --cover-xml \
 							 --with-xunit \
