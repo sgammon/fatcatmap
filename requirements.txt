@@ -5,3 +5,4 @@ fabtools
 fabric
 dogapi
 msgpack-python
+raven
