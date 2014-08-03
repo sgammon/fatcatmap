@@ -45,6 +45,15 @@ config = cfg.Config(app={
       'compiled': 'fatcatmap.templates.compiled'
     }
 
+  },
+
+  # app credentials
+  'credentials': {
+
+    'sentry': {
+      'endpoint': 'https://3de93e524e09448ea9d08ffda6c5059f:1b1fd3facfb9493aa3201a064d0c135b@app.getsentry.com/28386'
+    }
+
   }
 
 }, config={
