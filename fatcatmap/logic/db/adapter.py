@@ -316,8 +316,8 @@ class RedisWarehouse(WarehouseAdapter, redis.RedisAdapter):
 
     ''' Configuration for the `RedisWarehouse` engine. '''
 
-    serializer = msgpack or json
-    mode = redis.RedisMode.hashkey_blob
+    serializer = json
+    mode = redis.RedisMode.toplevel_blob
 
   ## +=+=+ Graph Methods +=+=+ ##
   def edges(self, key1, key2=None, type=None, **kwargs):
