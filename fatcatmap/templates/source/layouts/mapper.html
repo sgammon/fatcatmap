@@ -5,27 +5,10 @@
 {% block templates %}
 
         <script id="tpl-legislator" nonce="{{ nonce.script }}" type="catnip/template" class="hidden template resource">
-        {%- raw %}
-            <div id="detail-{{=key}}" class="{{=class}}" data-kind="legislator">
-                <div class="byline">
-                    <h2>{{=firstname}} {{=lastname}}</h2>
-                    <h3>{{=office}}, {{=state}}{{district}}-{{=district}}{{/district}}</h3>
-                </div>
-                <div class="portrait">
-                    <img class="legislator govtrack thumbnail" alt="{{=title}}. {{=firstname}} {{=lastname}} [{{=state}}{{district}}-{{=district}}{{/district}}]" src="{{=config.assets.prefix}}image-proxy/providence-clarity/warehouse/raw/govtrack/photos/{{=govtrack_id}}{{portrait_size}}-{{=portrait_size}}{{/portrait_size}}.{{=image_format}}" />
-                </div>
-            </div><!-- end #detail-{{=key}} -->
-        {% endraw -%}
+        {%- raw %}<div id="detail-{{=key}}" class="{{=class}}" data-kind="legislator"><div class="byline"><h2>{{=firstname}} {{=lastname}}</h2><h3>{{=office}}, {{=state}}{{district}}-{{=district}}{{/district}}</h3></div><div class="portrait"><img class="legislator govtrack thumbnail" alt="{{=title}}. {{=firstname}} {{=lastname}} [{{=state}}{{district}}-{{=district}}{{/district}}]" src="{{=config.assets.prefix}}image-proxy/providence-clarity/warehouse/raw/govtrack/photos/{{=govtrack_id}}{{portrait_size}}-{{=portrait_size}}{{/portrait_size}}.{{=image_format}}" /></div></div>{% endraw -%}
         </script><!-- end #tpl-legislator -->
         <script id="tpl-contributor" nonce="{{ nonce.script }}" type="catnip/template" class="hidden template resource">
-        {%- raw %}
-            <div id="detail-{{=key}}" class="{{=class}}" data-kind="contributor">
-                <div class="byline">
-                    <h2>{{=name}}</h2>
-                    <h3>{{type=='C'}}Corporate Contributor{{:type=='I'}}Individual Contributor{{/type}}</h3>
-                </div>
-            </div><!-- end #detail-{{=key}}.contributor -->
-        {% endraw -%}
+        {%- raw %}<div id="detail-{{=key}}" class="{{=class}}" data-kind="contributor"><div class="byline"><h2>{{=name}}</h2><h3>{{type=='C'}}Corporate Contributor{{:type=='I'}}Individual Contributor{{/type}}</h3></div></div>{% endraw -%}
         </script><!-- end #tpl-contributor -->
 
       {% endblock templates %}
@@ -56,13 +39,6 @@
 {%- endblock frame -%}
 
 {% block appheader %}
-            <section id='identity'>
-                <button type="button" id="logon" class="transparent btn btn-success">Sign in</button>
-                <div id="signon-providers" class="transparent">
-                    <div id="gplus-signon">g+</div><div id="fb-signon">fb</div>
-                    <div id="tw-signon">tw</div><div id="gh-signon">gh</div>
-                </div><!-- end div#signon-providers -->
-            </section><!-- end #identity -->
 {% endblock appheader %}
 
 {% block appstage %}
