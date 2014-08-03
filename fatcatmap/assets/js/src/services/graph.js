@@ -14,6 +14,8 @@ goog.require('services.data');
 
 goog.provide('services.graph');
 
+var _graph = {};
+
 /**
  * @expose
  */
@@ -24,15 +26,22 @@ services.graph = /** @lends {Client.prototype.graph} */ {
    * @this {Client}
    */
   init: function (raw) {
-    return this.graph.construct(this.data.normalize(raw));
+    _graph = this.graph.construct(this.data.normalize(raw));
   },
 
   /**
-   * @param {Object} data Normalized dataset.
+   * @param {PageData} data Normalized dataset.
    * @return {Object} Graph object.
    * @this {Client}
    */
   construct: function (data) {
+    var graph;
+
+    if (!data)
+      return _graph;
+
+    graph.origin = data.graph.origin;
+
     return data;
   }
 }.service('graph');

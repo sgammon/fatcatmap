@@ -41,6 +41,12 @@ views.detail.Legislator = views.AppView.extend({
      * @expose
      * @type {string}
      */
+    kind: '',
+
+    /**
+     * @expose
+     * @type {string}
+     */
     class: '',
 
     /**
@@ -60,6 +66,12 @@ views.detail.Legislator = views.AppView.extend({
      * @type {string}
      */
     office: '',
+
+    /**
+     * @expose
+     * @type {?string}
+     */
+    district: '',
 
     /**
      * @expose

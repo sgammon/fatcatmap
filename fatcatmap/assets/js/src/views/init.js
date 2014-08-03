@@ -51,7 +51,7 @@ View.extend = function (options) {
 
     if (ready)
       ready.call(view);
-  }
+  };
 
   view = Vue.extend(options);
 

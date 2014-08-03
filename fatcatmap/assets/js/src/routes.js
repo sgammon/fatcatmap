@@ -20,7 +20,8 @@ var routes = {
    * @this {Client}
    */
   '/': function (request) {
-    this.catnip.app.$set('page.route', '/');
+    this.catnip.app.page = 'page.map';
+    this.catnip.app.$broadcast('page.map', this.graph.construct());
     return null;
   },
 
@@ -38,16 +39,6 @@ var routes = {
    */
   '/settings': function (request) {
 
-  },
-
-  /**
-   * @param {Object} request
-   * @return {?Object}
-   * @this {Client}
-   */
-  '/beta': function (request) {
-    this.catnip.app.$set('page.route', '/beta');
-    return null;
   },
 
   /**

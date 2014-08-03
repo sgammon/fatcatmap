@@ -33,7 +33,6 @@
     "gulp": "~3.8.5",
     "gulp-svgmin": "~0.4.6",
     "gulp-rimraf": "~0.1.0",
-    "gulp-coffee": "~2.1.1",
     "gulp-concat": "~2.3.4",
     "gulp-imagemin": "~0.6.1",
     "gulp-sourcemaps": "~0.4.4"

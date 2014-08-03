@@ -9,7 +9,6 @@
  * copyright (c) momentum labs, 2014
  */
 
-goog.require('routes');
 goog.require('supports');
 
 goog.require('services');
@@ -21,7 +20,6 @@ goog.require('services.graph');
 goog.require('services.map');
 
 goog.require('views.Page');
-goog.require('views.Map');
 
 goog.provide('catnip');
 
@@ -46,10 +44,11 @@ catnip = services.catnip = /** @lends {Client.prototype.catnip} */{
   /**
    * @param {JSContext} context
    * @param {PageData} data
+   * @param {Object.<string, function(this:Client)>} routes
    * @this {Client}
    * @return {Client}
    */
-  init: function (context, data) {
+  init: function (context, data, routes) {
     var fcm = this;
 
     /**
@@ -83,15 +82,11 @@ catnip = services.catnip = /** @lends {Client.prototype.catnip} */{
     });
 
     fcm.router.init(routes, function (initialRoute) {
-      
       fcm.catnip.ready(function () {
-
         fcm.history.init();
 
         if (initialRoute)
           return fcm.router.route(initialRoute);
-
-        fcm.router.route('/beta');
       });
     });
 

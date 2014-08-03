@@ -1,13 +1,10 @@
 (function() {
 var async = {}, CallbackMap;
 var routes = {"/":function(a) {
-  this.catnip.app.$set("page.route", "/");
+  this.catnip.app.page = "map";
   return null;
 }, "/login":function(a) {
 }, "/settings":function(a) {
-}, "/beta":function(a) {
-  this.catnip.app.$set("page.route", "/beta");
-  return null;
 }, "/404":function(a) {
 }, "/<key>":function(a) {
   var b = this;
@@ -447,39 +444,16 @@ View.extend = function(a) {
   return a;
 };
 var views = {};
-views.Detail = View.extend({viewname:"detail", replace:!0, data:{view:"", selected:null}, handler:function(a) {
-  this.$set("view", a.kind.toLowerCase());
-  this.$set("selected", a);
-}});
 views.Header = View.extend({viewname:"header", replace:!0});
-views.Map = View.extend({viewname:"map", data:{active:!0, selected:null, config:{width:0, height:0, force:{alpha:.75, strength:1, friction:.9, theta:.7, gravity:.1, charge:-700, distance:180}, origin:{snap:!0, dynamic:!0, position:null}, node:{radius:20, classes:["node"]}, labels:{enable:!1, distance:0}, edge:{width:2, stroke:"#999", classes:["link"]}, sprite:{width:60, height:60}}}, methods:{toggleSelected:function(a) {
-}, addSelected:function(a) {
-}, browseTo:function(a) {
-}, draw:function(a) {
-}}, attached:function() {
-  var a = this.$el.offsetWidth, b = this.$el.offsetHeight;
-  this.$set("config.width", a);
-  this.$set("config.height", b);
-  this.$set("config.origin.position", {x:a - 30, y:b - 30});
-}, ready:function() {
-  window.addEventListener("resize", function(a) {
-  });
-}});
 views.Modal = View.extend({viewname:"modal", data:{active:!1, message:""}});
 views.Stage = View.extend({viewname:"stage", replace:!0, data:{active:!0}});
-views.Page = Vue.extend({data:{page:{route:"/"}, active:!1, modal:null}, methods:{route:function(a) {
+views.Page = Vue.extend({data:{page:"", active:!1, modal:null}, methods:{route:function(a) {
   if (a.target.hasAttribute("data-route")) {
     var b = a.target.getAttribute("href");
     a.preventDefault();
     a.stopPropagation();
     services.router.route(b);
   }
-}, child:function(a) {
-  a = a.split(".");
-  for (var b = this, c;a.length;) {
-    c = a.shift(), b = b.$[c];
-  }
-  return b;
 }}});
 services.view.put("page", views.Page);
 var _ready, _go, catnip;
@@ -491,30 +465,29 @@ _go = function() {
     a();
   });
 };
-catnip = services.catnip = {init:function(a, b) {
-  var c = this;
-  c._context = a;
-  c.session = null;
-  c.app = null;
-  a.session && a.session.established && (c.session = a.session.payload);
-  a.services && a.protocol.rpc.enabled && c.rpc.init(a.services);
-  a.template.manifest && c.template.init(a.template.manifest);
-  c.view.init("page", function() {
+catnip = services.catnip = {init:function(a, b, c) {
+  var d = this;
+  d._context = a;
+  d.session = null;
+  d.app = null;
+  a.session && a.session.established && (d.session = a.session.payload);
+  a.services && a.protocol.rpc.enabled && d.rpc.init(a.services);
+  a.template.manifest && d.template.init(a.template.manifest);
+  d.view.init("page", function() {
     this.$set("active", !0);
     services.catnip.app = this;
     _go();
   });
-  c.router.init(routes, function(a) {
-    c.catnip.ready(function() {
-      c.history.init();
+  d.router.init(c, function(a) {
+    d.catnip.ready(function() {
+      d.history.init();
       if (a) {
-        return c.router.route(a);
+        return d.router.route(a);
       }
-      c.router.route("/beta");
     });
   });
   services.catnip.init = function() {
-    return c;
+    return d;
   };
   return this;
 }, ready:function(a) {

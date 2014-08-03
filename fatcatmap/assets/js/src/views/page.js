@@ -11,9 +11,10 @@
 
 goog.require('services.router');
 goog.require('services.view');
+goog.require('views.Header');
 goog.require('views.Modal');
 goog.require('views.Stage');
-goog.require('views.Header');
+// goog.require('views.Map');
 
 goog.provide('views.Page');
 
@@ -28,17 +29,12 @@ views.Page = Vue.extend({
    * @type {Object}
    */
   data: {
+
     /**
      * @expose
-     * @type {Object}
+     * @type {string}
      */
-    page: {
-      /**
-       * @expose
-       * @type {string}
-       */
-      route: '/'
-    },
+    page: '',
 
     /**
      * @expose
@@ -69,22 +65,6 @@ views.Page = Vue.extend({
         e.stopPropagation();
         services.router.route(route);
       }
-    },
-
-    /**
-     * @expose
-     * @param {string} ns
-     * @this {views.Page}
-     */
-    child: function (ns) {
-      var parts = ns.split('.'),
-        child = this,
-        part;
-      while (parts.length) {
-        part = parts.shift();
-        child = child.$[part];
-      }
-      return child;
     }
   }
 });

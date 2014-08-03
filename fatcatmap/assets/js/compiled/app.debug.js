@@ -1,13 +1,10 @@
 (function() {
 var async = {}, CallbackMap;
 var routes = {"/":function($request$$) {
-  this.catnip.app.$set("page.route", "/");
+  this.catnip.app.page = "map";
   return null;
 }, "/login":function($request$$) {
 }, "/settings":function($request$$) {
-}, "/beta":function($request$$) {
-  this.catnip.app.$set("page.route", "/beta");
-  return null;
 }, "/404":function($request$$) {
 }, "/<key>":function($request$$) {
   var $_this$$ = this;
@@ -447,39 +444,16 @@ View.extend = function $View$extend$($options$$5_view$$) {
   return $options$$5_view$$;
 };
 var views = {};
-views.Detail = View.extend({viewname:"detail", replace:!0, data:{view:"", selected:null}, handler:function($data$$) {
-  this.$set("view", $data$$.kind.toLowerCase());
-  this.$set("selected", $data$$);
-}});
 views.Header = View.extend({viewname:"header", replace:!0});
-views.Map = View.extend({viewname:"map", data:{active:!0, selected:null, config:{width:0, height:0, force:{alpha:.75, strength:1, friction:.9, theta:.7, gravity:.1, charge:-700, distance:180}, origin:{snap:!0, dynamic:!0, position:null}, node:{radius:20, classes:["node"]}, labels:{enable:!1, distance:0}, edge:{width:2, stroke:"#999", classes:["link"]}, sprite:{width:60, height:60}}}, methods:{toggleSelected:function($e$$) {
-}, addSelected:function($e$$) {
-}, browseTo:function($e$$) {
-}, draw:function($graph$$) {
-}}, attached:function() {
-  var $width$$ = this.$el.offsetWidth, $height$$ = this.$el.offsetHeight;
-  this.$set("config.width", $width$$);
-  this.$set("config.height", $height$$);
-  this.$set("config.origin.position", {x:$width$$ - 30, y:$height$$ - 30});
-}, ready:function() {
-  window.addEventListener("resize", function($e$$) {
-  });
-}});
 views.Modal = View.extend({viewname:"modal", data:{active:!1, message:""}});
 views.Stage = View.extend({viewname:"stage", replace:!0, data:{active:!0}});
-views.Page = Vue.extend({data:{page:{route:"/"}, active:!1, modal:null}, methods:{route:function($e$$) {
+views.Page = Vue.extend({data:{page:"", active:!1, modal:null}, methods:{route:function($e$$) {
   if ($e$$.target.hasAttribute("data-route")) {
     var $route$$ = $e$$.target.getAttribute("href");
     $e$$.preventDefault();
     $e$$.stopPropagation();
     services.router.route($route$$);
   }
-}, child:function($ns_parts$$) {
-  $ns_parts$$ = $ns_parts$$.split(".");
-  for (var $child$$ = this, $part$$;$ns_parts$$.length;) {
-    $part$$ = $ns_parts$$.shift(), $child$$ = $child$$.$[$part$$];
-  }
-  return $child$$;
 }}});
 services.view.put("page", views.Page);
 var _ready, _go, catnip;
@@ -491,7 +465,7 @@ _go = function $_go$() {
     $fn$$();
   });
 };
-catnip = services.catnip = {init:function($context$$, $data$$) {
+catnip = services.catnip = {init:function($context$$, $data$$, $routes$$) {
   var $fcm$$ = this;
   $fcm$$._context = $context$$;
   $fcm$$.session = null;
@@ -504,13 +478,12 @@ catnip = services.catnip = {init:function($context$$, $data$$) {
     services.catnip.app = this;
     _go();
   });
-  $fcm$$.router.init(routes, function($initialRoute$$) {
+  $fcm$$.router.init($routes$$, function($initialRoute$$) {
     $fcm$$.catnip.ready(function() {
       $fcm$$.history.init();
       if ($initialRoute$$) {
         return $fcm$$.router.route($initialRoute$$);
       }
-      $fcm$$.router.route("/beta");
     });
   });
   services.catnip.init = function $services$catnip$init$() {

@@ -11,6 +11,7 @@
 
 goog.require('catnip');
 goog.require('config');
+goog.require('routes');
 
 goog.provide('init');
 

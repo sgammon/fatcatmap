@@ -89,7 +89,7 @@ js:
 
 styles:
 	@echo "Compiling Less..."
-	@-node_modules/gulp/bin/gulp.js less
+	@-node_modules/gulp/bin/gulp.js style
 
 ifeq ($(BREW),1)
 brew:
