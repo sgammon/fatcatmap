@@ -14,7 +14,7 @@ goog.require('services.view');
 goog.require('views.Header');
 goog.require('views.Modal');
 goog.require('views.Stage');
-// goog.require('views.Map');
+goog.require('views.Map');
 
 goog.provide('views.Page');
 
@@ -32,9 +32,15 @@ views.Page = Vue.extend({
 
     /**
      * @expose
-     * @type {string}
+     * @type {Object}
      */
-    page: '',
+    page: {
+      /**
+       * @expose
+       * @type {string}
+       */
+      name: 'page.map'
+    },
 
     /**
      * @expose

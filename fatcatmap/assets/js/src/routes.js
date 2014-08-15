@@ -20,8 +20,8 @@ var routes = {
    * @this {Client}
    */
   '/': function (request) {
-    this.catnip.app.page = 'page.map';
-    this.catnip.app.$broadcast('page.map', this.graph.construct());
+    this.app.page = 'page.map';
+    this.app.$broadcast('page.map', this.graph.construct());
     return null;
   },
 
@@ -63,7 +63,7 @@ var routes = {
        * @param {Object} data
        */
       success: function (data) {
-        this.catnip.app.$broadcast('detail', data);
+        _this.app.$broadcast('detail', data);
       },
 
       /**

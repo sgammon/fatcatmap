@@ -278,7 +278,7 @@ views.Map = View.extend({
    * @expose
    * @type {Object}
    */
-  methods: {
+  methods: /** @lends {views.Map.prototype} */{
     /**
      * @expose
      * @param {MouseEvent} e

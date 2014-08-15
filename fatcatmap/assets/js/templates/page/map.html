@@ -1,4 +1,4 @@
-<section id="mapper" v-if="active" v-transition>
+<section id="mapper">
   <svg id='catnip' class='transparent svg mapper viewport' version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink= "http://www.w3.org/1999/xlink">
       <defs>
           <filter id="blur-3p"><feGaussianBlur stdDeviation="3"/></filter>
@@ -13,5 +13,5 @@
       " v-transition></svg>
   </svg>
 
-  <section v-component="detail"></section>
+  <section v-component="detail" v-if="selected"></section>
 </section>

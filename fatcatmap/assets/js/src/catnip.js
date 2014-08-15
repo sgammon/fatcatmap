@@ -17,7 +17,6 @@ goog.require('services.history');
 goog.require('services.template');
 goog.require('services.view');
 goog.require('services.graph');
-goog.require('services.map');
 
 goog.require('views.Page');
 
@@ -39,16 +38,13 @@ _go = function () {
 
 /**
  * @expose
+ * @param {JSContext} context
+ * @param {PageData} data
+ * @param {Object.<string, function(this:Client)>} routes
+ * @this {Client}
+ * @return {Client}
  */
-catnip = services.catnip = /** @lends {Client.prototype.catnip} */{
-  /**
-   * @param {JSContext} context
-   * @param {PageData} data
-   * @param {Object.<string, function(this:Client)>} routes
-   * @this {Client}
-   * @return {Client}
-   */
-  init: function (context, data, routes) {
+catnip = function (context, data, routes) {
     var fcm = this;
 
     /**
@@ -61,11 +57,6 @@ catnip = services.catnip = /** @lends {Client.prototype.catnip} */{
      */
     fcm.session = null;
 
-    /**
-     * @type {?Vue}
-     */
-    fcm.app = null;
-
     if (context.session && context.session.established)
       fcm.session = context.session.payload;
 
@@ -77,12 +68,12 @@ catnip = services.catnip = /** @lends {Client.prototype.catnip} */{
 
     fcm.view.init('page', /** @this {Vue} */function () {
       this.$set('active', true);
-      services.catnip.app = this;
+      Client.prototype['app'] = this;
       _go();
     });
 
     fcm.router.init(routes, function (initialRoute) {
-      fcm.catnip.ready(function () {
+      fcm.ready(function () {
         fcm.history.init();
 
         if (initialRoute)
@@ -90,13 +81,8 @@ catnip = services.catnip = /** @lends {Client.prototype.catnip} */{
       });
     });
 
-    services.catnip.init = function () {
-      return fcm;
-    };
-
     return this;
-  },
-
+}.client({
   /**
    * @param {function()} cb
    */
@@ -109,5 +95,4 @@ catnip = services.catnip = /** @lends {Client.prototype.catnip} */{
 
     _ready.push(cb);
   }
-
-}.service('catnip');
+});

@@ -1,4 +1,5 @@
-var path = require('path'),
+var fs = require('fs'),
+  path = require('path'),
   less = require('less-stream'),
   sass = require('sass-stream'),
   closure = require('closure-compiler-stream'),
@@ -78,7 +79,7 @@ outputs = {
     scaffold: ASSET_PREFIX + 'style/themes/scaffold/'
   },
   templates: 'fatcatmap/templates/compiled',
-  sourcemaps: '../../../../../.develop/maps/'
+  sourcemaps: '.develop/maps/'
 };
 
 // Build configuration.
@@ -86,8 +87,7 @@ config = {
 
   // Sourcemaps
   sourcemaps: {
-    includeContent: false,
-    sourceRoot: '/.develop/maps/' // This needs to match asset serve root for less
+    includeContent: false
   },
 
   // Images
@@ -144,6 +144,7 @@ config = {
 
     common: {
       jar: 'lib/closure/build/compiler.jar',
+      source_map_format: 'V3',
       summary_detail_level: 3,
       warning_level: 'VERBOSE',
       language_in: 'ECMASCRIPT5',
@@ -211,37 +212,43 @@ task('less', [
 
 // Compile dark theme
 task('less:dark', function () {
-  var opts = merge(config.less.options, config.less.themes.dark);
+  var opts = merge(config.less.options, config.less.themes.dark),
+    cfg = config.sourcemaps;
+  cfg.sourceRoot = '/assets/less/site';
   return src(inputs.themes)
     .pipe(sourcemaps.init())
     .pipe(less(opts))
     .pipe(sourcemaps.write(
-      outputs.sourcemaps + ASSET_PREFIX + 'style/themes/dark/',
-      config.sourcemaps))
+      path.relative(ASSET_PREFIX + 'less/site/home.css', outputs.sourcemaps + ASSET_PREFIX + 'style/themes/dark/'),
+      cfg))
     .pipe(dest(outputs.themes.dark));
 });
 
 // Compile light theme
 task('less:light', function () {
-  var opts = merge(config.less.options, config.less.themes.light);
+  var opts = merge(config.less.options, config.less.themes.light),
+    cfg = config.sourcemaps;
+  cfg.sourceRoot = '/assets/less/site';
   return src(inputs.themes)
     .pipe(sourcemaps.init())
     .pipe(less(opts))
     .pipe(sourcemaps.write(
-      outputs.sourcemaps + ASSET_PREFIX + 'style/themes/light/',
-      config.sourcemaps))
+      path.relative(ASSET_PREFIX + 'less/site/home.css', outputs.sourcemaps + ASSET_PREFIX + 'style/themes/light/'),
+      cfg))
     .pipe(dest(outputs.themes.light));
 });
 
 // Compile scaffold theme
 task('less:scaffold', function () {
-  var opts = merge(config.less.options, config.less.themes.scaffold);
+  var opts = merge(config.less.options, config.less.themes.scaffold),
+    cfg = config.sourcemaps;
+  cfg.sourceRoot = '/assets/less/site';
   return src(inputs.themes)
     .pipe(sourcemaps.init())
     .pipe(less(opts))
     .pipe(sourcemaps.write(
-      outputs.sourcemaps + ASSET_PREFIX + 'style/themes/scaffold/',
-      config.sourcemaps))
+      path.relative(ASSET_PREFIX + 'less/site/home.css', outputs.sourcemaps + ASSET_PREFIX + 'style/themes/scaffold/'),
+      cfg))
     .pipe(dest(outputs.themes.scaffold));
 });
 
@@ -263,28 +270,41 @@ task('style:clean', function () {
 
 // Compile JS with Closure Compiler in production mode
 task('closure:min', function () {
+  var cfg = config.sourcemaps;
+  cfg.sourceRoot = '/assets/js/src';
   return src(inputs.js.app)
-    .pipe(closure(merge(config.closure.common, config.closure.min)));
+    .pipe(sourcemaps.init())
+    .pipe(closure(merge(config.closure.common, config.closure.min)))
+    .pipe(sourcemaps.write(
+      path.relative(ASSET_PREFIX + 'js/src', outputs.sourcemaps + ASSET_PREFIX + 'js/'),
+      cfg))
+    .pipe(dest(outputs.js.app));
 });
 
 // Compile JS with Closure Compiler in debug mode
 task('closure:debug', function () {
+  var cfg = config.sourcemaps;
+  cfg.sourceRoot = '/assets/js/src';
   return src(inputs.js.app)
-    .pipe(closure(merge(config.closure.common, config.closure.debug)));
+    .pipe(sourcemaps.init())
+    .pipe(closure(merge(config.closure.common, config.closure.debug)))
+    .pipe(sourcemaps.write(
+      path.relative(ASSET_PREFIX + 'js/src', outputs.sourcemaps + ASSET_PREFIX + 'js/'),
+      cfg))
+    .pipe(dest(outputs.js.app));
 });
 
 // Compile JS with Closure Compiler in pretty mode
 task('closure:pretty', function () {
+  var cfg = config.sourcemaps;
+  cfg.sourceRoot = '/assets/js/src';
   return src(inputs.js.app)
-    .pipe(closure(merge(config.closure.common, config.closure.pretty)));
-});
-
-// Compile source JS with tests for release.
-task('closure:tests', function () {
-  return src([inputs.js.app, inputs.js.test])
-    .pipe(closure(merge(
-      merge(config.closure.common, config.closure.min), config.closure.test
-    )));
+    .pipe(sourcemaps.init())
+    .pipe(closure(merge(config.closure.common, config.closure.pretty)))
+    .pipe(sourcemaps.write(
+      path.relative(ASSET_PREFIX + 'js/src', outputs.sourcemaps + ASSET_PREFIX + 'js/'),
+      cfg))
+    .pipe(dest(outputs.js.app));
 });
 
 // Clean compiled JS files
@@ -352,7 +372,7 @@ task('test:debug', ['closure:debug'], function (cb) {
 });
 
 // Run JS tests in release mode
-task('test:release', ['closure:tests'], function (cb) {
+task('test:release', ['closure:min'], function (cb) {
   setTimeout(function () {
     var cfg = merge({}, config.karma);
     cfg.files = cfg._releaseFiles;
@@ -396,4 +416,7 @@ task('clean', [
   'style:clean',
   'closure:clean',
   'templates:clean'
-]);
+], function () {
+  return src(outputs.sourcemaps)
+    .pipe(rmrf());
+});

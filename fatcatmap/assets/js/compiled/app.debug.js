@@ -1,7 +1,8 @@
 (function() {
 var async = {}, CallbackMap;
 var routes = {"/":function($request$$) {
-  this.catnip.app.page = "map";
+  this.app.page = "page.map";
+  this.app.$broadcast("page.map", this.graph.construct());
   return null;
 }, "/login":function($request$$) {
 }, "/settings":function($request$$) {
@@ -9,7 +10,7 @@ var routes = {"/":function($request$$) {
 }, "/<key>":function($request$$) {
   var $_this$$ = this;
   $_this$$.data.get($request$$.args.key, {success:function($data$$) {
-    this.catnip.app.$broadcast("detail", $data$$);
+    $_this$$.app.$broadcast("detail", $data$$);
   }, error:function($e$$) {
     $request$$.error = $e$$;
     $_this$$.router.route("/404", $request$$);
@@ -22,12 +23,13 @@ var toArray = function $toArray$($list$$) {
   for ($i$$ = 0;$i$$ < $list$$.length;$arr$$.push($list$$[$i$$++])) {
   }
   return $arr$$;
-}, $ = function $$$($query$$) {
+}, $ = function $$$($query$$, $bound$$) {
   if ($query$$ && $query$$.querySelector) {
     return $query$$;
   }
+  $bound$$ = $bound$$ || document;
   if ("string" === typeof $query$$) {
-    return "#" === $query$$.charAt(0) ? document.getElementById($query$$.slice(1)) : toArray(document.querySelectorAll($query$$));
+    return "#" === $query$$.charAt(0) ? document.getElementById($query$$.slice(1)) : toArray($bound$$.querySelectorAll($query$$));
   }
   throw new TypeError("Invalid document query string.");
 };
@@ -179,13 +181,39 @@ services.data = {init:function($raw$$) {
     this._watchers[$key$$] = $watchers$$;
   }
 }}.service("data");
+var _cache, _index, GRAPH;
+_cache = {};
+_index = {adjacency:{}, nodesByKey:{}, edgesByKey:{}, nativesByKey:{}, object_natives:{}};
 services.graph = {init:function($raw$$) {
-  return this.graph.construct(this.data.normalize($raw$$));
+  return GRAPH = this.graph.construct(this.data.normalize($raw$$));
 }, construct:function($data$$) {
-  return $data$$;
+  var $graph$$, $i$$, $key$$0$$, $targets$$, $source$$0$$, $makeEdge$$;
+  if (!$data$$) {
+    return GRAPH;
+  }
+  $graph$$ = $data$$.graph;
+  $data$$ = $data$$.data;
+  GRAPH = {nodes:[], edges:[], natives:[], origin:$graph$$.origin};
+  $data$$.keys.forEach(function($key$$, $key_i$$) {
+    _cache[$key$$] = $data$$.objects[$key_i$$];
+  });
+  $graph$$.natives.forEach(function($j_offset$$) {
+    $j_offset$$ = $graph$$.edges + 1 + $j_offset$$;
+    var $k$$ = $data$$.keys[$i$$];
+    _index.nativesByKey[$k$$] || (_index.nativesByKey[$k$$] = GRAPH.natives.push({key:$k$$, data:$data$$.objects[$j_offset$$]}) - 1);
+  });
+  $i$$ = -1;
+  for ($makeEdge$$ = function $$makeEdge$$$($source$$, $key$$) {
+    return function($target$$) {
+      var $_i$$;
+      !_index.adjacency[$source$$] && _index.adjacency[$source$$][$target$$] && ($_i$$ = GRAPH.edges.push({edge:{key:$key$$, data:$data$$.objects[$i$$]}, native:_cache[$data$$.objects[$i$$].native], source:_index.nodesByKey[$source$$], target:_index.nodesByKey[$target$$]}) - 1, _index.edgesByKey[$key$$].push($_i$$), _index.adjacency[$source$$] = {}, _index.adjacency[$source$$][$target$$] = $_i$$);
+    };
+  };$i$$++ < $data$$.keys.length;) {
+    $key$$0$$ = $data$$.keys[$i$$], $i$$ <= $graph$$.nodes ? _index.nodesByKey[$key$$0$$] || (_index.nodesByKey[$key$$0$$] = GRAPH.nodes.push({node:{key:$key$$0$$, data:_cache[$key$$0$$]}, native:{key:$data$$.objects[$i$$].native, data:_cache[$data$$.objects[$i$$].native]}})) : $i$$ <= $graph$$.edges && (_index.edgesByKey[$key$$0$$] || (_index.edgesByKey[$key$$0$$] = []), $targets$$ = $data$$.objects[$i$$].node.slice(), $source$$0$$ = $targets$$.shift(), $targets$$.forEach($makeEdge$$($source$$0$$, 
+    $key$$0$$)));
+  }
+  return GRAPH;
 }}.service("graph");
-services.map = {draw:function() {
-}}.service("map");
 var Request, Response, _prepareRequest, _dispatch, _parseResponse;
 _prepareRequest = function $_prepareRequest$($headers_method$$, $request$$, $handlers$$) {
   var $xhr$$ = new XMLHttpRequest, $url$$;
@@ -444,10 +472,65 @@ View.extend = function $View$extend$($options$$5_view$$) {
   return $options$$5_view$$;
 };
 var views = {};
+views.Detail = View.extend({viewname:"detail", replace:!0, data:{view:"", selected:null}, handler:function($data$$) {
+  this.$set("view", $data$$.kind.toLowerCase());
+  this.$set("selected", $data$$);
+}});
 views.Header = View.extend({viewname:"header", replace:!0});
 views.Modal = View.extend({viewname:"modal", data:{active:!1, message:""}});
 views.Stage = View.extend({viewname:"stage", replace:!0, data:{active:!0}});
-views.Page = Vue.extend({data:{page:"", active:!1, modal:null}, methods:{route:function($e$$) {
+views.Map = View.extend({viewname:"page.map", selectors:{map:"#map", edge:".edge", node:".node"}, data:{active:!0, graph:{root:null, force:null, edge:null, line:null, node:null, circle:null}, config:{width:0, height:0, force:{alpha:.75, strength:1, friction:.9, theta:.7, gravity:.1, charge:-700, distance:180}, origin:{snap:!0, dynamic:!0, position:null}, node:{radius:20, classes:["node"]}, labels:{enable:!1, distance:0}, edge:{width:2, stroke:"#999", classes:["link"]}, sprite:{width:60, height:60}}}, 
+methods:{toggleSelected:function($e$$) {
+}, addSelected:function($e$$) {
+}, browseTo:function($e$$) {
+}, draw:function($graph$$) {
+  var $config$$, $node$$5_nodeWrap_selectors$$, $force$$, $root$$, $edge_edgeWrap$$, $line$$, $container$$, $lineTick$$, $nodeTick$$;
+  this.graph.root ? (this.graph.root = null, $(this.$options.selectors.map).innerHTML = "", this.draw($graph$$)) : ($config$$ = this.config, $node$$5_nodeWrap_selectors$$ = this.$options.selectors, d3.scale.category20(), $force$$ = this.graph.force = d3.layout.force().size($config$$.width, $config$$.height).linkDistance($config$$.force.distance).charge($config$$.force.charge).linkStrength($config$$.force.strength).friction($config$$.force.friction).theta($config$$.force.theta).gravity($config$$.force.gravity).alpha($config$$.force.alpha), 
+  $root$$ = this.graph.root = d3.select($node$$5_nodeWrap_selectors$$.map), $edge_edgeWrap$$ = $root$$.selectAll($node$$5_nodeWrap_selectors$$.edge).data($graph$$.edges).enter(), $edge_edgeWrap$$ = this.graph.edge = $edge_edgeWrap$$.append("svg:svg").attr("id", function($e$$) {
+    return "edge-" + $e$$.edge.key;
+  }), $line$$ = this.graph.line = $edge_edgeWrap$$.append("svg:line").attr("stroke", $config$$.edge.stroke).attr("class", $config$$.edge.classes).style("stroke-width", $config$$.edge.width), $node$$5_nodeWrap_selectors$$ = $root$$.selectAll($node$$5_nodeWrap_selectors$$.node).data($graph$$.nodes).enter(), $container$$ = $node$$5_nodeWrap_selectors$$.append("svg:svg").attr("id", function($n$$) {
+    return "group-" + $n$$.node.key;
+  }).attr("width", $config$$.sprite.width).attr("height", $config$$.sprite.height).call($force$$.drag), $node$$5_nodeWrap_selectors$$ = this.graph.node = $container$$.append("svg:g").attr("width", $config$$.sprite.width).attr("height", $config$$.sprite.height).attr("class", function($d$$, $i$$) {
+    var $classes$$ = [];
+    $d$$.native.data.govtrack_id ? ($classes$$.push("legislator"), $classes$$.push("M" === $d$$.native.data.gender ? "male" : "female"), $classes$$.push(Math.ceil(100 * Math.random()) % 2 ? "democrat" : "republican")) : ($classes$$.push("contributor"), $classes$$.push("C" == $d$$.native.data.contributor_type ? "corporate" : "individual"));
+    return $classes$$.join(" ");
+  }), this.graph.circle = $node$$5_nodeWrap_selectors$$.append("svg:circle").attr("r", $config$$.node.radius).attr("cx", $config$$.sprite.width / 2).attr("cy", $config$$.sprite.height / 2).attr("class", $config$$.node.classes), $lineTick$$ = function $$lineTick$$$($direction$$, $pt$$, $edge_d$$, $edge_i$$) {
+    return $config$$.origin.snap && $edge_d$$[$direction$$].index === $graph$$.origin ? Math.floor($config$$.origin.position($pt$$)) : Math.floor($edge_d$$[$direction$$][$pt$$] + $config$$.node.radius / 2);
+  }, $nodeTick$$ = function $$nodeTick$$$($pt$$, $node_d$$, $node_i$$) {
+    return $config$$.origin.snap && $node_i$$ === $graph$$.origin ? Math.floor($config$$.origin.position[$pt$$] - $config$$.sprite["x" === $pt$$ ? "width" : "height"] / 2) : Math.floor($node_d$$[$pt$$] - $config$$.node.radius);
+  }, $force$$.on("tick", function($centerX_f$$) {
+    var $centerY$$;
+    $centerX_f$$ = $config$$.width / 2;
+    $centerY$$ = $config$$.height / 2;
+    $config$$.origin.dynamic && $config$$.origin.snap && (this.config.origin.position = {x:$centerX_f$$ + $config$$.sprite.width / 2, y:$centerY$$ + $config$$.sprite.height / 2});
+    ["x", "y"].forEach(function($pt$$) {
+      $container$$.attr($pt$$, function($d$$, $i$$) {
+        $nodeTick$$($pt$$, $d$$, $i$$);
+      });
+    });
+    ["x1", "y1", "x2", "y2"].forEach(function($pt$$) {
+      $line$$.attr($pt$$, function($d$$, $i$$) {
+        $lineTick$$("1" === $pt$$[1] ? "source" : "target", $pt$$[0], $d$$, $i$$);
+      });
+    });
+  }), $force$$.nodes($graph$$.nodes).links($graph$$.edges).start());
+}}, ready:function() {
+  var $view$$ = this, $width$$ = this.$el.offsetWidth, $height$$0$$ = this.$el.offsetHeight;
+  this.config.width = $width$$;
+  this.config.height = $height$$0$$;
+  this.config.origin.position = {x:$width$$ - 30, y:$height$$0$$ - 30};
+  window.addEventListener("resize", function($e$$24_width$$) {
+    $e$$24_width$$ = document.body.clientWidth;
+    var $height$$ = document.body.clientHeight;
+    $view$$.config.graph.width = $e$$24_width$$;
+    $view$$.config.graph.height = $height$$;
+    $view$$.graph.root && $view$$.graph.root.attr("width", $e$$24_width$$).attr("height", $height$$);
+    $view$$.graph.force && $view$$.graph.force.size([$e$$24_width$$, $height$$]).resume();
+  });
+}, handler:function($graph$$) {
+  this.draw($graph$$);
+}});
+views.Page = Vue.extend({data:{page:{name:"page.map"}, active:!1, modal:null}, methods:{route:function($e$$) {
   if ($e$$.target.hasAttribute("data-route")) {
     var $route$$ = $e$$.target.getAttribute("href");
     $e$$.preventDefault();
@@ -465,40 +548,38 @@ _go = function $_go$() {
     $fn$$();
   });
 };
-catnip = services.catnip = {init:function($context$$, $data$$, $routes$$) {
+catnip = function($context$$, $data$$, $routes$$) {
   var $fcm$$ = this;
   $fcm$$._context = $context$$;
   $fcm$$.session = null;
-  $fcm$$.app = null;
   $context$$.session && $context$$.session.established && ($fcm$$.session = $context$$.session.payload);
   $context$$.services && $context$$.protocol.rpc.enabled && $fcm$$.rpc.init($context$$.services);
   $context$$.template.manifest && $fcm$$.template.init($context$$.template.manifest);
   $fcm$$.view.init("page", function() {
     this.$set("active", !0);
-    services.catnip.app = this;
+    Client.prototype.app = this;
     _go();
   });
   $fcm$$.router.init($routes$$, function($initialRoute$$) {
-    $fcm$$.catnip.ready(function() {
+    $fcm$$.ready(function() {
       $fcm$$.history.init();
       if ($initialRoute$$) {
         return $fcm$$.router.route($initialRoute$$);
       }
     });
   });
-  services.catnip.init = function $services$catnip$init$() {
-    return $fcm$$;
-  };
   return this;
-}, ready:function($cb$$) {
+}.client({ready:function($cb$$) {
   if ($cb$$) {
     if (!_ready) {
       return $cb$$();
     }
     _ready.push($cb$$);
   }
-}}.service("catnip");
+}});
 var init = {};
-window.catnip_beta = catnip.init(config.context, config.data);
+window.catnip_beta = catnip(config.context, config.data, routes);
 
 })();
+
+//# sourceMappingURL=../../../../.develop/maps/fatcatmap/assets/js/app.debug.js.map

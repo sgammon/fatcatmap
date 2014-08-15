@@ -1,7 +1,8 @@
 (function() {
 var async = {}, CallbackMap;
 var routes = {"/":function(a) {
-  this.catnip.app.page = "map";
+  this.app.page = "page.map";
+  this.app.$broadcast("page.map", this.graph.construct());
   return null;
 }, "/login":function(a) {
 }, "/settings":function(a) {
@@ -9,7 +10,7 @@ var routes = {"/":function(a) {
 }, "/<key>":function(a) {
   var b = this;
   b.data.get(a.args.key, {success:function(a) {
-    this.catnip.app.$broadcast("detail", a);
+    b.app.$broadcast("detail", a);
   }, error:function(c) {
     a.error = c;
     b.router.route("/404", a);
@@ -22,12 +23,13 @@ var toArray = function(a) {
   for (c = 0;c < a.length;b.push(a[c++])) {
   }
   return b;
-}, $ = function(a) {
+}, $ = function(a, b) {
   if (a && a.querySelector) {
     return a;
   }
+  b = b || document;
   if ("string" === typeof a) {
-    return "#" === a.charAt(0) ? document.getElementById(a.slice(1)) : toArray(document.querySelectorAll(a));
+    return "#" === a.charAt(0) ? document.getElementById(a.slice(1)) : toArray(b.querySelectorAll(a));
   }
   throw new TypeError("Invalid document query string.");
 };
@@ -179,13 +181,38 @@ services.data = {init:function(a) {
     this._watchers[a] = c;
   }
 }}.service("data");
+var _cache, _index, GRAPH;
+_cache = {};
+_index = {adjacency:{}, nodesByKey:{}, edgesByKey:{}, nativesByKey:{}, object_natives:{}};
 services.graph = {init:function(a) {
-  return this.graph.construct(this.data.normalize(a));
+  return GRAPH = this.graph.construct(this.data.normalize(a));
 }, construct:function(a) {
-  return a;
+  var b, c, d, e, f, g;
+  if (!a) {
+    return GRAPH;
+  }
+  b = a.graph;
+  a = a.data;
+  GRAPH = {nodes:[], edges:[], natives:[], origin:b.origin};
+  a.keys.forEach(function(b, c) {
+    _cache[b] = a.objects[c];
+  });
+  b.natives.forEach(function(d) {
+    d = b.edges + 1 + d;
+    var e = a.keys[c];
+    _index.nativesByKey[e] || (_index.nativesByKey[e] = GRAPH.natives.push({key:e, data:a.objects[d]}) - 1);
+  });
+  c = -1;
+  for (g = function(b, d) {
+    return function(e) {
+      var f;
+      !_index.adjacency[b] && _index.adjacency[b][e] && (f = GRAPH.edges.push({edge:{key:d, data:a.objects[c]}, native:_cache[a.objects[c].native], source:_index.nodesByKey[b], target:_index.nodesByKey[e]}) - 1, _index.edgesByKey[d].push(f), _index.adjacency[b] = {}, _index.adjacency[b][e] = f);
+    };
+  };c++ < a.keys.length;) {
+    d = a.keys[c], c <= b.nodes ? _index.nodesByKey[d] || (_index.nodesByKey[d] = GRAPH.nodes.push({node:{key:d, data:_cache[d]}, native:{key:a.objects[c].native, data:_cache[a.objects[c].native]}})) : c <= b.edges && (_index.edgesByKey[d] || (_index.edgesByKey[d] = []), e = a.objects[c].node.slice(), f = e.shift(), e.forEach(g(f, d)));
+  }
+  return GRAPH;
 }}.service("graph");
-services.map = {draw:function() {
-}}.service("map");
 var Request, Response, _prepareRequest, _dispatch, _parseResponse;
 _prepareRequest = function(a, b, c) {
   var d = new XMLHttpRequest, e;
@@ -444,10 +471,65 @@ View.extend = function(a) {
   return a;
 };
 var views = {};
+views.Detail = View.extend({viewname:"detail", replace:!0, data:{view:"", selected:null}, handler:function(a) {
+  this.$set("view", a.kind.toLowerCase());
+  this.$set("selected", a);
+}});
 views.Header = View.extend({viewname:"header", replace:!0});
 views.Modal = View.extend({viewname:"modal", data:{active:!1, message:""}});
 views.Stage = View.extend({viewname:"stage", replace:!0, data:{active:!0}});
-views.Page = Vue.extend({data:{page:"", active:!1, modal:null}, methods:{route:function(a) {
+views.Map = View.extend({viewname:"page.map", selectors:{map:"#map", edge:".edge", node:".node"}, data:{active:!0, graph:{root:null, force:null, edge:null, line:null, node:null, circle:null}, config:{width:0, height:0, force:{alpha:.75, strength:1, friction:.9, theta:.7, gravity:.1, charge:-700, distance:180}, origin:{snap:!0, dynamic:!0, position:null}, node:{radius:20, classes:["node"]}, labels:{enable:!1, distance:0}, edge:{width:2, stroke:"#999", classes:["link"]}, sprite:{width:60, height:60}}}, 
+methods:{toggleSelected:function(a) {
+}, addSelected:function(a) {
+}, browseTo:function(a) {
+}, draw:function(a) {
+  var b, c, d, e, f, g, h, k, l;
+  this.graph.root ? (this.graph.root = null, $(this.$options.selectors.map).innerHTML = "", this.draw(a)) : (b = this.config, c = this.$options.selectors, d3.scale.category20(), d = this.graph.force = d3.layout.force().size(b.width, b.height).linkDistance(b.force.distance).charge(b.force.charge).linkStrength(b.force.strength).friction(b.force.friction).theta(b.force.theta).gravity(b.force.gravity).alpha(b.force.alpha), e = this.graph.root = d3.select(c.map), f = e.selectAll(c.edge).data(a.edges).enter(), 
+  f = this.graph.edge = f.append("svg:svg").attr("id", function(a) {
+    return "edge-" + a.edge.key;
+  }), g = this.graph.line = f.append("svg:line").attr("stroke", b.edge.stroke).attr("class", b.edge.classes).style("stroke-width", b.edge.width), c = e.selectAll(c.node).data(a.nodes).enter(), h = c.append("svg:svg").attr("id", function(a) {
+    return "group-" + a.node.key;
+  }).attr("width", b.sprite.width).attr("height", b.sprite.height).call(d.drag), c = this.graph.node = h.append("svg:g").attr("width", b.sprite.width).attr("height", b.sprite.height).attr("class", function(a, b) {
+    var c = [];
+    a.native.data.govtrack_id ? (c.push("legislator"), c.push("M" === a.native.data.gender ? "male" : "female"), c.push(Math.ceil(100 * Math.random()) % 2 ? "democrat" : "republican")) : (c.push("contributor"), c.push("C" == a.native.data.contributor_type ? "corporate" : "individual"));
+    return c.join(" ");
+  }), this.graph.circle = c.append("svg:circle").attr("r", b.node.radius).attr("cx", b.sprite.width / 2).attr("cy", b.sprite.height / 2).attr("class", b.node.classes), k = function(c, d, e, f) {
+    return b.origin.snap && e[c].index === a.origin ? Math.floor(b.origin.position(d)) : Math.floor(e[c][d] + b.node.radius / 2);
+  }, l = function(c, d, e) {
+    return b.origin.snap && e === a.origin ? Math.floor(b.origin.position[c] - b.sprite["x" === c ? "width" : "height"] / 2) : Math.floor(d[c] - b.node.radius);
+  }, d.on("tick", function(a) {
+    var c;
+    a = b.width / 2;
+    c = b.height / 2;
+    b.origin.dynamic && b.origin.snap && (this.config.origin.position = {x:a + b.sprite.width / 2, y:c + b.sprite.height / 2});
+    ["x", "y"].forEach(function(a) {
+      h.attr(a, function(b, c) {
+        l(a, b, c);
+      });
+    });
+    ["x1", "y1", "x2", "y2"].forEach(function(a) {
+      g.attr(a, function(b, c) {
+        k("1" === a[1] ? "source" : "target", a[0], b, c);
+      });
+    });
+  }), d.nodes(a.nodes).links(a.edges).start());
+}}, ready:function() {
+  var a = this, b = this.$el.offsetWidth, c = this.$el.offsetHeight;
+  this.config.width = b;
+  this.config.height = c;
+  this.config.origin.position = {x:b - 30, y:c - 30};
+  window.addEventListener("resize", function(b) {
+    b = document.body.clientWidth;
+    var c = document.body.clientHeight;
+    a.config.graph.width = b;
+    a.config.graph.height = c;
+    a.graph.root && a.graph.root.attr("width", b).attr("height", c);
+    a.graph.force && a.graph.force.size([b, c]).resume();
+  });
+}, handler:function(a) {
+  this.draw(a);
+}});
+views.Page = Vue.extend({data:{page:{name:"page.map"}, active:!1, modal:null}, methods:{route:function(a) {
   if (a.target.hasAttribute("data-route")) {
     var b = a.target.getAttribute("href");
     a.preventDefault();
@@ -465,40 +547,38 @@ _go = function() {
     a();
   });
 };
-catnip = services.catnip = {init:function(a, b, c) {
+catnip = function(a, b, c) {
   var d = this;
   d._context = a;
   d.session = null;
-  d.app = null;
   a.session && a.session.established && (d.session = a.session.payload);
   a.services && a.protocol.rpc.enabled && d.rpc.init(a.services);
   a.template.manifest && d.template.init(a.template.manifest);
   d.view.init("page", function() {
     this.$set("active", !0);
-    services.catnip.app = this;
+    Client.prototype.app = this;
     _go();
   });
   d.router.init(c, function(a) {
-    d.catnip.ready(function() {
+    d.ready(function() {
       d.history.init();
       if (a) {
         return d.router.route(a);
       }
     });
   });
-  services.catnip.init = function() {
-    return d;
-  };
   return this;
-}, ready:function(a) {
+}.client({ready:function(a) {
   if (a) {
     if (!_ready) {
       return a();
     }
     _ready.push(a);
   }
-}}.service("catnip");
+}});
 var init = {};
-window.catnip_beta = catnip.init(config.context, config.data);
+window.catnip_beta = catnip(config.context, config.data, routes);
 
 })();
+
+//# sourceMappingURL=../../../../.develop/maps/fatcatmap/assets/js/app.js.map
