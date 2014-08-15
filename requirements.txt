@@ -5,4 +5,5 @@ fabtools
 fabric
 dogapi
 msgpack-python
+ctypes-snappy
 raven

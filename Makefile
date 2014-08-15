@@ -118,7 +118,7 @@ lib/canteen:
 endif
 
 test:
-	@-bin/pip install nose coverage
+	@-bin/python -c "import nose" || @-bin/pip install nose coverage
 	@echo "Running python testsuite..."
 	@-bin/nosetests canteen_tests fatcatmap_tests --verbose
 	@echo "Running javascript testsuite..."
