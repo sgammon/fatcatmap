@@ -7,12 +7,9 @@
 '''
 
 # submodules
-from . import recipient
-from . import contributor
-from . import contribution
+from . import (contributor,
+               contribution)
 
 
-__all__ = (
-  'recipient',
-  'contributor',
-  'contribution')
+__all__ = ('contributor',
+           'contribution')

@@ -10,10 +10,10 @@
 from . import adapter
 
 # fcm
+from fatcatmap.models import Edge
+from fatcatmap.models import Vertex
 from fatcatmap.logic import grapher
 from fatcatmap.models.graph import hint
-from fatcatmap.models.graph import node
-from fatcatmap.models.graph import edge
 from fatcatmap.models.graph import graph
 
 # canteen
@@ -29,8 +29,8 @@ class DataWarehouse(Logic):
   # bind models
   models = struct.ObjectProxy({
     'hint': hint.Hint,
-    'node': node.Node,
-    'edge': edge.Edge
+    'node': Vertex,
+    'edge': Edge
   })
 
   @property

@@ -1,1 +1,7 @@
-__author__ = 'weisberger'
+# -*- coding: utf-8 -*-
+
+'''
+
+  fcm: analyzer
+
+'''

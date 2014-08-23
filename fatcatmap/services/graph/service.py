@@ -11,7 +11,7 @@ from . import messages
 from canteen import remote, Service, model
 
 # models
-from fatcatmap.models.graph import node
+from fatcatmap.models import Vertex
 
 
 @remote.service('graph')
@@ -24,7 +24,7 @@ class GraphService(Service):
 
     ''' '''
 
-    origin = (request.origin and node.Node.get(model.Key(urlsafe=request.origin))) or None
+    origin = (request.origin and Vertex.get(model.Key(urlsafe=request.origin))) or None
 
     # construct graph
     meta, data, graph = self.graph.construct(origin, **{

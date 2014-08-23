@@ -7,14 +7,9 @@
 '''
 
 # submodules
-from . import edge
-from . import node
 from . import hint
 from . import graph
 
 
-__all__ = (
-  'edge',
-  'node',
-  'hint',
-  'graph')
+__all__ = ('hint',
+           'graph')

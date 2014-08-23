@@ -16,14 +16,14 @@ from . import graph
 from canteen import model
 
 # app model
-from fatcatmap.models import AppModel
+from fatcatmap.models import BaseModel
 
 
 ## Constants
 HINT_LIFETIME = datetime.timedelta(days=30)
 
 
-class Hint(AppModel):
+class Hint(BaseModel):
 
   ''' Represents a hint leftover from a previous query, which
       attaches a cached graph fragment to a guessable key.

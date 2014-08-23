@@ -2,28 +2,33 @@
 
 '''
 
-fatcatmap legislative models: committee
+  fcm: legislative committee membership models
 
-
-    :author: Alexander Rosner <alex@momentum.io>
-    :copyright: (c) momentum labs, 2013
 '''
 
 
 # canteen models
-from canteen import model
-from fatcatmap.models import AppModel
+from fatcatmap.models import Edge
 
 
-# Member - represents membership in a group type (committee/session/etc).
-class Member(AppModel):
-	
-	committee = basestring, {'indexed': True, 'required': True}
-	legislator = basestring, {'indexed': True, 'required': True}
-	committee_type = basestring, {'indexed': True}
-	govtrackid = basestring, {'indexed' : True}
-	name = basestring, {'indexed': True}
-	subname = basestring, {'indexed': True}
-	role = basestring, {'indexed': True}
-	housecode = basestring, {'indexed': True}
-	senatecode = basestring, {'indexed': True}
+class CommitteeMembership(Edge):
+
+  ''' Edge representing a legislator's membership on a legislative
+      committe. '''
+
+  # -- references -- #
+  committee = basestring, {'indexed': True, 'required': True}
+  legislator = basestring, {'indexed': True, 'required': True}
+
+  # -- external IDs -- #
+  govtrackid = basestring, {'indexed': True}
+
+  # -- categorization & naming -- #
+  committee_type = basestring, {'indexed': True}
+  name = basestring, {'indexed': True}
+  subname = basestring, {'indexed': True}
+  role = basestring, {'indexed': True}
+
+  # -- internal codes -- #
+  housecode = basestring, {'indexed': True}
+  senatecode = basestring, {'indexed': True}

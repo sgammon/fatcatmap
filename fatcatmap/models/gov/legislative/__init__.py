@@ -7,9 +7,9 @@
 '''
 
 # submodules
-from . import member
-from . import committee
-from . import legislator
+from . import (member,
+               committee,
+               legislator)
 
 
 __all__ = (

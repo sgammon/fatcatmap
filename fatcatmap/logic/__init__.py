@@ -18,10 +18,9 @@ from . import grapher
 from .grapher import *
 
 
-__all__ = (
-  'db',
-  'views',
-  'grapher',
-  'Graph',
-  'Grapher',
-  'GraphOptions')
+__all__ = ('db',
+           'views',
+           'grapher',
+           'Graph',
+           'Grapher',
+           'GraphOptions')

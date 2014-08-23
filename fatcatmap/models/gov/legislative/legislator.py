@@ -2,44 +2,47 @@
 
 '''
 
-    fatcatmap legislative models: legislator
+  fcm: legislative actor models
 
-
-    :author: Alexander Rosner <alex@momentum.io>
-    :copyright: (c) momentum labs, 2013
-  
 '''
 
+# stdlib
+import datetime
 
-# canteen models
-from canteen import model
-from fatcatmap.models import AppModel
-
-
-# Legislator - describes a person who legislates.
-class Legislator(AppModel):
-
-  '''  '''
+# graph models
+from fatcatmap.models import Vertex
 
 
-  firstname = basestring, {'indexed': True}
-  lastname = basestring, {'indexed': True}
-  nickname = basestring, {}
+class Legislator(Vertex):
+
+  ''' Describes an individual person who acts as a legislative and political
+      actor, past or present. '''
+
+  # -- primary naming -- #
+  firstname = str, {'indexed': True}
+  lastname = str, {'indexed': True}
+  nickname = str, {'indexed': True}
+
+  # -- alternate natming -- #
+  namemod = str, {'indexed': True}
+  lastnameenc = str, {'indexed': True}
+  lastnamealt = str, {'indexed': True}
+
+  # -- personal details -- #
+  birthday = datetime.date, {'indexed': True}  # @TODO(arosner): convert to date property when it works
+  gender = str, {'indexed': True, 'choices': frozenset(('m', 'f'))}
+  religion = str, {'indexed': True, 'default': None}
+
+  # -- external IDs -- #
   govtrack_id = long, {'indexed': True}
-  thomas_id = basestring, {'indexed': True}
-  namemod = basestring, {}
-  lastnameenc = basestring, {}
-  lastnamealt = basestring, {}
-  birthday = basestring, {}  # @TODO(arosner): convert to date property when it works
-  gender = basestring, {'indexed': True}
-  religion = basestring, {'indexed': True, 'default': None}
-  osid = basestring, {'indexed': True, 'default':None}
-  bioguideid = basestring, {'indexed': True, 'default': None}
-  pvsid = long, {'indexed':True, 'default': None}
-  fecid = basestring, {'indexed': True, 'default': None}
-  metavidid = basestring, {'indexed': True, 'default': None}
-  youtubeid = basestring, {'indexed': True, 'default': None}
-  twitterid = basestring, {'indexed': True, 'default': None}
-  lismemberid = basestring, {'indexed':True, 'default':None}
-  icpsrid = long, {'indexed': True, 'default': None}
-  fbid = long, {'indexed': True, 'default': None}
+  thomas_id = str, {'indexed': True}
+  os_id = str, {'indexed': True, 'default': None}
+  bioguide_id = str, {'indexed': True, 'default': None}
+  pvs_id = long, {'indexed': True, 'default': None}
+  fec_id = str, {'indexed': True, 'default': None}
+  metavid_id = str, {'indexed': True, 'default': None}
+  youtube_id = str, {'indexed': True, 'default': None}
+  twitter_id = str, {'indexed': True, 'default': None}
+  lismember_id = str, {'indexed': True, 'default': None}
+  icpsr_id = long, {'indexed': True, 'default': None}
+  fb_id = long, {'indexed': True, 'default': None}

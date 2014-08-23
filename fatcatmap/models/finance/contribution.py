@@ -2,31 +2,24 @@
 
 '''
 
-    fatcatmap finance models: contributions
+  fcm: financial contributions models
 
-
-    :author: Alexander Rosner <alex@momentum.io>
-    :copyright: (c) momentum labs, 2013
-    
 '''
 
 
-# canteen models
-from canteen import model
-from fatcatmap.models import AppModel
+# graph models
+from fatcatmap.models import Edge
 
 
-# Contribution - A monetary contribution between two entites( see: Contributor, Recipient)
-class Contribution(AppModel):
-  
-  ''' Represents a single Contribution between a 
-    :py:class:`contributions.Contributor` 
-    and a :py:class:`contributions.Recipient` 
-    on the :py:mod:`fatcatmap` graph.'''
+class Contribution(Edge):
 
-  cycle = int,{'indexed': True}
+  ''' Represents a single Contribution between a :py:class:`Contributor` and a
+      :py:class:`Recipient` on the :py:mod:`fatcatmap` graph. '''
+
+  # -- details -- #
+  cycle = int, {'indexed': True}
   total = float, {'indexed': True}
-  contributor = basestring, {'indexed': True}
-  recipient = basestring, {'indexed': True}
-  contributor_name = basestring, {'indexed' : True}
-  recipient_name = basestring, {'indexed' : True}
+
+  # -- naming -- #
+  recipient_name = str, {'indexed': True}
+  contributor_name = str, {'indexed': True}

@@ -2,23 +2,23 @@
 
 '''
 
-    fatcatmap finance models: contributors
+    fcm: financial contributor models
 
-    :author: Alexander Rosner <alex@momentum.io>
-    :copyright: (c) momentum labs, 2013
-   
 '''
 
-# canteen models
-from canteen import model
-from fatcatmap.models import AppModel
+# graph models
+from fatcatmap.models import Vertex
 
-class Contributor(AppModel):
 
-  ''' Represents a Contributor from the :py:mod:`fatcatmap`graph. '''
+class Contributor(Vertex):
 
-  name = basestring, {'indexed': True}
-  contributor_type = basestring, {'indexed': True}
-  fec_category = basestring, {'indexed': True}
-  open_secrets_id = basestring, {'indexed': True}
-  freebase_id = basestring, {'indexed': True}
+  ''' Represents a Contributor from the :py:mod:`fatcatmap` graph. '''
+
+  # -- naming / categorization -- #
+  name = str, {'indexed': True}
+  contributor_type = str, {'indexed': True}
+  fec_category = str, {'indexed': True}
+
+  # -- external IDs -- #
+  open_secrets_id = str, {'indexed': True}
+  freebase_id = str, {'indexed': True}

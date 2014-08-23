@@ -26,7 +26,7 @@ if __debug__:
   from canteen.util.debug import Logger
 
   # fcm config & base model
-  from fatcatmap.models import AppModel
+  from fatcatmap.models import BaseModel
   from fatcatmap.config import project as root
   from fatcatmap.config import config as appconfig
 
@@ -40,8 +40,8 @@ if __debug__:
 
   # install application config and set adapter
   test.BaseTest.set_config(appconfig)
-  AppModel.__adapter__ = RedisWarehouse.acquire(*(
-    'AppModel', AppModel.__bases__, {}))
+  BaseModel.__adapter__ = RedisWarehouse.acquire(*(
+    'BaseModel', BaseModel.__bases__, {}))
 
   # load fixtures and set adapter
   try:

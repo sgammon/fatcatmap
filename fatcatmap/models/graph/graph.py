@@ -13,7 +13,7 @@ import hashlib
 from canteen import model
 
 # app model
-from fatcatmap.models import AppModel
+from fatcatmap.models import BaseModel
 
 
 ## Constants
@@ -21,37 +21,36 @@ DEFAULT_DEPTH = 1  # only map to 1-traversal out by default
 DEFAULT_LIMIT = 15  # limit edge count per traversal step
 
 
-class GraphOptions(AppModel):
+class GraphOptions(BaseModel):
 
-  ''' Model representing options related to a particular
-      instance of a ``Graph``. '''
+  ''' Model representing options related to a particular instance of a
+      ``Graph``. '''
 
   depth = int, {'default': DEFAULT_DEPTH}
   limit = int, {'default': DEFAULT_LIMIT}
 
   def describe(self):
 
-    ''' Describe the local instance in a string that can
-        later be unpacked into an identical object. '''
+    ''' Describe the local instance in a string that can later be unpacked into
+        an identical object. '''
 
     return "/".join(map(str, (self.depth, self.limit)))
 
   @classmethod
   def from_describe(cls, spec):
 
-    ''' Unpack a string representing a ``GraphOptions``
-        structure, generated previously from ``describe``. '''
+    ''' Unpack a string representing a ``GraphOptions`` structure, generated
+        previously from ``describe``. '''
 
     depth, limit = tuple(map(int, spec.split("/")))
     return cls(depth=depth, limit=limit)
 
 
-class Graph(AppModel):
+class Graph(BaseModel):
 
-  ''' Model representing a single instance of a structure
-      representing ``Nodes``, interlinked by ``Edges``. Can
-      optionally contain references to full data for those
-      objects. '''
+  ''' Model representing a single instance of a structure representing
+      ``Nodes``, interlinked by ``Edges``. Can optionally contain references to
+      full data for those objects. '''
 
   data = model.Key, {'repeated': True}
   structure = model.Key, {'repeated': True}
@@ -61,8 +60,8 @@ class Graph(AppModel):
 
   def hash(self):
 
-    ''' Generate a content-based unique hash of this Graph.
-        Includes both structural and data keys. '''
+    ''' Generate a content-based unique hash of this Graph. Includes both
+        structural and data keys. '''
 
     hash, lookup = hashlib.sha1(), set()
     for keygroup in (self.data, self.structure, (self.origin,)):
@@ -75,9 +74,8 @@ class Graph(AppModel):
 
   def fingerprint(self, hash=False):
 
-    ''' Generate a string fingerprint for this Graph from
-        the input parameters: ``origin``, ``depth`` and
-        ``limit``.
+    ''' Generate a string fingerprint for this Graph from the input parameters:
+        ``origin``, ``depth`` and ``limit``.
 
         Optionally make a hash of the contents, too. '''
 
