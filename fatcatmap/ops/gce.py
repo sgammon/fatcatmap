@@ -134,7 +134,7 @@ class Deploy(object):
                      ex_boot_disk_auto_delete=True,
                      ex_metadata={'group': self.group,
                                   'environment': self.environment,
-                                  'startup-script-url': settings.STARTUP_SCRIPT_URL})
+                                  'startup-script-url': settings.DEFAULT_STARTUP_SCRIPT_URL})
     print colors.green('Node created: %s' % node)
 
   def deploy_many(self, n=3):

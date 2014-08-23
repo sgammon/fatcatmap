@@ -24,6 +24,48 @@ except ImportError:
 _custom_jinja2_extensions = filter(lambda x: x is not None, [HamlishExtension if HAML else None])
 app = os.path.dirname(__file__)
 project = os.path.dirname(app)
+DEFAULT_BOOT_DISK = 'base-v11'
+freeze = lambda x: frozenset(x)
+
+
+## Enumerations
+class Components:
+
+  ''' Enumeration of software components. '''
+
+  PROXY = 'haproxy'
+  WEBSERVER = 'httpd'
+  DATABASE = 'redis'
+
+
+class DiskType:
+
+  ''' Enumeration of disk types. '''
+
+  MAGNETIC = None
+  SSD = 'pd-ssd'
+
+
+class ComponentProcesses:
+
+  ''' Supervisor configuration for component processes. '''
+
+  haproxy = {
+    'command': '/base/software/haproxy/sbin/haproxy -f /etc/haproxy/haproxy.conf -db -p /base/ns/pid/haproxy',
+  }
+
+  httpd = {
+    'command': '/base/software/httpd/bin/httpd -f /etc/apache2/httpd.conf -DFOREGROUND'
+  }
+
+  k9 = {
+    'command': '/base/software/k9/sbin/k9 --ini /base/software/k9/apphosting/master.ini'
+  }
+
+  redis = {
+    'process_name': 'redis-server',
+    'command': '/base/software/redis/bin/redis-server /etc/redis/db.conf --daemonize no'
+  }
 
 
 config = cfg.Config(app={
@@ -189,6 +231,125 @@ config = cfg.Config(app={
     'style': {},
     'scripts': {},
     'fonts': {}
+
+  }
+
+}, infrastructure={
+
+  'groups': freeze({'lb', 'app', 'master', 'db'}),
+  'environments': freeze({'production', 'staging', 'sandbox'}),
+
+  'gce': {
+    'project': {
+      'name': 'fcm-catnip',
+      'id': '489276160057-dffvig7s5uoqg0em72ndnsuvc72jb6m6@developer.gserviceaccount.com'
+    },
+
+    'authorization': {
+      'key': 'conf/keys/id_k9',
+      'identity': 'conf/credentials/identity.pem',
+
+      'scopes': {
+        'base': freeze({
+          "compute.read_only",
+          "devstorage.read_only"
+        })
+      }
+    },
+
+    'regions': {
+      'default': 'us-central1-a',
+      'enabled': {
+        'us-central1-a',
+        'us-central1-b',
+        'us-central1-testingf',
+        'europe-west1-a'
+      }
+    },
+
+    'startup': {
+      'default': 'https://storage.googleapis.com/fcm-dev/base/bootstrap.sh'
+    },
+
+    'environments': {
+      'production': {'tags': {'production', 'public'}, 'boot': DEFAULT_BOOT_DISK},
+      'staging': {'tags': {'staging', 'internal'}, 'boot': DEFAULT_BOOT_DISK},
+      'sandbox': {'tags': {'sandbox', 'internal'}, 'boot': DEFAULT_BOOT_DISK}
+    }
+  },
+
+  'runtime': {
+    'user': 'k9',
+    'group': 'runtime',
+  },
+
+  'datadog': {
+    'key': 'ac728205a32668467a1e4c4f16f61501'
+  },
+
+  'roles': {
+
+    # ~~ settings by role ~~ ##
+
+    'lb': {
+      #'size': 'n1-standard-2-1x-ssd',
+      'size': 'n1-standard-2',
+      'image': 'debian-7-wheezy-v20140606',
+      'ip_forwarding': True,
+      'tags': ['frontline', 'http-server', 'https-server'],
+      'scopes': set(),
+      'services': [Components.PROXY, Components.WEBSERVER],
+      'disk': {
+        'size': 10,
+        'type': DiskType.SSD
+      }
+    },
+
+    'app': {
+      #'size': 'n1-standard-2-1x-ssd',
+      'size': 'n1-standard-2',
+      'image': 'debian-7-wheezy-v20140606',
+      'ip_forwarding': False,
+      'tags': ['app', 'db'],  # @TODO(sgammon): split out DB role
+      'scopes': freeze({
+        "userinfo.email",
+        "devstorage.read_write",
+        "taskqueue",
+        "bigquery",
+        "sqlservice",  # TODO(sgammon): delegate to db role
+        "datastore"  # @TODO(sgammon): delegate to db role
+      }),
+      'services': [
+        Components.PROXY,  # @TODO(sgammon): split out proxy role
+        Components.WEBSERVER,  # @TODO(sgammon): delegate webserver to lb role
+        Components.DATABASE
+      ],
+      'disk': {
+        'size': 20,
+        'type': DiskType.SSD
+      }
+    },
+
+    'db': {
+      #'size': 'n1-highcpu-2-1x-ssd',
+      'size': 'n1-standard-2',
+      'image': 'debian-7-wheezy-v20140606',
+      'ip_forwarding': False,
+      'tags': ['db'],
+      'scopes': freeze({
+        "userinfo.email",
+        "devstorage.read_write",
+        "taskqueue",
+        "bigquery",
+        "sqlservice",
+        "datastore"
+      }),
+      'services': [Components.DATABASE],
+      'disk': {
+        'size': 40,
+        'type': DiskType.SSD
+      }
+    }
 
   }
 
