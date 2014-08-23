@@ -44,16 +44,13 @@ class Page(RawPage):
     # JavaScript
     'script-src': (
       ('self', 'https://deliver.fcm-static.org', 'https://storage.googleapis.com', 'http://localhost:5000', 'unsafe-eval') if __debug__ else (
-      ('self', 'https:', 'deliver.fcm-static.org', 'storage.googleapis.com')
-    )),
+      ('self', 'https:', 'deliver.fcm-static.org', 'storage.googleapis.com'))),
 
     # WebSocket / RPC
     'connect-src': (
       ('self', 'https://api.fatcatmap.org', 'https://realtime.fatcatmap.org', 'http://localhost:5000')  if __debug__ else (
-      ('self', 'https:', 'api.fatcatmap.org', 'realtime.fatcatmap.org')
-    ))
+      ('self', 'https:', 'api.fatcatmap.org', 'realtime.fatcatmap.org')))}
 
-  }
 
   @property
   def template_context(self):

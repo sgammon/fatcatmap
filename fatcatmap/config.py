@@ -50,22 +50,22 @@ class ComponentProcesses:
 
   ''' Supervisor configuration for component processes. '''
 
-  haproxy = {
-    'command': '/base/software/haproxy/sbin/haproxy -f /etc/haproxy/haproxy.conf -db -p /base/ns/pid/haproxy',
-  }
+  haproxy = {'command': ('/base/software/haproxy/sbin/haproxy'
+                         ' -f /etc/haproxy/haproxy.conf'
+                         ' -db'
+                         ' -p /base/ns/pid/haproxy')}
 
-  httpd = {
-    'command': '/base/software/httpd/bin/httpd -f /etc/apache2/httpd.conf -DFOREGROUND'
-  }
+  httpd = {'command': ('/base/software/httpd/bin/httpd'
+                       ' -f /etc/apache2/httpd.conf'
+                       ' -DFOREGROUND')}
 
-  k9 = {
-    'command': '/base/software/k9/sbin/k9 --ini /base/software/k9/apphosting/master.ini'
-  }
+  k9 = {'command': ('/base/software/k9/sbin/k9'
+                    ' --ini /base/software/k9/apphosting/master.ini')}
 
-  redis = {
-    'process_name': 'redis-server',
-    'command': '/base/software/redis/bin/redis-server /etc/redis/db.conf --daemonize no'
-  }
+  redis = {'process_name': 'redis-server',
+           'command': ('/base/software/redis/bin/redis-server'
+                       ' /etc/redis/db.conf'
+                       ' --daemonize no')}
 
 
 config = cfg.Config(app={
@@ -93,7 +93,8 @@ config = cfg.Config(app={
   'credentials': {
 
     'sentry': {
-      'endpoint': 'https://3de93e524e09448ea9d08ffda6c5059f:1b1fd3facfb9493aa3201a064d0c135b@app.getsentry.com/28386'
+      'endpoint': ('https://3de93e524e09448ea9d08ffda6c5059f:'
+                   '1b1fd3facfb9493aa3201a064d0c135b@app.getsentry.com/28386')
     }
 
   }
