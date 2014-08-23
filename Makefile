@@ -28,7 +28,7 @@ USER?=`whoami`
 CANTEEN_BRANCH?=feature/FLY-1
 BOOTSTRAP_BRANCH?=master
 SANDBOX_GIT?=$(USER)@sandbox
-BREWDEPS=openssl python haproxy redis nginx pypy
+BREWDEPS=openssl python haproxy redis pypy
 
 ## == optionals == ##
 extensions=on
@@ -56,6 +56,15 @@ LIBROOT=$(BUILDROOT)/lib
 DEVROOT=$(BUILDROOT)
 endif
 
+STOP=\x1b[0m
+GREEN=\x1b[32;01m
+RED=\x1b[31;01m
+YELLOW=\x1b[33;01m
+
+OK_STRING=$(GREEN)[OK]$(STOP)
+ERROR_STRING=$(RED)[ERRORS]$(STOP)
+WARN_STRING=$(YELLOW)[WARNINGS]$(STOP)
+
 
 ### === ROUTINES === ###
 
@@ -63,7 +72,7 @@ all: build
 run: build devserver
 
 build: develop
-	@echo "~~ fcm build completed ~~"
+	@echo "~~ $(GREEN)fcm build completed$(STOP) ~~"
 
 package: develop
 	@echo "Making buildroot..."
@@ -75,7 +84,7 @@ package: develop
 	@echo "Building egg..."
 	@bin/python setup.py bdist_egg
 
-	@echo "=== fcm distribution built. ==="
+	@echo "~~~ $(GREEN)fcm distribution built.$(STOP) ~~~"
 
 develop: .develop js styles templates coverage
 	@echo "Updating source dependencies..."
@@ -118,14 +127,14 @@ lib/canteen:
 endif
 
 test:
-	@-bin/python -c "import nose" || @-bin/pip install nose coverage
+	@-bin/python -c "import nose" || @-bin/pip install --upgrade nose coverage
 	@echo "Running python testsuite..."
 	@-bin/nosetests canteen_tests fatcatmap_tests --verbose
 	@echo "Running javascript testsuite..."
 	@-ENV=$(ENVIRONMENT) gulp test
 
 coverage:
-	@-bin/pip install nose coverage
+	@-bin/python -c "import nose" || @-bin/pip install --upgrade nose coverage
 	@echo "Running testsuite (with coverage)..."
 	@mkdir -p .develop/tests/python/xunit .develop/tests/js
 	@mkdir -p .develop/coverage/python/xunit .develop/coverage/js
@@ -212,12 +221,12 @@ $(DEVROOT)/.env: closure bootstrap canteen npm
 	@bin/pip install msgpack-python
 	@bin/pip install "git+https://github.com/sgammon/protobuf.git#egg=protobuf-2.5.2-canteen"
 	@bin/pip install "git+https://github.com/sgammon/hamlish-jinja.git#egg=hamlish_jinja-0.3.4-canteen"
-	@bin/pip install -r lib/canteen/requirements.txt
-	@bin/pip install -r lib/canteen/dev_requirements.txt
+	@bin/pip install --upgrade -r lib/canteen/requirements.txt
+	@bin/pip install --upgrade -r lib/canteen/dev_requirements.txt
 
 	@echo "Installing Pip dependencies..."
 	@bin/pip install "git+https://github.com/sgammon/libcloud.git#egg=libcloud-0.15.1"
-	@-bin/pip install -r ./requirements.txt
+	@-bin/pip install --upgrade -r ./requirements.txt
 	@-mkdir -p .develop
 	@-mkdir -p .develop/maps/fatcatmap/assets/{js,less,style,coffee}/site
 	@-chmod -R 775 .develop
@@ -228,12 +237,10 @@ $(DEVROOT)/.env: closure bootstrap canteen npm
 
 ### === dependencies === ###
 ifeq ($(OS),Mac)
-
 gevent: cython
 	@echo "Installing Gevent..."
 	@-brew install libev
-	@-bin/pip install "git+git://github.com/surfly/gevent.git#egg=gevent"
-
+	@-bin/pip install --upgrade "git+git://github.com/surfly/gevent.git#egg=gevent"
 endif
 
 ifeq ($(OS),Linux)
@@ -242,21 +249,21 @@ ifeq ($(PLAT),RHEL)
 gevent: cython
 	@echo "Installing Gevent..."
 	@-yum install libev-dev
-	@-bin/pip install cython "git+git://github.com/surfly/gevent.git#egg=gevent"
+	@-bin/pip install --upgrade cython "git+git://github.com/surfly/gevent.git#egg=gevent"
 endif
 
 ifeq ($(PLAT),Debian)
 gevent: cython
 	@echo "Installing Gevent..."
 	@-apt-get install libev
-	@-bin/pip install cython "git+git://github.com/surfly/gevent.git#egg=gevent"
+	@-bin/pip install --upgrade cython "git+git://github.com/surfly/gevent.git#egg=gevent"
 endif
 
 endif
 
 logbook:
 	@echo "Installing Logbook..."
-	@-bin/pip install "git+git://github.com/keenlabs/logbook.git#egg=logbook"
+	@-bin/pip install --upgrade "git+git://github.com/keenlabs/logbook.git#egg=logbook"
 
 $(DEVROOT)/node_modules: bootstrap
 	@echo "Installing NPM dependencies..."
