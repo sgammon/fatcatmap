@@ -31,7 +31,7 @@ class Deploy(object):
   PROJECT = settings.PROJECT
   node_class = GCENode  # used for cross-cloud compatability
 
-  def __init__(self, environment, group, region, names=None):
+  def __init__(self, environment, group, region=settings.DEFAULT_REGION, names=None):
 
     '''  '''
 
@@ -126,8 +126,7 @@ class Deploy(object):
                      location=self.region,
                      ex_tags=(
                       settings.GROUP_SETTINGS[self.group].get('tags', []) +
-                      settings.ENV_TAGS[self.environment]
-                     ),
+                      settings.ENV_TAGS[self.environment]),
                      ex_network=self.environment,
                      ex_boot_disk=boot_volume,
                      ex_service_scopes=self.config.get('scopes', []),

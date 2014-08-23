@@ -24,6 +24,7 @@ USER, GROUP = runtime['user'], runtime['group']
 ALLOWED_GROUPS, ALLOWED_ENVIRONMENTS = ifx['groups'], ifx['environments']
 DEFAULT_REGION, ENABLED_REGIONS = gce['regions']['default'], gce['regions']['enabled']
 BASE_SERVICE_SCOPES = gce['authorization']['scopes']['base']
+DEFAULT_STARTUP_SCRIPT_URL = gce['startup']['default']
 PROJECT, PROJECT_ID, KEY, PEM = (
   gce['project']['name'],
   gce['project']['id'],

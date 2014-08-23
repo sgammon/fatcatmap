@@ -28,9 +28,18 @@ from canteen import url
 from canteen import Page as RawPage
 
 
+# @TODO(sgammon): in general this file needs massive cleanup
+
+
 class Page(RawPage):
 
-  ''' '''
+  ''' Extends Canteen's builtin base ``Page`` class to provide ``catnip``-
+      specific template context and functionality.
+
+      Also provides:
+        - stapled page data (provided to handlers at `self.staple_data`)
+        - CSP header autogeneration (beta, use with caution)
+        - custom JS context (provided at `_collapse_js_context`) '''
 
   __page_data__ = None  # holds inlined page data
   __js_context__ = {}  # holds javascript context items
@@ -55,7 +64,11 @@ class Page(RawPage):
   @property
   def template_context(self):
 
-    '''  '''
+    ''' Provides ``catnip``-specific Jinja2 template context, like the CSP nonce
+        and any stapled page data. Headers are also injected from here, which is
+        completely horrible practice and I should honestly be shot for it, but
+        deal - it works.
+              -sam '''
 
     from fatcatmap import config
 
@@ -77,6 +90,8 @@ class Page(RawPage):
       else:
         self.response.headers['Content-Security-Policy-Report-Only'] = ' '.join(_csp_header)
 
+    # @TODO(sgammon): don't inject headers from template context calculations, dumbass
+
     # set extra security headers
     self.response.headers['X-Frame-Options'] = 'DENY'
     self.response.headers['X-XSS-Protection'] = '1; mode=block'
@@ -89,9 +104,7 @@ class Page(RawPage):
       'instance': {
         'id': '__virtual__',
         'zone': 'fcm.local',
-        'hostname': 'localhost'
-      }
-    }
+        'hostname': 'localhost'}}
 
     environ = self.environ
     global_environ = os.environ
@@ -123,13 +136,44 @@ class Page(RawPage):
 
   def staple_data(self, data):
 
-    '''  '''
+    ''' Attach a blob of data that should be passed to the page as "pagedata",
+        which can be used as a one-item slot of information to be preloaded in
+        raw JSON and served with the page directly.
 
-    return setattr(self, '__page_data__', data) or self.__page_data__
+        If a developer anticipates that a user will need a particular API
+        response (for instance, an empty graph request for a cold hit/new user),
+        they can prefetch the data server-side (where latency is low) and
+        "staple" it to the page context.
+
+        It will automatically be picked up and included in the JS context, and
+        will be made globally available to catnip JS.
+
+        :param data: Raw Python data value (usually a ``dict``) that must be
+          recursively serializable by JSON.
+
+        :raises TypeError: If an object that is not JSON serializable is stapled
+          to the page, located anywhere recursively in ``data``.
+
+        :returns: Value of ``data`` that was stapled to the page. '''
+
+    try:
+      return setattr(self, '__page_data__', data) or self.__page_data__
+    except TypeError:
+      raise  # dumbass
 
   def _collapse_js_context(self):
 
-    '''  '''
+    ''' Collapse template context to provide a rich configuration payload to
+        ``catnip`` JS. Include useful tidbits like:
+
+        - state/config of RPC (and services manifest)
+        - realtime dispatch configuration + endpoints
+        - session state
+        - detected agent capabilities
+        - the presence of stapled page data
+        - manifest of client-side templates
+
+        :returns: Merged and collapsed JS context. '''
 
     from canteen.rpc import ServiceHandler
 
@@ -146,38 +190,31 @@ class Page(RawPage):
           'enabled': self.config.get('api', {}).get('rpc', {}).get('enabled', True),
           'secure': False if __debug__ else True,
           'host': self.config.get('api', {}).get('rpc', {}).get('host') or self.request.host,
-          'version': self.config.get('api', {}).get('rpc', {}).get('version') or 1
-        },
+          'version': self.config.get('api', {}).get('rpc', {}).get('version') or 1},
 
         # WebSockets
         'realtime': {
           'enabled': self.config.get('api', {}).get('realtime', {}).get('enabled', True),
           'secure': False if __debug__ else True,
           'host': self.config.get('api', {}).get('realtime', {}).get('host') or self.request.host,
-          'version': self.config.get('api', {}).get('realtime', {}).get('version') or 1
-        }
-      },
+          'version': self.config.get('api', {}).get('realtime', {}).get('version') or 1}},
 
       ## == session data == ##
       'session': {
-        'established': None
-      },
+        'established': None},
 
       ## == agent capabilities == ##
       'agent': {
         'capabilities': {
           'webp': self.agent.capabilities.webp if getattr(self, 'agent', None) else False,
           'spdy': self.agent.capabilities.spdy if getattr(self, 'agent', None) else False,
-          'webm': self.agent.capabilities.webm if getattr(self, 'agent', None) else False
-        }
-      },
+          'webm': self.agent.capabilities.webm if getattr(self, 'agent', None) else False}},
 
       ## == services == ##
       'services': ServiceHandler.describe(json=False, javascript=False),
 
       'template': {
-        'manifest': self.views.describe()
-      }
+        'manifest': self.views.describe()}
 
     }
 

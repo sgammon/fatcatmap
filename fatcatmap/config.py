@@ -243,8 +243,7 @@ config = cfg.Config(app={
   'gce': {
     'project': {
       'name': 'fcm-catnip',
-      'id': '489276160057-dffvig7s5uoqg0em72ndnsuvc72jb6m6@developer.gserviceaccount.com'
-    },
+      'id': '489276160057-dffvig7s5uoqg0em72ndnsuvc72jb6m6@developer.gserviceaccount.com'},
 
     'authorization': {
       'key': 'conf/keys/id_k9',
@@ -254,9 +253,7 @@ config = cfg.Config(app={
         'base': freeze({
           "compute.read_only",
           "devstorage.read_only"
-        })
-      }
-    },
+        })}},
 
     'regions': {
       'default': 'us-central1-a',
@@ -265,35 +262,55 @@ config = cfg.Config(app={
         'us-central1-b',
         'us-central1-testingf',
         'europe-west1-a'
-      }
-    },
+      }},
 
     'startup': {
-      'default': 'https://storage.googleapis.com/fcm-dev/base/bootstrap.sh'
-    },
+      'default': 'https://storage.googleapis.com/fcm-dev/base/bootstrap.sh'},
 
     'environments': {
       'production': {'tags': {'production', 'public'}, 'boot': DEFAULT_BOOT_DISK},
       'staging': {'tags': {'staging', 'internal'}, 'boot': DEFAULT_BOOT_DISK},
-      'sandbox': {'tags': {'sandbox', 'internal'}, 'boot': DEFAULT_BOOT_DISK}
-    }
-  },
+      'sandbox': {'tags': {'sandbox', 'internal'}, 'boot': DEFAULT_BOOT_DISK}}},
 
   'runtime': {
     'user': 'k9',
-    'group': 'runtime',
-  },
+    'group': 'runtime'},
 
   'datadog': {
-    'key': 'ac728205a32668467a1e4c4f16f61501'
-  },
+    'key': 'ac728205a32668467a1e4c4f16f61501'},
 
   'roles': {
 
     # ~~ settings by role ~~ ##
 
-    'lb': {
-      #'size': 'n1-standard-2-1x-ssd',
+    'dev': {  # development machines - full access, bleeding edge
+      'size': 'n1-standard-1-1x-ssd',
+      'image': 'backports-debian-7-wheezy-v20140814',
+      'ip_forwarding': True,
+      'tags': {'internal', 'dev', 'sandbox'},
+
+      'restrictions': {
+        'environments': {'sandbox'},
+        'regions': {'us-central1-testingf'}},
+
+      'scopes': freeze({
+        "userinfo.email",
+        "devstorage.full_control",
+        "taskqueue",
+        "bigquery",
+        "sqlservice",
+        "datastore",
+        "compute"}),
+
+      'services': [],
+
+      'disk': {
+        'size': 20,
+        'type': DiskType.SSD}
+
+    },
+
+    'lb': {  # load balancer role
       'size': 'n1-standard-2',
       'image': 'debian-7-wheezy-v20140606',
       'ip_forwarding': True,
@@ -302,12 +319,9 @@ config = cfg.Config(app={
       'services': [Components.PROXY, Components.WEBSERVER],
       'disk': {
         'size': 10,
-        'type': DiskType.SSD
-      }
-    },
+        'type': DiskType.SSD}},
 
-    'app': {
-      #'size': 'n1-standard-2-1x-ssd',
+    'app': {  # app server role
       'size': 'n1-standard-2',
       'image': 'debian-7-wheezy-v20140606',
       'ip_forwarding': False,
@@ -318,18 +332,16 @@ config = cfg.Config(app={
         "taskqueue",
         "bigquery",
         "sqlservice",  # TODO(sgammon): delegate to db role
-        "datastore"  # @TODO(sgammon): delegate to db role
-      }),
+        "datastore"}),  # @TODO(sgammon): delegate to db role
+
       'services': [
         Components.PROXY,  # @TODO(sgammon): split out proxy role
         Components.WEBSERVER,  # @TODO(sgammon): delegate webserver to lb role
-        Components.DATABASE
-      ],
+        Components.DATABASE],
+
       'disk': {
         'size': 20,
-        'type': DiskType.SSD
-      }
-    },
+        'type': DiskType.SSD}},
 
     'db': {
       #'size': 'n1-highcpu-2-1x-ssd',
@@ -343,14 +355,13 @@ config = cfg.Config(app={
         "taskqueue",
         "bigquery",
         "sqlservice",
-        "datastore"
-      }),
+        "datastore"}),
+
       'services': [Components.DATABASE],
+
       'disk': {
         'size': 40,
-        'type': DiskType.SSD
-      }
-    }
+        'type': DiskType.SSD}}
 
   }
 
