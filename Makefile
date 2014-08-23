@@ -29,6 +29,7 @@ CANTEEN_BRANCH?=feature/FLY-1
 BOOTSTRAP_BRANCH?=master
 SANDBOX_GIT?=$(USER)@sandbox
 BREWDEPS=openssl python haproxy redis pypy
+TEST_FLAGS?=
 
 ## == optionals == ##
 extensions=on
@@ -57,9 +58,11 @@ DEVROOT=$(BUILDROOT)
 endif
 
 STOP=\x1b[0m
-GREEN=\x1b[32;01m
 RED=\x1b[31;01m
+GREEN=\x1b[32;01m
+CYAN=\x1b[36;01m
 YELLOW=\x1b[33;01m
+MAGENTA=\x1b[35;01m
 
 OK_STRING=$(GREEN)[OK]$(STOP)
 ERROR_STRING=$(RED)[ERRORS]$(STOP)
@@ -128,10 +131,11 @@ endif
 
 test:
 	@-bin/python -c "import nose" || @-bin/pip install --upgrade nose coverage
-	@echo "Running python testsuite..."
-	@-bin/nosetests canteen_tests fatcatmap_tests --verbose
-	@echo "Running javascript testsuite..."
+	@echo "$(CYAN)Running Python app testsuite...$(STOP)"
+	@-bin/nosetests canteen_tests fatcatmap_tests $(TEST_FLAGS)
+	@echo "$(MAGENTA)Running javascript testsuite...$(STOP)"
 	@-ENV=$(ENVIRONMENT) gulp test
+	@echo "~~~ $(GREEN) tests complete. $(STOP) ~~~"
 
 coverage:
 	@-bin/python -c "import nose" || @-bin/pip install --upgrade nose coverage
@@ -146,7 +150,7 @@ coverage:
 							 --with-xunit \
 							 --cover-html-dir=.develop/coverage/python/html \
 							 --cover-xml-file=.develop/coverage/python/clover.xml \
-							 --xunit-file=.develop/tests/python/xunit.xml;
+							 --xunit-file=.develop/tests/python/xunit.xml $(TEST_FLAGS);
 
 deploy:
 	@echo "Deployment is not currently supported from dev. Check back later."
