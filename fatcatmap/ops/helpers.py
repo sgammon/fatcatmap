@@ -31,14 +31,17 @@ setup(settings.DATADOG_KEY)
 
 def get_node():
 
-  '''  '''
+  ''' Retrieve host details about the currently-active node.
+
+      :returns: Host details from Fabric environment. '''
 
   return env.hosts_detail[env.host]
 
 
 def pause():
 
-  '''  '''
+  ''' Pause deploy/execution flow for a few seconds to allow a human to catch
+      up in the log or stop it in time. '''
 
   try:
     for i, color in zip(reversed(xrange(3)), (colors.green, colors.yellow, colors.red)):
@@ -50,11 +53,18 @@ def pause():
 
 class GCEPool(object):
 
-  '''  '''
+  ''' Represents a pool of instances used in load balancing. '''
 
   def __init__(self, environment, group):
 
-    '''  '''
+    ''' Accepts an ``environment`` and ``group`` pair for which this pool will
+        match and activate/deactivate instances.
+
+        :param environment: Node environment (usually ``sandbox``/``staging``/
+          ``production``).
+
+        :param group: Node group/role name, usually something like ``lb`` or
+          ``app`` or ``db``. '''
 
     self.environment = environment
     self.group = group
@@ -62,11 +72,18 @@ class GCEPool(object):
 
 class GCENode(object):
 
-  ''' Class that provides a standard node object for the GCE libcloud provider '''
+  ''' Class that provides a standard node object representing a catnip-managed
+      node through the GCE libcloud provider. '''
 
   def __init__(self, node, driver):
 
-    '''  '''
+    ''' Initialize this ``node`` with an underlying ``driver``.
+
+        :param node: Target low-level GCE node that should be wrapped.
+
+        :param driver: Driver to use for communication with APIs related to
+          the target ``node`` to be wrapped. '''
+
     self.driver = driver
     self.node = node
     self.name = node.name
@@ -77,7 +94,8 @@ class GCENode(object):
 
   def _set_meta(self):
 
-    '''  '''
+    ''' Read metadata about a node, include its ``environment`` and
+        ``group``. '''
 
     items = self.node.extra['metadata']['items']
     self.metadata = dict([(item['key'], item['value']) for item in items])
@@ -87,33 +105,46 @@ class GCENode(object):
 
   @property
   def healthcheck_name(self):
-    ''' returns the name for a groups healthcheck '''
+
+    ''' Returns the name for a group's healthcheck.
+
+        :returns: String name calculated for a node group's healthcheck
+          configuration. '''
+
     return "check-" + self.group
 
   @property
   def targetpool_name(self):
 
-    '''Helper function to return unique name for targetpool / LB '''
+    ''' Helper function to return unique name for targetpool / LB.
+
+        :returns: String target pool name. '''
 
     name = (self.environment, '_', self.group, '_', self.driver.zone.name)
     return "".join(name).replace('_', '-')  # make the name safe for google
 
   def healthcheck_create(self):
 
-    ''' creates and returns a healthcheck for this pool'''
+    ''' Creates and returns a healthcheck for this pool.
 
-    return self.driver.ex_create_healthcheck(self.healthcheck_name,host="fatcatmap.org",port="80")
+        :returns: Created GCE healthcheck object. '''
+
+    return self.driver.ex_create_healthcheck(self.healthcheck_name, host="fatcatmap.org",port="80")
 
   def targetpool_create(self):
 
-    ''' creates a targetpool and adds the appropriate healthcheck '''
+    ''' Creates a targetpool and adds the appropriate healthcheck.
+
+        :returns: Created pool. '''
+
     healthcheck = self.healthcheck_get()
-    pool = self.driver.ex_create_targetpool(self.targetpool_name,healthchecks=[healthcheck])
-    return pool
+    return self.driver.ex_create_targetpool(self.targetpool_name, healthchecks=[healthcheck])
 
   def healthcheck_get(self):
 
-    ''' returns a healthcheck object creating one if it doesn't exist '''
+    ''' Returns a healthcheck object, creating one if it doesn't exist.
+
+        :returns: Created healthcheck object. '''
 
     try:
       return self.driver.ex_get_healthcheck(self.healthcheck_name)
@@ -123,7 +154,9 @@ class GCENode(object):
 
   def targetpool_get(self):
 
-    ''' returns a targetpool object creating one if it doesnt exist '''
+    ''' Returns a targetpool object, creating one if it doesnt exist.
+
+        :returns: Created targetpool object. '''
 
     try:
       return self.driver.ex_get_targetpool(self.targetpool_name)
@@ -133,22 +166,24 @@ class GCENode(object):
 
   def targetpool_add(self):
 
-    ''' adds node to targetpool  '''
+    ''' Adds node to the targetpool. '''
 
     pool = self.targetpool_get()
     self.driver.ex_targetpool_add_node(pool, self.node)
-    self.driver.ex_targetpool_add_healthcheck(pool,self.healthcheck_get())
+    self.driver.ex_targetpool_add_healthcheck(pool, self.healthcheck_get())
 
   def targetpool_remove(self):
 
-    '''  '''
+    ''' Removes a node from the targetpool. '''
 
     pool = self.targetpool_get()
     self.driver.ex_targetpool_remove_node(pool, self.node)
 
   def __repr__(self):
 
-    '''  '''
+    ''' Generates string representation for a given compute node.
+
+        :returns: Multiline, pretty-formatted string. '''
 
     return """
 
