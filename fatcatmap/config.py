@@ -107,8 +107,7 @@ config = cfg.Config(app={
 
     # In-page Devtools
     'tools': {
-      'enabled': True
-    },
+      'enabled': True},
 
   },
 
@@ -130,14 +129,12 @@ config = cfg.Config(app={
 
     'haml': {
       'debug': False,
-      'mode': 'indented'
-    },
+      'mode': 'indented'},
 
     'syntax': {
       'variable': ('{{', '}}'),
       'block': ('{%', '%}'),
-      'comment': ('{#', '#}')
-    },
+      'comment': ('{#', '#}')},
 
     'jinja2': {
 
@@ -146,9 +143,7 @@ config = cfg.Config(app={
       'extensions': [
         'jinja2.ext.autoescape',
         'jinja2.ext.with_',
-      ] + _custom_jinja2_extensions,
-
-    }
+      ] + _custom_jinja2_extensions}
   },
 
   ## - Redis
@@ -161,8 +156,8 @@ config = cfg.Config(app={
 
       # Redis Instances
       'local': {'host': '127.0.0.1', 'port': 6379},
-      'sandbox': {'host': '10.0.5.5', 'port': 6379}
-    }
+      'sandbox': {'host': '10.0.5.5', 'port': 6379}}
+
   },
 
   ## - Redis
@@ -175,8 +170,8 @@ config = cfg.Config(app={
 
       # Redis Instances
       'local': {'host': '127.0.0.1', 'port': 6379},
-      'sandbox': {'host': '10.0.5.5', 'port': 6379}
-    }
+      'sandbox': {'host': '10.0.5.5', 'port': 6379}}
+
   },
 
 
@@ -188,15 +183,13 @@ config = cfg.Config(app={
     'rpc': {
       'enabled': True,
       'version': 1,
-      'host': None if __debug__ else 'api.fatcatmap.org'  # `None` will use the HTTP request's host and port
-    },
+      'host': None if __debug__ else 'api.fatcatmap.org'},  # `None` will use the HTTP request's host and port
 
     # WebSockets
     'realtime': {
       'enabled': False,
       'version': 1,
-      'host': None if __debug__ else 'realtime.fatcatmap.org'  # `None` will use the HTTP request's host and port
-    }
+      'host': None if __debug__ else 'realtime.fatcatmap.org'}  # `None` will use the HTTP request's host and port
 
   }
 
@@ -214,26 +207,20 @@ config = cfg.Config(app={
       'style': 'assets/style',
       'image': 'assets/img',
       'script': 'assets/js',
-      'font': 'assets/fonts',
-    },
+      'font': 'assets/fonts'},
 
     'extra_assets': {
       'develop-less': ('/assets/less', os.path.join(app, 'assets', 'less')),
       'develop-sources': ('/.develop', os.path.join(os.path.dirname(app), '.develop')),
       'less-sources': ('/.develop/maps/fatcatmap/assets/less', os.path.join(app, 'assets', 'less')),
-      'develop-coffee': ('/.develop/maps/fatcatmap/assets/coffee', os.path.join(app, 'assets', 'js'))
-    }
-
-  },
+      'develop-coffee': ('/.develop/maps/fatcatmap/assets/coffee', os.path.join(app, 'assets', 'js'))}},
 
   ## - Asset Registry
   'assets': {
 
     'style': {},
     'scripts': {},
-    'fonts': {}
-
-  }
+    'fonts': {}}
 
 }, infrastructure={
 
@@ -252,8 +239,7 @@ config = cfg.Config(app={
       'scopes': {
         'base': freeze({
           "compute.read_only",
-          "devstorage.read_only"
-        })}},
+          "devstorage.read_only"})}},
 
     'regions': {
       'default': 'us-central1-a',
@@ -261,8 +247,7 @@ config = cfg.Config(app={
         'us-central1-a',
         'us-central1-b',
         'us-central1-testingf',
-        'europe-west1-a'
-      }},
+        'europe-west1-a'}},
 
     'startup': {
       'default': 'https://storage.googleapis.com/fcm-dev/base/bootstrap.sh'},
@@ -284,16 +269,21 @@ config = cfg.Config(app={
     # ~~ settings by role ~~ ##
 
     'dev': {  # development machines - full access, bleeding edge
+
       'size': 'n1-standard-1-1x-ssd',
       'image': 'backports-debian-7-wheezy-v20140814',
       'ip_forwarding': True,
       'tags': {'internal', 'dev', 'sandbox'},
 
-      'restrictions': {
+      'restrictions': {  # allow restricting environments & regions
         'environments': {'sandbox'},
         'regions': {'us-central1-testingf'}},
 
-      'scopes': freeze({
+      'startup': {  # allow overriding startup boot disk and script
+        'boot': DEFAULT_BOOT_DISK,
+        'script': 'https://storage.googleapis.com/fcm-dev/base/bootstrap.sh'},
+
+      'scopes': freeze({  # dev machines get full access
         "userinfo.email",
         "devstorage.full_control",
         "taskqueue",
@@ -302,7 +292,7 @@ config = cfg.Config(app={
         "datastore",
         "compute"}),
 
-      'services': [],
+      'services': [],  # no services come preinstalled (yet)
 
       'disk': {
         'size': 20,
@@ -311,21 +301,25 @@ config = cfg.Config(app={
     },
 
     'lb': {  # load balancer role
+
       'size': 'n1-standard-2',
       'image': 'debian-7-wheezy-v20140606',
       'ip_forwarding': True,
       'tags': ['frontline', 'http-server', 'https-server'],
-      'scopes': set(),
+      'scopes': frozenset(),
       'services': [Components.PROXY, Components.WEBSERVER],
+
       'disk': {
         'size': 10,
         'type': DiskType.SSD}},
 
     'app': {  # app server role
+
       'size': 'n1-standard-2',
       'image': 'debian-7-wheezy-v20140606',
       'ip_forwarding': False,
       'tags': ['app', 'db'],  # @TODO(sgammon): split out DB role
+
       'scopes': freeze({
         "userinfo.email",
         "devstorage.read_write",
@@ -343,12 +337,13 @@ config = cfg.Config(app={
         'size': 20,
         'type': DiskType.SSD}},
 
-    'db': {
-      #'size': 'n1-highcpu-2-1x-ssd',
+    'db': {  # @TODO(weisberger): for future use :)
+
       'size': 'n1-standard-2',
       'image': 'debian-7-wheezy-v20140606',
       'ip_forwarding': False,
       'tags': ['db'],
+
       'scopes': freeze({
         "userinfo.email",
         "devstorage.read_write",

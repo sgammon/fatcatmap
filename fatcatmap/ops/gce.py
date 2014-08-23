@@ -6,6 +6,8 @@
 
 '''
 
+from __future__ import print_function
+
 # local
 from . import settings
 from .helpers import GCENode
@@ -33,35 +35,82 @@ class Deploy(object):
 
   def __init__(self, environment, group, region=settings.DEFAULT_REGION, names=None):
 
-    '''  '''
+    ''' Initialize this ``Deploy`` flow, given a Fabric Python ``environment``,
+        an instance role (called a ``group``), and a GCE ``region``.
 
-    if (group not in settings.ALLOWED_GROUPS) or (environment not in settings.ALLOWED_ENVIRONMENTS):
-      raise Exception("invalid group or environment specified")
+        :param environment: Fabric environment for the current ops flow.
+
+        :param group: Instance role name, defined in ``config.py``.
+
+        :param region: GCE region to deploy to, defaults to
+          ``settings.DEFAULT_REGION``.
+
+        :param names: Instance names to filter by. Iterable of strings.
+
+        :raises TypeError: In the event of an unknown or invalid ``group``,
+          ``environment`` or ``region`` value. Groups are derived from the
+          *infrastructure* config block in ``appconfig.py``, and known/enabled
+          regions and environments are also outlined there.
+
+        :raises RuntimeError: On the other hand, if an instance role (or
+          ``group``) is *restricted explicitly or implicitly* via the
+          ``restrictions`` block in the role config (either via an
+          ``environments`` or ``regions`` restriction), a ``RuntimeError``
+          is raised describing the situation. '''
+
+    if group not in settings.ALLOWED_GROUPS:
+      raise TypeError("invalid or unkown group specified: '%s'" % group)
+
+    if environment not in settings.ALLOWED_ENVIRONMENTS:
+      raise TypeError("invalid or unkown environment specified: '%s'" % environment)
+
+    if region not in settings.ENABLED_REGIONS:
+      raise TypeError("invalid or unkown region specified: '%s'" % region)
+
+    # setup instance vars
     self.names = names
     self.group = group
     self.region = region
     self.environment = environment
-    self._setup()
 
-  @property
-  def config(self):
-
-    '''  '''
-
-    return settings.GROUP_SETTINGS[self.group]
-
-  def _setup(self):
-
-    '''  '''
-
+    # initialize driver
     driver = get_driver(Provider.GCE)
     self.driver = driver(self.ID, self.PEM, self.region, self.PROJECT)
     self.image = self.driver.ex_get_image(self.config['image'])
     self.size = self.driver.ex_get_size(self.config['size'])
 
+    # enforce restrictions
+    if 'restrictions' in self.config:
+      if 'environments' in self.config['restrictions']:
+        if environment not in self.config['restrictions']['environments']:
+          raise RuntimeError('Instance role type %s is not supported'
+                             ' in requested environment %s.' % (
+                                group, environment))
+
+      if 'regions' in self.config['restrictions']:
+        if region not in self.config['restrictions']['regions']:
+          raise RuntimeError('Instance role type %s is not supported'
+                             ' in requested region %s.' % (
+                                group, region))
+
+  @property
+  def config(self):
+
+    ''' Retrieve configuration for the current instance role.
+
+        :returns: ``dict`` of instance role (or ``group``) configuration. '''
+
+    return settings.GROUP_SETTINGS[self.group]
+
   def get_nodes(self, all_regions=False):
 
-    ''' filters nodes and converts libcloud nodes into our node object as '''
+    ''' Filters nodes and converts libcloud nodes into our node object.
+
+        :param all_regions: Iterate over all nodes from all known/enabled GCE
+          regions (configuratble in ``config.py``).
+
+        :returns: Matching nodes, according to input parameters and current
+          state in GCE. '''
 
     driver = get_driver(Provider.GCE)
 
@@ -82,7 +131,19 @@ class Deploy(object):
 
   def deploy(self):
 
-    '''  '''
+    ''' Perform a full *deploy flow*, which consists of creating a desired
+        count (``n``) of instances or enough instances up to a limit (``l``) for
+        a given role (``group``) and ``environment``.
+
+        Available ``groups``/roles (varies by config, typical case here):
+        - ``lb`` - load balancer role for routing traffic
+        - ``app`` - appserver role for serving traffic
+        - ``db`` - database role for serving data to appservers
+
+        Available ``environments`` include:
+        - ``sandbox`` - for development and one-off/general tasks
+        - ``staging`` - for testing feature work, RC or production builds
+        - ``production`` - full live production, *baby* '''
 
     nodes = self.get_nodes(all_regions=True)
     n = [int(node.name.split('-')[-1])
@@ -94,7 +155,7 @@ class Deploy(object):
     name = "{env}-{group}-{n}".format(group=self.group, env=self.environment, n=node_n)
 
     # create boot volume
-    print colors.yellow('Creating boot volume "%s"...' % '-'.join((name, 'boot')))
+    print(colors.yellow('Creating boot volume "%s"...' % '-'.join((name, 'boot'))))
     snapshot = self.config.get('disk', {}).get('snap', None)
 
     disktype = self.config.get('disk', {}).get('type', None)
@@ -107,18 +168,17 @@ class Deploy(object):
       'name': '-'.join((name, 'boot')),
       'location': self.region,
       'size': self.config.get('disk', {}).get('size', 10),
-      'type': disktype
-    }
+      'type': disktype}
 
     if snapshot:
       boot_kwargs['snapshot'] = snapshot
     else:
       boot_kwargs['image'] = self.config['image']
     boot_volume = self.driver.create_volume(**boot_kwargs)
-    print colors.green('Volume created: %s' % boot_volume)
+    print(colors.green('Volume created: %s' % boot_volume))
 
     # create node
-    print colors.yellow('Creating node "%s" of size "%s"...' % (name, self.config['size']))
+    print(colors.yellow('Creating node "%s" of size "%s"...' % (name, self.config['size'])))
     node = self.driver.create_node(
                      name=name,
                      size=self.config['size'],
@@ -126,19 +186,24 @@ class Deploy(object):
                      location=self.region,
                      ex_tags=(
                       settings.GROUP_SETTINGS[self.group].get('tags', []) +
-                      settings.ENV_TAGS[self.environment]),
+                      settings.ENV_TAGS[self.environment]) +
+                      self.config.get('tags', set()),
                      ex_network=self.environment,
                      ex_boot_disk=boot_volume,
                      ex_service_scopes=self.config.get('scopes', []),
                      ex_boot_disk_auto_delete=True,
                      ex_metadata={'group': self.group,
                                   'environment': self.environment,
-                                  'startup-script-url': settings.DEFAULT_STARTUP_SCRIPT_URL})
-    print colors.green('Node created: %s' % node)
+                                  'startup-script-url': (
+                                    settings.DEFAULT_STARTUP_SCRIPT_URL)})
+    print(colors.green('Node created: %s' % node))
 
   def deploy_many(self, n=3):
 
-    '''  '''
+    ''' Batch version of ``deploy``, which accepts a count of instances to
+        deploy (``n``).
+
+        :param n: Count of instances to deploy via ``deploy``. '''
 
     for i in range(int(n)):
       self.deploy()

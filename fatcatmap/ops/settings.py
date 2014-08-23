@@ -10,10 +10,11 @@
 '''
 
 from fatcatmap import config
+from fatcatmap.config import Components
 
 
 ## Globals
-ifx = config.config.blocks['infrastructure']
+ifx = config.blocks['infrastructure']
 gce, runtime, datadog, roles = (
   ifx['gce'], ifx['runtime'], ifx['datadog'], ifx['roles'])
 
