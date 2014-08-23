@@ -15,5 +15,4 @@ from . import legislative
 __all__ = (
   'executive',
   'judicial',
-  'legislative'
-)
+  'legislative')

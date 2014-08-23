@@ -24,5 +24,4 @@ __all__ = (
   'grapher',
   'Graph',
   'Grapher',
-  'GraphOptions'
-)
+  'GraphOptions')

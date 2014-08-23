@@ -17,5 +17,4 @@ __all__ = (
   'edge',
   'node',
   'hint',
-  'graph'
-)
+  'graph')

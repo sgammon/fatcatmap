@@ -15,5 +15,4 @@ from . import legislator
 __all__ = (
   'member',
   'committee',
-  'legislator'
-)
+  'legislator')

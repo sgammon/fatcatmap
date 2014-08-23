@@ -22,5 +22,4 @@ class AppModel(model.Model):
 __all__ = (
   'graph',
   'gov',
-  'finance'
-)
+  'finance')

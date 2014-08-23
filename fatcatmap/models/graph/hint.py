@@ -46,5 +46,4 @@ class Hint(AppModel):
       key=model.Key(cls, _hash),
       hash=_hash,
       graph=graph,
-      expires=datetime.datetime.now() + HINT_LIFETIME
-    )
+      expires=datetime.datetime.now() + HINT_LIFETIME)

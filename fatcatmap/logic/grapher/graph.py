@@ -81,22 +81,23 @@ class Graph(object):
 
     '''  '''
 
-    yield self.add_node(node)  # consider node
+    if node:
+      yield self.add_node(node)  # consider node
+
+      # resolve edges & add
+      for edge in self._retrieve_edges(node):
+        yield self.add_edge(edge)
+
+        for node_key in edge.node:
+          node = Node.get(node_key)  # retrieve node
+
+          if node:
+            for artifact in self._traverse(node, _current_depth + 1):
+              yield artifact
 
     # check depth
     if self.options.depth and _current_depth > self.options.depth:
       raise StopIteration()  # terminate recursion: depth reached
-
-    # resolve edges & add
-    for edge in self._retrieve_edges(node):
-      yield self.add_edge(edge)
-
-      for node_key in edge.node:
-        node = Node.get(node_key)  # retrieve node
-
-        if node:
-          for artifact in self._traverse(node, _current_depth + 1):
-            yield artifact
 
     raise StopIteration()  # recursion has finished: return
 
@@ -398,10 +399,10 @@ class Graph(object):
     }, {
 
       ## == graph == ##
-      'nodes': max(_nodes),
-      'edges': max(_edges),
-      'natives': max(_natives),
-      'origin': _origin_i
+      'nodes': max(_nodes) if _nodes else 0,
+      'edges': max(_edges) if _edges else 0,
+      'natives': max(_natives) if _natives else 0,
+      'origin': _origin_i if _nodes else None
 
     }
 

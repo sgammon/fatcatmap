@@ -169,9 +169,9 @@ class Page(RawPage):
       ## == agent capabilities == ##
       'agent': {
         'capabilities': {
-          'webp': self.agent.capabilities.webp,
-          'spdy': self.agent.capabilities.spdy,
-          'webm': self.agent.capabilities.webm
+          'webp': self.agent.capabilities.webp if getattr(self, 'agent', None) else False,
+          'spdy': self.agent.capabilities.spdy if getattr(self, 'agent', None) else False,
+          'webm': self.agent.capabilities.webm if getattr(self, 'agent', None) else False
         }
       },
 
@@ -205,5 +205,4 @@ __all__ = (
   'models',
   'pages',
   'services',
-  'templates'
-)
+  'templates')

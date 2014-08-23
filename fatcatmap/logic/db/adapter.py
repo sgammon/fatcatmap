@@ -236,13 +236,6 @@ class InMemoryWarehouse(WarehouseAdapter, inmemory.InMemoryAdapter):
 
     raise NotImplemented('`memory` graph support not yet implemented.')
 
-  def connect(cls, key1, key2, edge, **kwargs):
-
-    ''' Connect two objects (expressed as ``key1`` and ``key2``) as
-        ``Vertexes`` by an ``Edge`` in memory. '''
-
-    raise NotImplemented('`memory` graph support not yet implemented.')
-
 
 class DatastoreWarehouse(WarehouseAdapter):
 
@@ -361,13 +354,6 @@ class RedisWarehouse(WarehouseAdapter, redis.RedisAdapter):
 
     ''' Retrieve graph ``Hint`` objects for a given ``subject`` key,
         or store a ``Hint`` if ``data`` is provided, in Redis. '''
-
-    raise NotImplemented('`Redis` graph support not yet implemented.')
-
-  def connect(cls, key1, key2, edge, **kwargs):
-
-    ''' Connect two objects (expressed as ``key1`` and ``key2``) as
-        ``Vertexes`` by an ``Edge`` in Redis. '''
 
     raise NotImplemented('`Redis` graph support not yet implemented.')
 

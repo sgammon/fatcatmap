@@ -15,5 +15,4 @@ from . import contribution
 __all__ = (
   'recipient',
   'contributor',
-  'contribution'
-)
+  'contribution')
