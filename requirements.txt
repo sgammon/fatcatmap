@@ -4,3 +4,6 @@ uwsgi
 fabtools
 fabric
 dogapi
+mysql-python
+google-api-python-client
+pyopenssl

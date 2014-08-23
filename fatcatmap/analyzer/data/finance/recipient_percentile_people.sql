@@ -24,7 +24,7 @@ select
   contributions.contributor_category as contributor_category_id,
   people.id as person_id
 
-from [distributions.percentile] as contributions
+from [{source_table}] as contributions
         inner join [crp.categories] as categories
           on contributions.contributor_category=categories.catcode
         inner join [govtrack.people] as people

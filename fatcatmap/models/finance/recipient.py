@@ -4,7 +4,7 @@
 
     fatcatmap legislative models: committee
     :author: Alexander Rosner <alex@momentum.io>, Ian Weisberger <ian@momentum.io>
-    :copyright: (c) momentum labs, 2013
+    :copyright: (c) momentum labs, 2014
    
 '''
 
@@ -20,16 +20,29 @@ class Recipient(AppModel):
     open_secrets_id = basestring, {'indexed': True}
     freebase_id = basestring, {'indexed':True}
 
+
 class RecipientStats(AppModel):
+  ''' represents
+  '''
+  recipient_id = basestring, {} # opensecrets id of recipient
+  amount = int, {}
+  count = int, {}
+  amount_rank = float, {}
+  count_rank = float, {}
+
+
+
+class RecipientCategoryStats(AppModel):
 
   ''' Represents a summarized record of statistics pertaining to contributions
       for a specifc category
   '''
 
-  open_secrets_id = basestring, {} # opensecrets id of recipient
+  recipient_id = basestring, {} # opensecrets id of recipient
+
+  contributor_category_id = basestring, {}
 
 
-  contributor_category = basestring, {}
   #numeric fields
   amount = int, {}
   count = int, {}
