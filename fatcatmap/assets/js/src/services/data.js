@@ -29,7 +29,8 @@ _resolveAndSet = function (key, data) {
   var keys = key.split('.'),
     obj = _dataCache;
   while (keys.length > 1) {
-    obj = obj[keys.shift()] || {};
+    key = keys.shift()
+    obj = obj[key] || (obj[key] = {}, obj[key]);
   }
   obj[keys.shift()] = data;
 };
