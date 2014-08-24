@@ -24,7 +24,7 @@ except ImportError:
 _custom_jinja2_extensions = filter(lambda x: x is not None, [HamlishExtension if HAML else None])
 app = os.path.dirname(__file__)
 project = os.path.dirname(app)
-DEFAULT_BOOT_DISK = 'base-v11'
+DEFAULT_BOOT_DISK = 'base-prerelease-v12-alpha-2'
 freeze = lambda x: frozenset(x)
 
 
@@ -250,7 +250,7 @@ config = cfg.Config(app={
         'europe-west1-a'}},
 
     'startup': {
-      'default': 'https://storage.googleapis.com/fcm-dev/base/bootstrap.sh'},
+      'default': 'https://storage.googleapis.com/fcm-dev/base/instance/bootstrap.sh'},
 
     'environments': {
       'production': {'tags': {'production', 'public'}, 'boot': DEFAULT_BOOT_DISK},
@@ -281,7 +281,7 @@ config = cfg.Config(app={
 
       'startup': {  # allow overriding startup boot disk and script
         'boot': DEFAULT_BOOT_DISK,
-        'script': 'https://storage.googleapis.com/fcm-dev/base/bootstrap.sh'},
+        'script': 'https://storage.googleapis.com/fcm-dev/base/instance/bootstrap.sh'},
 
       'scopes': freeze({  # dev machines get full access
         "userinfo.email",
