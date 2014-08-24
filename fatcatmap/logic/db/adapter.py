@@ -306,6 +306,26 @@ class RedisWarehouse(WarehouseAdapter, redis.RedisAdapter):
     serializer = json
     mode = redis.RedisMode.toplevel_blob
 
+  ## +=+=+ Basic Methods +=+=+ ##
+  def put(cls, key, entity, model, pipeline=None):
+
+    ''' Persist an entity to storage in the Redis Warehouse.
+
+        :param key: New (and potentially empty) :py:class:`model.Key` for
+          ``entity``. Must be assigned an ``ID`` by the driver through
+          :py:meth:`RedisAdapter.allocate_ids` in the case of an empty
+          (non-deterministic) :py:class:`model.Key`.
+
+        :param entity: Object entity :py:class:`model.Model` to persist in
+          ``Redis``.
+
+        :param model: Schema :py:class:`model.Model` associated with the
+          target ``entity`` being persisted.
+
+        :returns: Result of the lower-level write operation. '''
+
+    pass
+
   ## +=+=+ Graph Methods +=+=+ ##
   def edges(self, key1, key2=None, type=None, **kwargs):
 
