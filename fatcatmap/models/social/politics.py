@@ -2,7 +2,7 @@
 
 '''
 
-    fcm: issue models
+    fcm: politics models
 
 '''
 
@@ -13,8 +13,14 @@ from fatcatmap.models import describe
 
 
 @describe(root=True)
-class Issue(Vertex):
+class PoliticalParty(Vertex):
 
   '''  '''
 
-  name = abstract.TopicName, {'indexed': True}
+  name = abstract.OrganizationName, {'indexed': True}
+
+
+@describe(root=True)
+class Election(Vertex):
+
+  '''  '''

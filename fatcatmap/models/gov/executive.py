@@ -2,6 +2,6 @@
 
 '''
 
-  fcm: judicial models
+  fcm: executive government models
 
 '''

@@ -2,7 +2,7 @@
 
 '''
 
-    fcm: legislative models
+    fcm: legislative government models
 
 '''
 
@@ -21,9 +21,9 @@ from fatcatmap.models import Model
 from fatcatmap.models import Vertex
 from fatcatmap.models import abstract
 from fatcatmap.models import describe
-from fatcatmap.models import politics
+from fatcatmap.models.person import Person
 from fatcatmap.models.social import issues
-from fatcatmap.models.natural import Person
+from fatcatmap.models.social import politics
 
 
 ## +=+=+=+=+=+=+=+=+ Structure +=+=+=+=+=+=+=+=+ ##

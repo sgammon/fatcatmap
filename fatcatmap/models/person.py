@@ -10,12 +10,11 @@
 import datetime
 
 # graph models
-from fatcatmap import models
-from fatcatmap.models import abstract
+from . import describe, abstract, Vertex
 
 
-@models.describe(root=True)
-class Person(models.Vertex):
+@describe(root=True)
+class Person(Vertex):
 
   '''  '''
 

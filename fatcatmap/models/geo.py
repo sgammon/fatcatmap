@@ -7,11 +7,10 @@
 '''
 
 # graph models
-from fatcatmap import models
-from fatcatmap.models import abstract
+from . import Model
 
 
-class Geopoint(models.Model):
+class Geopoint(Model):
 
   '''  '''
 
@@ -20,7 +19,7 @@ class Geopoint(models.Model):
   altitude = float, {'indexed': True, 'required': True}
 
 
-class Geobounds(models.Model):
+class Geobounds(Model):
 
   '''  '''
 

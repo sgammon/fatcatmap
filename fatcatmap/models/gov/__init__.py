@@ -7,12 +7,11 @@
 '''
 
 # submodules
-from . import judicial
-from . import executive
-from . import legislative
+from . import (judicial,
+               executive,
+               legislative)
 
 
-__all__ = (
-  'executive',
-  'judicial',
-  'legislative')
+__all__ = ('executive',
+           'judicial',
+           'legislative')

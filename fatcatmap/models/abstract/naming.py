@@ -36,6 +36,11 @@ class PlaceName(Name):
   '''  '''
 
 
+class TopicName(Name):
+
+  '''  '''
+
+
 class OrganizationName(Name):
 
   '''  '''

@@ -9,6 +9,10 @@
 
 # submodules
 from . import issues
+from . import campaign
+from . import politics
 
 
-__all__ = ('issues',)
+__all__ = ('campaign',
+           'issues',
+           'politics')
