@@ -16,13 +16,6 @@ class Name(Model):
 
   primary = str, {'indexed': True}
 
-  @property
-  def kind(self):
-
-    ''' return kind name that should be used in storage '''
-
-    return 'Name'
-
 
 class PersonName(Name):
 
