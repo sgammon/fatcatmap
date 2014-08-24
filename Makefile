@@ -160,7 +160,7 @@ lib/canteen:
 endif
 
 test:
-	@-bin/python -c "import nose" || @-bin/pip install --upgrade nose coverage
+	@-bin/python -c "import nose" > /dev/null 2> /dev/null || @-bin/pip install --upgrade nose coverage
 
 	$(call say,"Running Python app testsuite...")
 	@-bin/nosetests canteen_tests fatcatmap_tests $(TEST_FLAGS)
