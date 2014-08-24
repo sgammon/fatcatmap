@@ -165,9 +165,9 @@ test:
 	$(call say,"Running Python app testsuite...")
 	@-bin/nosetests canteen_tests fatcatmap_tests $(TEST_FLAGS)
 
-	@echo "$(MAGENTA)Running javascript testsuite...$(STOP)"
+	$(call say,"Running javascript testsuite...")
 	@-ENV=$(ENVIRONMENT) gulp test
-	@echo "~~~ $(GREEN) tests ran successfully. $(STOP) ~~~"
+	$(call okay,"~~~ tests ran successfully. ~~~")
 
 coverage:
 	@-bin/python -c "import nose" || @-bin/pip install --upgrade nose coverage
