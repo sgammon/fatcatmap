@@ -63,7 +63,7 @@ class ModelSpec(object):
         :param type:
         :param keyname: '''
 
-    self.root, self.parent, self.type, self.keyname = (
+    self.__root__, self.__parent__, self.__type__, self.__keyname__ = (
       root, parent, type, keyname)
 
   def __call__(self, target):
@@ -116,7 +116,8 @@ Model, Vertex, Edge = (BaseModel,
 
 __all__ = ('abstract',
            'finance',
-           'finance',
            'gov',
            'graph',
-           'social')
+           'social',
+           'geo',
+           'person')

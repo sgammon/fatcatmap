@@ -15,7 +15,10 @@ from . import (event,
 
 # submodule symbols
 from .event import *
-
+from .ext import *
+from .group import *
+from .naming import *
+from .role import *
 
 
 __all__ = ('event',
