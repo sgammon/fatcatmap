@@ -14,10 +14,10 @@ class BaseModel(model.Model):
 
   ''' Base application model that specifies proper adapter settings. '''
 
-  __adapter__ = "RedisWarehouse"
+  __adapter__, __description__ = "RedisWarehouse", None
 
 
-class Vertex(model.Vertex, BaseModel):
+class BaseVertex(model.Vertex, BaseModel):
 
   ''' Extended-functionality graph ``Vertex`` model, with builtin fcm
       functionality and driver support. '''
@@ -27,7 +27,7 @@ class Vertex(model.Vertex, BaseModel):
   native = basestring, {'indexed': True, 'required': False, 'verbose_name': 'Native'}
 
 
-class Edge(model.Edge, BaseModel):
+class BaseEdge(model.Edge, BaseModel):
 
   ''' Extended-functionality graph ``Edge`` model, with builtin fcm
       functionality and driver support. '''
@@ -38,7 +38,85 @@ class Edge(model.Edge, BaseModel):
   native = basestring, {'indexed': True, 'required': False, 'verbose_name': 'Native'}
 
 
-__all__ = (
-  'graph',
-  'gov',
-  'finance')
+class ModelSpec(object):
+
+  ''' Thin class for specifying various model-level schema items and subsequent
+      attachment directly to a ``BaseModel`` subtype. '''
+
+  __slots__ = ('__root__',
+               '__parent__',
+               '__type__',
+               '__keyname__')
+
+  def __init__(self, root=False, parent=None, type=None, keyname=False):
+
+    ''' Describe a catnip model class with extra, model-level schema. This
+        includes any of the following:
+
+        - whether the model is a ``root`` type
+        - if the model is not a root type, the ``parent`` for this model
+        - if the model implements an abstract model ``type``
+        - whether the ``keyname`` is used for anything in entities of this type
+
+        :param root:
+        :param parent:
+        :param type:
+        :param keyname: '''
+
+    self.root, self.parent, self.type, self.keyname = (
+      root, parent, type, keyname)
+
+  def __call__(self, target):
+
+    ''' Apply this ``ModelSpec`` object as a decorator to the ``Model`` subtype
+        ``target`` class.
+
+        :param target: Target ``class`` or ``function`` to decorate with local
+          ``ModelSpec`` object.
+
+        :returns: Decorated ``target``. '''
+
+    return setattr(target, '__description__', self) or target
+
+  @classmethod
+  def describe(cls, **kwargs):
+
+    ''' Alias method, for use as a ``Model`` subtype decorator. Passes through
+        to ``ModelSpec`` but only allows ``kwargs``.
+
+        :returns: Constructeed ``ModelSpec`` object, describing the parameters
+          contained in ``kwargs``, and suitable for use as a closured
+          factory. '''
+
+    def _apply_description(target):
+
+      ''' Apply the ``ModelSpec`` description for a ``target`` model class
+          and return the resulting callable.
+
+          :param target: Target ``class`` or ``function`` to decorate.
+
+          :returns: Decorated ``target``. '''
+
+      return cls(**kwargs)(target)
+    return _apply_description
+
+  # -- property accessors -- #
+  root = property(lambda self: self.__root__)
+  type = property(lambda self: self.__type__)
+  parent = property(lambda self: self.__parent__)
+  keyname = property(lambda self: self.__keyname__)
+
+
+# map aliases
+describe = ModelSpec.describe
+Model, Vertex, Edge = (BaseModel,
+                       BaseVertex,
+                       BaseEdge)
+
+
+__all__ = ('abstract',
+           'finance',
+           'finance',
+           'gov',
+           'graph',
+           'social')
