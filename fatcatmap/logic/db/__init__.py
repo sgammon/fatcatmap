@@ -12,8 +12,6 @@ from . import adapter
 from . import warehouse
 
 
-__all__ = (
-  'query',
-  'adapter',
-  'warehouse'
-)
+__all__ = ('query',
+           'adapter',
+           'warehouse')
