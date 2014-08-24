@@ -20,7 +20,6 @@ var routes = {
    * @this {Client}
    */
   '/': function (request) {
-    this.app.page = 'page.map';
     this.app.$broadcast('page.map', this.graph.construct());
     return null;
   },

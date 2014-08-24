@@ -20,3 +20,34 @@ goog.provide('async');
  * }}
  */
 var CallbackMap;
+
+
+Object.defineProperty(Function.prototype, 'throttle', {
+  /**
+   * @expose
+   * @param {number} interval
+   * @return {function(...)}
+   */
+  value: /** @this {Function} */ function (interval) {
+    var fn = this,
+      timerID, args, that;
+
+    return function () {
+      args = arguments;
+      that = this;
+      if (!timerID) {
+        setTimeout(function () {
+          timerID = null;
+          fn.apply(that, args);
+        }, interval);
+      }
+    };
+  }
+});
+
+/**
+ * @expose
+ * @param {number} interval
+ * @return {function(...)}
+ */
+Function.prototype.throttle;

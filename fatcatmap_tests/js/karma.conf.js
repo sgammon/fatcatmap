@@ -24,7 +24,7 @@ module.exports = {
 
   _debugFiles: [
     JS_BASE + 'lib/closure/base.js',
-    JS_BASE + 'compiled/app.js',
+    JS_BASE + 'src/**/*.js',
     'simulate/mocks.js',
     'spec/unit/**/*.spec.js'
   ],

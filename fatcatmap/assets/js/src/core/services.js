@@ -109,3 +109,13 @@ Object.defineProperty(Object.prototype, 'service', {
  * @throws {Error|TypeError}
  */
 Object.prototype.service;
+
+/**
+ * @expose
+ * @param {string} name
+ * @param {(function(*)|Object.<string, function(*)>)} service
+ * @throws {TypeError}
+ */
+services.service._register = function (name, service) {
+  services[name] = service;
+};

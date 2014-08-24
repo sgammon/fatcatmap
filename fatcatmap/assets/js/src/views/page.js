@@ -37,16 +37,10 @@ views.Page = Vue.extend({
     page: {
       /**
        * @expose
-       * @type {string}
+       * @type {boolean}
        */
-      name: 'page.map'
+      active: false
     },
-
-    /**
-     * @expose
-     * @type {boolean}
-     */
-    active: false,
 
     /**
      * @expose
@@ -72,6 +66,16 @@ views.Page = Vue.extend({
         services.router.route(route);
       }
     }
+  },
+
+  /**
+   * @expose
+   * @this {views.Page}
+   */
+  ready: function () {
+    this.$on('route', function (route) {
+      services.router.route(route);
+    });
   }
 });
 

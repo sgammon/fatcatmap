@@ -66,10 +66,8 @@ catnip = function (context, data, routes) {
     if (context.template.manifest)
       fcm.template.init(context.template.manifest);
 
-    fcm.view.init('page', /** @this {Vue} */function () {
-      this.$set('active', true);
-      Client.prototype['app'] = this;
-      _go();
+    fcm.data.init(data, function (d) {
+      fcm.graph.init(d);
     });
 
     fcm.router.init(routes, function (initialRoute) {
@@ -79,6 +77,13 @@ catnip = function (context, data, routes) {
         if (initialRoute)
           return fcm.router.route(initialRoute);
       });
+    });
+
+    fcm.view.init('page', /** @this {Vue} */function () {
+      this.$set('active', true);
+      this.$.stage.$set('active', true);
+      services.service._register('app', this);
+      _go();
     });
 
     return this;

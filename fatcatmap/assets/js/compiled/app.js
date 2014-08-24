@@ -1,7 +1,17 @@
 (function() {
 var async = {}, CallbackMap;
+Object.defineProperty(Function.prototype, "throttle", {value:function(a) {
+  var b = this, c, d, e;
+  return function() {
+    d = arguments;
+    e = this;
+    c || setTimeout(function() {
+      c = null;
+      b.apply(e, d);
+    }, a);
+  };
+}});
 var routes = {"/":function(a) {
-  this.app.page = "page.map";
   this.app.$broadcast("page.map", this.graph.construct());
   return null;
 }, "/login":function(a) {
@@ -66,6 +76,9 @@ Object.defineProperty(Object.prototype, "service", {value:function(a) {
   Client.prototype[a] = this;
   return Client.prototype[a];
 }});
+services.service._register = function(a, b) {
+  services[a] = b;
+};
 var supports = {cookies:navigator.cookieEnabled, retina:2 == window.devicePixelRatio, workers:!!window.Worker, sharedWorkers:!!window.SharedWorker, sockets:!!window.WebSocket, sse:!!window.EventSource, geo:!!navigator.geolocation, touch:0 < navigator.maxTouchPoints, history:{html5:!!window.history.pushState, hash:!!window.onhashchange}, storage:{local:!!window.localStorage, session:!!window.sessionStorage, indexed:!!window.IDBFactory}};
 var urlutil = {addParams:function(a, b) {
   var c = !0;
@@ -113,104 +126,90 @@ var urlutil = {addParams:function(a, b) {
   }
   return d.join("/");
 }};
-var Diff, DIFF;
-Diff = function() {
-  this._diff = {};
-};
-Diff.prototype.add = function(a, b) {
-  var c, d;
-  if (this._diff[a]) {
-    d = this._diff[a];
-    for (c in b) {
-      b.hasOwnProperty(c) && (d[c] = b[c]);
-    }
-    this._diff[a] = d;
-  } else {
-    this._diff[a] = b;
+var _dataCache, watchers, _resolveAndSet;
+_dataCache = {};
+watchers = {};
+_resolveAndSet = function(a, b) {
+  for (var c = a.split("."), d = _dataCache;1 < c.length;) {
+    d = d[c.shift()] || {};
   }
+  d[c.shift()] = b;
 };
-Diff.prototype.commit = function() {
-  var a = this._diff;
-  this._diff = !1;
-  this.add = function() {
-    throw Error("Cannot add to committed diff.");
-  };
-  return a;
-};
-services.data = {init:function(a) {
-  DIFF = new Diff;
-  this._watchers = {};
+services.data = {init:function(a, b) {
+  var c = this.data.normalize(a), d = c.data.keys, e = c.data.objects, f;
+  for (f = 0;d && f < d.length;f++) {
+    _dataCache[d[f]] = e[f];
+  }
+  b(c);
 }, normalize:function(a) {
   if ("string" === typeof a) {
     try {
       a = JSON.parse(a);
     } catch (b) {
-      a = {};
+      console.warn("[service.data] Couldn't parse raw data: "), console.warn(a), a = {};
     }
   }
   return a;
-}, watch:function(a, b, c) {
-  if (!a) {
-    throw Error("services.data.watch() requires a string key.");
+}, get:function(a, b) {
+  var c = _dataCache[a], d = {success:function(a) {
+    this.data.set(e, a);
+    b.success(a);
+  }.bind(this), error:b.error}, e;
+  if (c) {
+    return c.native && "string" === typeof c.native ? (e = c.native, this.watch(e, function(b) {
+      this.data.set(a + ".native", b);
+    }.bind(this)), this.data.get(e, d)) : b.success(c);
   }
-  if (!c) {
-    if ("function" !== typeof b) {
-      throw Error("services.data.watch() requires a watcher function.");
-    }
-    c = b;
-    b = null;
-  }
-  this._watchers[a] || (this._watchers[a] = []);
-  this._watchers[a].push(b ? c.bind(b) : function(a) {
-    c.call(a, a);
+  debugger;
+}, set:function(a, b) {
+  _resolveAndSet(a, b);
+  watchers[a].length && watchers[a].forEach(function(a) {
+    a(b);
   });
+}, watch:function(a, b) {
+  watchers[a] || (watchers[a] = []);
+  watchers[a].push(b);
 }, unwatch:function(a, b) {
-  var c, d;
-  if (this._watchers[a]) {
-    c = this._watchers[a];
-    if (b) {
-      for (d = 0;d < c.length;d++) {
-        if (b === c[d]) {
-          c.splice(d, 1);
-          break;
-        }
-      }
-    } else {
-      c = [];
-    }
-    this._watchers[a] = c;
-  }
+  var c = b;
+  b && "function" === typeof b ? watchers[a] = watchers[a].filter(function(a) {
+    return a === b;
+  }) : (c = watchers[a], watchers[a] = []);
+  return c;
 }}.service("data");
-var _cache, _index, GRAPH;
-_cache = {};
-_index = {adjacency:{}, nodesByKey:{}, edgesByKey:{}, nativesByKey:{}, object_natives:{}};
+var _graphCache, _graphIndex, GRAPH;
+_graphCache = {};
+_graphIndex = {adjacency:{}, nodesByKey:{}, edgesByKey:{}};
 services.graph = {init:function(a) {
-  return GRAPH = this.graph.construct(this.data.normalize(a));
-}, construct:function(a) {
-  var b, c, d, e, f, g;
+  return GRAPH = this.graph.construct(a.graph, a.data);
+}, construct:function(a, b) {
   if (!a) {
     return GRAPH;
   }
-  b = a.graph;
-  a = a.data;
-  GRAPH = {nodes:[], edges:[], natives:[], origin:b.origin};
-  a.keys.forEach(function(b, c) {
-    _cache[b] = a.objects[c];
-  });
-  b.natives.forEach(function(d) {
-    d = b.edges + 1 + d;
-    var e = a.keys[c];
-    _index.nativesByKey[e] || (_index.nativesByKey[e] = GRAPH.natives.push({key:e, data:a.objects[d]}) - 1);
-  });
-  c = -1;
-  for (g = function(b, d) {
-    return function(e) {
-      var f;
-      !_index.adjacency[b] && _index.adjacency[b][e] && (f = GRAPH.edges.push({edge:{key:d, data:a.objects[c]}, native:_cache[a.objects[c].native], source:_index.nodesByKey[b], target:_index.nodesByKey[e]}) - 1, _index.edgesByKey[d].push(f), _index.adjacency[b] = {}, _index.adjacency[b][e] = f);
+  GRAPH = {nodes:[], edges:[], natives:[], origin:a.origin, origin_key:b.keys[a.origin]};
+  return this.graph.add(a, b);
+}, add:function(a, b) {
+  var c, d, e, f, g, h;
+  c = function(a, b) {
+    return function(c) {
+      var d;
+      if (!_graphIndex.adjacency[a] || !_graphIndex.adjacency[a][c]) {
+        if (null == _graphIndex.nodesByKey[a] || null == _graphIndex.nodesByKey[c]) {
+          debugger;
+        }
+        d = GRAPH.edges.push({key:b, source:_graphIndex.nodesByKey[a], target:_graphIndex.nodesByKey[c]}) - 1;
+        _graphIndex.edgesByKey[b].push(d);
+        _graphIndex.adjacency[a] = {};
+        _graphIndex.adjacency[a][c] = d;
+      }
     };
-  };c++ < a.keys.length;) {
-    d = a.keys[c], c <= b.nodes ? _index.nodesByKey[d] || (_index.nodesByKey[d] = GRAPH.nodes.push({node:{key:d, data:_cache[d]}, native:{key:a.objects[c].native, data:_cache[a.objects[c].native]}})) : c <= b.edges && (_index.edgesByKey[d] || (_index.edgesByKey[d] = []), e = a.objects[c].node.slice(), f = e.shift(), e.forEach(g(f, d)));
+  };
+  d = 0;
+  for (e = b.keys;d < e.length;) {
+    f = e[d], d <= a.nodes ? _graphIndex.nodesByKey[f] || (g = {key:f, classes:["node"]}, h = b.objects[d].native, h = b.objects[e.indexOf(h)], h.govtrack_id ? (g.classes.push("legislator"), g.classes.push("M" === h.gender ? "male" : "female"), g.classes.push(Math.ceil(100 * Math.random()) % 2 ? "democrat" : "republican"), .1869 > Math.random() && g.classes.push("senate")) : (g.classes.push("contributor"), g.classes.push("C" == h.contributor_type ? "corporate" : "individual")), _graphIndex.nodesByKey[f] = 
+    GRAPH.nodes.push(g) - 1) : d <= a.edges && (_graphIndex.edgesByKey[f] || (_graphIndex.edgesByKey[f] = []), g = b.objects[d].node.slice(), h = g.shift(), g.forEach(c(h, f))), d++;
   }
+  return this.graph.get();
+}, get:function() {
   return GRAPH;
 }}.service("graph");
 var Request, Response, _prepareRequest, _dispatch, _parseResponse;
@@ -410,7 +409,7 @@ var VIEWS = {}, getSelfAndChildren = function(a, b) {
     if ("string" !== typeof d.data) {
       return b(!1, d);
     }
-    f = d.data.replace(/v-component=("|')(\w+)\1/g, function(a, b, c) {
+    f = d.data.replace(/v-component=("|')([\w\.\-]+)\1/g, function(a, b, c) {
       e.push(c);
       return a;
     });
@@ -477,66 +476,116 @@ views.Detail = View.extend({viewname:"detail", replace:!0, data:{view:"", select
 }});
 views.Header = View.extend({viewname:"header", replace:!0});
 views.Modal = View.extend({viewname:"modal", data:{active:!1, message:""}});
-views.Stage = View.extend({viewname:"stage", replace:!0, data:{active:!0}});
-views.Map = View.extend({viewname:"page.map", selectors:{map:"#map", edge:".edge", node:".node"}, data:{active:!0, graph:{root:null, force:null, edge:null, line:null, node:null, circle:null}, config:{width:0, height:0, force:{alpha:.75, strength:1, friction:.9, theta:.7, gravity:.1, charge:-700, distance:180}, origin:{snap:!0, dynamic:!0, position:null}, node:{radius:20, classes:["node"]}, labels:{enable:!1, distance:0}, edge:{width:2, stroke:"#999", classes:["link"]}, sprite:{width:60, height:60}}}, 
-methods:{toggleSelected:function(a) {
-}, addSelected:function(a) {
+views.Stage = View.extend({viewname:"stage", replace:!0});
+views.Map = View.extend({viewname:"page.map", replace:!0, selectors:{map:"#map", edge:".edge", node:".node", selected:".selected"}, data:{map:{}, config:{width:0, height:0, force:{alpha:.75, strength:1, friction:.9, theta:.7, gravity:.1, charge:-600, distance:180}, origin:{snap:!0, dynamic:!1, position:null}, node:{radius:25, scaleFactor:1.6, classes:["node"]}, labels:{enable:!1, distance:0}, edge:{width:2, stroke:"#999", classes:["link"]}, sprite:{width:60, height:60}}}, methods:{isNode:function(a) {
+  return a.classList.contains("node");
+}, isEdge:function(a) {
+  return a.classList.contains("link");
+}, select:function(a) {
+  var b = a.target, c = b.id.split("-").pop(), d = this.$options.selectors.selected.slice(1);
+  this.map.selected || (this.map.selected = []);
+  this.isNode(b) && (a.preventDefault(), a.stopPropagation(), b.classList.contains(d) ? (a = this.map.selected.indexOf(c), -1 < a && this.map.selected.splice(a, 1)) : (a.shiftKey || (this.map.selected = []), this.map.selected.push(c)));
+  this.map.selected.changed = !0;
+  this.map.force.start();
 }, browseTo:function(a) {
+  console.log("map.browseTo()");
 }, draw:function(a) {
-  var b, c, d, e, f, g, h, k, l;
-  this.graph.root ? (this.graph.root = null, $(this.$options.selectors.map).innerHTML = "", this.draw(a)) : (b = this.config, c = this.$options.selectors, d3.scale.category20(), d = this.graph.force = d3.layout.force().size(b.width, b.height).linkDistance(b.force.distance).charge(b.force.charge).linkStrength(b.force.strength).friction(b.force.friction).theta(b.force.theta).gravity(b.force.gravity).alpha(b.force.alpha), e = this.graph.root = d3.select(c.map), f = e.selectAll(c.edge).data(a.edges).enter(), 
-  f = this.graph.edge = f.append("svg:svg").attr("id", function(a) {
-    return "edge-" + a.edge.key;
-  }), g = this.graph.line = f.append("svg:line").attr("stroke", b.edge.stroke).attr("class", b.edge.classes).style("stroke-width", b.edge.width), c = e.selectAll(c.node).data(a.nodes).enter(), h = c.append("svg:svg").attr("id", function(a) {
-    return "group-" + a.node.key;
-  }).attr("width", b.sprite.width).attr("height", b.sprite.height).call(d.drag), c = this.graph.node = h.append("svg:g").attr("width", b.sprite.width).attr("height", b.sprite.height).attr("class", function(a, b) {
-    var c = [];
-    a.native.data.govtrack_id ? (c.push("legislator"), c.push("M" === a.native.data.gender ? "male" : "female"), c.push(Math.ceil(100 * Math.random()) % 2 ? "democrat" : "republican")) : (c.push("contributor"), c.push("C" == a.native.data.contributor_type ? "corporate" : "individual"));
-    return c.join(" ");
-  }), this.graph.circle = c.append("svg:circle").attr("r", b.node.radius).attr("cx", b.sprite.width / 2).attr("cy", b.sprite.height / 2).attr("class", b.node.classes), k = function(c, d, e, f) {
-    return b.origin.snap && e[c].index === a.origin ? Math.floor(b.origin.position(d)) : Math.floor(e[c][d] + b.node.radius / 2);
-  }, l = function(c, d, e) {
-    return b.origin.snap && e === a.origin ? Math.floor(b.origin.position[c] - b.sprite["x" === c ? "width" : "height"] / 2) : Math.floor(d[c] - b.node.radius);
-  }, d.on("tick", function(a) {
-    var c;
-    a = b.width / 2;
-    c = b.height / 2;
-    b.origin.dynamic && b.origin.snap && (this.config.origin.position = {x:a + b.sprite.width / 2, y:c + b.sprite.height / 2});
-    ["x", "y"].forEach(function(a) {
-      h.attr(a, function(b, c) {
-        l(a, b, c);
+  var b = this, c, d, e, f, g, h, k, l;
+  if (a && !b.map.root) {
+    c = b.config, d = b.$options.selectors, e = d3.select(d.map).attr("width", c.width).attr("height", c.height), f = e.selectAll(d.node), g = e.selectAll(d.edge), h = function() {
+      b.config.origin.snap && (a.nodes[a.origin].x = b.config.origin.position.x, a.nodes[a.origin].y = b.config.origin.position.y);
+      g.attr("x1", function(a) {
+        return a.source.x;
+      }).attr("y1", function(a) {
+        return a.source.y;
+      }).attr("x2", function(a) {
+        return a.target.x;
+      }).attr("y2", function(a) {
+        return a.target.y;
       });
-    });
-    ["x1", "y1", "x2", "y2"].forEach(function(a) {
-      g.attr(a, function(b, c) {
-        k("1" === a[1] ? "source" : "target", a[0], b, c);
+      f.attr("cx", function(a) {
+        return a.x;
+      }).attr("cy", function(a) {
+        return a.y;
       });
-    });
-  }), d.nodes(a.nodes).links(a.edges).start());
+      b.map.selected && b.map.selected.changed && (f.filter(d.selected).filter(function(a) {
+        return-1 === b.map.selected.indexOf(a.key);
+      }).classed({selected:!1}).transition().duration(200).ease("cubic").attr("r", c.node.radius), f.filter(function(a) {
+        return-1 < b.map.selected.indexOf(a.key);
+      }).classed({selected:!0}).transition().duration(200).ease("cubic").attr("r", c.node.radius * c.node.scaleFactor), b.map.selected.changed = !1);
+    }, k = d3.layout.force().size([c.width, c.height]).linkDistance(c.force.distance).linkStrength(c.force.strength).friction(c.force.friction).theta(c.force.theta).gravity(c.force.gravity).alpha(c.force.alpha).charge(function(a) {
+      return b.map.selected && -1 < b.map.selected.indexOf(a.key) ? c.force.charge * c.node.scaleFactor : c.force.charge;
+    }).on("tick", h), l = function() {
+      var b = a.nodes, d = a.edges;
+      k.nodes(b).links(d).start();
+      g = g.data(d, function(a) {
+        return a.key;
+      });
+      g.exit().remove();
+      g.enter().insert("line", ".node").attr("id", function(a) {
+        return "edge-" + a.key;
+      }).attr("x1", function(a) {
+        return a.source.x;
+      }).attr("y1", function(a) {
+        return a.source.y;
+      }).attr("x2", function(a) {
+        return a.target.x;
+      }).attr("y2", function(a) {
+        return a.target.y;
+      }).attr("stroke-width", c.edge.width).attr("stroke", c.edge.stroke).attr("class", c.edge.classes);
+      f = f.data(b, function(a) {
+        return a.key;
+      });
+      f.exit().remove();
+      f.enter().append("svg:circle").attr("id", function(a) {
+        return "node-" + a.key;
+      }).attr("cx", function(a) {
+        return a.x;
+      }).attr("cy", function(a) {
+        return a.y;
+      }).attr("r", c.node.radius).attr("width", c.sprite.width).attr("height", c.sprite.height).attr("class", function(a, b) {
+        return a.classes.join(" ");
+      }).call(k.drag);
+      f.filter(function(b, c) {
+        return b.key === a.origin_key;
+      });
+    }, b.map.root = e, b.map.force = k, setTimeout(function() {
+      l();
+    }, 0);
+  } else {
+    return b.map.root = null, $(b.$options.selectors.map).innerHTML = "", b.draw(a);
+  }
 }}, ready:function() {
-  var a = this, b = this.$el.offsetWidth, c = this.$el.offsetHeight;
-  this.config.width = b;
-  this.config.height = c;
-  this.config.origin.position = {x:b - 30, y:c - 30};
+  var a = this;
   window.addEventListener("resize", function(b) {
-    b = document.body.clientWidth;
-    var c = document.body.clientHeight;
-    a.config.graph.width = b;
-    a.config.graph.height = c;
-    a.graph.root && a.graph.root.attr("width", b).attr("height", c);
-    a.graph.force && a.graph.force.size([b, c]).resume();
+    b = a.$el.clientWidth;
+    var c = a.$el.clientHeight;
+    a.config.width = b;
+    a.config.height = c;
+    a.map.root && a.map.root.attr("width", b).attr("height", c);
+    a.config.origin.snap && (a.config.origin.position.x = b / 2, a.config.origin.position.y = c / 2);
+    a.map.force && a.map.force.size([b, c]).resume();
   });
 }, handler:function(a) {
+  var b = this.$el.clientWidth, c = this.$el.clientHeight;
+  this.config.width = b;
+  this.config.height = c;
+  this.config.origin.snap && (this.config.origin.position = this.config.origin.position || {}, this.config.origin.position.x = b / 2, this.config.origin.position.y = c / 2);
   this.draw(a);
+  $(this.$options.selectors.map).classList.remove("transparent");
 }});
-views.Page = Vue.extend({data:{page:{name:"page.map"}, active:!1, modal:null}, methods:{route:function(a) {
+views.Page = Vue.extend({data:{page:{active:!1}, modal:null}, methods:{route:function(a) {
   if (a.target.hasAttribute("data-route")) {
     var b = a.target.getAttribute("href");
     a.preventDefault();
     a.stopPropagation();
     services.router.route(b);
   }
-}}});
+}}, ready:function() {
+  this.$on("route", function(a) {
+    services.router.route(a);
+  });
+}});
 services.view.put("page", views.Page);
 var _ready, _go, catnip;
 _ready = [];
@@ -554,10 +603,8 @@ catnip = function(a, b, c) {
   a.session && a.session.established && (d.session = a.session.payload);
   a.services && a.protocol.rpc.enabled && d.rpc.init(a.services);
   a.template.manifest && d.template.init(a.template.manifest);
-  d.view.init("page", function() {
-    this.$set("active", !0);
-    Client.prototype.app = this;
-    _go();
+  d.data.init(b, function(a) {
+    d.graph.init(a);
   });
   d.router.init(c, function(a) {
     d.ready(function() {
@@ -566,6 +613,12 @@ catnip = function(a, b, c) {
         return d.router.route(a);
       }
     });
+  });
+  d.view.init("page", function() {
+    this.$set("active", !0);
+    this.$.stage.$set("active", !0);
+    services.service._register("app", this);
+    _go();
   });
   return this;
 }.client({ready:function(a) {

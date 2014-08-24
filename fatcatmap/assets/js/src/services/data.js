@@ -9,60 +9,30 @@
  * copyright (c) momentum labs, 2014
  */
 
+goog.require('async');
 goog.require('services');
 
 goog.provide('services.data');
 
-var Diff, DIFF;
+var _dataCache, watchers, _resolveAndSet;
+
+_dataCache = {};
+
+watchers = {};
 
 /**
- * @constructor
- */
-Diff = function () {
-  /**
-   * @type {Object.<string, Object>}
-   */
-  this._diff = {};
-};
-
-/**
+ * @private
  * @param {string} key
- * @param {Object} diff
- * @throws {Error} If called after diff was committed.
+ * @param {Object} data
  */
-Diff.prototype.add = function (key, diff) {
-  var k, obj;
-  if (!this._diff[key]) {
-    this._diff[key] = diff;
-    return;
+_resolveAndSet = function (key, data) {
+  var keys = key.split('.'),
+    obj = _dataCache;
+  while (keys.length > 1) {
+    obj = obj[keys.shift()] || {};
   }
-
-  obj = this._diff[key];
-
-  for (k in diff) {
-    if (diff.hasOwnProperty(k)) {
-      obj[k] = diff[k];
-    }
-  }
-
-  this._diff[key] = obj;
+  obj[keys.shift()] = data;
 };
-
-/**
- * @return {Object.<string, Object>}
- */
-Diff.prototype.commit = function () {
-  var diff = this._diff;
-
-  this._diff = false;
-
-  this.add = function () {
-    throw new Error('Cannot add to committed diff.');
-  };
-
-  return diff;
-};
-
 
 /**
  * @expose
@@ -71,14 +41,18 @@ services.data = /** @lends {Client.prototype.data} */ {
   /**
    * @expose
    * @param {string|Object} raw Raw input.
+   * @param {function(string|Object)} cb
    * @this {Client}
    */
-  init: function (raw) {
-    DIFF = new Diff();
-    /**
-     * @type {Object.<string, Array.<function(Object)>>}
-     */
-    this._watchers = {};
+  init: function (raw, cb) {
+    var data = this.data.normalize(raw),
+      keys = data.data.keys,
+      objects = data.data.objects,
+      i;
+    for (i = 0; keys && i < keys.length; i++) {
+      _dataCache[keys[i]] = objects[i];
+    }
+    cb(data);
   },
 
   /**
@@ -91,6 +65,8 @@ services.data = /** @lends {Client.prototype.data} */ {
       try {
         raw = JSON.parse(raw);
       } catch (e) {
+        console.warn('[service.data] Couldn\'t parse raw data: ');
+        console.warn(raw);
         raw = {};
       }
     }
@@ -100,54 +76,79 @@ services.data = /** @lends {Client.prototype.data} */ {
   /**
    * @expose
    * @param {string} key
-   * @param {(Object|function(Object))} target
-   * @param {function(Object)=} fn
-   * @this {Client}
-   * @throws {Error} If watcher function or key is not passed.
+   * @param {CallbackMap} cbs
    */
-  watch: function (key, target, fn) {
-    if (!key)
-      throw new Error('services.data.watch() requires a string key.');
+  get: function (key, cbs) {
+    var item = _dataCache[key],
+      _cbs = {
+        success: function (data) {
+          this.data.set(nativeKey, data);
+          cbs.success(data);
+        }.bind(this),
 
-    if (!fn) {
-      if (typeof target !== 'function')
-        throw new Error('services.data.watch() requires a watcher function.');
+        error: cbs.error
+      },
+      nativeKey;
+    if (item) {
+      if (item.native && typeof item.native === 'string') {
+        nativeKey = item.native;
 
-      fn = target;
-      target = null;
+        this.watch(nativeKey, function (data) {
+          this.data.set(key + '.native', data);
+        }.bind(this));
+
+        return this.data.get(nativeKey, _cbs);
+      }
+      return cbs.success(item);
+    } else {
+      // Retrieve from server.
+      debugger;
     }
-
-    if (!this._watchers[key])
-      this._watchers[key] = [];
-
-    this._watchers[key].push(target ? fn.bind(target) : function (obj) {
-      fn.call(obj, obj);
-    });
   },
 
   /**
    * @expose
    * @param {string} key
-   * @param {function(Object)=} fn
-   * @this {Client}
+   * @param {*} data
    */
-  unwatch: function (key, fn) {
-    var watchers, i;
-    if (this._watchers[key]) {
-      watchers = this._watchers[key];
+  set: function (key, data) {
+    _resolveAndSet(key, data);
 
-      if (fn) {
-        for (i = 0; i < watchers.length; i++) {
-          if (fn === watchers[i]) {
-            watchers.splice(i, 1);
-            break;
-          }
-        }
-      } else {
-        watchers = [];
-      }
-
-      this._watchers[key] = watchers;
+    if (watchers[key].length) {
+      watchers[key].forEach(function (watcher) {
+        watcher(data);
+      });
     }
+  },
+
+  /**
+   * @expose
+   * @param {string} key
+   * @param {function(*)} watcher
+   */
+  watch: function (key, watcher) {
+    if (!watchers[key])
+      watchers[key] = [];
+
+    watchers[key].push(watcher);
+  },
+
+  /**
+   * @expose
+   * @param {string} key
+   * @param {function(*)=} watcher
+   * @return {(function(*)|Array.<function(*)>)}
+   */
+  unwatch: function (key, watcher) {
+    var _watchers = watcher;
+    if (watcher && typeof watcher === 'function') {
+      watchers[key] = watchers[key].filter(function (w) {
+        return w === watcher;
+      });
+    } else {
+      _watchers = watchers[key];
+      watchers[key] = [];
+    }
+    return _watchers;
   }
 }.service('data');

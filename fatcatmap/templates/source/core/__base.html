@@ -84,19 +84,15 @@
 
       {% block south -%}
       <!-- bundle/page JS -->
-      <script type="text/javascript" nonce="{{ nonce.script }}" src="{{ asset.script("lib/jquery/jquery-2.1.1.min.js") }}"></script>
-      <script type="text/javascript" nonce="{{ nonce.script }}" src="{{ asset.script("lib/d3/d3-v3.min.js") }}"></script>
-      <script type="text/javascript" nonce="{{ nonce.script }}" src="{{ asset.script("lib/masonry/masonry-3.1.5.min.js") }}"></script>
-      <script type="text/javascript" nonce="{{ nonce.script }}" src="{{ asset.script("lib/apptools/apptools-v4.min.js") }}"></script>
+      <script type="text/javascript" nonce="{{ nonce.script }}" src="{{ asset.script("lib/d3/d3-v3.js") }}"></script>
       <script type="text/javascript" nonce="{{ nonce.script }}" src="{{ asset.script("lib/vue/vue.js") }}"></script>
-      <script type="text/javascript" nonce="{{ nonce.script }}" src="{{ asset.script("common.min.js") }}"></script>
       <script id="js-page" type="text/javascript" nonce="{{ nonce.script }}" src="{%- block page_js -%}{%- endblock -%}"></script>
 
       <!-- context -->
       <script id="js-context" type="application/json">{{ js_context|json|safe }}</script><!-- end #js-context -->
       {% if js_context.pagedata -%}<script id="js-data" type="application/json">{{ pagedata|json|safe }}</script><!-- end #js-data -->{%- endif %}
       {% if config.assets.config.serving_mode != "cdn" -%}
-        <script type="text/javascript" nonce="{{ nonce.script }}" src="{{ asset.script("compiled/app.min.js") }}"></script>
+        <script type="text/javascript" nonce="{{ nonce.script }}" src="{{ asset.script("compiled/app.js") }}"></script>
       {%- endif %}
       {%- endblock south %}
 

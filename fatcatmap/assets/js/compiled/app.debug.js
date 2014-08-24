@@ -1,7 +1,17 @@
 (function() {
 var async = {}, CallbackMap;
+Object.defineProperty(Function.prototype, "throttle", {value:function($interval$$) {
+  var $fn$$ = this, $timerID$$, $args$$, $that$$;
+  return function() {
+    $args$$ = arguments;
+    $that$$ = this;
+    $timerID$$ || setTimeout(function() {
+      $timerID$$ = null;
+      $fn$$.apply($that$$, $args$$);
+    }, $interval$$);
+  };
+}});
 var routes = {"/":function($request$$) {
-  this.app.page = "page.map";
   this.app.$broadcast("page.map", this.graph.construct());
   return null;
 }, "/login":function($request$$) {
@@ -66,6 +76,9 @@ Object.defineProperty(Object.prototype, "service", {value:function($name$$) {
   Client.prototype[$name$$] = this;
   return Client.prototype[$name$$];
 }});
+services.service._register = function $services$service$_register$($name$$, $service$$) {
+  services[$name$$] = $service$$;
+};
 var supports = {cookies:navigator.cookieEnabled, retina:2 == window.devicePixelRatio, workers:!!window.Worker, sharedWorkers:!!window.SharedWorker, sockets:!!window.WebSocket, sse:!!window.EventSource, geo:!!navigator.geolocation, touch:0 < navigator.maxTouchPoints, history:{html5:!!window.history.pushState, hash:!!window.onhashchange}, storage:{local:!!window.localStorage, session:!!window.sessionStorage, indexed:!!window.IDBFactory}};
 var urlutil = {addParams:function($url$$, $params$$) {
   var $needsAmp$$ = !0;
@@ -113,105 +126,91 @@ var urlutil = {addParams:function($url$$, $params$$) {
   }
   return $parts$$.join("/");
 }};
-var Diff, DIFF;
-Diff = function $Diff$() {
-  this._diff = {};
-};
-Diff.prototype.add = function $Diff$$add$($key$$, $diff$$) {
-  var $k$$, $obj$$;
-  if (this._diff[$key$$]) {
-    $obj$$ = this._diff[$key$$];
-    for ($k$$ in $diff$$) {
-      $diff$$.hasOwnProperty($k$$) && ($obj$$[$k$$] = $diff$$[$k$$]);
-    }
-    this._diff[$key$$] = $obj$$;
-  } else {
-    this._diff[$key$$] = $diff$$;
+var _dataCache, watchers, _resolveAndSet;
+_dataCache = {};
+watchers = {};
+_resolveAndSet = function $_resolveAndSet$($key$$, $data$$) {
+  for (var $keys$$ = $key$$.split("."), $obj$$ = _dataCache;1 < $keys$$.length;) {
+    $obj$$ = $obj$$[$keys$$.shift()] || {};
   }
+  $obj$$[$keys$$.shift()] = $data$$;
 };
-Diff.prototype.commit = function $Diff$$commit$() {
-  var $diff$$ = this._diff;
-  this._diff = !1;
-  this.add = function $this$add$() {
-    throw Error("Cannot add to committed diff.");
-  };
-  return $diff$$;
-};
-services.data = {init:function($raw$$) {
-  DIFF = new Diff;
-  this._watchers = {};
+services.data = {init:function($raw$$, $cb$$) {
+  var $data$$ = this.data.normalize($raw$$), $keys$$ = $data$$.data.keys, $objects$$ = $data$$.data.objects, $i$$;
+  for ($i$$ = 0;$keys$$ && $i$$ < $keys$$.length;$i$$++) {
+    _dataCache[$keys$$[$i$$]] = $objects$$[$i$$];
+  }
+  $cb$$($data$$);
 }, normalize:function($raw$$) {
   if ("string" === typeof $raw$$) {
     try {
       $raw$$ = JSON.parse($raw$$);
     } catch ($e$$) {
-      $raw$$ = {};
+      console.warn("[service.data] Couldn't parse raw data: "), console.warn($raw$$), $raw$$ = {};
     }
   }
   return $raw$$;
-}, watch:function($key$$, $target$$, $fn$$) {
-  if (!$key$$) {
-    throw Error("services.data.watch() requires a string key.");
+}, get:function($key$$, $cbs$$) {
+  var $item$$ = _dataCache[$key$$], $_cbs$$ = {success:function($data$$) {
+    this.data.set($nativeKey$$, $data$$);
+    $cbs$$.success($data$$);
+  }.bind(this), error:$cbs$$.error}, $nativeKey$$;
+  if ($item$$) {
+    return $item$$.native && "string" === typeof $item$$.native ? ($nativeKey$$ = $item$$.native, this.watch($nativeKey$$, function($data$$) {
+      this.data.set($key$$ + ".native", $data$$);
+    }.bind(this)), this.data.get($nativeKey$$, $_cbs$$)) : $cbs$$.success($item$$);
   }
-  if (!$fn$$) {
-    if ("function" !== typeof $target$$) {
-      throw Error("services.data.watch() requires a watcher function.");
-    }
-    $fn$$ = $target$$;
-    $target$$ = null;
-  }
-  this._watchers[$key$$] || (this._watchers[$key$$] = []);
-  this._watchers[$key$$].push($target$$ ? $fn$$.bind($target$$) : function($obj$$) {
-    $fn$$.call($obj$$, $obj$$);
+  debugger;
+}, set:function($key$$, $data$$) {
+  _resolveAndSet($key$$, $data$$);
+  watchers[$key$$].length && watchers[$key$$].forEach(function($watcher$$) {
+    $watcher$$($data$$);
   });
-}, unwatch:function($key$$, $fn$$) {
-  var $watchers$$, $i$$;
-  if (this._watchers[$key$$]) {
-    $watchers$$ = this._watchers[$key$$];
-    if ($fn$$) {
-      for ($i$$ = 0;$i$$ < $watchers$$.length;$i$$++) {
-        if ($fn$$ === $watchers$$[$i$$]) {
-          $watchers$$.splice($i$$, 1);
-          break;
-        }
-      }
-    } else {
-      $watchers$$ = [];
-    }
-    this._watchers[$key$$] = $watchers$$;
-  }
+}, watch:function($key$$, $watcher$$) {
+  watchers[$key$$] || (watchers[$key$$] = []);
+  watchers[$key$$].push($watcher$$);
+}, unwatch:function($key$$, $watcher$$) {
+  var $_watchers$$ = $watcher$$;
+  $watcher$$ && "function" === typeof $watcher$$ ? watchers[$key$$] = watchers[$key$$].filter(function($w$$) {
+    return $w$$ === $watcher$$;
+  }) : ($_watchers$$ = watchers[$key$$], watchers[$key$$] = []);
+  return $_watchers$$;
 }}.service("data");
-var _cache, _index, GRAPH;
-_cache = {};
-_index = {adjacency:{}, nodesByKey:{}, edgesByKey:{}, nativesByKey:{}, object_natives:{}};
-services.graph = {init:function($raw$$) {
-  return GRAPH = this.graph.construct(this.data.normalize($raw$$));
-}, construct:function($data$$) {
-  var $graph$$, $i$$, $key$$0$$, $targets$$, $source$$0$$, $makeEdge$$;
-  if (!$data$$) {
+var _graphCache, _graphIndex, GRAPH;
+_graphCache = {};
+_graphIndex = {adjacency:{}, nodesByKey:{}, edgesByKey:{}};
+services.graph = {init:function($data$$) {
+  return GRAPH = this.graph.construct($data$$.graph, $data$$.data);
+}, construct:function($graph$$, $data$$) {
+  if (!$graph$$) {
     return GRAPH;
   }
-  $graph$$ = $data$$.graph;
-  $data$$ = $data$$.data;
-  GRAPH = {nodes:[], edges:[], natives:[], origin:$graph$$.origin};
-  $data$$.keys.forEach(function($key$$, $key_i$$) {
-    _cache[$key$$] = $data$$.objects[$key_i$$];
-  });
-  $graph$$.natives.forEach(function($j_offset$$) {
-    $j_offset$$ = $graph$$.edges + 1 + $j_offset$$;
-    var $k$$ = $data$$.keys[$i$$];
-    _index.nativesByKey[$k$$] || (_index.nativesByKey[$k$$] = GRAPH.natives.push({key:$k$$, data:$data$$.objects[$j_offset$$]}) - 1);
-  });
-  $i$$ = -1;
-  for ($makeEdge$$ = function $$makeEdge$$$($source$$, $key$$) {
+  GRAPH = {nodes:[], edges:[], natives:[], origin:$graph$$.origin, origin_key:$data$$.keys[$graph$$.origin]};
+  return this.graph.add($graph$$, $data$$);
+}, add:function($graph$$, $data$$) {
+  var $makeEdge$$, $i$$, $keys$$, $key$$0$$, $node$$, $native_nativeKey$$1_source$$;
+  $makeEdge$$ = function $$makeEdge$$$($source$$, $key$$) {
     return function($target$$) {
       var $_i$$;
-      !_index.adjacency[$source$$] && _index.adjacency[$source$$][$target$$] && ($_i$$ = GRAPH.edges.push({edge:{key:$key$$, data:$data$$.objects[$i$$]}, native:_cache[$data$$.objects[$i$$].native], source:_index.nodesByKey[$source$$], target:_index.nodesByKey[$target$$]}) - 1, _index.edgesByKey[$key$$].push($_i$$), _index.adjacency[$source$$] = {}, _index.adjacency[$source$$][$target$$] = $_i$$);
+      if (!_graphIndex.adjacency[$source$$] || !_graphIndex.adjacency[$source$$][$target$$]) {
+        if (null == _graphIndex.nodesByKey[$source$$] || null == _graphIndex.nodesByKey[$target$$]) {
+          debugger;
+        }
+        $_i$$ = GRAPH.edges.push({key:$key$$, source:_graphIndex.nodesByKey[$source$$], target:_graphIndex.nodesByKey[$target$$]}) - 1;
+        _graphIndex.edgesByKey[$key$$].push($_i$$);
+        _graphIndex.adjacency[$source$$] = {};
+        _graphIndex.adjacency[$source$$][$target$$] = $_i$$;
+      }
     };
-  };$i$$++ < $data$$.keys.length;) {
-    $key$$0$$ = $data$$.keys[$i$$], $i$$ <= $graph$$.nodes ? _index.nodesByKey[$key$$0$$] || (_index.nodesByKey[$key$$0$$] = GRAPH.nodes.push({node:{key:$key$$0$$, data:_cache[$key$$0$$]}, native:{key:$data$$.objects[$i$$].native, data:_cache[$data$$.objects[$i$$].native]}})) : $i$$ <= $graph$$.edges && (_index.edgesByKey[$key$$0$$] || (_index.edgesByKey[$key$$0$$] = []), $targets$$ = $data$$.objects[$i$$].node.slice(), $source$$0$$ = $targets$$.shift(), $targets$$.forEach($makeEdge$$($source$$0$$, 
-    $key$$0$$)));
+  };
+  $i$$ = 0;
+  for ($keys$$ = $data$$.keys;$i$$ < $keys$$.length;) {
+    $key$$0$$ = $keys$$[$i$$], $i$$ <= $graph$$.nodes ? _graphIndex.nodesByKey[$key$$0$$] || ($node$$ = {key:$key$$0$$, classes:["node"]}, $native_nativeKey$$1_source$$ = $data$$.objects[$i$$].native, $native_nativeKey$$1_source$$ = $data$$.objects[$keys$$.indexOf($native_nativeKey$$1_source$$)], $native_nativeKey$$1_source$$.govtrack_id ? ($node$$.classes.push("legislator"), $node$$.classes.push("M" === $native_nativeKey$$1_source$$.gender ? "male" : "female"), $node$$.classes.push(Math.ceil(100 * 
+    Math.random()) % 2 ? "democrat" : "republican"), .1869 > Math.random() && $node$$.classes.push("senate")) : ($node$$.classes.push("contributor"), $node$$.classes.push("C" == $native_nativeKey$$1_source$$.contributor_type ? "corporate" : "individual")), _graphIndex.nodesByKey[$key$$0$$] = GRAPH.nodes.push($node$$) - 1) : $i$$ <= $graph$$.edges && (_graphIndex.edgesByKey[$key$$0$$] || (_graphIndex.edgesByKey[$key$$0$$] = []), $node$$ = $data$$.objects[$i$$].node.slice(), $native_nativeKey$$1_source$$ = 
+    $node$$.shift(), $node$$.forEach($makeEdge$$($native_nativeKey$$1_source$$, $key$$0$$))), $i$$++;
   }
+  return this.graph.get();
+}, get:function() {
   return GRAPH;
 }}.service("graph");
 var Request, Response, _prepareRequest, _dispatch, _parseResponse;
@@ -411,7 +410,7 @@ var VIEWS = {}, getSelfAndChildren = function $getSelfAndChildren$($viewname$$, 
     if ("string" !== typeof $resp$$.data) {
       return $cb$$(!1, $resp$$);
     }
-    $source$$ = $resp$$.data.replace(/v-component=("|')(\w+)\1/g, function($_$$, $__$$, $childname$$) {
+    $source$$ = $resp$$.data.replace(/v-component=("|')([\w\.\-]+)\1/g, function($_$$, $__$$, $childname$$) {
       $children$$.push($childname$$);
       return $_$$;
     });
@@ -478,66 +477,116 @@ views.Detail = View.extend({viewname:"detail", replace:!0, data:{view:"", select
 }});
 views.Header = View.extend({viewname:"header", replace:!0});
 views.Modal = View.extend({viewname:"modal", data:{active:!1, message:""}});
-views.Stage = View.extend({viewname:"stage", replace:!0, data:{active:!0}});
-views.Map = View.extend({viewname:"page.map", selectors:{map:"#map", edge:".edge", node:".node"}, data:{active:!0, graph:{root:null, force:null, edge:null, line:null, node:null, circle:null}, config:{width:0, height:0, force:{alpha:.75, strength:1, friction:.9, theta:.7, gravity:.1, charge:-700, distance:180}, origin:{snap:!0, dynamic:!0, position:null}, node:{radius:20, classes:["node"]}, labels:{enable:!1, distance:0}, edge:{width:2, stroke:"#999", classes:["link"]}, sprite:{width:60, height:60}}}, 
-methods:{toggleSelected:function($e$$) {
-}, addSelected:function($e$$) {
+views.Stage = View.extend({viewname:"stage", replace:!0});
+views.Map = View.extend({viewname:"page.map", replace:!0, selectors:{map:"#map", edge:".edge", node:".node", selected:".selected"}, data:{map:{}, config:{width:0, height:0, force:{alpha:.75, strength:1, friction:.9, theta:.7, gravity:.1, charge:-600, distance:180}, origin:{snap:!0, dynamic:!1, position:null}, node:{radius:25, scaleFactor:1.6, classes:["node"]}, labels:{enable:!1, distance:0}, edge:{width:2, stroke:"#999", classes:["link"]}, sprite:{width:60, height:60}}}, methods:{isNode:function($element$$) {
+  return $element$$.classList.contains("node");
+}, isEdge:function($element$$) {
+  return $element$$.classList.contains("link");
+}, select:function($e$$) {
+  var $target$$ = $e$$.target, $key$$ = $target$$.id.split("-").pop(), $className$$ = this.$options.selectors.selected.slice(1);
+  this.map.selected || (this.map.selected = []);
+  this.isNode($target$$) && ($e$$.preventDefault(), $e$$.stopPropagation(), $target$$.classList.contains($className$$) ? ($e$$ = this.map.selected.indexOf($key$$), -1 < $e$$ && this.map.selected.splice($e$$, 1)) : ($e$$.shiftKey || (this.map.selected = []), this.map.selected.push($key$$)));
+  this.map.selected.changed = !0;
+  this.map.force.start();
 }, browseTo:function($e$$) {
+  console.log("map.browseTo()");
 }, draw:function($graph$$) {
-  var $config$$, $node$$5_nodeWrap_selectors$$, $force$$, $root$$, $edge_edgeWrap$$, $line$$, $container$$, $lineTick$$, $nodeTick$$;
-  this.graph.root ? (this.graph.root = null, $(this.$options.selectors.map).innerHTML = "", this.draw($graph$$)) : ($config$$ = this.config, $node$$5_nodeWrap_selectors$$ = this.$options.selectors, d3.scale.category20(), $force$$ = this.graph.force = d3.layout.force().size($config$$.width, $config$$.height).linkDistance($config$$.force.distance).charge($config$$.force.charge).linkStrength($config$$.force.strength).friction($config$$.force.friction).theta($config$$.force.theta).gravity($config$$.force.gravity).alpha($config$$.force.alpha), 
-  $root$$ = this.graph.root = d3.select($node$$5_nodeWrap_selectors$$.map), $edge_edgeWrap$$ = $root$$.selectAll($node$$5_nodeWrap_selectors$$.edge).data($graph$$.edges).enter(), $edge_edgeWrap$$ = this.graph.edge = $edge_edgeWrap$$.append("svg:svg").attr("id", function($e$$) {
-    return "edge-" + $e$$.edge.key;
-  }), $line$$ = this.graph.line = $edge_edgeWrap$$.append("svg:line").attr("stroke", $config$$.edge.stroke).attr("class", $config$$.edge.classes).style("stroke-width", $config$$.edge.width), $node$$5_nodeWrap_selectors$$ = $root$$.selectAll($node$$5_nodeWrap_selectors$$.node).data($graph$$.nodes).enter(), $container$$ = $node$$5_nodeWrap_selectors$$.append("svg:svg").attr("id", function($n$$) {
-    return "group-" + $n$$.node.key;
-  }).attr("width", $config$$.sprite.width).attr("height", $config$$.sprite.height).call($force$$.drag), $node$$5_nodeWrap_selectors$$ = this.graph.node = $container$$.append("svg:g").attr("width", $config$$.sprite.width).attr("height", $config$$.sprite.height).attr("class", function($d$$, $i$$) {
-    var $classes$$ = [];
-    $d$$.native.data.govtrack_id ? ($classes$$.push("legislator"), $classes$$.push("M" === $d$$.native.data.gender ? "male" : "female"), $classes$$.push(Math.ceil(100 * Math.random()) % 2 ? "democrat" : "republican")) : ($classes$$.push("contributor"), $classes$$.push("C" == $d$$.native.data.contributor_type ? "corporate" : "individual"));
-    return $classes$$.join(" ");
-  }), this.graph.circle = $node$$5_nodeWrap_selectors$$.append("svg:circle").attr("r", $config$$.node.radius).attr("cx", $config$$.sprite.width / 2).attr("cy", $config$$.sprite.height / 2).attr("class", $config$$.node.classes), $lineTick$$ = function $$lineTick$$$($direction$$, $pt$$, $edge_d$$, $edge_i$$) {
-    return $config$$.origin.snap && $edge_d$$[$direction$$].index === $graph$$.origin ? Math.floor($config$$.origin.position($pt$$)) : Math.floor($edge_d$$[$direction$$][$pt$$] + $config$$.node.radius / 2);
-  }, $nodeTick$$ = function $$nodeTick$$$($pt$$, $node_d$$, $node_i$$) {
-    return $config$$.origin.snap && $node_i$$ === $graph$$.origin ? Math.floor($config$$.origin.position[$pt$$] - $config$$.sprite["x" === $pt$$ ? "width" : "height"] / 2) : Math.floor($node_d$$[$pt$$] - $config$$.node.radius);
-  }, $force$$.on("tick", function($centerX_f$$) {
-    var $centerY$$;
-    $centerX_f$$ = $config$$.width / 2;
-    $centerY$$ = $config$$.height / 2;
-    $config$$.origin.dynamic && $config$$.origin.snap && (this.config.origin.position = {x:$centerX_f$$ + $config$$.sprite.width / 2, y:$centerY$$ + $config$$.sprite.height / 2});
-    ["x", "y"].forEach(function($pt$$) {
-      $container$$.attr($pt$$, function($d$$, $i$$) {
-        $nodeTick$$($pt$$, $d$$, $i$$);
+  var $view$$ = this, $config$$, $selectors$$, $root$$, $node$$, $edge$$, $tick$$, $force$$, $update$$;
+  if ($graph$$ && !$view$$.map.root) {
+    $config$$ = $view$$.config, $selectors$$ = $view$$.$options.selectors, $root$$ = d3.select($selectors$$.map).attr("width", $config$$.width).attr("height", $config$$.height), $node$$ = $root$$.selectAll($selectors$$.node), $edge$$ = $root$$.selectAll($selectors$$.edge), $tick$$ = function $$tick$$$() {
+      $view$$.config.origin.snap && ($graph$$.nodes[$graph$$.origin].x = $view$$.config.origin.position.x, $graph$$.nodes[$graph$$.origin].y = $view$$.config.origin.position.y);
+      $edge$$.attr("x1", function($e$$) {
+        return $e$$.source.x;
+      }).attr("y1", function($e$$) {
+        return $e$$.source.y;
+      }).attr("x2", function($e$$) {
+        return $e$$.target.x;
+      }).attr("y2", function($e$$) {
+        return $e$$.target.y;
       });
-    });
-    ["x1", "y1", "x2", "y2"].forEach(function($pt$$) {
-      $line$$.attr($pt$$, function($d$$, $i$$) {
-        $lineTick$$("1" === $pt$$[1] ? "source" : "target", $pt$$[0], $d$$, $i$$);
+      $node$$.attr("cx", function($n$$) {
+        return $n$$.x;
+      }).attr("cy", function($n$$) {
+        return $n$$.y;
       });
-    });
-  }), $force$$.nodes($graph$$.nodes).links($graph$$.edges).start());
+      $view$$.map.selected && $view$$.map.selected.changed && ($node$$.filter($selectors$$.selected).filter(function($n$$) {
+        return-1 === $view$$.map.selected.indexOf($n$$.key);
+      }).classed({selected:!1}).transition().duration(200).ease("cubic").attr("r", $config$$.node.radius), $node$$.filter(function($n$$) {
+        return-1 < $view$$.map.selected.indexOf($n$$.key);
+      }).classed({selected:!0}).transition().duration(200).ease("cubic").attr("r", $config$$.node.radius * $config$$.node.scaleFactor), $view$$.map.selected.changed = !1);
+    }, $force$$ = d3.layout.force().size([$config$$.width, $config$$.height]).linkDistance($config$$.force.distance).linkStrength($config$$.force.strength).friction($config$$.force.friction).theta($config$$.force.theta).gravity($config$$.force.gravity).alpha($config$$.force.alpha).charge(function($n$$) {
+      return $view$$.map.selected && -1 < $view$$.map.selected.indexOf($n$$.key) ? $config$$.force.charge * $config$$.node.scaleFactor : $config$$.force.charge;
+    }).on("tick", $tick$$), $update$$ = function $$update$$$() {
+      var $nodes$$ = $graph$$.nodes, $edges$$ = $graph$$.edges;
+      $force$$.nodes($nodes$$).links($edges$$).start();
+      $edge$$ = $edge$$.data($edges$$, function($e$$) {
+        return $e$$.key;
+      });
+      $edge$$.exit().remove();
+      $edge$$.enter().insert("line", ".node").attr("id", function($e$$) {
+        return "edge-" + $e$$.key;
+      }).attr("x1", function($e$$) {
+        return $e$$.source.x;
+      }).attr("y1", function($e$$) {
+        return $e$$.source.y;
+      }).attr("x2", function($e$$) {
+        return $e$$.target.x;
+      }).attr("y2", function($e$$) {
+        return $e$$.target.y;
+      }).attr("stroke-width", $config$$.edge.width).attr("stroke", $config$$.edge.stroke).attr("class", $config$$.edge.classes);
+      $node$$ = $node$$.data($nodes$$, function($n$$) {
+        return $n$$.key;
+      });
+      $node$$.exit().remove();
+      $node$$.enter().append("svg:circle").attr("id", function($n$$) {
+        return "node-" + $n$$.key;
+      }).attr("cx", function($n$$) {
+        return $n$$.x;
+      }).attr("cy", function($n$$) {
+        return $n$$.y;
+      }).attr("r", $config$$.node.radius).attr("width", $config$$.sprite.width).attr("height", $config$$.sprite.height).attr("class", function($n$$, $i$$) {
+        return $n$$.classes.join(" ");
+      }).call($force$$.drag);
+      $node$$.filter(function($n$$, $i$$) {
+        return $n$$.key === $graph$$.origin_key;
+      });
+    }, $view$$.map.root = $root$$, $view$$.map.force = $force$$, setTimeout(function() {
+      $update$$();
+    }, 0);
+  } else {
+    return $view$$.map.root = null, $($view$$.$options.selectors.map).innerHTML = "", $view$$.draw($graph$$);
+  }
 }}, ready:function() {
-  var $view$$ = this, $width$$ = this.$el.offsetWidth, $height$$0$$ = this.$el.offsetHeight;
-  this.config.width = $width$$;
-  this.config.height = $height$$0$$;
-  this.config.origin.position = {x:$width$$ - 30, y:$height$$0$$ - 30};
-  window.addEventListener("resize", function($e$$24_width$$) {
-    $e$$24_width$$ = document.body.clientWidth;
-    var $height$$ = document.body.clientHeight;
-    $view$$.config.graph.width = $e$$24_width$$;
-    $view$$.config.graph.height = $height$$;
-    $view$$.graph.root && $view$$.graph.root.attr("width", $e$$24_width$$).attr("height", $height$$);
-    $view$$.graph.force && $view$$.graph.force.size([$e$$24_width$$, $height$$]).resume();
+  var $view$$ = this;
+  window.addEventListener("resize", function($e$$32_width$$) {
+    $e$$32_width$$ = $view$$.$el.clientWidth;
+    var $height$$ = $view$$.$el.clientHeight;
+    $view$$.config.width = $e$$32_width$$;
+    $view$$.config.height = $height$$;
+    $view$$.map.root && $view$$.map.root.attr("width", $e$$32_width$$).attr("height", $height$$);
+    $view$$.config.origin.snap && ($view$$.config.origin.position.x = $e$$32_width$$ / 2, $view$$.config.origin.position.y = $height$$ / 2);
+    $view$$.map.force && $view$$.map.force.size([$e$$32_width$$, $height$$]).resume();
   });
 }, handler:function($graph$$) {
+  var $width$$ = this.$el.clientWidth, $height$$ = this.$el.clientHeight;
+  this.config.width = $width$$;
+  this.config.height = $height$$;
+  this.config.origin.snap && (this.config.origin.position = this.config.origin.position || {}, this.config.origin.position.x = $width$$ / 2, this.config.origin.position.y = $height$$ / 2);
   this.draw($graph$$);
+  $(this.$options.selectors.map).classList.remove("transparent");
 }});
-views.Page = Vue.extend({data:{page:{name:"page.map"}, active:!1, modal:null}, methods:{route:function($e$$) {
+views.Page = Vue.extend({data:{page:{active:!1}, modal:null}, methods:{route:function($e$$) {
   if ($e$$.target.hasAttribute("data-route")) {
     var $route$$ = $e$$.target.getAttribute("href");
     $e$$.preventDefault();
     $e$$.stopPropagation();
     services.router.route($route$$);
   }
-}}});
+}}, ready:function() {
+  this.$on("route", function($route$$) {
+    services.router.route($route$$);
+  });
+}});
 services.view.put("page", views.Page);
 var _ready, _go, catnip;
 _ready = [];
@@ -555,10 +604,8 @@ catnip = function($context$$, $data$$, $routes$$) {
   $context$$.session && $context$$.session.established && ($fcm$$.session = $context$$.session.payload);
   $context$$.services && $context$$.protocol.rpc.enabled && $fcm$$.rpc.init($context$$.services);
   $context$$.template.manifest && $fcm$$.template.init($context$$.template.manifest);
-  $fcm$$.view.init("page", function() {
-    this.$set("active", !0);
-    Client.prototype.app = this;
-    _go();
+  $fcm$$.data.init($data$$, function($d$$) {
+    $fcm$$.graph.init($d$$);
   });
   $fcm$$.router.init($routes$$, function($initialRoute$$) {
     $fcm$$.ready(function() {
@@ -567,6 +614,12 @@ catnip = function($context$$, $data$$, $routes$$) {
         return $fcm$$.router.route($initialRoute$$);
       }
     });
+  });
+  $fcm$$.view.init("page", function() {
+    this.$set("active", !0);
+    this.$.stage.$set("active", !0);
+    services.service._register("app", this);
+    _go();
   });
   return this;
 }.client({ready:function($cb$$) {

@@ -356,15 +356,15 @@ task('watch', function (cb) {
   watch(inputs.less, ['less']);
   watch(inputs.sass, ['sass']);
   watch(inputs.templates, ['templates']);
-  watch(inputs.js.app, ['closure:pretty'])
+  // watch(inputs.js.app, ['closure:pretty'])
   cb();
 });
 
 // Run JS tests based on environment
-task('test', [DEBUG ? 'test:debug' : 'test:release']);
+task('test', ['test:debug']);
 
 // Run JS tests in dev mode
-task('test:debug', ['closure:debug'], function (cb) {
+task('test:debug', ['closure:pretty'], function (cb) {
   var cfg = merge({}, config.karma);
   cfg.files = cfg._debugFiles;
   karma.start(cfg);

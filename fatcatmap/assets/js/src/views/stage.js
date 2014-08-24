@@ -29,17 +29,5 @@ views.Stage = View.extend({
    * @expose
    * @type {boolean}
    */
-  replace: true,
-
-  /**
-   * @expose
-   * @type {Object}
-   */
-  data: {
-    /**
-     * @expose
-     * @type {boolean}
-     */
-    active: true
-  }
+  replace: true
 });

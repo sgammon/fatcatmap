@@ -10,7 +10,7 @@
  */
 
 goog.require('$');
-goog.require('supports');
+goog.require('async');
 goog.require('View');
 goog.require('views.Detail');
 
@@ -27,6 +27,12 @@ views.Map = View.extend({
    * @type {string}
    */
   viewname: 'page.map',
+
+  /**
+   * @expose
+   * @type {boolean}
+   */
+  replace: true,
 
   /**
    * @expose
@@ -49,7 +55,13 @@ views.Map = View.extend({
      * @expose
      * @type {string}
      */
-    node: '.node'
+    node: '.node',
+
+    /**
+     * @expose
+     * @type {string}
+     */
+    selected: '.selected'
   },
 
   /**
@@ -59,51 +71,9 @@ views.Map = View.extend({
   data: /** @lends {views.Map.prototype} */{
     /**
      * @expose
-     * @type {boolean}
-     */
-    active: true,
-
-    /**
-     * @expose
      * @type {Object}
      */
-    graph: {
-      /**
-       * @expose
-       * @type {?Node}
-       */
-      root: null,
-
-      /**
-       * @expose
-       * @type {?Object}
-       */
-      force: null,
-
-      /**
-       * @expose
-       * @type {?Object}
-       */
-      edge: null,
-
-      /**
-       * @expose
-       * @type {?Object}
-       */
-      line: null,
-
-      /**
-       * @expose
-       * @type {?Object}
-       */
-      node: null,
-
-      /**
-       * @expose
-       * @type {?Object}
-       */
-      circle: null
-    },
+    map: {},
 
     /**
      * @expose
@@ -161,7 +131,7 @@ views.Map = View.extend({
          * @expose
          * @type {number}
          */
-        charge: -700,
+        charge: -600,
 
         /**
          * @expose
@@ -185,7 +155,7 @@ views.Map = View.extend({
          * @expose
          * @type {boolean}
          */
-        dynamic: true,
+        dynamic: false,
 
         /**
          * @expose
@@ -203,7 +173,13 @@ views.Map = View.extend({
          * @expose
          * @type {number}
          */
-        radius: 20,
+        radius: 25,
+
+        /**
+         * @expose
+         * @type {number}
+         */
+        scaleFactor: 1.6,
 
         /**
          * @expose
@@ -281,18 +257,57 @@ views.Map = View.extend({
   methods: /** @lends {views.Map.prototype} */{
     /**
      * @expose
-     * @param {MouseEvent} e
+     * @param {Node} element
+     * @return {boolean}
      */
-    toggleSelected: /** @this {views.Map} */ function (e) {
-      
+    isNode: function (element) {
+      return element.classList.contains('node');
+    },
+
+    /**
+     * @expose
+     * @param {Node} element
+     * @return {boolean}
+     */
+    isEdge: function (element) {
+      return element.classList.contains('link');
     },
 
     /**
      * @expose
      * @param {MouseEvent} e
+     * @throws {}
+     * @this {views.Map}
      */
-    addSelected: /** @this {views.Map} */ function (e) {
+    select: function (e) {
+      var target = e.target,
+        key = target.id.split('-').pop(),
+        className = this.$options.selectors.selected.slice(1),
+        selectedI;
 
+      if (!this.map.selected) {
+        this.map.selected = [];
+      }
+
+      if (this.isNode(target)) {
+        e.preventDefault();
+        e.stopPropagation();
+
+        if (target.classList.contains(className)) {
+          selectedI = this.map.selected.indexOf(key);
+
+          if (selectedI > -1)
+            this.map.selected.splice(selectedI, 1);
+        } else {
+          if (!e.shiftKey)
+            this.map.selected = [];
+
+          this.map.selected.push(key);
+        }
+      }
+
+      this.map.selected.changed = true;
+      this.map.force.start();
     },
 
     /**
@@ -300,7 +315,7 @@ views.Map = View.extend({
      * @param {MouseEvent} e
      */
     browseTo: /** @this {views.Map} */ function (e) {
-
+      console.log('map.browseTo()');
     },
 
     /**
@@ -309,119 +324,132 @@ views.Map = View.extend({
      * @this {views.Map}
      */
     draw: function (graph) {
-      var config, selectors, color,
-        force, root, edgeWrap, edge, line, nodeWrap, container, node, shape,
-        lineTick, nodeTick;
+      var view = this,
+        config, selectors, root, node, origin, edge, tick, force, update;
 
-      if (!this.graph.root) {
-        config = this.config;
-        selectors = this.$options.selectors;
-        color = d3.scale.category20();
+      if (graph && !view.map.root) {
+        config = view.config;
+        selectors = view.$options.selectors;
 
-        force = this.graph.force = d3.layout.force()
-                    .size(config.width, config.height)
-                    .linkDistance(config.force.distance)
-                    .charge(config.force.charge)
-                    .linkStrength(config.force.strength)
-                    .friction(config.force.friction)
-                    .theta(config.force.theta)
-                    .gravity(config.force.gravity)
-                    .alpha(config.force.alpha);
+        root = d3
+          .select(selectors.map)
+          .attr('width', config.width)
+          .attr('height', config.height);
 
-        root = this.graph.root = d3.select(selectors.map);
+        node = root.selectAll(selectors.node);
+        edge = root.selectAll(selectors.edge);
 
-        edgeWrap = root.selectAll(selectors.edge)
-          .data(graph.edges)
-          .enter();
+        tick = function () {
+          if (view.config.origin.snap) {
+            graph.nodes[graph.origin].x = view.config.origin.position.x;
+            graph.nodes[graph.origin].y = view.config.origin.position.y;
+          }
 
-        edge = this.graph.edge = edgeWrap.append('svg:svg')
-          .attr('id', function (e) { return 'edge-' + e.edge.key; });
+          edge.attr('x1', function (e) { return e.source.x; })
+              .attr('y1', function (e) { return e.source.y; })
+              .attr('x2', function (e) { return e.target.x; })
+              .attr('y2', function (e) { return e.target.y; });
 
-        line = this.graph.line = edge.append('svg:line')
-          .attr('stroke', config.edge.stroke)
-          .attr('class', config.edge.classes)
-          .style('stroke-width', config.edge.width);
+          node.attr('cx', function (n) { return n.x; })
+              .attr('cy', function (n) { return n.y; });
 
-        nodeWrap = root.selectAll(selectors.node)
-          .data(graph.nodes)
-          .enter();
+          if (view.map.selected && view.map.selected.changed) {
+            node.filter(selectors.selected)
+                .filter(function (n) {
+                  return view.map.selected.indexOf(n.key) === -1;
+                })
+                .classed({'selected': false})
+                .transition()
+                .duration(200)
+                .ease('cubic')
+                .attr('r', config.node.radius);
 
-        container = nodeWrap.append('svg:svg')
-          .attr('id', function (n) { return 'group-' + n.node.key; })
-          .attr('width', config.sprite.width)
-          .attr('height', config.sprite.height)
-          .call(force.drag);
+            node.filter(function (n) {
+                  return view.map.selected.indexOf(n.key) > -1;
+                })
+                .classed({'selected': true})
+                .transition()
+                .duration(200)
+                .ease('cubic')
+                .attr('r', config.node.radius * config.node.scaleFactor);
 
-        node = this.graph.node = container.append('svg:g')
-          .attr('width', config.sprite.width)
-          .attr('height', config.sprite.height)
-          .attr('class', function (d, i) {
-            var classes = [];
+            view.map.selected.changed = false;
+          }
+        };
 
-            if (d.native.data.govtrack_id) {
-              classes.push('legislator');
-              classes.push(d.native.data.gender === 'M' ? 'male' : 'female');
-              classes.push(Math.ceil(Math.random() * 100) % 2 ? 'democrat' : 'republican');
-            } else {
-              classes.push('contributor');
-              classes.push(d.native.data.contributor_type == 'C' ? 'corporate' : 'individual');
+        force = d3.layout
+          .force()
+          .size([config.width, config.height])
+          .linkDistance(config.force.distance)
+          .linkStrength(config.force.strength)
+          .friction(config.force.friction)
+          .theta(config.force.theta)
+          .gravity(config.force.gravity)
+          .alpha(config.force.alpha)
+          .charge(function (n) {
+            if (view.map.selected && view.map.selected.indexOf(n.key) > -1) {
+              return config.force.charge * config.node.scaleFactor;
             }
+            return config.force.charge;
+          })
+          .on('tick', tick);
 
-            return classes.join(' ');
+        update = function () {
+          var nodes = graph.nodes,
+            edges = graph.edges;
+
+          force
+            .nodes(nodes)
+            .links(edges)
+            .start();
+
+          edge = edge.data(edges, function (e) { return e.key; });
+
+          edge.exit().remove();
+
+          edge.enter()
+              .insert('line', '.node')
+              .attr('id', function (e) { return 'edge-' + e.key; })
+              .attr('x1', function (e) { return e.source.x; })
+              .attr('y1', function (e) { return e.source.y; })
+              .attr('x2', function (e) { return e.target.x; })
+              .attr('y2', function (e) { return e.target.y; })
+              .attr('stroke-width', config.edge.width)
+              .attr('stroke', config.edge.stroke)
+              .attr('class', config.edge.classes);
+
+          node = node.data(nodes, function (n) { return n.key; });
+
+          node.exit().remove();
+
+          node.enter()
+              .append('svg:circle')
+              .attr('id', function (n) { return 'node-' + n.key; })
+              .attr('cx', function (n) { return n.x; })
+              .attr('cy', function (n) { return n.y; })
+              .attr('r', config.node.radius)
+              .attr('width', config.sprite.width)
+              .attr('height', config.sprite.height)
+              .attr('class', function (n, i) {
+                return n.classes.join(' ');
+              })
+              .call(force.drag);
+
+          origin = node.filter(function (n, i) {
+            return n.key === graph.origin_key;
           });
-
-        shape = this.graph.circle = node.append('svg:circle')
-          .attr('r', config.node.radius)
-          .attr('cx', config.sprite.width / 2)
-          .attr('cy', config.sprite.height / 2)
-          .attr('class', config.node.classes);
-
-        lineTick = function (direction, pt, edge_d, edge_i) {
-          if (config.origin.snap) {
-            if (edge_d[direction].index === graph.origin)
-              return Math.floor(config.origin.position(pt));
-          }
-          return Math.floor(edge_d[direction][pt] + (config.node.radius / 2));
         };
 
-        nodeTick = function(pt, node_d, node_i) {
-          if (config.origin.snap) {
-            if (node_i === graph.origin)
-              return Math.floor(config.origin.position[pt] - (
-                config.sprite[pt === 'x' ? 'width' : 'height'] / 2));
-          }
-          return Math.floor(node_d[pt] - config.node.radius);
-        };
+        view.map.root = root;
+        view.map.force = force;
 
-        force.on('tick', function (f) {
-          var centerX, centerY;
-
-          centerX = config.width / 2;
-          centerY = config.height / 2;
-
-          if (config.origin.dynamic && config.origin.snap) {
-            this.config.origin.position = {
-              x: centerX + (config.sprite.width / 2),
-              y: centerY + (config.sprite.height / 2)
-            };
-          }
-
-          ['x', 'y'].forEach(function (pt) {
-            container.attr(pt, function (d, i) { nodeTick(pt, d, i); });
-          });
-          
-          ['x1', 'y1', 'x2', 'y2'].forEach(function (pt) {
-            line.attr(pt, function (d, i) {
-              lineTick(pt[1] === '1' ? 'source' : 'target', pt[0], d, i);
-            });
-          });
-        });
-
-        force.nodes(graph.nodes).links(graph.edges).start();
+        setTimeout(function () {
+          update();
+        }, 0);
       } else {
-        this.graph.root = null;
-        $(this.$options.selectors.map).innerHTML = '';
-        this.draw(graph);
+        view.map.root = null;
+        $(view.$options.selectors.map).innerHTML = '';
+        return view.draw(graph);
       }
     }
   },
@@ -431,31 +459,27 @@ views.Map = View.extend({
    * @this {views.Map}
    */
   ready: function () {
-    var view = this,
-      width = this.$el.offsetWidth,
-      height = this.$el.offsetHeight;
-
-    this.config.width = width;
-    this.config.height = height;
-    this.config.origin.position = {
-      x: width - 30,
-      y: height - 30
-    };
+    var view = this;
 
     window.addEventListener('resize', function (e) {
-      var width = document.body.clientWidth,
-        height = document.body.clientHeight;
+      var width = view.$el.clientWidth,
+        height = view.$el.clientHeight;
 
-      view.config.graph.width = width;
-      view.config.graph.height = height;
+      view.config.width = width;
+      view.config.height = height;
 
-      if (view.graph.root)
-        view.graph.root
+      if (view.map.root)
+        view.map.root
           .attr('width', width)
           .attr('height', height);
 
-      if (view.graph.force)
-        view.graph.force
+      if (view.config.origin.snap) {
+        view.config.origin.position.x = width / 2;
+        view.config.origin.position.y = height / 2;
+      }
+
+      if (view.map.force)
+        view.map.force
           .size([width, height])
           .resume();
     });
@@ -463,9 +487,24 @@ views.Map = View.extend({
 
   /**
    * @expose
+   * @param {object} graph
    * @this {views.Map}
    */
   handler: function (graph) {
+    var width = this.$el.clientWidth,
+      height = this.$el.clientHeight;
+
+    this.config.width = width;
+    this.config.height = height;
+
+    if (this.config.origin.snap) {
+      this.config.origin.position = this.config.origin.position || {};
+      this.config.origin.position.x = width / 2;
+      this.config.origin.position.y = height / 2;
+    }
+
     this.draw(graph);
+
+    $(this.$options.selectors.map).classList.remove('transparent');
   }
 });

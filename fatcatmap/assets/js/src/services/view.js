@@ -28,7 +28,7 @@ var VIEWS = {},
         if (typeof resp.data !== 'string')
           return cb(false, resp);
 
-        source = resp.data.replace(/v-component=("|')(\w+)\1/g, function (_, __, childname) {
+        source = resp.data.replace(/v-component=("|')([\w\.\-]+)\1/g, function (_, __, childname) {
           children.push(childname);
           return _;
         });
