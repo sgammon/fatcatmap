@@ -193,7 +193,7 @@ clean:
 	@find . -name "*.pyc" -exec rm -f {} \;
 	@find . -name "*.pyo" -exec rm -f {} \;
 
-	$(call say,"Cleaning SASS cache...")
+	@echo "Cleaning SASS cache..."
 	@rm -fr .sass-cache
 
 distclean: clean
