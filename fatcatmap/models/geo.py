@@ -7,13 +7,15 @@
 '''
 
 # graph models
-from . import Model
+from . import abstract, describe, Model
 
 
+@describe(root=True)
 class Geopoint(Model):
 
   '''  '''
 
+  place = abstract.PlaceName, {'indexed': True, 'embedded': True}
   latitude = float, {'indexed': True, 'required': True}
   longitude = float, {'indexed': True, 'required': True}
   altitude = float, {'indexed': True, 'required': True}

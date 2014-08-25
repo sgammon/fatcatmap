@@ -6,14 +6,10 @@
 
 '''
 
-# stdlib
-import datetime
-
 # graph models
-from fatcatmap.models import Model
+from .. import date, Model
 
 
 class Event(Model):
 
   '''  '''
-

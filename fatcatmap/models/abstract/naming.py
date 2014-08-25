@@ -7,7 +7,7 @@
 '''
 
 # graph models
-from fatcatmap.models import Model
+from .. import Model
 
 
 class Name(Model):

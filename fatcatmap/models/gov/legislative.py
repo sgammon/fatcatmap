@@ -6,24 +6,31 @@
 
 '''
 
-# stdlib
-import datetime
+# fcm model base
+from .. import Key
+from .. import date
+from .. import Model
+from .. import Vertex
+from .. import describe
 
-# canteen struct
-from canteen import struct
-
-# canteen models
-from canteen.model import VertexKey
+# abstract models
+from ..abstract import URI
+from ..abstract import Role
+from ..abstract import Name
+from ..abstract import Group
+from ..abstract import OrganizationName
 
 # fcm models
-from fatcatmap.models import geo
-from fatcatmap.models import Model
-from fatcatmap.models import Vertex
-from fatcatmap.models import abstract
-from fatcatmap.models import describe
-from fatcatmap.models.person import Person
-from fatcatmap.models.social import issues
-from fatcatmap.models.social import politics
+from ..geo import Geobounds
+from ..person import Person
+from ..social.issues import Issue
+from ..social.politics import Election
+from ..social.campaign import Campaign
+from ..social.politics import PoliticalParty
+
+# canteen struct
+from canteen.util.struct import BidirectionalEnum
+
 
 
 ## +=+=+=+=+=+=+=+=+ Structure +=+=+=+=+=+=+=+=+ ##
@@ -35,8 +42,8 @@ class Legislature(Model):
 
   ''' Describes a legislative body. '''
 
-  name = abstract.OrganizationName, {'embedded': True, 'indexed': True}
-  jurisdiction = geo.Geobounds, {'repeated': True, 'indexed': True}
+  name = OrganizationName, {'embedded': True, 'indexed': True}
+  jurisdiction = Geobounds, {'repeated': True, 'indexed': True}
 
 
 @describe(parent=Legislature)
@@ -44,9 +51,20 @@ class LegislativeHouse(Model):
 
   ''' Describes a minor, major, or primary house within a legislative body. '''
 
-  name = abstract.OrganizationName, {'indexed': True}
+  name = OrganizationName, {'indexed': True}
   term = int, {'indexed': True, 'range': xrange(2, 10)}
   type = str, {'indexed': True, 'choices': {'major', 'minor', 'primary'}}
+
+
+@describe(parent=Legislature)
+class LegislativeSession(Model):
+
+  ''' Describes a session of time where a ``Legislature`` is considered to be
+      *in session*. '''
+
+  number = int, {'indexed': True, 'required': True}
+  start = date, {'indexed': True, 'required': True}
+  end = date, {'indexed': True, 'required': True}
 
 
 @describe(parent=LegislativeHouse)
@@ -55,7 +73,7 @@ class LegislativeSeat(Model):
   ''' Describes a seat to be filled by an official selected through a political
       election.'''
 
-  class SeatType(struct.BidirectionalEnum):
+  class SeatType(BidirectionalEnum):
 
     ''' Describes the types of elected seats generally found in legislatures -
         *bounds*-based districts (like whole US states, in the case of US
@@ -65,26 +83,28 @@ class LegislativeSeat(Model):
     BOUNDS = 0x0  # boundary-based jurisdictions
     POPULATION = 0x1  # population-based jurisdictions
 
-  boundary = geo.Geobounds, {'indexed': True, 'repeated': True}
+  boundary = Geobounds, {'indexed': True, 'repeated': True}
   type = int, {'indexed': True, 'choices': [val for (key, val) in SeatType()]}
+
 
 
 ## +=+=+=+=+=+=+=+=+ Vertexes +=+=+=+=+=+=+=+=+ ##
 
 
 ## +=+=+=+=+ Legislators +=+=+=+=+ ##
-@describe(parent=Person, type=abstract.Role)
+@describe(parent=Person, type=Role)
 class Legislator(Vertex):
 
   ''' Describes an individual legislative actor, who is an elected (or, in some
       special cases, appointed) member of a ``LegislativeBody``, occupying one
       of many ``LegislativeSeat``s. '''
 
+  election = Election, {'indexed': True}
   seat = LegislativeSeat, {'indexed': True, 'required': True}
-  election = politics.Election, {'indexed': True}
+  campaigns = Campaign, {'indexed': True, 'embedded': True}
 
 
-@describe(parent=Legislator, type=abstract.Role)
+@describe(parent=Legislator, type=Role)
 class PartyLeadership(Vertex):
 
   ''' ``Legislator``-specific role that describes a party leadership role held
@@ -93,11 +113,11 @@ class PartyLeadership(Vertex):
 
   type = str, {'indexed': True, 'choices': {'whip', 'leader'}}
   rank = str, {'indexed': True, 'choices': {'majority', 'minority'}}
-  party = politics.PoliticalParty, {'indexed': True}
+  party = PoliticalParty, {'indexed': True}
 
 
 ## +=+=+=+=+ Committees +=+=+=+=+ ##
-@describe(parent=Legislature, type=abstract.Group)
+@describe(parent=Legislature, type=Group)
 class Committee(Vertex):
 
   ''' Describes a committee within one (or sometimes bridging two) house(s)
@@ -105,7 +125,7 @@ class Committee(Vertex):
       *major* or *minor* house, or can be a member of both, making it a *joint*
       ``Committee``. '''
 
-  class CommitteeType(struct.BidirectionalEnum):
+  class CommitteeType(BidirectionalEnum):
 
     ''' Describes the available types of legislative ``Committee``s. '''
 
@@ -114,13 +134,13 @@ class Committee(Vertex):
     JOINT = 0x2  # for committees that are unexclusively part of both houses
 
   ## -- structure -- ##
-  super = VertexKey, {'indexed': True}
+  super = Key, {'indexed': True}
   type = str, {'indexed': True, 'choices': (
                         [val for (key, val) in CommitteeType()])}
 
   ## -- naming and resources -- ##
-  name = abstract.OrganizationName, {'embedded': True, 'indexed': True}
-  website = abstract.URI, {'indexed': True}
+  name = OrganizationName, {'embedded': True, 'indexed': True}
+  website = URI, {'indexed': True}
 
 
 ## +=+=+=+=+ Legislation +=+=+=+=+ ##
@@ -130,16 +150,16 @@ class Legislation(Vertex):
   ''' Describes a legislative proposal, made by a ``Legislator`` in a
       ``LegislativeHouse``. '''
 
-  class BillName(abstract.Name):
+  class BillName(Name):
 
     ''' Describes the concept of a ``Bill``'s name, which carries a long title,
         short title, and bill code name. '''
 
     code = str, {'indexed': True, 'required': True}
-    longtitle = str, {'indexed': True, 'required': True}
-    shorttitle = str, {'indexed': True, 'required': True}
+    longtitle = str, {'indexed': True, 'repeated': True}
+    shorttitle = str, {'indexed': True, 'repeated': True}
 
-  class BillOrigin(struct.BidirectionalEnum):
+  class BillOrigin(BidirectionalEnum):
 
     ''' Describes the available origins of a ``Bill``, which is always a single
         house of a ``Legislature``, or the *primary* house if there is only
@@ -149,7 +169,7 @@ class Legislation(Vertex):
     MAJOR = 0x1  # for bills that originate in a major house
     PRIMARY = 0x2  # for bills in legislatures with only one house
 
-  class BillType(struct.BidirectionalEnum):
+  class BillType(BidirectionalEnum):
 
     ''' Describes the types of ``Bill`` objects that can be proposed by a
         ``Legislator``.
@@ -180,7 +200,7 @@ class Legislation(Vertex):
 
   ## -- structural details -- ##
   name = BillName, {'indexed': True}
-  issues = issues.Issue, {'indexed': True, 'repeated': True}
+  issues = Issue, {'indexed': True, 'repeated': True}
   cycle = int, {'indexed': True, 'required': True, 'choices': xrange(1, 113)}
 
 
@@ -211,7 +231,7 @@ class CommitteeMember(Legislator > Committee):
       ``Committee``, which is a smaller body within a ``Legislature``
       responsible for some aspect of running either Congress or the USA. '''
 
-  class CommitteeLeadership(struct.BidirectionalEnum):
+  class CommitteeLeadership(BidirectionalEnum):
 
     ''' Describes ``Committee`` leadership structure options, which include the
         ``chair`` of the committee (essentially, the leader), the ``co-chair``

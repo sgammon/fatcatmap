@@ -6,8 +6,16 @@
 
 '''
 
+# stdlib
+from datetime import (date,
+                      time,
+                      datetime)
+
 # canteen model API
 from canteen import model
+from canteen.model import (Key,
+                           EdgeKey,
+                           VertexKey)
 
 
 class BaseModel(model.Model):
@@ -115,7 +123,7 @@ Model, Vertex, Edge = (BaseModel,
 
 
 __all__ = ('abstract',
-           'finance',
+           'campaign',
            'gov',
            'graph',
            'social',

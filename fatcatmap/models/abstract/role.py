@@ -6,16 +6,14 @@
 
 '''
 
-# stdlib
-import datetime
-
 # graph models
-from fatcatmap.models import Model
+from .. import date, Key, Model
 
 
 class Role(Model):
 
   '''  '''
 
-  start = datetime.date, {'indexed': True, 'required': True}
-  end = datetime.date, {'indexed': True, 'default': None}
+  start = date, {'indexed': True, 'required': True}
+  end = date, {'indexed': True, 'default': None}
+  peers = Key, {'indexed': True, 'repeated': True}
