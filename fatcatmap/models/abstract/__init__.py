@@ -12,7 +12,8 @@ from . import (event,
                group,
                naming,
                org,
-               role)
+               role,
+               seat)
 
 # submodule symbols
 from .event import *
@@ -21,6 +22,7 @@ from .group import *
 from .naming import *
 from .org import *
 from .role import *
+from .seat import *
 
 
 __all__ = ('event',
@@ -28,4 +30,5 @@ __all__ = ('event',
            'group',
            'naming',
            'org',
-           'role')
+           'role',
+           'seat')

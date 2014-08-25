@@ -7,18 +7,19 @@
 '''
 
 # fcm model base
-from .. import Key
-from .. import date
-from .. import Model
-from .. import Vertex
-from .. import describe
+from .. import (Key,
+                date,
+                Model,
+                Vertex,
+                describe)
 
 # abstract models
-from ..abstract import URI
-from ..abstract import Role
-from ..abstract import Name
-from ..abstract import Group
-from ..abstract import OrganizationName
+from ..abstract import (URI,
+                        Role,
+                        Name,
+                        Seat,
+                        Group,
+                        OrganizationName)
 
 # fcm models
 from ..geo import Geobounds
@@ -67,8 +68,8 @@ class LegislativeSession(Model):
   end = date, {'indexed': True, 'required': True}
 
 
-@describe(parent=LegislativeHouse)
-class LegislativeSeat(Model):
+@describe(parent=LegislativeHouse, type=Seat)
+class LegislativeOffice(Model):
 
   ''' Describes a seat to be filled by an official selected through a political
       election.'''
@@ -97,10 +98,10 @@ class Legislator(Vertex):
 
   ''' Describes an individual legislative actor, who is an elected (or, in some
       special cases, appointed) member of a ``LegislativeBody``, occupying one
-      of many ``LegislativeSeat``s. '''
+      of many ``LegislativeOffice``s. '''
 
   election = Election, {'indexed': True}
-  seat = LegislativeSeat, {'indexed': True, 'required': True}
+  seat = LegislativeOffice, {'indexed': True, 'required': True}
   campaigns = Campaign, {'indexed': True, 'embedded': True}
 
 

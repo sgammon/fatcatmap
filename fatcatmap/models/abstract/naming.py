@@ -36,6 +36,14 @@ class PlaceName(Name):
   '''  '''
 
 
+class RoleName(Name):
+
+  '''  '''
+
+  formal = str, {'indexed': True}
+  informal = str, {'indexed': True}
+
+
 class TopicName(Name):
 
   '''  '''

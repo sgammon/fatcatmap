@@ -124,7 +124,7 @@ Model, Vertex, Edge = (BaseModel,
 
 __all__ = ('abstract',
            'campaign',
-           'gov',
+           'government',
            'graph',
            'social',
            'geo',
