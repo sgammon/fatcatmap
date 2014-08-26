@@ -7,9 +7,9 @@
 '''
 
 # submodules
-from . import business
-from . import industry
-from . import nonprofit
+from . import (business,
+               industry,
+               nonprofit)
 
 
 __all__ = ('business',

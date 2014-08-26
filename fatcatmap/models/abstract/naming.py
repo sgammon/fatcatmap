@@ -7,7 +7,8 @@
 '''
 
 # graph models
-from .. import Model
+from .. import (Model,
+                describe)
 
 
 class Name(Model):
@@ -15,8 +16,10 @@ class Name(Model):
   '''  '''
 
   primary = str, {'indexed': True}
+  secondary = str, {'indexed': True, 'repeated': True}
 
 
+@describe(type=Name)
 class PersonName(Name):
 
   '''  '''
@@ -31,11 +34,13 @@ class PersonName(Name):
   nickname = str, {'indexed': True, 'repeated': True}
 
 
+@describe(type=Name)
 class PlaceName(Name):
 
   '''  '''
 
 
+@describe(type=Name)
 class RoleName(Name):
 
   '''  '''
@@ -44,11 +49,19 @@ class RoleName(Name):
   informal = str, {'indexed': True}
 
 
+@describe(type=Name)
 class TopicName(Name):
 
   '''  '''
 
 
+@describe(type=Name)
+class IndustryName(Name):
+
+  '''  '''
+
+
+@describe(type=Name)
 class OrganizationName(Name):
 
   '''  '''
