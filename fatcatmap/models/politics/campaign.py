@@ -2,19 +2,21 @@
 
 '''
 
-    fcm: campaign models
+  fcm: political campaign models
 
 '''
 
 # graph models
-from .. import Vertex
-from .. import abstract
-from .. import describe
+from .. import (Vertex,
+                describe)
 
-# fatcatmap models
+# fcm models
 from .issues import Issue
 from .politics import Election
 from ..person import Person
+
+# abstract models
+from ..abstract import OrganizationName
 
 
 @describe(root=True)
@@ -22,7 +24,7 @@ class Campaign(Vertex):
 
   '''  '''
 
-  name = abstract.OrganizationName, {'indexed': True}
+  name = OrganizationName, {'indexed': True}
 
 
 class IssueCampaign(Campaign):

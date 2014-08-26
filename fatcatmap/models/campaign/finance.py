@@ -2,24 +2,22 @@
 
 '''
 
-    fcm: campaign finance models
+  fcm: campaign finance models
 
 '''
 
-# stdlib
-import datetime
-
 # graph models
-from .. import date
-from .. import Edge
-from .. import Vertex
-from .. import describe
+from .. import (date,
+                Vertex,
+                describe)
+
+# abstract models
+from ..abstract import (URI,
+                        Role,
+                        Organization)
 
 # parent models
 from ..person import Person
-from ..abstract import URI
-from ..abstract import Role
-from ..abstract import Organization
 from ..social.campaign import Campaign
 
 
@@ -32,7 +30,7 @@ class Contributor(Vertex):
   fec_category = str, {'indexed': True}
 
 
-class Contribution(Contributor >> Campaign):
+class CampaignContribution(Contributor >> Campaign):
 
   ''' Describes a monetary contribution made from a ``Contributor`` to a
       ``Campaign``. '''
@@ -50,4 +48,3 @@ class Contribution(Contributor >> Campaign):
   ## -- time -- ##
   filed = date, {'indexed': True}
   revised = date, {'indexed': True}
-  occurred = date, {'indexed': True}

@@ -2,7 +2,7 @@
 
 '''
 
-  fcm: social issue models
+  fcm: political party models
 
 '''
 
@@ -11,12 +11,12 @@ from .. import (Vertex,
                 describe)
 
 # abstract models
-from ..abstract import TopicName
+from ..abstract import OrganizationName
 
 
 @describe(root=True)
-class Issue(Vertex):
+class PoliticalParty(Vertex):
 
   '''  '''
 
-  name = TopicName, {'indexed': True}
+  name = OrganizationName, {'indexed': True}

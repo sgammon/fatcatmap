@@ -2,7 +2,7 @@
 
 '''
 
-    fcm: legislative government models
+  fcm: legislative government models
 
 '''
 
@@ -25,8 +25,8 @@ from ..abstract import (URI,
 from ..geo import Geobounds
 from ..person import Person
 from ..social.issues import Issue
-from ..social.politics import Election
 from ..social.campaign import Campaign
+from ..social.politics import Election
 from ..social.politics import PoliticalParty
 
 # canteen struct

@@ -2,26 +2,26 @@
 
 '''
 
-  fcm: graph hint models
+  fcm: graph models
 
 '''
 
 # stdlib
 import hashlib
+import datetime
 
 # canteen
-from canteen import model
-
-# app model
-from fatcatmap.models import BaseModel
+from . import (Key,
+               Model)
 
 
 ## Constants
 DEFAULT_DEPTH = 1  # only map to 1-traversal out by default
 DEFAULT_LIMIT = 15  # limit edge count per traversal step
+HINT_LIFETIME = datetime.timedelta(days=30)
 
 
-class GraphOptions(BaseModel):
+class GraphOptions(Model):
 
   ''' Model representing options related to a particular instance of a
       ``Graph``. '''
@@ -46,16 +46,16 @@ class GraphOptions(BaseModel):
     return cls(depth=depth, limit=limit)
 
 
-class Graph(BaseModel):
+class Graph(Model):
 
   ''' Model representing a single instance of a structure representing
       ``Nodes``, interlinked by ``Edges``. Can optionally contain references to
       full data for those objects. '''
 
-  data = model.Key, {'repeated': True}
-  structure = model.Key, {'repeated': True}
+  data = Key, {'repeated': True}
+  structure = Key, {'repeated': True}
   hash = basestring, {'required': False}
-  origin = model.Key, {'required': True}
+  origin = Key, {'required': True}
   options = GraphOptions, {'default': GraphOptions()}
 
   def hash(self):
@@ -90,3 +90,29 @@ class Graph(BaseModel):
       'content': self.hash(),
       'options': self.options.describe()
     }
+
+
+class Hint(Model):
+
+  ''' Represents a hint leftover from a previous query, which
+      attaches a cached graph fragment to a guessable key.
+
+      This allows future queries to optionally look for hints
+      and potentially yield better performance by avoiding
+      queries. '''
+
+  hash = basestring, {'required': True}
+  graph = Graph, {'required': True}
+  expires = datetime.datetime, {'required': True}
+
+  @classmethod
+  def spawn(cls, graph):
+
+    '''  '''
+
+    _hash = graph.fingerprint()
+    return cls(
+      key=Key(cls, _hash),
+      hash=_hash,
+      graph=graph,
+      expires=datetime.datetime.now() + HINT_LIFETIME)

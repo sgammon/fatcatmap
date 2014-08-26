@@ -2,12 +2,16 @@
 
 '''
 
-    fcm: geo models
+  fcm: geo models
 
 '''
 
 # graph models
-from . import abstract, describe, Model
+from . import (Model,
+               describe)
+
+# abstract models
+from .abstract import PlaceName
 
 
 @describe(root=True)
@@ -15,7 +19,7 @@ class Geopoint(Model):
 
   '''  '''
 
-  place = abstract.PlaceName, {'indexed': True, 'embedded': True}
+  place = PlaceName, {'indexed': True, 'embedded': True}
   latitude = float, {'indexed': True, 'required': True}
   longitude = float, {'indexed': True, 'required': True}
   altitude = float, {'indexed': True, 'required': True}

@@ -9,12 +9,13 @@
 # local
 from . import adapter
 
-# fcm
-from fatcatmap.models import Edge
-from fatcatmap.models import Vertex
+# logic
 from fatcatmap.logic import grapher
-from fatcatmap.models.graph import hint
-from fatcatmap.models.graph import graph
+
+# models
+from fatcatmap.models import (Edge,
+                              graph,
+                              Vertex)
 
 # canteen
 from canteen import struct
@@ -29,7 +30,7 @@ class DataWarehouse(Logic):
 
   # bind models
   models = struct.ObjectProxy({
-    'hint': hint.Hint,
+    'hint': graph.Hint,
     'node': Vertex,
     'edge': Edge})
 
