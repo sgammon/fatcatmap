@@ -19,7 +19,7 @@ from ..abstract import (URI,
 
 # parent models
 from ..person import Person
-from ..social.campaign import Campaign
+from ..politics.campaign import Campaign
 
 
 @describe(parent=(Person, Organization), type=Role)

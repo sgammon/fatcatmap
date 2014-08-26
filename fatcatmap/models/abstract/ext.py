@@ -7,7 +7,7 @@
 '''
 
 # graph models
-from .. import date, Model
+from .. import Model
 
 
 class ExternalID(Model):

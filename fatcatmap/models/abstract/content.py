@@ -2,7 +2,7 @@
 
 '''
 
-    fcm: event models
+    fcm: content models
 
 '''
 
@@ -10,6 +10,6 @@
 from .. import Model
 
 
-class Event(Model):
+class Content(Model):
 
   '''  '''

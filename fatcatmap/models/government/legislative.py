@@ -25,9 +25,9 @@ from ..abstract import (URI,
 from ..geo import Geobounds
 from ..person import Person
 from ..social.issues import Issue
-from ..social.campaign import Campaign
-from ..social.politics import Election
-from ..social.politics import PoliticalParty
+from ..politics.campaign import Campaign
+from ..politics.election import Election
+from ..politics.party import PoliticalParty
 
 # canteen struct
 from canteen.util.struct import BidirectionalEnum

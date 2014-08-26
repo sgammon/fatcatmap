@@ -8,6 +8,8 @@
 
 # submodules
 from . import issues
+from . import journalism
 
 
-__all__ = ('issues',)
+__all__ = ('issues',
+           'journalism')

@@ -11,9 +11,9 @@ from .. import (Vertex,
                 describe)
 
 # fcm models
-from .issues import Issue
-from .politics import Election
+from .election import Election
 from ..person import Person
+from ..social.issues import Issue
 
 # abstract models
 from ..abstract import OrganizationName

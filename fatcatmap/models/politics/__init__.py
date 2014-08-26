@@ -7,10 +7,10 @@
 '''
 
 # submodules
-from .. import (campaign,
-                committee,
-                election,
-                party)
+from . import (campaign,
+               committee,
+               election,
+               party)
 
 
 __all__ = ('campaign',
