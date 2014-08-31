@@ -44,7 +44,7 @@ class BaseVertex(model.Vertex, BaseModel):
   native = Key, {'embedded': True, 'indexed': True, 'required': True}
 
   @classmethod
-  def spawn(cls, first=None, second=None, **kwargs):
+  def new(cls, first=None, second=None, **kwargs):
 
     ''' Spawn an instance of this model class with a (potentially) enforced
         ``parent`` and/or ``keyname``. Options for the parent classes are
