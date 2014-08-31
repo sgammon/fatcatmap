@@ -6,11 +6,11 @@
 
 '''
 
+from __future__ import print_function
+
 # stdlib
 from collections import defaultdict
-from datetime import (date,
-                      time,
-                      datetime)
+from datetime import date, time, datetime
 
 # canteen model API
 from canteen import meta
@@ -23,11 +23,10 @@ from canteen.model import (Key,
 ## Globals
 _spawn = lambda _t: defaultdict(_t)
 _ptree, _ttree, _models, _graph = (
-  _spawn(set),
-  _spawn(set), {},
-  _spawn(lambda: _spawn(set)))
-tupleify = lambda subj: ((subj,) if subj and not (
-                          isinstance(subj, tuple)) else subj)
+  _spawn(set), _spawn(set), {}, _spawn(lambda: _spawn(set)))
+tupleify = lambda subj, _def=None: (((subj,) if subj and not (
+                                    isinstance(subj, tuple)) else subj) if (
+                                    subj is not _def) else _def)
 
 
 class BaseModel(model.Model):
@@ -43,6 +42,67 @@ class BaseVertex(model.Vertex, BaseModel):
       functionality and driver support. '''
 
   native = Key, {'embedded': True, 'indexed': True, 'required': True}
+
+  @classmethod
+  def spawn(cls, first=None, second=None, **kwargs):
+
+    ''' Spawn an instance of this model class with a (potentially) enforced
+        ``parent`` and/or ``keyname``. Options for the parent classes are
+        available in the subtype's ``describe`` declaration.
+
+        :param first: Either an instance of one of the bound ``parent`` classes
+          listed in the method definition, or a string ``keyname``, depending
+          on the object requirements.
+
+        :param second: Either an instance of one of the bound ``parent`` classes
+          listed in the method definition, or a string ``keyname``, depending
+          on the object requirements.
+
+        :param **kwargs: Properties to fill with values upon constructing
+          the model instance.
+
+        :raises TypeError: If either a ``parent`` or a ``keyname`` are not
+          provided, as they are both required parameters. Also raised if
+          ``parent`` is not an instance of either :py:class:`Model` or
+          :py:class:`Key`, or ``keyname`` is not a string type.
+
+        :raises ValueError: If ``parent`` is not a subclass of the
+          registered parent types for this subtype.
+
+        :returns: Resulting subtype instance. '''
+
+    desc = cls.__description__
+
+    # special case: no parent and a keyname means keyname is first
+    parent, keyname = first, second if desc.keyname and not desc.parent else (
+                      second, first)
+
+    if desc.keyname:
+      if keyname is None:
+        raise TypeError('`%s` instances require both a key names.' % cls.kind())
+
+      if not isinstance(keyname, basestring):
+        raise TypeError('Keyname for `%s` instance must be'
+                        ' a string or unicode type. Instead, got'
+                        ' item of type "%s".' % (cls, keyname.__class__))
+
+
+    if desc.parent:
+      if parent is None:
+        raise TypeError('`%s` instances require key parents.' % cls.kind())
+
+      if not isinstance(parent, (model.Model, model.Key)):
+        raise TypeError('Parent for `%s` instance must be'
+                        ' a valid `Model` or `Key`. Instead, got'
+                        ' item of type "%s".' % (cls, parent.__class__))
+
+      if not isinstance(parent, desc.parent):
+        raise ValueError('`%s` is not a valid parent object'
+                         ' for model class `%s`.' % (parent, cls))
+
+    kwargs.update({
+      'key': cls.__keyclass__(cls, keyname, parent=parent)})
+    return cls(**kwargs)
 
 
 class BaseEdge(model.Edge, BaseModel):
@@ -116,7 +176,7 @@ class Spec(object):
 
     # initialize
     self.__root__, self.__parent__, self.__type__, self.__keyname__ = (
-      root, tupleify(parent), tupleify(type), keyname)
+      root, tupleify(parent, None), tupleify(type, None), keyname)
 
     # extended flags
     self.__abstract__, self.__descriptor__, self.__graph_spec__ = (
@@ -304,6 +364,47 @@ class Spec(object):
     property(lambda self: self.__keyname__),
     property(lambda self: self.__descriptor__),
     property(lambda self: self.__abstract__))
+
+
+def report_structure():  # pragma: no cover
+
+  ''' Print a nice and pretty report about what the model structure looks like
+      internally.
+
+      :returns: Nothing - prints it directly. Obviously not meant for use at
+        runtime.'''
+
+  import pprint
+
+  print("\n\n")
+  print("======================== Model Registry ========================")
+  pprint.pprint(_models)
+  print("================================================================")
+  print("\n")
+  print("======================== Model Graph ========================")
+  for vertex, groups in _graph.iteritems():
+    print(repr(vertex))
+    for group in groups:
+      if not group.startswith('_'):
+        print("  %s:" % group)
+        for subobj in groups[group]:
+          print("  --- %s" % repr(subobj))
+  print("================================================================")
+  print("\n")
+  print("======================== Type Tree ========================")
+  for basetype, subtypes in _ttree.iteritems():
+    print(repr(basetype) + ':')
+    for subtype in subtypes:
+      print('--- %s' % repr(subtype))
+  print("================================================================")
+  print("\n")
+  print("======================== Entity Groups ========================")
+  for basetype, subtypes in _ptree.iteritems():
+    print(repr(basetype) + ':')
+    for subtype in subtypes:
+      print('--- %s' % repr(subtype))
+  print("================================================================")
+  print("\n\n")
 
 
 # map aliases
