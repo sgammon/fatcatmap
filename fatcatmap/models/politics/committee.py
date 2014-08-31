@@ -9,9 +9,3 @@
 # graph models
 from .. import (Vertex,
                 describe)
-
-
-@describe(root=True)
-class Election(Vertex):
-
-  '''  '''

@@ -22,8 +22,12 @@ from canteen.model import (Key,
 
 ## Globals
 _spawn = lambda _t: defaultdict(_t)
-_graph, _tree, _models = (
-  _spawn(set), _spawn(dict), set())
+_ptree, _ttree, _models, _graph = (
+  _spawn(set),
+  _spawn(set), {},
+  _spawn(lambda: _spawn(set)))
+tupleify = lambda subj: ((subj,) if subj and not (
+                          isinstance(subj, tuple)) else subj)
 
 
 class BaseModel(model.Model):
@@ -112,7 +116,7 @@ class Spec(object):
 
     # initialize
     self.__root__, self.__parent__, self.__type__, self.__keyname__ = (
-      root, parent, type, keyname)
+      root, tupleify(parent), tupleify(type), keyname)
 
     # extended flags
     self.__abstract__, self.__descriptor__, self.__graph_spec__ = (
@@ -129,8 +133,6 @@ class Spec(object):
 
         :returns: Merged result of combining properties with ``other``, which is
           an instance of ``Spec``, and ``self``. '''
-
-    from canteen import model
 
     if issubclass(target, model.Edge):
       setattr(self, '__root__', True)  # all edges are roots
@@ -160,15 +162,24 @@ class Spec(object):
         :returns: ``True`` if the ``target`` should be allowed to continue the
           class construction process, or ``False`` otherwise. '''
 
+    global _models
+
     _l = lambda klass: klass.__name__  # quick utility to extract labels
 
+    assert _l(target) not in _models, (
+      'Cannot register duplicate model `%s`.' % _l(target))
+
     assert not (self.descriptor and self.parent), (
-      'Descriptor `%s` cannot restrict their `parent` types.' % _l(target))
+      'Descriptor `%s` cannot restrict its `parent` types.' % _l(target))
 
     assert not (self.abstract and self.descriptor), (
       'Abstract model `%s` cannot be marked as descriptors.' % _l(target))
 
-    if not self.abstract and not self.descriptor:
+    if issubclass(target, model.Edge):  # edges must have specs
+      assert hasattr(target, '__spec__') and target.__spec__, (
+        'Edge (`%s`) must have specification objects.' % _l(target))
+
+    if not self.abstract and not self.descriptor:  # validate concrete models
 
       assert not (self.root and self.parent), (
         'Cannot mark entity `%s` as `root` and with a `parent`.' % _l(target))
@@ -188,14 +199,38 @@ class Spec(object):
 
         :returns: Original :py:class:`Model` subclass, after registration. '''
 
+    global _ttree, _ptree, _graph, _models
+
     # merge self with target
     if self.validate(self.merge(target)):
 
       # register as regular model
+      _models[target.kind()] = target
 
       # register according to parent
+      if self.parent:
+        for parent in self.parent:
+          _ptree[parent].add(target)
+
+      # register according to type
+      if self.type:
+        for _type in self.type:
+          _ttree[_type].add(target)
 
       # register according to spec
+      if hasattr(target, '__edge__') and target.__edge__:
+        spec = target.__spec__
+
+        for peer in tupleify(spec.peering):
+          if spec.directed:
+            _graph[spec.origin]['out'].add(peer)
+            _graph[peer]['in'].add(spec.origin)
+          else:
+            _graph[spec.origin]['peers'].add(peer)
+            _graph[peer]['peers'].add(spec.origin)
+
+      elif hasattr(target, '__vertex__') and target.__vertex__:
+        _graph[target]['_root_'] = target
 
       return target
 
