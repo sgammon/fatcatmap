@@ -7,7 +7,8 @@
 '''
 
 # submodules
-from . import (event,
+from . import (content,
+               event,
                ext,
                group,
                naming,
@@ -17,6 +18,7 @@ from . import (event,
                transaction)
 
 # submodule symbols
+from .content import *
 from .event import *
 from .ext import *
 from .group import *
@@ -27,7 +29,8 @@ from .seat import *
 from .transaction import *
 
 
-__all__ = ('event',
+__all__ = ('content',
+           'event',
            'ext',
            'group',
            'naming',

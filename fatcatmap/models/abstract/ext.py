@@ -7,9 +7,10 @@
 '''
 
 # graph models
-from .. import Model
+from .. import describe, Model
 
 
+@describe(descriptor=True)
 class ExternalID(Model):
 
   '''  '''
@@ -22,6 +23,7 @@ class ExternalID(Model):
   provider = str, {'indexed': True, 'required': True}
 
 
+@describe(descriptor=True)
 class URI(Model):
 
   '''  '''

@@ -7,9 +7,10 @@
 '''
 
 # graph models
-from .. import date, Key, Model
+from .. import describe, date, Key, Model
 
 
+@describe(abstract=True)
 class Role(Model):
 
   '''  '''

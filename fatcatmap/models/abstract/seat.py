@@ -7,9 +7,10 @@
 '''
 
 # graph models
-from .. import Model
+from .. import describe, Model
 
 
+@describe(abstract=True)
 class Seat(Model):
 
   '''  '''

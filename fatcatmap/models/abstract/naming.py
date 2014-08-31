@@ -11,6 +11,7 @@ from .. import (Model,
                 describe)
 
 
+@describe(abstract=True)
 class Name(Model):
 
   '''  '''

@@ -7,9 +7,10 @@
 '''
 
 # abstract models
-from .group import Group
+from .group import describe, Group
 
 
+@describe(abstract=True)
 class Organization(Group):
 
   '''  '''
