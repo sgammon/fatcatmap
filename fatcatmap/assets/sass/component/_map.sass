@@ -4,7 +4,7 @@
 @import "var/struct"
 
 
-$node-stroke-width: 6px
+$node-stroke-width: 5px
 $node-scale-factor: 1.6
 
 #mapper
@@ -31,7 +31,7 @@ svg svg, .node,
   stroke-opacity: 1
   stroke-width: $node-stroke-width
   +transition-property(stroke, stroke-width)
-  +transition-duration(0.2s)
+  +transition-duration(0.15s)
   +transition-ease(ease)
 
   &.selected
@@ -46,9 +46,9 @@ circle
 
   &.senate,
   &.corporate
-    stroke-width: $node-stroke-width * 1.2
+    stroke-width: $node-stroke-width * $node-scale-factor
     &.selected
-      stroke-width: $node-stroke-width * 1.2 * $node-scale-factor
+      stroke-width: $node-stroke-width * $node-scale-factor * $node-scale-factor
 
 .link
   cursor: pointer

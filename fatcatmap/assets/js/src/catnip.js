@@ -83,6 +83,7 @@ catnip = function (context, data, routes) {
       this.$set('active', true);
       this.$.stage.$set('active', true);
       services.service._register('app', this);
+      window['_page'] = this;
       _go();
     });
 

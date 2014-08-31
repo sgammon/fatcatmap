@@ -10,6 +10,7 @@
  */
 
 goog.require('View');
+goog.require('services.router');
 
 goog.provide('views.Detail');
 
@@ -33,28 +34,106 @@ views.Detail = View.extend({
 
   /**
    * @expose
-   * @type {Object}
+   * @type {Object.<string, *>}
    */
   data: {
     /**
      * @expose
      * @type {string}
      */
-    view: '',
-
-    /**
-     * @expose
-     * @type {?Object}
-     */
-    selected: null
+    kind: ''
   },
 
   /**
    * @expose
+   * @type {Object.<string, function(...[*])>}
+   */
+  methods: {
+    /**
+     * @expose
+     * @param {MouseEvent=} e
+     */
+    close: function (e) {
+      if (e) {
+        e.preventDefault();
+        e.stopPropagation();
+      }
+
+      services.router.back();
+    }
+  },
+
+  /**
+   * @expose
+   * @param {Object} data Data to render into detail view.
    * @this {views.Detail}
    */
   handler: function (data) {
-    this.$set('view', data.kind.toLowerCase());
-    this.$set('selected', data);
+    if (data && data.kind) {
+      this.$set('data', data);
+      this.$set('kind', 'detail.' + data.kind.toLowerCase());
+    }
+  }
+});
+
+/**
+ * @constructor
+ * @extends {View}
+ * @param {VueOptions} options
+ */
+views.Compare = View.extend({
+  /**
+   * @expose
+   * @type {string}
+   */
+  viewname: 'compare',
+
+  /**
+   * @expose
+   * @type {boolean}
+   */
+  replace: true,
+
+  /**
+   * @expose
+   * @type {Object.<string, *>}
+   */
+  data: {
+    /**
+     * @expose
+     * @type {string}
+     */
+    kind: ''
+  },
+
+  /**
+   * @expose
+   * @type {Object.<string, function(...[*])>}
+   */
+  methods: {
+    /**
+     * @expose
+     * @param {MouseEvent=} e
+     */
+    close: function (e) {
+      if (e) {
+        e.preventDefault();
+        e.stopPropagation();
+      }
+
+      services.router.back();
+    }
+  },
+
+  /**
+   * @expose
+   * @param {Object} data Data to render into detail view.
+   * @this {views.Compare}
+   */
+  handler: function (data) {
+    if (data && data.kind) {
+      this.$set('data', data);
+      this.$set('kind', 'detail.' + data.kind.toLowerCase());
+    }
   }
 });

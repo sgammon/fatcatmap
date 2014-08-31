@@ -9,9 +9,12 @@
 
       <svg id="map" class="transparent" v-on="
         click : select,
-        dblclick: browseTo
+        dblclick: browseTo,
+        dragstart: startDrag,
+        dragend: endDrag
       "></svg>
   </svg>
 
-  <section v-component="detail" v-if="selected"></section>
+  <section v-component="detail" v-if="map.detail"></section>
+  <section v-component="compare" v-if="map.compare"></section>
 </section>

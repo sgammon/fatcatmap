@@ -40,6 +40,14 @@ services.history = /** @lends {Client.prototype.history} */ {
         services.history.push(url, request.state);
     });
 
+    hist.router.back = function () {
+      window.history.back();
+    };
+
+    hist.router.forward = function () {
+      window.history.forward();
+    };
+
     if (supports.history.html5) {
       window.onpopstate = function (event) {
         var request = {

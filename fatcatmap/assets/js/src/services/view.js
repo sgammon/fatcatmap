@@ -64,7 +64,6 @@ services.view = /** @lends {Client.prototype.view} */{
   /**
    * @param {string} viewname
    * @param {function(new:Vue)} viewclass
-   * @return {function(new:Vue)}
    * @throws {TypeError}
    */
   put: function (viewname, viewclass) {
@@ -72,7 +71,6 @@ services.view = /** @lends {Client.prototype.view} */{
       throw new TypeError('services.view.put() takes a string name and constructor.');
 
     VIEWS[viewname] = viewclass;
-    return viewclass;
   },
 
   /**
@@ -101,6 +99,8 @@ services.view = /** @lends {Client.prototype.view} */{
 
     getSelfAndChildren(rootname, function (template) {
 
+      var viewname, view;
+
       document.body.innerHTML = '';
 
       if (template)
@@ -117,6 +117,20 @@ services.view = /** @lends {Client.prototype.view} */{
        * @expose
        */
       window.__ROOTVIEW = rootview;
+
+      for (viewname in VIEWS) {
+        if (VIEWS.hasOwnProperty(viewname)) {
+          view = VIEWS[viewname];
+  
+          if (!view.options.template)
+            getSelfAndChildren(viewname, function (template) {
+              if (template)
+                view.options.template = template;
+
+              services.view.put(viewname, view);
+            });
+        }
+      }
     });
   }
 }.service('view');

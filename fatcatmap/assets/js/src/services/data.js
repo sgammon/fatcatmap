@@ -23,13 +23,13 @@ watchers = {};
 /**
  * @private
  * @param {string} key
- * @param {Object} data
+ * @param {*} data
  */
 _resolveAndSet = function (key, data) {
   var keys = key.split('.'),
     obj = _dataCache;
   while (keys.length > 1) {
-    key = keys.shift()
+    key = keys.shift();
     obj = obj[key] || (obj[key] = {}, obj[key]);
   }
   obj[keys.shift()] = data;
@@ -42,7 +42,7 @@ services.data = /** @lends {Client.prototype.data} */ {
   /**
    * @expose
    * @param {string|Object} raw Raw input.
-   * @param {function(string|Object)} cb
+   * @param {function((string|Object))} cb
    * @this {Client}
    */
   init: function (raw, cb) {
@@ -58,8 +58,8 @@ services.data = /** @lends {Client.prototype.data} */ {
 
   /**
    * @expose
-   * @param {string|Object} raw Raw input.
-   * @return {Object} Normalized data.
+   * @param {string|Object|*} raw Raw input.
+   * @return {Object|*} Normalized data.
    */
   normalize: function (raw) {
     if (typeof raw === 'string') {
@@ -78,6 +78,7 @@ services.data = /** @lends {Client.prototype.data} */ {
    * @expose
    * @param {string} key
    * @param {CallbackMap} cbs
+   * @this {Client}
    */
   get: function (key, cbs) {
     var item = _dataCache[key],
@@ -111,6 +112,7 @@ services.data = /** @lends {Client.prototype.data} */ {
    * @expose
    * @param {string} key
    * @param {*} data
+   * @this {Client}
    */
   set: function (key, data) {
     _resolveAndSet(key, data);
@@ -126,6 +128,7 @@ services.data = /** @lends {Client.prototype.data} */ {
    * @expose
    * @param {string} key
    * @param {function(*)} watcher
+   * @this {Client}
    */
   watch: function (key, watcher) {
     if (!watchers[key])
@@ -139,6 +142,7 @@ services.data = /** @lends {Client.prototype.data} */ {
    * @param {string} key
    * @param {function(*)=} watcher
    * @return {(function(*)|Array.<function(*)>)}
+   * @this {Client}
    */
   unwatch: function (key, watcher) {
     var _watchers = watcher;

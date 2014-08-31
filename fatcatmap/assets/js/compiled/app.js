@@ -12,21 +12,43 @@ Object.defineProperty(Function.prototype, "throttle", {value:function(a) {
   };
 }});
 var routes = {"/":function(a) {
-  this.app.$broadcast("page.map", this.graph.construct());
+  this.app.$set("page", {active:!0});
+  this.app.$set("modal", null);
+  setTimeout(function() {
+    this.app.$.stage.$.map.$set("map.detail", null);
+    this.app.$.stage.$.map.$set("map.compare", null);
+    this.app.$broadcast("page.map", this.graph.construct());
+  }.bind(this), 20);
   return null;
 }, "/login":function(a) {
+  this.app.$set("modal", {viewname:"page.login", data:{session:null}});
+  this.app.$set("page", null);
 }, "/settings":function(a) {
 }, "/404":function(a) {
 }, "/<key>":function(a) {
-  var b = this;
-  b.data.get(a.args.key, {success:function(a) {
-    b.app.$broadcast("detail", a);
-  }, error:function(c) {
-    a.error = c;
-    b.router.route("/404", a);
-  }});
+  var b = this, c = a.args.key, d = !b.app.page;
+  b.app.$set("page", {active:!0});
+  b.app.$set("modal", null);
+  setTimeout(function() {
+    var a = b.app.$.stage.$.map;
+    "detail" === (a.getComponentNameByKey(c) || "detail") ? (a.$set("map.compare", null), a.$set("map.detail", c)) : (a.$set("map.detail", null), a.$set("map.compare", c));
+    b.app.$broadcast("page.map", d ? b.graph.construct() : null);
+  }, 20);
   return null;
 }, "/<key1>/and/<key2>":function(a) {
+  var b = this, c = a.args.key1, d = a.args.key2, e = !b.app.page;
+  b.app.$set("page", {active:!0});
+  b.app.$set("modal", null);
+  setTimeout(function() {
+    var a = b.app.$.stage.$.map, g = a.getComponentNameByKey(c), h = a.getComponentNameByKey(d);
+    g || h || (g = "detail", h = "compare");
+    g || (g = "detail" === h ? "compare" : "detail");
+    h || (h = "detail" === g ? "compare" : "detail");
+    a.$set("map." + g, c);
+    a.$set("map." + h, d);
+    b.app.$broadcast("page.map", e ? b.graph.construct() : null);
+  }, 20);
+  return null;
 }};
 var toArray = function(a) {
   var b = [], c;
@@ -131,7 +153,7 @@ _dataCache = {};
 watchers = {};
 _resolveAndSet = function(a, b) {
   for (var c = a.split("."), d = _dataCache;1 < c.length;) {
-    d = d[c.shift()] || {};
+    a = c.shift(), d = d[a] || (d[a] = {}, d[a]);
   }
   d[c.shift()] = b;
 };
@@ -286,8 +308,8 @@ _findRoute = function(a, b, c) {
 Route = function(a, b) {
   var c = this;
   c.keys = [];
-  c.id = a.replace(/\/<(\w+)>/, function(a, b, f) {
-    c.keys.push(f);
+  c.id = a.replace(/\/<(\w+)>/g, function(a, b) {
+    c.keys.push(b);
     return "/(\\w+)";
   });
   c.matcher = new RegExp("^" + c.id + "$");
@@ -359,6 +381,12 @@ services.history = {push:supports.history.html5 ? function(a, b) {
   a.router.on("routed", function(a, c, d) {
     "history" !== c.source && services.history.push(a, c.state);
   });
+  a.router.back = function() {
+    window.history.back();
+  };
+  a.router.forward = function() {
+    window.history.forward();
+  };
   supports.history.html5 && (window.onpopstate = function(b) {
     a.router.route(window.location.pathname, {source:"history", state:b.state || {}});
   });
@@ -433,7 +461,7 @@ services.view = {put:function(a, b) {
   if ("string" !== typeof a || "function" !== typeof b) {
     throw new TypeError("services.view.put() takes a string name and constructor.");
   }
-  return VIEWS[a] = b;
+  VIEWS[a] = b;
 }, get:function(a) {
   if ("string" !== typeof a) {
     throw new TypeError("services.view.get() takes a string name.");
@@ -445,11 +473,18 @@ services.view = {put:function(a, b) {
     throw Error("view.init() cannot be called with unregistered view " + a);
   }
   getSelfAndChildren(a, function(d) {
+    var e, f;
     document.body.innerHTML = "";
     d && (c.options.template = d);
     services.view.put(a, c);
     d = new c({ready:b, el:"body"});
     window.__ROOTVIEW = d;
+    for (e in VIEWS) {
+      VIEWS.hasOwnProperty(e) && (f = VIEWS[e], f.options.template || getSelfAndChildren(e, function(a) {
+        a && (f.options.template = a);
+        services.view.put(e, f);
+      }));
+    }
   });
 }}.service("view");
 window.__VIEWS = VIEWS;
@@ -470,55 +505,74 @@ View.extend = function(a) {
   return a;
 };
 var views = {};
-views.Detail = View.extend({viewname:"detail", replace:!0, data:{view:"", selected:null}, handler:function(a) {
-  this.$set("view", a.kind.toLowerCase());
-  this.$set("selected", a);
+views.Detail = View.extend({viewname:"detail", replace:!0, data:{kind:""}, methods:{close:function(a) {
+  a && (a.preventDefault(), a.stopPropagation());
+  services.router.back();
+}}, handler:function(a) {
+  a && a.kind && (this.$set("data", a), this.$set("kind", "detail." + a.kind.toLowerCase()));
+}});
+views.Compare = View.extend({viewname:"compare", replace:!0, data:{kind:""}, methods:{close:function(a) {
+  a && (a.preventDefault(), a.stopPropagation());
+  services.router.back();
+}}, handler:function(a) {
+  a && a.kind && (this.$set("data", a), this.$set("kind", "detail." + a.kind.toLowerCase()));
 }});
 views.Header = View.extend({viewname:"header", replace:!0});
-views.Modal = View.extend({viewname:"modal", data:{active:!1, message:""}});
+views.Modal = View.extend({viewname:"modal", methods:{close:function(a) {
+  a && (a.preventDefault(), a.stopPropagation());
+  services.router.back();
+}}});
 views.Stage = View.extend({viewname:"stage", replace:!0});
-views.Map = View.extend({viewname:"page.map", replace:!0, selectors:{map:"#map", edge:".edge", node:".node", selected:".selected"}, data:{map:{}, config:{width:0, height:0, force:{alpha:.75, strength:1, friction:.9, theta:.7, gravity:.1, charge:-600, distance:180}, origin:{snap:!0, dynamic:!1, position:null}, node:{radius:25, scaleFactor:1.6, classes:["node"]}, labels:{enable:!1, distance:0}, edge:{width:2, stroke:"#999", classes:["link"]}, sprite:{width:60, height:60}}}, methods:{isNode:function(a) {
+views.Login = View.extend({viewname:"page.login", replace:!0, methods:{login:function(a) {
+  a.preventDefault();
+  a.stopPropagation();
+}}, data:{session:null}});
+views.Map = View.extend({viewname:"page.map", replace:!0, selectors:{map:"#map", edge:".edge", node:".node", selected:".selected"}, data:{map:{}, config:{width:0, height:0, force:{alpha:.75, strength:1, friction:.9, theta:.7, gravity:.1, charge:-600, distance:180}, origin:{snap:!1, dynamic:!1, position:null}, node:{radius:25, scaleFactor:1.6, classes:["node"]}, labels:{enable:!1, distance:0}, edge:{width:2, stroke:"#999", classes:["link"]}, sprite:{width:60, height:60}}, dragging:!1, selected:!1, 
+compare:!1}, methods:{isNode:function(a) {
   return a.classList.contains("node");
 }, isEdge:function(a) {
   return a.classList.contains("link");
 }, select:function(a) {
-  var b = a.target, c = b.id.split("-").pop(), d = this.$options.selectors.selected.slice(1);
-  this.map.selected || (this.map.selected = []);
-  this.isNode(b) && (a.preventDefault(), a.stopPropagation(), b.classList.contains(d) ? (a = this.map.selected.indexOf(c), -1 < a && this.map.selected.splice(a, 1)) : (a.shiftKey || (this.map.selected = []), this.map.selected.push(c)));
-  this.map.selected.changed = !0;
-  this.map.force.start();
+  var b, c, d, e, f;
+  this.dragging || (b = a.target, c = b.id.split("-").pop(), d = this.$options.selectors.selected.slice(1), e = this.map.detail, f = this.map.compare, this.isNode(b) && (a.preventDefault(), a.stopPropagation(), c = b.classList.contains(d) ? e === c ? f : f === c ? e : e + "/and/" + f : e ? !f && a.shiftKey ? e + "/and/" + c : e + "/and/" + f : c, this.$root.route("/" + c)));
+}, getComponentNameByKey:function(a) {
+  return this.map.detail === a ? "detail" : this.map.compare === a ? "compare" : null;
 }, browseTo:function(a) {
   console.log("map.browseTo()");
+}, startDrag:function(a) {
+  this.dragging = !0;
+}, endDrag:function(a) {
+  this.dragging = !1;
 }, draw:function(a) {
   var b = this, c, d, e, f, g, h, k, l;
   if (a && !b.map.root) {
     c = b.config, d = b.$options.selectors, e = d3.select(d.map).attr("width", c.width).attr("height", c.height), f = e.selectAll(d.node), g = e.selectAll(d.edge), h = function() {
-      b.config.origin.snap && (a.nodes[a.origin].x = b.config.origin.position.x, a.nodes[a.origin].y = b.config.origin.position.y);
+      b.config.origin.snap ? (a.nodes[a.origin].x = b.config.origin.position.x, a.nodes[a.origin].y = b.config.origin.position.y) : b.config.origin.position = {x:a.nodes[a.origin].x, y:a.nodes[a.origin].y};
       g.attr("x1", function(a) {
-        return a.source.x;
+        return a.source.x - b.config.node.radius;
       }).attr("y1", function(a) {
-        return a.source.y;
+        return a.source.y - b.config.node.radius;
       }).attr("x2", function(a) {
-        return a.target.x;
+        return a.target.x - b.config.node.radius;
       }).attr("y2", function(a) {
-        return a.target.y;
+        return a.target.y - b.config.node.radius;
       });
       f.attr("cx", function(a) {
-        return a.x;
+        return a.x - b.config.node.radius;
       }).attr("cy", function(a) {
-        return a.y;
+        return a.y - b.config.node.radius;
       });
-      b.map.selected && b.map.selected.changed && (f.filter(d.selected).filter(function(a) {
-        return-1 === b.map.selected.indexOf(a.key);
-      }).classed({selected:!1}).transition().duration(200).ease("cubic").attr("r", c.node.radius), f.filter(function(a) {
-        return-1 < b.map.selected.indexOf(a.key);
-      }).classed({selected:!0}).transition().duration(200).ease("cubic").attr("r", c.node.radius * c.node.scaleFactor), b.map.selected.changed = !1);
+      b.map.changed && (f.filter(d.selected).filter(function(a) {
+        return b.map.detail !== a.key && b.map.compare !== a.key;
+      }).classed({selected:!1}).transition().duration(150).ease("cubic").attr("r", c.node.radius), f.filter(function(a) {
+        return b.map.detail === a.key || b.map.compare === a.key;
+      }).classed({selected:!0}).transition().duration(150).ease("cubic").attr("r", c.node.radius * c.node.scaleFactor), b.map.changed = !1);
     }, k = d3.layout.force().size([c.width, c.height]).linkDistance(c.force.distance).linkStrength(c.force.strength).friction(c.force.friction).theta(c.force.theta).gravity(c.force.gravity).alpha(c.force.alpha).charge(function(a) {
-      return b.map.selected && -1 < b.map.selected.indexOf(a.key) ? c.force.charge * c.node.scaleFactor : c.force.charge;
+      return b.map.detail === a.key || b.map.compare === a.key ? c.force.charge * Math.pow(c.node.scaleFactor, 2) : c.force.charge;
     }).on("tick", h), l = function() {
-      var b = a.nodes, d = a.edges;
-      k.nodes(b).links(d).start();
-      g = g.data(d, function(a) {
+      var d = a.nodes, e = a.edges;
+      k.nodes(d).links(e).start();
+      g = g.data(e, function(a) {
         return a.key;
       });
       g.exit().remove();
@@ -533,7 +587,7 @@ views.Map = View.extend({viewname:"page.map", replace:!0, selectors:{map:"#map",
       }).attr("y2", function(a) {
         return a.target.y;
       }).attr("stroke-width", c.edge.width).attr("stroke", c.edge.stroke).attr("class", c.edge.classes);
-      f = f.data(b, function(a) {
+      f = f.data(d, function(a) {
         return a.key;
       });
       f.exit().remove();
@@ -543,44 +597,46 @@ views.Map = View.extend({viewname:"page.map", replace:!0, selectors:{map:"#map",
         return a.x;
       }).attr("cy", function(a) {
         return a.y;
-      }).attr("r", c.node.radius).attr("width", c.sprite.width).attr("height", c.sprite.height).attr("class", function(a, b) {
-        return a.classes.join(" ");
+      }).attr("r", c.node.radius).attr("width", c.sprite.width).attr("height", c.sprite.height).attr("class", function(a, c) {
+        var d = a.classes.slice();
+        if (b.map.detail === a.key || b.map.compare === a.key) {
+          b.map.changed = !0;
+        }
+        return d.join(" ");
       }).call(k.drag);
       f.filter(function(b, c) {
         return b.key === a.origin_key;
       });
+      b.map.changed && k.start();
     }, b.map.root = e, b.map.force = k, setTimeout(function() {
       l();
     }, 0);
   } else {
     return b.map.root = null, $(b.$options.selectors.map).innerHTML = "", b.draw(a);
   }
+}, resize:function(a) {
+  a = this.$el.clientWidth;
+  var b = this.$el.clientHeight;
+  this.config.width = a;
+  this.config.height = b;
+  this.map.root && this.map.root.attr("width", a).attr("height", b);
+  this.config.origin.snap && (this.config.origin.position = {x:a / 2, y:b / 2});
+  this.map.force && this.map.force.size([a, b]).resume();
 }}, ready:function() {
-  var a = this;
-  window.addEventListener("resize", function(b) {
-    b = a.$el.clientWidth;
-    var c = a.$el.clientHeight;
-    a.config.width = b;
-    a.config.height = c;
-    a.map.root && a.map.root.attr("width", b).attr("height", c);
-    a.config.origin.snap && (a.config.origin.position.x = b / 2, a.config.origin.position.y = c / 2);
-    a.map.force && a.map.force.size([b, c]).resume();
-  });
+  window.addEventListener("resize", this.resize);
+}, beforeDestroy:function() {
+  window.removeEventListener("resize", this.resize);
 }, handler:function(a) {
   var b = this.$el.clientWidth, c = this.$el.clientHeight;
   this.config.width = b;
   this.config.height = c;
-  this.config.origin.snap && (this.config.origin.position = this.config.origin.position || {}, this.config.origin.position.x = b / 2, this.config.origin.position.y = c / 2);
-  this.draw(a);
-  $(this.$options.selectors.map).classList.remove("transparent");
+  this.config.origin.snap && (this.config.origin.position = this.config.origin.position || {}, this.config.origin.position = {x:b / 2, y:c / 2});
+  a ? (this.draw(a), $(this.$options.selectors.map).classList.remove("transparent")) : (this.map.changed = !0, this.map.force.start());
 }});
 views.Page = Vue.extend({data:{page:{active:!1}, modal:null}, methods:{route:function(a) {
-  if (a.target.hasAttribute("data-route")) {
-    var b = a.target.getAttribute("href");
-    a.preventDefault();
-    a.stopPropagation();
-    services.router.route(b);
-  }
+  var b;
+  a.target && a.target.hasAttribute("data-route") ? (b = a.target.getAttribute("href"), a.preventDefault(), a.stopPropagation()) : b = a;
+  this.$emit("route", b);
 }}, ready:function() {
   this.$on("route", function(a) {
     services.router.route(a);
@@ -618,6 +674,7 @@ catnip = function(a, b, c) {
     this.$set("active", !0);
     this.$.stage.$set("active", !0);
     services.service._register("app", this);
+    window._page = this;
     _go();
   });
   return this;

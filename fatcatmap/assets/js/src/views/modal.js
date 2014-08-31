@@ -10,6 +10,7 @@
  */
 
 goog.require('View');
+goog.require('services.router');
 
 goog.provide('views.Modal');
 
@@ -29,17 +30,18 @@ views.Modal = View.extend({
    * @expose
    * @type {Object}
    */
-  data: {
+  methods: {
     /**
      * @expose
-     * @type {boolean}
+     * @param {MouseEvent=} e
      */
-    active: false,
+    close: function (e) {
+      if (e) {
+        e.preventDefault();
+        e.stopPropagation();
+      }
 
-    /**
-     * @expose
-     * @type {string}
-     */
-    message: ''
+      services.router.back();
+    }
   }
 });

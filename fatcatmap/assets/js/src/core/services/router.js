@@ -83,7 +83,7 @@ Route = function (path, handler) {
   /**
    * @type {string}
    */
-  rt.id = path.replace(/\/<(\w+)>/, function (_, leading, key) {
+  rt.id = path.replace(/\/<(\w+)>/g, function (_, key) {
     rt.keys.push(key);
     return '/(\\w+)';
   });

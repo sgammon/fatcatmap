@@ -149,7 +149,7 @@ views.Map = View.extend({
          * @expose
          * @type {boolean}
          */
-        snap: true,
+        snap: false,
 
         /**
          * @expose
@@ -247,7 +247,25 @@ views.Map = View.extend({
          */
         height: 60
       }
-    }
+    },
+
+    /**
+     * @expose
+     * @type {boolean}
+     */
+    dragging: false,
+
+    /**
+     * @expose
+     * @type {boolean}
+     */
+    selected: false,
+
+    /**
+     * @expose
+     * @type {boolean}
+     */
+    compare: false
   },
 
   /**
@@ -257,7 +275,7 @@ views.Map = View.extend({
   methods: /** @lends {views.Map.prototype} */{
     /**
      * @expose
-     * @param {Node} element
+     * @param {EventTarget} element
      * @return {boolean}
      */
     isNode: function (element) {
@@ -266,7 +284,7 @@ views.Map = View.extend({
 
     /**
      * @expose
-     * @param {Node} element
+     * @param {EventTarget} element
      * @return {boolean}
      */
     isEdge: function (element) {
@@ -276,46 +294,78 @@ views.Map = View.extend({
     /**
      * @expose
      * @param {MouseEvent} e
-     * @throws {}
      * @this {views.Map}
      */
     select: function (e) {
-      var target = e.target,
-        key = target.id.split('-').pop(),
-        className = this.$options.selectors.selected.slice(1),
-        selectedI;
+      var target, key, className, detail, compare, selectedI;
 
-      if (!this.map.selected) {
-        this.map.selected = [];
-      }
+      if (!this.dragging) {
+        target = e.target;
+        key = target.id.split('-').pop();
+        className = this.$options.selectors.selected.slice(1);
+        detail = this.map.detail;
+        compare = this.map.compare;
 
-      if (this.isNode(target)) {
-        e.preventDefault();
-        e.stopPropagation();
+        if (this.isNode(target)) {
+          e.preventDefault();
+          e.stopPropagation();
 
-        if (target.classList.contains(className)) {
-          selectedI = this.map.selected.indexOf(key);
+          if (target.classList.contains(className)) {
+            key = detail === key ? compare :
+              compare === key ? detail :
+              detail + '/and/' + compare;
+          } else {
+            key = !detail ? key :
+              !compare && e.shiftKey ? detail + '/and/' + key :
+              detail + '/and/' + compare;
+          }
 
-          if (selectedI > -1)
-            this.map.selected.splice(selectedI, 1);
-        } else {
-          if (!e.shiftKey)
-            this.map.selected = [];
-
-          this.map.selected.push(key);
+          this.$root.route('/' + key);
         }
       }
+    },
 
-      this.map.selected.changed = true;
-      this.map.force.start();
+    /**
+     * @expose
+     * @param {string} key
+     * @return {?string}
+     * @this {views.Map}
+     */
+    getComponentNameByKey: function (key) {
+      if (this.map.detail === key)
+        return 'detail';
+
+      if (this.map.compare === key)
+        return 'compare';
+
+      return null;
     },
 
     /**
      * @expose
      * @param {MouseEvent} e
+     * @this {views.Map}
      */
-    browseTo: /** @this {views.Map} */ function (e) {
+    browseTo: function (e) {
       console.log('map.browseTo()');
+    },
+
+    /**
+     * @expose
+     * @param {MouseEvent} e
+     * @this {views.Map}
+     */
+    startDrag: function (e) {
+      this.dragging = true;
+    },
+
+    /**
+     * @expose
+     * @param {MouseEvent} e
+     * @this {views.Map}
+     */
+    endDrag: function (e) {
+      this.dragging = false;
     },
 
     /**
@@ -340,40 +390,46 @@ views.Map = View.extend({
         edge = root.selectAll(selectors.edge);
 
         tick = function () {
+
           if (view.config.origin.snap) {
             graph.nodes[graph.origin].x = view.config.origin.position.x;
             graph.nodes[graph.origin].y = view.config.origin.position.y;
+          } else {
+            view.config.origin.position = {
+              x: graph.nodes[graph.origin].x,
+              y: graph.nodes[graph.origin].y
+            };
           }
 
-          edge.attr('x1', function (e) { return e.source.x; })
-              .attr('y1', function (e) { return e.source.y; })
-              .attr('x2', function (e) { return e.target.x; })
-              .attr('y2', function (e) { return e.target.y; });
+          edge.attr('x1', function (e) { return e.source.x - view.config.node.radius; })
+              .attr('y1', function (e) { return e.source.y - view.config.node.radius; })
+              .attr('x2', function (e) { return e.target.x - view.config.node.radius; })
+              .attr('y2', function (e) { return e.target.y - view.config.node.radius; });
 
-          node.attr('cx', function (n) { return n.x; })
-              .attr('cy', function (n) { return n.y; });
+          node.attr('cx', function (n) { return n.x - view.config.node.radius; })
+              .attr('cy', function (n) { return n.y - view.config.node.radius; });
 
-          if (view.map.selected && view.map.selected.changed) {
+          if (view.map.changed) {
             node.filter(selectors.selected)
                 .filter(function (n) {
-                  return view.map.selected.indexOf(n.key) === -1;
+                  return view.map.detail !== n.key && view.map.compare !== n.key;
                 })
                 .classed({'selected': false})
                 .transition()
-                .duration(200)
+                .duration(150)
                 .ease('cubic')
                 .attr('r', config.node.radius);
 
             node.filter(function (n) {
-                  return view.map.selected.indexOf(n.key) > -1;
+                  return view.map.detail === n.key || view.map.compare === n.key;
                 })
                 .classed({'selected': true})
                 .transition()
-                .duration(200)
+                .duration(150)
                 .ease('cubic')
                 .attr('r', config.node.radius * config.node.scaleFactor);
 
-            view.map.selected.changed = false;
+            view.map.changed = false;
           }
         };
 
@@ -387,8 +443,8 @@ views.Map = View.extend({
           .gravity(config.force.gravity)
           .alpha(config.force.alpha)
           .charge(function (n) {
-            if (view.map.selected && view.map.selected.indexOf(n.key) > -1) {
-              return config.force.charge * config.node.scaleFactor;
+            if (view.map.detail === n.key || view.map.compare === n.key) {
+              return config.force.charge * Math.pow(config.node.scaleFactor, 2);
             }
             return config.force.charge;
           })
@@ -431,13 +487,21 @@ views.Map = View.extend({
               .attr('width', config.sprite.width)
               .attr('height', config.sprite.height)
               .attr('class', function (n, i) {
-                return n.classes.join(' ');
+                var classes = n.classes.slice();
+
+                if (view.map.detail === n.key || view.map.compare === n.key)
+                  view.map.changed = true;
+
+                return classes.join(' ');
               })
               .call(force.drag);
 
           origin = node.filter(function (n, i) {
             return n.key === graph.origin_key;
           });
+
+          if (view.map.changed)
+            force.start();
         };
 
         view.map.root = root;
@@ -451,6 +515,35 @@ views.Map = View.extend({
         $(view.$options.selectors.map).innerHTML = '';
         return view.draw(graph);
       }
+    },
+
+    /**
+     * @expose
+     * @param {UIEvent}
+     */
+    resize: function (e) {
+      var width = this.$el.clientWidth,
+        height = this.$el.clientHeight;
+
+      this.config.width = width;
+      this.config.height = height;
+
+      if (this.map.root)
+        this.map.root
+          .attr('width', width)
+          .attr('height', height);
+
+      if (this.config.origin.snap) {
+        this.config.origin.position = {
+          x: width / 2,
+          y: height / 2
+        };
+      }
+
+      if (this.map.force)
+        this.map.force
+          .size([width, height])
+          .resume();
     }
   },
 
@@ -459,35 +552,20 @@ views.Map = View.extend({
    * @this {views.Map}
    */
   ready: function () {
-    var view = this;
-
-    window.addEventListener('resize', function (e) {
-      var width = view.$el.clientWidth,
-        height = view.$el.clientHeight;
-
-      view.config.width = width;
-      view.config.height = height;
-
-      if (view.map.root)
-        view.map.root
-          .attr('width', width)
-          .attr('height', height);
-
-      if (view.config.origin.snap) {
-        view.config.origin.position.x = width / 2;
-        view.config.origin.position.y = height / 2;
-      }
-
-      if (view.map.force)
-        view.map.force
-          .size([width, height])
-          .resume();
-    });
+    window.addEventListener('resize', this.resize);
   },
 
   /**
    * @expose
-   * @param {object} graph
+   * @this {views.Map}
+   */
+  beforeDestroy: function () {
+    window.removeEventListener('resize', this.resize);
+  },
+
+  /**
+   * @expose
+   * @param {Object=} graph
    * @this {views.Map}
    */
   handler: function (graph) {
@@ -499,12 +577,19 @@ views.Map = View.extend({
 
     if (this.config.origin.snap) {
       this.config.origin.position = this.config.origin.position || {};
-      this.config.origin.position.x = width / 2;
-      this.config.origin.position.y = height / 2;
+      this.config.origin.position = {
+          x: width / 2,
+          y: height / 2
+        };
     }
 
-    this.draw(graph);
-
-    $(this.$options.selectors.map).classList.remove('transparent');
+    if (graph) {
+      this.draw(graph);
+      $(this.$options.selectors.map).classList.remove('transparent');
+    } else {
+      this.map.changed = true;
+      this.map.force.start();
+    }
+    
   }
 });

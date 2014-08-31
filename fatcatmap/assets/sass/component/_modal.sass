@@ -1,0 +1,17 @@
+@import "mixin/transition"
+@import "var/color"
+
+#modal
+  position: fixed
+  width: 60%
+  height: 60%
+  left: 20%
+  top: 20%
+  background-color: $grey-light
+  z-index: 9000
+  opacity: 1
+  transition: top 0.15s ease, opacity 0.15s ease
+  
+  &.v-enter, &.v-leave
+    top: 0%
+    opacity: 0

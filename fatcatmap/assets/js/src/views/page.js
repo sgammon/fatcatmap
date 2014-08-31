@@ -14,6 +14,7 @@ goog.require('services.view');
 goog.require('views.Header');
 goog.require('views.Modal');
 goog.require('views.Stage');
+goog.require('views.Login');
 goog.require('views.Map');
 
 goog.provide('views.Page');
@@ -56,15 +57,18 @@ views.Page = Vue.extend({
   methods: {
     /**
      * @expose
-     * @param {MouseEvent} e
+     * @param {(MouseEvent|string)} e
      */
     route: function (e) {
-      if (e.target.hasAttribute('data-route')) {
-        var route = e.target.getAttribute('href');
+      var route;
+      if (e.target && e.target.hasAttribute('data-route')) {
+        route = e.target.getAttribute('href');
         e.preventDefault();
         e.stopPropagation();
-        services.router.route(route);
+      } else {
+        route = e;
       }
+      this.$emit('route', route);
     }
   },
 

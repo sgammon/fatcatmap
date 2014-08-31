@@ -13,7 +13,8 @@ import json
 from fatcatmap import url, Page
 
 
-@url('landing', '/')
+@url('landing', r'/')
+@url('catchall', r'/<path:route>')
 class Landing(Page):
 
   '''  '''
@@ -23,7 +24,7 @@ class Landing(Page):
     'limit': 15
   }
 
-  def GET(self):
+  def GET(self, route='/'):
 
     '''  '''
 

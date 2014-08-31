@@ -1,6 +1,6 @@
 <div id="page" class="page container" v-on="click: route">
+  <div v-component="stage" v-if="page"></div>
   <div v-component="header"></div>
-  <div v-component="stage"></div>
 </div>
 
-<section v-component="modal" v-if="modal"></section>
+<div id="modal" v-component="modal" v-if="modal" v-transition></div>
