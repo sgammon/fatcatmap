@@ -11,8 +11,8 @@ from .. import (Vertex,
                 describe)
 
 # fcm models
-from .election import Election
 from ..person import Person
+from .election import Election
 from ..social.issues import Issue
 
 # abstract models
@@ -27,6 +27,7 @@ class Campaign(Vertex):
   name = OrganizationName, {'indexed': True}
 
 
+@describe(root=True)
 class IssueCampaign(Campaign):
 
   '''  '''
@@ -34,6 +35,7 @@ class IssueCampaign(Campaign):
   subject = Issue, {'indexed': True, 'required': True}
 
 
+@describe(parent=Person)
 class CandidateCampaign(Campaign):
 
   '''  '''

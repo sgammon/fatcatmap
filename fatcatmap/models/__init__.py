@@ -167,25 +167,25 @@ class Spec(object):
     _l = lambda klass: klass.__name__  # quick utility to extract labels
 
     assert _l(target) not in _models, (
-      'Cannot register duplicate model `%s`.' % _l(target))
+      'Cannot register duplicate model `%s`' % _l(target))
 
     assert not (self.descriptor and self.parent), (
-      'Descriptor `%s` cannot restrict its `parent` types.' % _l(target))
+      'Descriptor `%s` cannot restrict its `parent` types' % _l(target))
 
     assert not (self.abstract and self.descriptor), (
-      'Abstract model `%s` cannot be marked as descriptors.' % _l(target))
+      'Abstract model `%s` cannot be marked as descriptors' % _l(target))
 
     if issubclass(target, model.Edge):  # edges must have specs
       assert hasattr(target, '__spec__') and target.__spec__, (
-        'Edge (`%s`) must have specification objects.' % _l(target))
+        'Edge (`%s`) must have specification objects' % _l(target))
 
     if not self.abstract and not self.descriptor:  # validate concrete models
 
       assert not (self.root and self.parent), (
-        'Cannot mark entity `%s` as `root` and with a `parent`.' % _l(target))
+        'Cannot mark entity `%s` as `root` and with a `parent`' % _l(target))
 
       assert self.root or self.parent, (
-        'Cannot mark entity `%s` non-root and as parentless.' % _l(target))
+        'Cannot mark entity `%s` non-root and as parentless' % _l(target))
 
     return True  # passed all tests
 
@@ -275,7 +275,7 @@ class Spec(object):
               key, getattr(self, key, None)) for key in self.__slots__)))))
 
   @classmethod
-  def describe(cls, **kwargs):
+  def describe(cls, target=None, **kwargs):
 
     ''' Alias method, for use as a ``Model`` subtype decorator. Passes through
         to ``Spec`` but only allows ``kwargs``.
@@ -284,7 +284,7 @@ class Spec(object):
           contained in ``kwargs``, and suitable for use as a closured
           factory. '''
 
-    def _apply_description(target):
+    def _apply(target):
 
       ''' Apply the `Spec`` description for a ``target`` model class and return
           the resulting callable.
@@ -294,7 +294,7 @@ class Spec(object):
           :returns: Decorated ``target``. '''
 
       return cls(**kwargs)(target)
-    return _apply_description
+    return _apply(target) if target else _apply
 
   # -- property accessors -- #
   root, type, parent, keyname, descriptor, abstract = (

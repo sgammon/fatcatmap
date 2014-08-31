@@ -12,6 +12,6 @@ from . import (judicial,
                legislative)
 
 
-__all__ = ('executive',
-           'judicial',
+__all__ = ('judicial',
+           'executive',
            'legislative')

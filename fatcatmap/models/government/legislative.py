@@ -151,6 +151,7 @@ class Legislation(Vertex):
   ''' Describes a legislative proposal, made by a ``Legislator`` in a
       ``LegislativeHouse``. '''
 
+  @describe
   class BillName(Name):
 
     ''' Describes the concept of a ``Bill``'s name, which carries a long title,
@@ -210,6 +211,7 @@ class Legislation(Vertex):
 
 
 ## +=+=+=+=+ Legislators +=+=+=+=+ ##
+@describe
 class Vote(Legislator >> Legislation):
 
   ''' A ``Legislator``'s vote at a particular step in the legislative process
@@ -220,12 +222,14 @@ class Vote(Legislator >> Legislation):
   committee = Committee, {'indexed': True}
 
 
+@describe
 class Coauthorship(Legislator >> Legislation):
 
   ''' A ``Legislator``'s official declaration of collaboration and support
       concerning a piece of ``Legislation``. '''
 
 
+@describe
 class CommitteeMember(Legislator > Committee):
 
   ''' Describes a membership held by a ``Legislator`` on a legislative

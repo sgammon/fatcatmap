@@ -25,6 +25,7 @@ class Geopoint(Model):
   altitude = float, {'indexed': True, 'required': True}
 
 
+@describe(root=True)
 class Geobounds(Model):
 
   '''  '''

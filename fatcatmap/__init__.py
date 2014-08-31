@@ -233,10 +233,9 @@ from .pages import *
 from .services import *
 
 
-__all__ = (
-  'config',
-  'logic',
-  'models',
-  'pages',
-  'services',
-  'templates')
+__all__ = ('config',
+           'logic',
+           'models',
+           'pages',
+           'services',
+           'templates')

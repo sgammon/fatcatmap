@@ -12,7 +12,8 @@ import datetime
 
 # canteen
 from . import (Key,
-               Model)
+               Model,
+               describe)
 
 
 ## Constants
@@ -21,6 +22,7 @@ DEFAULT_LIMIT = 15  # limit edge count per traversal step
 HINT_LIFETIME = datetime.timedelta(days=30)
 
 
+@describe(descriptor=True)
 class GraphOptions(Model):
 
   ''' Model representing options related to a particular instance of a
@@ -46,6 +48,7 @@ class GraphOptions(Model):
     return cls(depth=depth, limit=limit)
 
 
+@describe(root=True)
 class Graph(Model):
 
   ''' Model representing a single instance of a structure representing
@@ -92,6 +95,7 @@ class Graph(Model):
     }
 
 
+@describe(parent=Graph)
 class Hint(Model):
 
   ''' Represents a hint leftover from a previous query, which

@@ -7,14 +7,16 @@
 '''
 
 # event models
-from .event import Event
+from .event import describe, Event
 
 
+@describe
 class Transaction(Event):
 
   '''  '''
 
 
+@describe
 class CurrencyTransaction(Transaction):
 
   '''  '''
@@ -22,6 +24,7 @@ class CurrencyTransaction(Transaction):
   amount = float, {'indexed': True}
 
 
+@describe
 class Contract(Transaction):
 
   '''  '''

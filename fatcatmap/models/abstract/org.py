@@ -16,16 +16,13 @@ class Organization(Group):
   '''  '''
 
 
+@describe
 class Institution(Organization):
 
   '''  '''
 
 
-class Corporation(Organization):
-
-  '''  '''
-
-
+@describe
 class Government(Organization):
 
   '''  '''
