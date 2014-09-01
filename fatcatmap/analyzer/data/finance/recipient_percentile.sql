@@ -21,9 +21,12 @@ select
            committee_ext_id,
            recipient_ext_id,
            contributor_category,
+
            Count(amount)      AS count,
            Round(Sum(amount)) AS amount
     FROM   raw.contributions
+
+
     GROUP EACH BY recipient_ext_id,
               recipient_type,
               contributor_category,
