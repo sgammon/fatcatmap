@@ -418,7 +418,10 @@ __all__ = ('abstract',
            'campaign',
            'commercial',
            'government',
-           'graph',
+           'politics',
            'social',
+           'account',
            'geo',
-           'person')
+           'graph',
+           'person',
+           'session')
