@@ -7,3 +7,4 @@ dogapi
 msgpack-python
 ctypes-snappy
 raven
+fakeredis
