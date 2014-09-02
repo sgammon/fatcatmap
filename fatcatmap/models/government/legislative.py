@@ -85,7 +85,7 @@ class LegislativeOffice(Model):
     POPULATION = 0x1  # population-based jurisdictions
 
   boundary = Geobounds, {'indexed': True, 'repeated': True}
-  type = int, {'indexed': True, 'choices': [val for (key, val) in SeatType()]}
+  type = int, {'indexed': True, 'choices': [val for (key, val) in SeatType]}
 
 
 
@@ -137,7 +137,7 @@ class Committee(Vertex):
   ## -- structure -- ##
   super = Key, {'indexed': True}
   type = str, {'indexed': True, 'choices': (
-                        [val for (key, val) in CommitteeType()])}
+                        [val for (key, val) in CommitteeType])}
 
   ## -- naming and resources -- ##
   name = OrganizationName, {'embedded': True, 'indexed': True}
@@ -196,9 +196,9 @@ class Legislation(Vertex):
 
   ## -- filing details -- ##
   code = str, {'indexed': True, 'required': True}
-  type = int, {'indexed': True, 'choices': [val for (key, val) in BillType()]}
+  type = int, {'indexed': True, 'choices': [val for (key, val) in BillType]}
   origin = int, {'indexed': True, 'choices': [
-                                    val for (key, val) in BillOrigin()]}
+                                    val for (key, val) in BillOrigin]}
 
   ## -- structural details -- ##
   name = BillName, {'indexed': True}
@@ -246,4 +246,4 @@ class CommitteeMember(Legislator > Committee):
     CHAIR = 0x2
 
   leadership = int, {'indexed': True, 'default': None, 'choices': [
-    val for (key, val) in CommitteeLeadership()]}
+    val for (key, val) in CommitteeLeadership]}
