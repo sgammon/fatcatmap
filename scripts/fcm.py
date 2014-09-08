@@ -51,11 +51,9 @@ UWSGI_BASE_ARGS, UWSGI_PROD_ARGS = [
   "--shared-import=fatcatmap",
   "--shared-import=werkzeug",
   "--shared-import=canteen",
-  "--shared-import=jinja2",
-], [
+  "--shared-import=jinja2"], [
   "--optimize",
-  "--uwsgi=127.0.0.1:3000"
-]
+  "--uwsgi=127.0.0.1:3000"]
 
 
 class FCM(cli.Tool):
@@ -67,8 +65,7 @@ class FCM(cli.Tool):
     ('--debug', '-d', {'action': 'store_true', 'help': 'run in debug mode'}),
     ('--quiet', '-q', {'action': 'store_true', 'help': 'suppress most output'}),
     ('--verbose', '-v', {'action': 'count', 'help': 'output a lot of useful info'}),
-    ('--version', '-V', {'action': 'version', 'help': 'print version and exit', 'version': 'webtool %s' % '.'.join(map(unicode, __version__))})
-  )
+    ('--version', '-V', {'action': 'version', 'help': 'print version and exit', 'version': 'webtool %s' % '.'.join(map(unicode, __version__))}))
 
   ## == Bound Commands == ##
   class Run(cli.Tool):
@@ -82,10 +79,7 @@ class FCM(cli.Tool):
       ('--services_only', '-s', {'action': 'store_true', 'help': 'run services only'}),
       ('--nocache', '-nc', {'action': 'store_true', 'help': 'disable static caching (takes precedence)'}),
       ('--profile', '-pr', {'action': 'store_true', 'help': 'attach a python profiler for each request/response'}),
-      ('--callgraph', '-cg', {'action': 'store_true', 'help': 'generate a callgraph for each request/response'}),
-      ('--companion', '-c', {'action': 'store_true', 'help': 'run the dev companion alongside the devserver'}),
-      ('--companion-port', '-cp', {'action': 'store_true', 'help': 'change the port the companion should run on'})
-    )
+      ('--callgraph', '-cg', {'action': 'store_true', 'help': 'generate a callgraph for each request/response'}))
 
     def execute(arguments):
 
@@ -102,44 +96,11 @@ class FCM(cli.Tool):
       import fatcatmap, canteen
       from fatcatmap.config import config
 
-      if arguments.companion:
-        dev_companion = companion.go()
-
       canteen.run(fatcatmap, **{
         'port': arguments.port or 5000,
         'interface': arguments.ip or '127.0.0.1',
         'config': config or {}
       })
-
-
-  class Companion(cli.Tool):
-
-    ''' Runs a small dev companion. '''
-
-    arguments = (
-      ('--ip', '-i', {'type': str, 'help': 'address to bind to'}),
-      ('--port', '-p', {'type': int, 'help': 'port to bind to'}),
-      ('--watch', '-w', {'action': 'store_true', 'help': 'watch static assets and compile on-the-fly'})
-    )
-
-    def execute(arguments=None):
-
-      ''' Run the local Development Companion, which is a small
-          WSGI server that serves up various resources that are
-          useful during development, in a second-screen kind of
-          scenario.
-
-          These tools are usually something like:
-          - Bootstrap, skinned to your liking
-          - HAML/alternate template syntax reference
-          - Canteen docs
-          - Live code execution for debugging
-          And so on.
-
-          :param arguments: Argument set passed in from
-          :py:mod:`argparse`. '''
-
-      companion.go()
 
 
   class Test(cli.Tool):
@@ -149,8 +110,7 @@ class FCM(cli.Tool):
     arguments = (
       ('--profile', {'action': 'store_true', 'help': 'profile while testing'}),
       ('--coverage', {'action': 'store_true', 'help': 'collect coverage while testing'}),
-      ('--cover-tests', {'action': 'store_true', 'help': 'collect coverage for tests themselves'})
-    )
+      ('--cover-tests', {'action': 'store_true', 'help': 'collect coverage for tests themselves'}))
 
     def execute(arguments):
 
@@ -179,8 +139,7 @@ class FCM(cli.Tool):
       ('--less', {'action': 'store_true', 'help': 'collect/compile LESS'}),
       ('--coffee', {'action': 'store_true', 'help': 'collect/compile CoffeeScript'}),
       ('--closure', {'action': 'store_true', 'help': 'preprocess JS with closure compiler'}),
-      ('--templates', {'action': 'store_true', 'help': 'compile and optimize jinja2 templates'})
-    )
+      ('--templates', {'action': 'store_true', 'help': 'compile and optimize jinja2 templates'}))
 
     def execute(arguments):
 
@@ -197,9 +156,10 @@ class FCM(cli.Tool):
 
       if arguments.templates:
 
-        logging.info('Compiling app templates...')
+        from fatcatmap.config import config
+        from canteen.logic.template import TemplateCompiler
 
-        from scripts import compile_templates
+        logging.info('Compiling app templates...')
 
         # delete existing templates first, if any
         logging.info('Cleaning existing template path...')
@@ -210,11 +170,24 @@ class FCM(cli.Tool):
           logging.debug('Executing command: "%s".' % clean_command)
         os.system(clean_command)
 
-        # run the template compiler
         try:
-          result = compile_templates.run()
+          # /scripts
+          root = os.path.dirname(os.path.abspath(os.path.realpath(__file__)))
+
+          # /
+          root = os.path.dirname(root)
+
+          module, sources, target = (
+            root + '/fatcatmap/templates',
+            root + '/fatcatmap/templates/source',
+            root + '/fatcatmap/templates/compiled')
+
+          return TemplateCompiler(*(
+            module, sources, target, config, 'fatcatmap.templates'))()
+
         except:
-          logging.error('An exception was encountered while compiling templates.')
+          logging.error('An exception was encountered while '
+                        ' compiling templates.')
           raise
         else:
           logging.info('Templates compiled successfully.')

@@ -21,5 +21,4 @@ client = Client(appconfig.app['credentials']['sentry']['endpoint'])
 
 # spawn and run app
 application = Sentry(canteen.spawn(fatcatmap,
-  dev=False,
   config=appconfig), client=client)
