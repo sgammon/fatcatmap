@@ -23,6 +23,7 @@ except:
   msgpack = False
 
 # canteen
+from canteen import decorators
 from canteen.model import adapter
 from canteen.model.adapter import redis
 from canteen.model.adapter import abstract
@@ -306,7 +307,18 @@ class RedisWarehouse(WarehouseAdapter, redis.RedisAdapter):
     serializer = json
     mode = redis.RedisMode.toplevel_blob
 
+  @decorators.classproperty
+  def config(self):
+
+    ''' Return adapter config. '''
+
+    from fatcatmap import config
+
+    profile = config.config['RedisWarehouse']['servers']['default']
+    return config.config['RedisWarehouse']['servers'][profile]
+
   ## +=+=+ Basic Methods +=+=+ ##
+  @classmethod
   def put(cls, key, entity, model, pipeline=None):
 
     ''' Persist an entity to storage in the Redis Warehouse.
@@ -324,7 +336,7 @@ class RedisWarehouse(WarehouseAdapter, redis.RedisAdapter):
 
         :returns: Result of the lower-level write operation. '''
 
-    pass
+    return super(RedisWarehouse, cls).put(key, entity, model, pipeline)
 
   ## +=+=+ Graph Methods +=+=+ ##
   def edges(self, key1, key2=None, type=None, **kwargs):

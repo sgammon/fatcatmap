@@ -12,7 +12,7 @@ __author__ = "Sam Gammon <sam@momentum.io>"
 
 
 # stdlib
-import os, sys, time, subprocess, StringIO
+import os, sys, time, urllib2, base64, collections, subprocess, StringIO
 
 project_root = os.path.abspath(os.path.dirname(os.path.dirname(__file__)))
 sys.path.insert(0, project_root)
@@ -39,9 +39,16 @@ from fatcatmap.templates import *
 # canteen util
 from canteen.util import cli, debug
 
+try:
+  import cStringIO as StringIO
+except ImportError:
+  import StringIO
+
 
 ## Globals
 logging = debug.Logger(name='fcm')
+dataset = 'fcm-dev/redis-data/backup-v1.aof'
+project_root = os.path.dirname(os.path.dirname(__file__))
 UWSGI_BASE_ARGS, UWSGI_PROD_ARGS = [
   "--pcre-jit",
   "--vacuum",
@@ -114,7 +121,7 @@ class FCM(cli.Tool):
 
     def execute(arguments):
 
-      ''' Execute the ``web test`` tool, given a set of arguments
+      ''' Execute the ``fcm test`` tool, given a set of arguments
           packaged as a :py:class:`argparse.Namespace`.
 
           :param arguments: Product of the ``parser.parse_args()``
@@ -143,7 +150,7 @@ class FCM(cli.Tool):
 
     def execute(arguments):
 
-      ''' Execute the ``web build`` tool, given a set of arguments
+      ''' Execute the ``fcm build`` tool, given a set of arguments
           packaged as a :py:class:`argparse.Namespace`.
 
           :param arguments: Product of the ``parser.parse_args()``
@@ -248,16 +255,15 @@ class FCM(cli.Tool):
       ('env', {'choices': ('sandbox', 'staging', 'production'), 'help': 'environment to deploy to'}),
       ('dc', {'choices': ('dal', 'sj'), 'help': 'datacenter to deploy to (defaults to both)'}),
       ('--assets', {'action': 'store_true', 'help': 'only deploy static assets'}),
-      ('--notest', {'action': 'store_true', 'help': 'don\'t run tests before deploying (DANGEROUS!)'})
-    )
+      ('--notest', {'action': 'store_true', 'help': 'don\'t run tests before deploying (DANGEROUS!)'}))
 
     def execute(arguments):
 
-      ''' Execute the ``web deploy`` tool, given a set of arguments
+      ''' Execute the ``fcm deploy`` tool, given a set of arguments
           packaged as a :py:class:`argparse.Namespace`.
 
           :param arguments: Product of the ``parser.parse_args()``
-          call, dispatched by ``apptools`` or manually.
+          call, dispatched by ``canteen`` or manually.
 
           :returns: Python value ``True`` or ``False`` depending on
           the result of the call. ``Falsy`` return values will be
@@ -267,5 +273,168 @@ class FCM(cli.Tool):
       import pdb; pdb.set_trace()
 
 
-if __name__ == '__main__':
-  FCM(autorun=True)  # initialize and run :)
+  class Migrate(cli.Tool):
+
+    ''' Migrates data in/out of underlying storage. '''
+
+    arguments = (
+      ('--source', {'type': str, 'help': 'adapter to migrate from'}),
+      ('--target', {'type': str, 'help': 'adapter to migrate to'}),
+      ('--binding', {'type': str, 'help': 'binding name to convert with, if any'}),
+      ('--kinds', {'type': str, 'help': 'kinds to transfer, comma-delimited (no spaces)'}),
+      ('--update', {'action': 'store_true', 'help': 'download latest dataset package'}))
+
+    def execute(arguments):
+
+      ''' Execute the ``fcm migrate`` tool, given a set of arguments
+          packaged as a :py:class:`argparse.Namespace`.
+
+          :param arguments: Product of the ``parser.parse_args()``
+          call, dispatched by ``canteen`` or manually.
+
+          :returns: Python value ``True`` or ``False`` depending on
+          the result of the call. ``Falsy`` return values will be
+          passed to :py:meth:`sys.exit` and converted into Unix-style
+          return codes. '''
+
+      from canteen import model
+      from canteen.model.adapter.redis import RedisAdapter
+      from fatcatmap.logic.db.adapter import RedisWarehouse
+
+      logging.info('Performing data migration...')
+
+      data_dir = os.path.join(project_root, '.develop', 'data')
+      data_file = os.path.join(data_dir, 'latest.aof')
+
+      if arguments.update and (not os.path.isdir(data_dir) or not os.path.isfile(data_file)):
+
+        logging.info('---- Updating local dataset... ----')
+
+        # make target path
+        if not os.path.isdir(data_dir):
+          os.makedirs(data_dir)
+
+        logging.info('Downloading %s...' % 'https://%s' % dataset)
+        f = urllib2.urlopen('https://storage.googleapis.com/%s' % dataset)
+        with open(data_file) as target:
+          logging.info('Writing...')
+          target.write(data.read())        
+        
+        logging.info('---- Dataset update complete. ----')
+
+      logging.info('Reading from migration source...')
+
+      _adapters = {
+        'RedisAdapter': RedisAdapter,
+        'RedisWarehouse': RedisWarehouse}
+
+      source = arguments.source and _adapters.get(arguments.source)
+      target = arguments.target and _adapters.get(arguments.target)
+
+      # grab all keys
+      source_a, target_a = source(), target()
+      source_keys = source.execute(source.Operations.KEYS, '__meta__')
+      found_keys = []
+
+      logging.info('Found %s keys. Beginning migration...' % len(source_keys))
+
+      for key in source_keys:
+
+        # skip meta/index keys
+        if key.startswith('__'):
+          logging.info('-- Skipping key "%s"...' % key)
+          continue
+
+        try:
+          unicode(key)
+          base64.b64decode(key)
+          model.Key(urlsafe=key)
+        except:
+          continue
+
+        logging.info('-- Processing key "%s"...' % key)
+        found_keys.append(key)
+
+      logging.info('Found %s object keys. Transferring...' % len(found_keys))
+
+      _keys, _by_kind = 0, collections.defaultdict(lambda: 0)
+      with source.channel('__meta__').pipeline() as pipeline:
+
+        _filtered_keys = []
+        for key in found_keys:
+
+          k = model.Key(urlsafe=key).kind
+          if (arguments.kinds and k in arguments.kinds.split(',')) or not arguments.kinds:
+            _keys += 1
+            _by_kind[model.Key(urlsafe=key).kind] += 1
+            source.get(model.Key(urlsafe=key).flatten(True), pipeline=pipeline)
+            logging.info('-- Queueing key "%s"...' % key)
+            _filtered_keys.append(key)
+
+        logging.debug('Entity type report (%s entities total):' % _keys)
+        for type in _by_kind:
+          logging.debug('-- "%s": %s entities' % (type, str(_by_kind[type])))
+
+        logging.info('Continuing in 3 seconds...')
+        time.sleep(3)
+
+        _keys, _by_kind = {}, collections.defaultdict(lambda: 0)
+        for key, result in zip(_filtered_keys, pipeline.execute()):
+          if result is not None:
+            logging.info('-- Fetched object at key "%s" of type "%s"...' % (
+              key, model.Key(urlsafe=key).kind))
+            _keys[key] = result
+            _by_kind[model.Key(urlsafe=key).kind] += 1
+          else:
+            logging.info('-- !! FETCH FAILED for key "%s"...' % key)
+
+        logging.info('Total of %s successfully packed objects.' % len(_keys))
+        logging.info('Loading bindings...')
+
+        from fatcatmap import bindings
+        logging.info('Found %s model binding categories.' % len(bindings._bindings))
+
+        if arguments.binding:
+          logging.info('Using bindings from category "%s"...' % arguments.binding)
+
+        logging.info('Beginning write in 3 seconds...')
+        time.sleep(3)
+
+        with target.channel('__meta__').pipeline() as pipeline:
+
+          _written, _by_kind = 0, collections.defaultdict(lambda: 0)
+          for key, entity in _keys.iteritems():
+
+            kind = model.Key(urlsafe=key).kind
+
+            logging.info('-- Queueing object write at key "%s" of type "%s"...' % (
+              key, kind))
+
+            if arguments.binding:
+              # resolve binding
+              if kind not in bindings._bindings[arguments.binding]:
+                raise RuntimeError('Binding category "%s" has no binding for model'
+                                   ' "%s".' % (arguments.binding, kind))
+
+              _e = bindings._bindings[arguments.binding][kind]().convert(source.EngineConfig.serializer.loads(entity))
+
+            else:
+              obj = source.EngineConfig.serializer.loads(entity)
+              _e = target.get(key=None, _entity=obj)
+
+            target.put(model.Key(urlsafe=key).flatten(True), _e, _e.__class__, pipeline=pipeline)
+
+            _written += 1
+            _by_kind[kind] += 1
+
+          import pdb; pdb.set_trace()
+          pipeline.execute()  # go
+
+          logging.info('Written entity report (%s objects total):' % str(_written))
+          for kind in _by_kind:
+            logging.debug('-- "%s": %s entities' % (kind, str(_by_kind[kind])))
+
+      logging.info('Migration complete.')
+
+
+if __name__ == '__main__': FCM(autorun=True)  # initialize and run :)

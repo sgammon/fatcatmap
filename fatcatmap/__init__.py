@@ -229,6 +229,7 @@ class Page(RawPage):
 from .config import *
 from .logic import *
 from .models import *
+from .bindings import *
 from .pages import *
 from .services import *
 
@@ -236,6 +237,7 @@ from .services import *
 __all__ = ('config',
            'logic',
            'models',
+           'bindings',
            'pages',
            'services',
            'templates')
