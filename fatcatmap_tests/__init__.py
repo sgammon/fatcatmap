@@ -64,4 +64,3 @@ if __debug__:
       ''' asserts itself '''
 
       assert self, "give me agency and respect"
-

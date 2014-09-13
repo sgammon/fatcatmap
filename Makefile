@@ -29,6 +29,7 @@ DEBUG?=1
 SANDBOX?=0
 BUILDBOX?=0
 USER?=`whoami`
+CANTEEN?=0
 CANTEEN_BRANCH?=feature/FLY-1
 BOOTSTRAP_BRANCH?=master
 SANDBOX_GIT?=$(USER)@sandbox
@@ -143,6 +144,10 @@ brew:
 	$(call warn,"Skipping brew.")
 endif
 
+ifneq ($(CANTEEN),0)
+lib/canteen:
+	$(call say,"Linking in Canteen...")
+	-@ln -s $(CANTEEN) lib/canteen
 ifeq ($(SANDBOX),1)
 lib/canteen:
 	$(call say,"Cloning Canteen from sandbox...")
@@ -157,6 +162,7 @@ else
 lib/canteen:
 	$(call say,"Updating source dependencies from GitHub...")
 	@git clone https://github.com/momentum/canteen.git $(LIBROOT)/canteen -b $(CANTEEN_BRANCH)
+endif
 endif
 
 test:

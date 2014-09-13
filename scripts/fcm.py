@@ -198,8 +198,7 @@ class FCM(cli.Tool):
     ''' Runs a local or simulated production shell. '''
 
     arguments = (
-      ('--production', '-p', {'action': 'store_true', 'help': 'simulate production'}),
-    )
+      ('--production', '-p', {'action': 'store_true', 'help': 'simulate production'}),)
 
     def execute(arguments):
 
