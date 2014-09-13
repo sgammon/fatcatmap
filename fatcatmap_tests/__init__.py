@@ -65,8 +65,3 @@ if __debug__:
 
       assert self, "give me agency and respect"
 
-    def test_get_homepage(self):
-
-      ''' basic homepage fetch '''
-
-      assert self.GET('/')
