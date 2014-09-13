@@ -60,7 +60,7 @@ var VIEWS = {},
 /**
  * @expose
  */
-services.view = /** @lends {Client.prototype.view} */{
+services.view = /** @lends {ServiceContext.prototype.view} */{
   /**
    * @param {string} viewname
    * @param {function(new:Vue)} viewclass
@@ -89,7 +89,7 @@ services.view = /** @lends {Client.prototype.view} */{
    * @param {string} rootname
    * @param {function()=} cb
    * @throws {Error}
-   * @this {Client}
+   * @this {ServiceContext}
    */
   init: function (rootname, cb) {
     var V = services.view.get(rootname);

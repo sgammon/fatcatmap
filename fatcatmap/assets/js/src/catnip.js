@@ -10,26 +10,24 @@
  */
 
 goog.require('supports');
-
 goog.require('services');
 goog.require('services.router');
 goog.require('services.history');
 goog.require('services.template');
 goog.require('services.view');
 goog.require('services.graph');
-
-goog.require('views.Page');
+goog.require('views.App');
 
 goog.provide('catnip');
 
-var _ready, _go, catnip;
+var READY, GO, catnip;
 
-_ready = [];
+READY = [];
 
-_go = function () {
-  var cbs = _ready;
+GO = function () {
+  var cbs = READY;
 
-  _ready = null;
+  READY = null;
 
   cbs.forEach(function (fn) {
     fn();
@@ -40,9 +38,9 @@ _go = function () {
  * @expose
  * @param {JSContext} context
  * @param {PageData} data
- * @param {Object.<string, function(this:Client)>} routes
- * @this {Client}
- * @return {Client}
+ * @param {Object.<string, function(this:ServiceContext)>} routes
+ * @this {ServiceContext}
+ * @return {ServiceContext}
  */
 catnip = function (context, data, routes) {
     var fcm = this;
@@ -66,12 +64,12 @@ catnip = function (context, data, routes) {
     if (context.template.manifest)
       fcm.template.init(context.template.manifest);
 
-    fcm.data.init(data, function (d) {
-      fcm.graph.init(d);
+    fcm.data.init(data, function (_data) {
+      fcm.graph.init(_data);
     });
 
     fcm.router.init(routes, function (initialRoute) {
-      fcm.ready(function () {
+      catnip.ready(function () {
         fcm.history.init();
 
         if (initialRoute)
@@ -79,26 +77,30 @@ catnip = function (context, data, routes) {
       });
     });
 
-    fcm.view.init('page', /** @this {Vue} */function () {
+    fcm.view.init('app', /** @this {Vue} */function () {
       this.$set('active', true);
       this.$.stage.$set('active', true);
-      services.service._register('app', this);
-      window['_page'] = this;
-      _go();
+
+      ServiceContext.register('app', this);
+
+      GO();
     });
 
     return this;
-}.client({
-  /**
-   * @param {function()} cb
-   */
-  ready: function (cb) {
-    if (!cb)
-      return;
 
-    if (!_ready)
-      return cb();
+}.service('catnip');
 
-    _ready.push(cb);
-  }
-});
+/**
+ * @param {function()=} cb
+ * @return {*}
+ * @throws {TypeError}
+ */
+catnip.ready = function (cb) {
+  if (!(cb instanceof Function))
+    throw new TypeError('catnip.ready() expects a function.');
+
+  if (!READY)
+    return cb();
+
+  READY.push(cb);
+};

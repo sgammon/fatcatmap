@@ -17,32 +17,51 @@ var routes = {
   /**
    * @param {Object} request
    * @return {?Object}
-   * @this {Client}
+   * @this {ServiceContext}
    */
   '/': function (request) {
-    this.app.$set('page', { active: true });
-    this.app.$set('modal', null);
+    var state = request.state || {},
+      app = this.app,
+      graph = (!app.$.stage || !app.$.stage.$.map.active) ?
+        this.graph.construct() : null;
 
-    setTimeout(function () {
-      this.app.$.stage.$.map.$set('map.detail', null);
-      this.app.$.stage.$.map.$set('map.compare', null);
-      this.app.$broadcast('page.map', this.graph.construct());
-    }.bind(this), 20);
-    return null;
+    state.page = state.page || { active: true };
+    state.modal = state.modal || null;
+
+    app.$set('page', state.page);
+    app.$set('modal', state.modal);
+
+    app.nextTick(function () {
+      app.$broadcast('page.map', graph);
+      app.$broadcast('detail');
+    });
+
+    return state;
   },
 
   /**
    * @param {Object} request
    * @return {?Object}
+   * @this {ServiceContext}
    */
   '/login': function (request) {
-    this.app.$set('modal', {
+    var state = request.state || {};
+
+    state.page = null;
+    state.modal = state.modal || {
       viewname: 'page.login',
       data: {
-        session: null
+        session: this.catnip.session
       }
-    });
-    this.app.$set('page', null);
+    };
+
+    this.app.$set('modal', state.modal);
+    this.app.$set('page', state.page);
+
+    if (this.app.$.stage)
+      this.app.$.stage.$.map.active = false;
+
+    return state;
   },
 
   /**
@@ -64,127 +83,77 @@ var routes = {
   /**
    * @param {Object} request
    * @return {?Object}
-   * @this {Client}
+   * @this {ServiceContext}
    */
   '/<key>': function (request) {
-    var _this = this,
+    var data = this.data,
+      app = this.app,
       key = request.args.key,
-      shouldRedraw = !_this.app.page;
+      state = request.state || {},
+      graph = (!app.$.stage || !app.$.stage.$.map.active) ?
+        this.graph.construct() : null;
 
-    _this.app.$set('page', { active: true });
-    _this.app.$set('modal', null);
+    state.page = state.page || { active: true };
+    state.modal = state.modal || null;
 
-    setTimeout(function () {
-      var map = _this.app.$.stage.$.map,
-        prop = map.getComponentNameByKey(key) || 'detail';
+    app.$set('page', state.page);
+    app.$set('modal', state.modal);
 
-      if (prop === 'detail') {
-        map.$set('map.compare', null);
-        map.$set('map.detail', key);
-      } else {
-        map.$set('map.detail', null);
-        map.$set('map.compare', key);
-      }
+    app.nextTick(function () {
+      app.$broadcast('page.map', graph);
 
-      _this.app.$broadcast('page.map', shouldRedraw ? _this.graph.construct() : null);
+      data.get(key, /** @type {CallbackMap} */({
+        success: function (data) {
+          app.$broadcast('detail', [data]);
+        },
 
-      // _this.data.get(key, {
-      //   /**
-      //    * @expose
-      //    * @param {Object} data
-      //    */
-      //   success: function (data) {
-      //     _this.app.$broadcast(prop, data);
-      //   },
+        error: function (e) {
+          app.$emit('route', '/404', {
+            error: e
+          });
+        }
+      }));
+    });
 
-      //   /**
-      //    * @expose
-      //    * @param {Error} e
-      //    */
-      //   error: function (e) {
-      //     request.error = e;
-      //     _this.router.route('/404', request);
-      //   }
-      // });
-
-    }, 20);
-
-    return null;
+    return state;
   },
 
   /**
    * @param {Object} request
    * @return {?Object}
+   * @this {ServiceContext}
    */
   '/<key1>/and/<key2>': function (request) {
-    var _this = this,
+    var data = this.data,
+      app = this.app,
       key1 = request.args.key1,
       key2 = request.args.key2,
-      shouldRedraw = !_this.app.page;
+      state = request.state || {},
+      graph = (!app.$.stage || !app.$.stage.$.map.active) ?
+        this.graph.construct() : null;
 
-    _this.app.$set('page', { active: true });
-    _this.app.$set('modal', null);
+    state.page = state.page || { active: true };
+    state.modal = state.modal || null;
 
-    setTimeout(function () {
-      var map = _this.app.$.stage.$.map,
-        prop1 = map.getComponentNameByKey(key1),
-        prop2 = map.getComponentNameByKey(key2);
+    app.$set('page', state.page);
+    app.$set('modal', state.modal);
 
-      if (!(prop1 || prop2)) {
-        prop1 = 'detail';
-        prop2 = 'compare';
-      }
+    app.nextTick(function () {
+      app.$broadcast('page.map', graph);
 
-      if (!prop1)
-        prop1 = prop2 === 'detail' ? 'compare' : 'detail';
+      data.getAll([key1, key2], /** @type {CallbackMap} */({
+        success: function (data) {
+          app.$broadcast('detail', data);
+        },
 
-      if (!prop2)
-        prop2 = prop1 === 'detail' ? 'compare' : 'detail';
+        error: function (e) {
+          app.$emit('route', '/404', {
+            error: e
+          });
+        }
+      }));
+    });
 
-      map.$set('map.' + prop1, key1);
-      map.$set('map.' + prop2, key2);
-
-      _this.app.$broadcast('page.map', shouldRedraw ? _this.graph.construct() : null);
-
-      // _this.data.get(key1, {
-      //   /**
-      //    * @expose
-      //    * @param {Object} data
-      //    */
-      //   success: function (data) {
-      //     _this.app.$broadcast(prop1, data);
-      //   },
-
-      //   /**
-      //    * @expose
-      //    * @param {Error} e
-      //    */
-      //   error: function (e) {
-      //     request.error = e;
-      //     _this.router.route('/404', request);
-      //   }
-      // });
-
-      // _this.data.get(key2, {
-      //   /**
-      //    * @expose
-      //    * @param {Object} data
-      //    */
-      //   success: function (data) {
-      //     _this.app.$broadcast(prop2, data);
-      //   },
-
-      //   /**
-      //    * @expose
-      //    * @param {Error} e
-      //    */
-      //   error: function (e) {
-      //     request.error = e;
-      //     _this.router.route('/404', request);
-      //   }
-      // });
-    }, 20);
-
-    return null;
+    return state;
   }
 };

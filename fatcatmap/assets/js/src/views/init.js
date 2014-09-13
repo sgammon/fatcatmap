@@ -1,5 +1,5 @@
 /**
- * @fileoverview Base view(manager) class.
+ * @fileoverview Base view class.
  *
  * @author  David Rekow <david@momentum.io>,
  *          Sam Gammon <sam@momentum.io>,
@@ -30,14 +30,11 @@ View = Vue.extend({});
  */
 View.extend = function (options) {
   var viewname = options.viewname.toLowerCase(),
-    ready, view;
+    ready = options.ready,
+    view;
 
   if (!viewname || typeof viewname !== 'string')
-    throw new Error('AppView.extend() requires a "viewname" option to be passed.');
-
-  if (options.ready) {
-    ready = options.ready;
-  }
+    throw new Error('View.extend() requires a "viewname" option to be passed.');
 
   /**
    * @this {View}
@@ -45,9 +42,8 @@ View.extend = function (options) {
   options.ready = function () {
     var view = this;
 
-    if (view.$options.handler) {
+    if (view.$options.handler)
       view.$on(view.$options.viewname, view.$options.handler.bind(view));
-    }
 
     if (ready)
       ready.call(view);

@@ -18,26 +18,27 @@ goog.provide('services.history');
 /**
  * @expose
  */
-services.history = /** @lends {Client.prototype.history} */ {
+services.history = /** @lends {ServiceContext.prototype.history} */ {
   /**
    * @expose
    * @param {string} url
    * @param {Object} state
    */
-  push: supports.history.html5 ? function (url, state) {
-    window.history.pushState(state, '', url);
-  } : function (url, state) {},
+  push: function (url, state) {
+    if (supports.history.html5)
+      window.history.pushState(state, '', url);
+  },
 
   /**
    * @expose
-   * @this {Client}
+   * @this {ServiceContext}
    */
   init: function () {
     var hist = this;
 
     hist.router.on('routed', function (url, request, response) {
       if (request.source !== 'history')
-        services.history.push(url, request.state);
+        services.history.push(url, response.state);
     });
 
     hist.router.back = function () {

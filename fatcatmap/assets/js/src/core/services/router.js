@@ -20,7 +20,7 @@ var ROUTES = {
     dynamic: []
   },
 
-  _routeEvents = {
+  ROUTE_EVENTS = {
     /** @expose */
     route: [],
     /** @expose */
@@ -29,7 +29,7 @@ var ROUTES = {
     error: []
   },
 
-  _findRoute, Route, router;
+  _dispatchRoute, Route, router;
 
 /**
  * @param {string} path
@@ -37,7 +37,7 @@ var ROUTES = {
  * @param {Array.<Route>} _routes
  * @return {*}
  */
-_findRoute = function (path, request, _routes) {
+_dispatchRoute = function (path, request, _routes) {
   var i = 0,
     route, matched, match, response,
     /**
@@ -55,7 +55,7 @@ _findRoute = function (path, request, _routes) {
       match = path.match(route.matcher).slice(1);
       match.forEach(setArg);
 
-      response = route.handler.call(new Client(), request);
+      response = route.handler.call(new ServiceContext(), request);
 
       break;
     }
@@ -107,35 +107,25 @@ Route = function (path, handler) {
 /**
  * @expose
  */
-services.router = /** @lends {Client.prototype.router} */ {
+services.router = /** @lends {ServiceContext.prototype.router} */ {
   /**
    * @param {string} path
    * @param {function(Object)} handler
    */
   register: function (path, handler) {
-    var inserted = false,
-      route, _route, _routes, i;
+    var route, routes, i;
 
     route = new Route(path, handler);
-    _routes = route.resolved ? ROUTES.resolved : ROUTES.dynamic;
+    routes = route.resolved ? ROUTES.resolved : ROUTES.dynamic;
 
-    if (!_routes.length) {
-      _routes.push(route);
-      return;
+    for (i = 0; i < routes.length; i++) {
+      if (routes[i].id > route.id) {
+        routes.splice(i, 0, route);
+        return;
+      }
     }
 
-    for (i = 0; i < _routes.length; i++) {
-      _route = _routes[i];
-      if (_route.id < route.id)
-        continue;
-
-      _routes.splice(i, 0, route);
-      inserted = true;
-      break;
-    }
-
-    if (inserted === false)
-      _routes.push(route);
+    routes.push(route);
   },
 
   /**
@@ -158,41 +148,30 @@ services.router = /** @lends {Client.prototype.router} */ {
       }
     }
 
-    _routeEvents.route.forEach(function (fn) {
+    ROUTE_EVENTS.route.forEach(function (fn) {
       fn(path, request);
     });
 
-    response = _findRoute(path, request, ROUTES.resolved);
+    response = _dispatchRoute(path, request, ROUTES.resolved);
+
+    if (!response.matched)
+      response = _dispatchRoute(path, request, ROUTES.dynamic);
 
     if (response.matched) {
       response = response.response;
 
-      _routeEvents.routed.forEach(function (fn) {
+      ROUTE_EVENTS.routed.forEach(function (fn) {
         fn(path, request, response)
       });
+    } else {
+      response = {
+        status: 404
+      };
 
-      return response;
-    }
-
-    response = _findRoute(path, request, ROUTES.dynamic);
-
-    if (response.matched) {
-      response = response.response;
-
-      _routeEvents.routed.forEach(function (fn) {
-        fn(path, request, response)
+      ROUTE_EVENTS.error.forEach(function (fn) {
+        fn(path, request, response);
       });
-
-      return response;
     }
-
-    response = {
-      status: 404
-    };
-
-    _routeEvents.error.forEach(function (fn) {
-      fn(path, request, response);
-    });
 
     return response;
   },
@@ -202,10 +181,10 @@ services.router = /** @lends {Client.prototype.router} */ {
    * @param {function(string, Object=, Object=)} callback
    */
   on: function (event, callback) {
-    if (!_routeEvents[event])
-      _routeEvents[event] = [];
+    if (!ROUTE_EVENTS[event])
+      ROUTE_EVENTS[event] = [];
 
-    _routeEvents[event].push(callback);
+    ROUTE_EVENTS[event].push(callback);
   },
 
   /**
@@ -215,29 +194,27 @@ services.router = /** @lends {Client.prototype.router} */ {
   off: function (event, callback) {
     var i;
     if (!callback) {
-      _routeEvents[event] = [];
+      ROUTE_EVENTS[event] = [];
     } else {
-      i = _routeEvents[event].indexOf(callback);
+      i = ROUTE_EVENTS[event].indexOf(callback);
       if (i > -1)
-        _routeEvents[event].splice(i, 1);
+        ROUTE_EVENTS[event].splice(i, 1);
     }
   },
 
   /**
    * @param {Object.<string, function(Object)>} _routes
    * @param {function(string=)=} handleInitial
-   * @this {Client}
+   * @this {ServiceContext}
    */
-  init: function (_routes, handleInitial) {
-    for (var k in _routes) {
-      if (_routes.hasOwnProperty(k) && typeof _routes[k] === 'function') {
-        this.router.register(k, _routes[k]);
-      }
+  init: function (routes, handleInitial) {
+    for (var k in routes) {
+      if (routes.hasOwnProperty(k) && typeof routes[k] === 'function')
+        this.router.register(k, routes[k]);
     }
 
-    if (handleInitial) {
-      handleInitial(window.location.pathname.split('?').shift());
-    }
+    if (handleInitial)
+      handleInitial(window.location.pathname);
   }
 
 }.service('router');

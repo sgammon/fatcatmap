@@ -38,21 +38,33 @@ _resolveAndSet = function (key, data) {
 /**
  * @expose
  */
-services.data = /** @lends {Client.prototype.data} */ {
+services.data = /** @lends {ServiceContext.prototype.data} */ {
   /**
    * @expose
    * @param {string|Object} raw Raw input.
    * @param {function((string|Object))} cb
-   * @this {Client}
+   * @this {ServiceContext}
    */
   init: function (raw, cb) {
     var data = this.data.normalize(raw),
       keys = data.data.keys,
       objects = data.data.objects,
-      i;
+      key, object, i;
     for (i = 0; keys && i < keys.length; i++) {
-      _dataCache[keys[i]] = objects[i];
+      key = keys[i];
+      object = objects[i];
+
+      if (!object.key)
+        object.key = key;
+
+      if (!object.native) {
+        object.kind = object.govtrack_id ? 'legislator' : 'contributor';
+      }
+
+      _dataCache[key] = object;
     }
+
+    window['DATACACHE'] = _dataCache;
     cb(data);
   },
 
@@ -76,49 +88,88 @@ services.data = /** @lends {Client.prototype.data} */ {
 
   /**
    * @expose
-   * @param {string} key
+   * @param {(string|Array.<string>)} key
    * @param {CallbackMap} cbs
-   * @this {Client}
+   * @this {ServiceContext}
    */
   get: function (key, cbs) {
-    var item = _dataCache[key],
-      _cbs = {
-        success: function (data) {
-          this.data.set(nativeKey, data);
-          cbs.success(data);
-        }.bind(this),
+    var item, nativeKey;
 
-        error: cbs.error
-      },
-      nativeKey;
-    if (item) {
-      if (item.native && typeof item.native === 'string') {
-        nativeKey = item.native;
-
-        this.watch(nativeKey, function (data) {
-          this.data.set(key + '.native', data);
-        }.bind(this));
-
-        return this.data.get(nativeKey, _cbs);
-      }
-      return cbs.success(item);
+    if (Array.isArray(key)) {
+      return this.data.getAll(key, cbs);
     } else {
-      // Retrieve from server.
-      debugger;
+      item = _dataCache[key];
+
+      if (item) {
+        nativeKey = item.native;
+        if (nativeKey && typeof nativeKey === 'string') {
+
+          if (_dataCache[nativeKey]) {
+            _dataCache[nativeKey].node_key = key;
+            this.data.set(key + '.native', _dataCache[nativeKey]);
+          } else {
+            this.data.get(nativeKey, /** @type {CallbackMap} */({
+              success: function (data) {
+                data.node_key = key;
+                services.data.set(key + '.native', data);
+                services.data.set(nativeKey, data);
+              },
+
+              error: function (e) {}
+            }));
+          }
+        }
+
+        return cbs.success(item);
+      } else {
+        // Retrieve from server.
+        debugger;
+      }
     }
+  },
+
+  /**
+   * @expose
+   * @param {Array.<string>} keys
+   * @param {CallbackMap} cbs
+   * @this {ServiceContext}
+   */
+  getAll: function (keys, cbs) {
+    var items = [],
+      shouldErr = true;
+
+    keys.forEach(function (key, i) {
+      services.data.get(key, /** @type {CallbackMap} */({
+        success: function (data) {
+          items[i] = data;
+
+          if (items.length === keys.length)
+            cbs.success(items);
+        },
+
+        error: function (e) {
+          if (shouldErr) {
+            shouldErr = false;
+            cbs.error(e);
+          }
+        }
+      }));
+    });
   },
 
   /**
    * @expose
    * @param {string} key
    * @param {*} data
-   * @this {Client}
+   * @this {ServiceContext}
    */
   set: function (key, data) {
+    var _watchers = watchers[key];
+
     _resolveAndSet(key, data);
 
-    if (watchers[key].length) {
-      watchers[key].forEach(function (watcher) {
+    if (_watchers && _watchers.length) {
+      _watchers.forEach(function (watcher) {
         watcher(data);
       });
     }
@@ -128,7 +179,7 @@ services.data = /** @lends {Client.prototype.data} */ {
    * @expose
    * @param {string} key
    * @param {function(*)} watcher
-   * @this {Client}
+   * @this {ServiceContext}
    */
   watch: function (key, watcher) {
     if (!watchers[key])
@@ -142,7 +193,7 @@ services.data = /** @lends {Client.prototype.data} */ {
    * @param {string} key
    * @param {function(*)=} watcher
    * @return {(function(*)|Array.<function(*)>)}
-   * @this {Client}
+   * @this {ServiceContext}
    */
   unwatch: function (key, watcher) {
     var _watchers = watcher;

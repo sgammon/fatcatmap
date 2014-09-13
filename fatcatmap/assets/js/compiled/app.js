@@ -12,43 +12,61 @@ Object.defineProperty(Function.prototype, "throttle", {value:function(a) {
   };
 }});
 var routes = {"/":function(a) {
-  this.app.$set("page", {active:!0});
-  this.app.$set("modal", null);
-  setTimeout(function() {
-    this.app.$.stage.$.map.$set("map.detail", null);
-    this.app.$.stage.$.map.$set("map.compare", null);
-    this.app.$broadcast("page.map", this.graph.construct());
-  }.bind(this), 20);
-  return null;
+  a = a.state || {};
+  var b = this.app, c = b.$.stage && b.$.stage.$.map.active ? null : this.graph.construct();
+  a.page = a.page || {active:!0};
+  a.modal = a.modal || null;
+  b.$set("page", a.page);
+  b.$set("modal", a.modal);
+  b.nextTick(function() {
+    b.$broadcast("page.map", c);
+    b.$broadcast("detail");
+  });
+  return a;
 }, "/login":function(a) {
-  this.app.$set("modal", {viewname:"page.login", data:{session:null}});
-  this.app.$set("page", null);
+  a = a.state || {};
+  a.page = null;
+  a.modal = a.modal || {viewname:"page.login", data:{session:this.catnip.session}};
+  this.app.$set("modal", a.modal);
+  this.app.$set("page", a.page);
+  this.app.$.stage && (this.app.$.stage.$.map.active = !1);
+  return a;
 }, "/settings":function(a) {
 }, "/404":function(a) {
 }, "/<key>":function(a) {
-  var b = this, c = a.args.key, d = !b.app.page;
-  b.app.$set("page", {active:!0});
-  b.app.$set("modal", null);
-  setTimeout(function() {
-    var a = b.app.$.stage.$.map;
-    "detail" === (a.getComponentNameByKey(c) || "detail") ? (a.$set("map.compare", null), a.$set("map.detail", c)) : (a.$set("map.detail", null), a.$set("map.compare", c));
-    b.app.$broadcast("page.map", d ? b.graph.construct() : null);
-  }, 20);
-  return null;
+  var b = this.data, c = this.app, d = a.args.key;
+  a = a.state || {};
+  var e = c.$.stage && c.$.stage.$.map.active ? null : this.graph.construct();
+  a.page = a.page || {active:!0};
+  a.modal = a.modal || null;
+  c.$set("page", a.page);
+  c.$set("modal", a.modal);
+  c.nextTick(function() {
+    c.$broadcast("page.map", e);
+    b.get(d, {success:function(a) {
+      c.$broadcast("detail", [a]);
+    }, error:function(a) {
+      c.$emit("route", "/404", {error:a});
+    }});
+  });
+  return a;
 }, "/<key1>/and/<key2>":function(a) {
-  var b = this, c = a.args.key1, d = a.args.key2, e = !b.app.page;
-  b.app.$set("page", {active:!0});
-  b.app.$set("modal", null);
-  setTimeout(function() {
-    var a = b.app.$.stage.$.map, g = a.getComponentNameByKey(c), h = a.getComponentNameByKey(d);
-    g || h || (g = "detail", h = "compare");
-    g || (g = "detail" === h ? "compare" : "detail");
-    h || (h = "detail" === g ? "compare" : "detail");
-    a.$set("map." + g, c);
-    a.$set("map." + h, d);
-    b.app.$broadcast("page.map", e ? b.graph.construct() : null);
-  }, 20);
-  return null;
+  var b = this.data, c = this.app, d = a.args.key1, e = a.args.key2;
+  a = a.state || {};
+  var f = c.$.stage && c.$.stage.$.map.active ? null : this.graph.construct();
+  a.page = a.page || {active:!0};
+  a.modal = a.modal || null;
+  c.$set("page", a.page);
+  c.$set("modal", a.modal);
+  c.nextTick(function() {
+    c.$broadcast("page.map", f);
+    b.getAll([d, e], {success:function(a) {
+      c.$broadcast("detail", a);
+    }, error:function(a) {
+      c.$emit("route", "/404", {error:a});
+    }});
+  });
+  return a;
 }};
 var toArray = function(a) {
   var b = [], c;
@@ -66,41 +84,56 @@ var toArray = function(a) {
   throw new TypeError("Invalid document query string.");
 };
 var config = {context:JSON.parse($("#js-context").textContent || "{}"), data:JSON.parse($("#js-data").textContent || "{}")};
-var services = {}, Client = function(a) {
-  if (a) {
-    for (var b in a) {
-      a.hasOwnProperty(b) && (this[b] = a[b]);
+var services = {}, ServiceContext, Service;
+ServiceContext = function() {
+};
+ServiceContext.prototype = {};
+ServiceContext.register = function(a, b) {
+  return ServiceContext.prototype[a] = b;
+};
+Service = function(a, b) {
+  if ("string" !== typeof a) {
+    throw new TypeError("Service() requires a service name to register.");
+  }
+  if (b) {
+    for (var c in b) {
+      b.hasOwnProperty(c) && b[c] instanceof Function && (this[c] = b[c].__injected__ ? b[c] : b[c].inject());
     }
   }
+  ServiceContext.register(a, this);
 };
-Client.prototype = services;
-Object.defineProperty(Function.prototype, "client", {value:function(a) {
-  var b = this;
-  return function() {
-    return b.apply(new Client(a), arguments);
+Service.prototype = new ServiceContext;
+Object.defineProperty(Function.prototype, "inject", {value:function(a) {
+  var b = this, c, d;
+  if (b.__injected__) {
+    return b;
+  }
+  a || (a = []);
+  if (a && !Array.isArray(a)) {
+    if ("string" !== typeof a) {
+      throw new TypeError("inject() requires a service name or list of names.");
+    }
+    a = [a];
+  }
+  a.forEach(function(a) {
+    c || (c = {});
+    c[a] = ServiceContext.prototype[a];
+  });
+  d = function() {
   };
+  d.prototype = c || new ServiceContext;
+  a = function() {
+    return b.apply(new d, arguments);
+  };
+  a.__injected__ = services.length ? services : !0;
+  return a;
 }});
-Object.defineProperty(Function.prototype, "service", {value:function(a, b) {
-  Client.prototype[a] = this.client(b);
-  return Client.prototype[a];
+Object.defineProperty(Function.prototype, "service", {value:function(a) {
+  return ServiceContext.register(a, this.inject());
 }});
 Object.defineProperty(Object.prototype, "service", {value:function(a) {
-  var b;
-  if (!a || "string" !== typeof a) {
-    throw new TypeError("service() requires a string name.");
-  }
-  if (this.constructor !== Object) {
-    throw Error("service() can only be invoked on native objects.");
-  }
-  for (var c in this) {
-    this.hasOwnProperty(c) && (b = this[c], b instanceof Function && (this[c] = b.client()));
-  }
-  Client.prototype[a] = this;
-  return Client.prototype[a];
+  return new Service(a, this);
 }});
-services.service._register = function(a, b) {
-  services[a] = b;
-};
 var supports = {cookies:navigator.cookieEnabled, retina:2 == window.devicePixelRatio, workers:!!window.Worker, sharedWorkers:!!window.SharedWorker, sockets:!!window.WebSocket, sse:!!window.EventSource, geo:!!navigator.geolocation, touch:0 < navigator.maxTouchPoints, history:{html5:!!window.history.pushState, hash:!!window.onhashchange}, storage:{local:!!window.localStorage, session:!!window.sessionStorage, indexed:!!window.IDBFactory}};
 var urlutil = {addParams:function(a, b) {
   var c = !0;
@@ -158,10 +191,11 @@ _resolveAndSet = function(a, b) {
   d[c.shift()] = b;
 };
 services.data = {init:function(a, b) {
-  var c = this.data.normalize(a), d = c.data.keys, e = c.data.objects, f;
-  for (f = 0;d && f < d.length;f++) {
-    _dataCache[d[f]] = e[f];
+  var c = this.data.normalize(a), d = c.data.keys, e = c.data.objects, f, g, h;
+  for (h = 0;d && h < d.length;h++) {
+    f = d[h], g = e[h], g.key || (g.key = f), g.native || (g.kind = g.govtrack_id ? "legislator" : "contributor"), _dataCache[f] = g;
   }
+  window.DATACACHE = _dataCache;
   b(c);
 }, normalize:function(a) {
   if ("string" === typeof a) {
@@ -173,19 +207,33 @@ services.data = {init:function(a, b) {
   }
   return a;
 }, get:function(a, b) {
-  var c = _dataCache[a], d = {success:function(a) {
-    this.data.set(e, a);
-    b.success(a);
-  }.bind(this), error:b.error}, e;
-  if (c) {
-    return c.native && "string" === typeof c.native ? (e = c.native, this.watch(e, function(b) {
-      this.data.set(a + ".native", b);
-    }.bind(this)), this.data.get(e, d)) : b.success(c);
+  var c, d;
+  if (Array.isArray(a)) {
+    return this.data.getAll(a, b);
+  }
+  if (c = _dataCache[a]) {
+    return(d = c.native) && "string" === typeof d && (_dataCache[d] ? (_dataCache[d].node_key = a, this.data.set(a + ".native", _dataCache[d])) : this.data.get(d, {success:function(b) {
+      b.node_key = a;
+      services.data.set(a + ".native", b);
+      services.data.set(d, b);
+    }, error:function(a) {
+    }})), b.success(c);
   }
   debugger;
+}, getAll:function(a, b) {
+  var c = [], d = !0;
+  a.forEach(function(e, f) {
+    services.data.get(e, {success:function(d) {
+      c[f] = d;
+      c.length === a.length && b.success(c);
+    }, error:function(a) {
+      d && (d = !1, b.error(a));
+    }});
+  });
 }, set:function(a, b) {
+  var c = watchers[a];
   _resolveAndSet(a, b);
-  watchers[a].length && watchers[a].forEach(function(a) {
+  c && c.length && c.forEach(function(a) {
     a(b);
   });
 }, watch:function(a, b) {
@@ -234,7 +282,7 @@ services.graph = {init:function(a) {
 }, get:function() {
   return GRAPH;
 }}.service("graph");
-var Request, Response, _prepareRequest, _dispatch, _parseResponse;
+var Request, Response, _prepareRequest, _dispatchRequest, _parseResponse;
 _prepareRequest = function(a, b, c) {
   var d = new XMLHttpRequest, e;
   e = b.params ? urlutil.addParams(b.url, b.params) : b.url;
@@ -256,7 +304,7 @@ _prepareRequest = function(a, b, c) {
   });
   return d;
 };
-_dispatch = function(a, b, c) {
+_dispatchRequest = function(a, b, c) {
   var d = "object" === typeof b.data ? JSON.stringify(b.data) : "string" === typeof b.data ? b.data : null == b.data ? null : "" + b.data;
   a = _prepareRequest(a, b, c);
   a.send(d);
@@ -276,22 +324,22 @@ _parseResponse = function(a) {
   return b;
 };
 services.http = {get:function(a, b) {
-  return _dispatch("GET", a, b);
+  return _dispatchRequest("GET", a, b);
 }, delete:function(a, b) {
-  return _dispatch("DELETE", a, b);
+  return _dispatchRequest("DELETE", a, b);
 }, head:function(a, b) {
-  return _dispatch("HEAD", a, b);
+  return _dispatchRequest("HEAD", a, b);
 }, post:function(a, b) {
-  return _dispatch("POST", a, b);
+  return _dispatchRequest("POST", a, b);
 }, put:function(a, b) {
-  return _dispatch("PUT", a, b);
+  return _dispatchRequest("PUT", a, b);
 }, patch:function(a, b) {
-  return _dispatch("PATCH", a, b);
+  return _dispatchRequest("PATCH", a, b);
 }, options:function(a, b) {
-  return _dispatch("OPTIONS", a, b);
+  return _dispatchRequest("OPTIONS", a, b);
 }}.service("http");
-var ROUTES = {resolved:[], dynamic:[]}, _routeEvents = {route:[], routed:[], error:[]}, _findRoute, Route, router;
-_findRoute = function(a, b, c) {
+var ROUTES = {resolved:[], dynamic:[]}, ROUTE_EVENTS = {route:[], routed:[], error:[]}, _dispatchRoute, Route, router;
+_dispatchRoute = function(a, b, c) {
   for (var d = 0, e, f, g, h = function(a, c) {
     b.args[e.keys[c]] = a;
   };(e = c[d++]) && e.id <= a;) {
@@ -299,7 +347,7 @@ _findRoute = function(a, b, c) {
       f = !0;
       a = a.match(e.matcher).slice(1);
       a.forEach(h);
-      g = e.handler.call(new Client, b);
+      g = e.handler.call(new ServiceContext, b);
       break;
     }
   }
@@ -317,21 +365,16 @@ Route = function(a, b) {
   c.resolved = 0 === c.keys.length;
 };
 services.router = {register:function(a, b) {
-  var c = !1, d, e, f, g;
-  d = new Route(a, b);
-  f = d.resolved ? ROUTES.resolved : ROUTES.dynamic;
-  if (f.length) {
-    for (g = 0;g < f.length;g++) {
-      if (e = f[g], !(e.id < d.id)) {
-        f.splice(g, 0, d);
-        c = !0;
-        break;
-      }
+  var c, d, e;
+  c = new Route(a, b);
+  d = c.resolved ? ROUTES.resolved : ROUTES.dynamic;
+  for (e = 0;e < d.length;e++) {
+    if (d[e].id > c.id) {
+      d.splice(e, 0, c);
+      return;
     }
-    !1 === c && f.push(d);
-  } else {
-    f.push(d);
   }
+  d.push(c);
 }, route:function(a, b) {
   var c, d, e;
   b = b || {};
@@ -341,45 +384,35 @@ services.router = {register:function(a, b) {
   for (d in c) {
     c.hasOwnProperty(d) && (b.params[d] = c[d]);
   }
-  _routeEvents.route.forEach(function(c) {
+  ROUTE_EVENTS.route.forEach(function(c) {
     c(a, b);
   });
-  e = _findRoute(a, b, ROUTES.resolved);
-  if (e.matched) {
-    return e = e.response, _routeEvents.routed.forEach(function(c) {
-      c(a, b, e);
-    }), e;
-  }
-  e = _findRoute(a, b, ROUTES.dynamic);
-  if (e.matched) {
-    return e = e.response, _routeEvents.routed.forEach(function(c) {
-      c(a, b, e);
-    }), e;
-  }
-  e = {status:404};
-  _routeEvents.error.forEach(function(c) {
+  e = _dispatchRoute(a, b, ROUTES.resolved);
+  e.matched || (e = _dispatchRoute(a, b, ROUTES.dynamic));
+  e.matched ? (e = e.response, ROUTE_EVENTS.routed.forEach(function(c) {
     c(a, b, e);
-  });
+  })) : (e = {status:404}, ROUTE_EVENTS.error.forEach(function(c) {
+    c(a, b, e);
+  }));
   return e;
 }, on:function(a, b) {
-  _routeEvents[a] || (_routeEvents[a] = []);
-  _routeEvents[a].push(b);
+  ROUTE_EVENTS[a] || (ROUTE_EVENTS[a] = []);
+  ROUTE_EVENTS[a].push(b);
 }, off:function(a, b) {
   var c;
-  b ? (c = _routeEvents[a].indexOf(b), -1 < c && _routeEvents[a].splice(c, 1)) : _routeEvents[a] = [];
+  b ? (c = ROUTE_EVENTS[a].indexOf(b), -1 < c && ROUTE_EVENTS[a].splice(c, 1)) : ROUTE_EVENTS[a] = [];
 }, init:function(a, b) {
   for (var c in a) {
     a.hasOwnProperty(c) && "function" === typeof a[c] && this.router.register(c, a[c]);
   }
-  b && b(window.location.pathname.split("?").shift());
+  b && b(window.location.pathname);
 }}.service("router");
-services.history = {push:supports.history.html5 ? function(a, b) {
-  window.history.pushState(b, "", a);
-} : function(a, b) {
+services.history = {push:function(a, b) {
+  supports.history.html5 && window.history.pushState(b, "", a);
 }, init:function() {
   var a = this;
   a.router.on("routed", function(a, c, d) {
-    "history" !== c.source && services.history.push(a, c.state);
+    "history" !== c.source && services.history.push(a, d.state);
   });
   a.router.back = function() {
     window.history.back();
@@ -394,19 +427,19 @@ services.history = {push:supports.history.html5 ? function(a, b) {
     throw Error("History already started");
   };
 }}.service("history");
-var _baseURL = "/_rpc/v1/", RPCAPI;
+var _baseRPCURL = "/_rpc/v1/", RPCAPI;
 RPCAPI = function(a, b, c) {
   var d = this;
   d.name = a;
   d.config = c;
   b.forEach(function(a) {
-    var b = urlutil.join(_baseURL, d.name + "." + a);
+    var b = urlutil.join(_baseRPCURL, d.name + "." + a);
     d[a] = function(a, c) {
       var d = {url:b, data:a.data || {}, params:a.params || {}, headers:a.headers || {}};
       d.headers.Accept = "application/json";
       d.headers["Content-Type"] = "application/json";
       return this.http.post(d, c);
-    }.client();
+    }.inject("http");
   });
 };
 services.rpc = {factory:function(a) {
@@ -490,11 +523,10 @@ services.view = {put:function(a, b) {
 window.__VIEWS = VIEWS;
 var View = Vue.extend({});
 View.extend = function(a) {
-  var b = a.viewname.toLowerCase(), c;
+  var b = a.viewname.toLowerCase(), c = a.ready;
   if (!b || "string" !== typeof b) {
-    throw Error('AppView.extend() requires a "viewname" option to be passed.');
+    throw Error('View.extend() requires a "viewname" option to be passed.');
   }
-  a.ready && (c = a.ready);
   a.ready = function() {
     this.$options.handler && this.$on(this.$options.viewname, this.$options.handler.bind(this));
     c && c.call(this);
@@ -505,38 +537,58 @@ View.extend = function(a) {
   return a;
 };
 var views = {};
-views.Detail = View.extend({viewname:"detail", replace:!0, data:{kind:""}, methods:{close:function(a) {
-  a && (a.preventDefault(), a.stopPropagation());
-  services.router.back();
+views.Detail = View.extend({viewname:"detail", replace:!0, data:{left:null, right:null, leftview:"", rightview:""}, methods:{close:function(a) {
+  var b = a.target.parentNode, c;
+  b.classList.contains("close") && (a.preventDefault(), a.stopPropagation(), c = this[b.parentNode.getAttribute("id").split("_").pop()].key, a = this.keys(), c = a.indexOf(c), -1 < c && (c = Math.abs(c - 1), a = a[c] ? [a[c]] : []), b.classList.add("transparent"), this.$root.$emit("route", "/" + (1 < a.length ? a.join("/and/") : a[0] || "")));
+}, keys:function() {
+  var a = [];
+  this.left && a.push(this.left.key);
+  this.right && a.push(this.right.key);
+  return a;
+}, select:function(a) {
+  var b = this, c, d;
+  a && a.length && (2 < a.length && (a = a.slice(0, 2)), a.forEach(function(a) {
+    b.left && b.left.key === a.key ? c = a : b.right && b.right.key === a.key ? d = a : c ? d = a : c = a;
+  }));
+  a = [];
+  c && (b.$set("leftview", "detail." + c.native.kind.toLowerCase()), a.push(c.key));
+  d && (b.$set("rightview", "detail." + d.native.kind.toLowerCase()), a.push(d.key));
+  b.$set("left", c);
+  b.$set("right", d);
+  b.$parent.$set("map.selected", a);
+  b.$parent.$set("map.changed", !0);
 }}, handler:function(a) {
-  a && a.kind && (this.$set("data", a), this.$set("kind", "detail." + a.kind.toLowerCase()));
+  this.select(a);
 }});
-views.Compare = View.extend({viewname:"compare", replace:!0, data:{kind:""}, methods:{close:function(a) {
-  a && (a.preventDefault(), a.stopPropagation());
-  services.router.back();
-}}, handler:function(a) {
-  a && a.kind && (this.$set("data", a), this.$set("kind", "detail." + a.kind.toLowerCase()));
-}});
-views.Header = View.extend({viewname:"header", replace:!0});
 views.Modal = View.extend({viewname:"modal", methods:{close:function(a) {
   a && (a.preventDefault(), a.stopPropagation());
   services.router.back();
 }}});
-views.Stage = View.extend({viewname:"stage", replace:!0});
+views.detail = {};
+views.detail.Legislator = View.extend({viewname:"detail.legislator", replace:!0, data:{key:null, kind:null, fec_id:"", bioguideid:"", govtrack_id:"", thomas_id:"", osid:"", lismemberid:null, icpsrid:null, fbid:null, twitterid:null, metavidid:null, pvsid:null, firstname:"", lastname:"", gender:"", birthday:"", lastnameenc:"", lastnamealt:null, namemod:null, nickname:null, religion:null}, attached:function() {
+  var a = this.$el, b = a.parentNode, c = function(d) {
+    b.removeEventListener("transitionend", c);
+    b.removeEventListener("webkitTransitionEnd", c);
+    a.classList.remove("v-enter");
+  };
+  b.addEventListener("webkitTransitionEnd", c);
+  b.addEventListener("transitionend", c);
+  a.classList.add("v-enter");
+}});
+views.Header = View.extend({viewname:"layout.header", replace:!0});
+views.Stage = View.extend({viewname:"layout.stage", replace:!0});
 views.Login = View.extend({viewname:"page.login", replace:!0, methods:{login:function(a) {
   a.preventDefault();
   a.stopPropagation();
 }}, data:{session:null}});
-views.Map = View.extend({viewname:"page.map", replace:!0, selectors:{map:"#map", edge:".edge", node:".node", selected:".selected"}, data:{map:{}, config:{width:0, height:0, force:{alpha:.75, strength:1, friction:.9, theta:.7, gravity:.1, charge:-600, distance:180}, origin:{snap:!1, dynamic:!1, position:null}, node:{radius:25, scaleFactor:1.6, classes:["node"]}, labels:{enable:!1, distance:0}, edge:{width:2, stroke:"#999", classes:["link"]}, sprite:{width:60, height:60}}, dragging:!1, selected:!1, 
-compare:!1}, methods:{isNode:function(a) {
+views.Map = View.extend({viewname:"page.map", replace:!0, selectors:{map:"#map", edge:".edge", node:".node", selected:".selected"}, data:{map:{selected:[], changed:!1}, config:{width:0, height:0, force:{alpha:.75, strength:1, friction:.9, theta:.7, gravity:.1, charge:-600, distance:180}, origin:{snap:!1, dynamic:!1, position:null}, node:{radius:25, scaleFactor:1.6, classes:["node"]}, labels:{enable:!1, distance:0}, edge:{width:2, stroke:"#999", classes:["link"]}, sprite:{width:60, height:60}}, dragging:!1, 
+active:!1}, methods:{isNode:function(a) {
   return a.classList.contains("node");
 }, isEdge:function(a) {
   return a.classList.contains("link");
-}, select:function(a) {
-  var b, c, d, e, f;
-  this.dragging || (b = a.target, c = b.id.split("-").pop(), d = this.$options.selectors.selected.slice(1), e = this.map.detail, f = this.map.compare, this.isNode(b) && (a.preventDefault(), a.stopPropagation(), c = b.classList.contains(d) ? e === c ? f : f === c ? e : e + "/and/" + f : e ? !f && a.shiftKey ? e + "/and/" + c : e + "/and/" + f : c, this.$root.route("/" + c)));
-}, getComponentNameByKey:function(a) {
-  return this.map.detail === a ? "detail" : this.map.compare === a ? "compare" : null;
+}, viewDetail:function(a) {
+  var b, c, d;
+  this.dragging || (b = a.target, c = b.id.split("-").pop(), this.isNode(b) && (a.preventDefault(), a.stopPropagation(), d = this.$.detail.keys(), b.classList.contains(this.$options.selectors.selected.slice(1)) ? (a = d.indexOf(c), -1 < a && d.splice(a, 1)) : 2 > d.length && (a.shiftKey ? d.push(c) : d = [c]), this.map.selected = d, this.map.changed = !0, this.$root.$emit("route", "/" + (1 < d.length ? d.join("/and/") : d[0] || ""))));
 }, browseTo:function(a) {
   console.log("map.browseTo()");
 }, startDrag:function(a) {
@@ -563,12 +615,12 @@ compare:!1}, methods:{isNode:function(a) {
         return a.y - b.config.node.radius;
       });
       b.map.changed && (f.filter(d.selected).filter(function(a) {
-        return b.map.detail !== a.key && b.map.compare !== a.key;
+        return-1 === b.map.selected.indexOf(a.key);
       }).classed({selected:!1}).transition().duration(150).ease("cubic").attr("r", c.node.radius), f.filter(function(a) {
-        return b.map.detail === a.key || b.map.compare === a.key;
-      }).classed({selected:!0}).transition().duration(150).ease("cubic").attr("r", c.node.radius * c.node.scaleFactor), b.map.changed = !1);
+        return-1 < b.map.selected.indexOf(a.key);
+      }).classed({selected:!0}).transition().duration(150).ease("cubic").attr("r", c.node.radius * c.node.scaleFactor), b.map.changed = !1, b.map.force.start());
     }, k = d3.layout.force().size([c.width, c.height]).linkDistance(c.force.distance).linkStrength(c.force.strength).friction(c.force.friction).theta(c.force.theta).gravity(c.force.gravity).alpha(c.force.alpha).charge(function(a) {
-      return b.map.detail === a.key || b.map.compare === a.key ? c.force.charge * Math.pow(c.node.scaleFactor, 2) : c.force.charge;
+      return-1 < b.map.selected.indexOf(a.key) ? c.force.charge * Math.pow(c.node.scaleFactor, 2) : c.force.charge;
     }).on("tick", h), l = function() {
       var d = a.nodes, e = a.edges;
       k.nodes(d).links(e).start();
@@ -598,19 +650,16 @@ compare:!1}, methods:{isNode:function(a) {
       }).attr("cy", function(a) {
         return a.y;
       }).attr("r", c.node.radius).attr("width", c.sprite.width).attr("height", c.sprite.height).attr("class", function(a, c) {
-        var d = a.classes.slice();
-        if (b.map.detail === a.key || b.map.compare === a.key) {
-          b.map.changed = !0;
-        }
-        return d.join(" ");
+        -1 < b.map.selected.indexOf(a.key) && (b.map.changed = !0);
+        return a.classes.join(" ");
       }).call(k.drag);
       f.filter(function(b, c) {
         return b.key === a.origin_key;
       });
       b.map.changed && k.start();
-    }, b.map.root = e, b.map.force = k, setTimeout(function() {
+    }, b.map.root = e, b.map.force = k, this.$root.nextTick(function() {
       l();
-    }, 0);
+    });
   } else {
     return b.map.root = null, $(b.$options.selectors.map).innerHTML = "", b.draw(a);
   }
@@ -621,8 +670,13 @@ compare:!1}, methods:{isNode:function(a) {
   this.config.height = b;
   this.map.root && this.map.root.attr("width", a).attr("height", b);
   this.config.origin.snap && (this.config.origin.position = {x:a / 2, y:b / 2});
-  this.map.force && this.map.force.size([a, b]).resume();
+  this.map.force.size([a, b]).resume();
 }}, ready:function() {
+  var a = this.$options.selectors.map;
+  this.$watch("active", function(b) {
+    b && $(a).classList.remove("transparent");
+  });
+  this.resize = this.resize.bind(this);
   window.addEventListener("resize", this.resize);
 }, beforeDestroy:function() {
   window.removeEventListener("resize", this.resize);
@@ -631,23 +685,25 @@ compare:!1}, methods:{isNode:function(a) {
   this.config.width = b;
   this.config.height = c;
   this.config.origin.snap && (this.config.origin.position = this.config.origin.position || {}, this.config.origin.position = {x:b / 2, y:c / 2});
-  a ? (this.draw(a), $(this.$options.selectors.map).classList.remove("transparent")) : (this.map.changed = !0, this.map.force.start());
+  a ? (this.active = !0, this.draw(a)) : (this.map.changed = !0, this.map.force && this.map.force.start());
 }});
-views.Page = Vue.extend({data:{page:{active:!1}, modal:null}, methods:{route:function(a) {
+views.App = Vue.extend({data:{page:{active:!1}, modal:null}, methods:{route:function(a) {
   var b;
-  a.target && a.target.hasAttribute("data-route") ? (b = a.target.getAttribute("href"), a.preventDefault(), a.stopPropagation()) : b = a;
-  this.$emit("route", b);
+  a.target && a.target.hasAttribute("data-route") && (b = a.target.getAttribute("href"), a.preventDefault(), a.stopPropagation());
+  b && this.$emit("route", b);
+}, nextTick:function(a) {
+  return Vue.nextTick(a);
 }}, ready:function() {
-  this.$on("route", function(a) {
-    services.router.route(a);
+  this.$on("route", function(a, b) {
+    services.router.route(a, b);
   });
 }});
-services.view.put("page", views.Page);
-var _ready, _go, catnip;
-_ready = [];
-_go = function() {
-  var a = _ready;
-  _ready = null;
+services.view.put("app", views.App);
+var READY, GO, catnip;
+READY = [];
+GO = function() {
+  var a = READY;
+  READY = null;
   a.forEach(function(a) {
     a();
   });
@@ -663,29 +719,30 @@ catnip = function(a, b, c) {
     d.graph.init(a);
   });
   d.router.init(c, function(a) {
-    d.ready(function() {
+    catnip.ready(function() {
       d.history.init();
       if (a) {
         return d.router.route(a);
       }
     });
   });
-  d.view.init("page", function() {
+  d.view.init("app", function() {
     this.$set("active", !0);
     this.$.stage.$set("active", !0);
-    services.service._register("app", this);
-    window._page = this;
-    _go();
+    ServiceContext.register("app", this);
+    GO();
   });
   return this;
-}.client({ready:function(a) {
-  if (a) {
-    if (!_ready) {
-      return a();
-    }
-    _ready.push(a);
+}.service("catnip");
+catnip.ready = function(a) {
+  if (!(a instanceof Function)) {
+    throw new TypeError("catnip.ready() expects a function.");
   }
-}});
+  if (!READY) {
+    return a();
+  }
+  READY.push(a);
+};
 var init = {};
 window.catnip_beta = catnip(config.context, config.data, routes);
 

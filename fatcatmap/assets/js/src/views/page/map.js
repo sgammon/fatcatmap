@@ -13,6 +13,7 @@ goog.require('$');
 goog.require('async');
 goog.require('View');
 goog.require('views.Detail');
+goog.require('views.detail.Legislator');
 
 goog.provide('views.Map');
 
@@ -73,7 +74,19 @@ views.Map = View.extend({
      * @expose
      * @type {Object}
      */
-    map: {},
+    map: {
+      /**
+       * @expose
+       * @type {Array.<string>}
+       */
+      selected: [],
+
+      /**
+       * @expose
+       * @type {boolean}
+       */
+      changed: false
+    },
 
     /**
      * @expose
@@ -259,13 +272,7 @@ views.Map = View.extend({
      * @expose
      * @type {boolean}
      */
-    selected: false,
-
-    /**
-     * @expose
-     * @type {boolean}
-     */
-    compare: false
+    active: false
   },
 
   /**
@@ -296,49 +303,41 @@ views.Map = View.extend({
      * @param {MouseEvent} e
      * @this {views.Map}
      */
-    select: function (e) {
-      var target, key, className, detail, compare, selectedI;
+    viewDetail: function (e) {
+      var target, key, selected, selectedI;
 
       if (!this.dragging) {
         target = e.target;
         key = target.id.split('-').pop();
-        className = this.$options.selectors.selected.slice(1);
-        detail = this.map.detail;
-        compare = this.map.compare;
 
         if (this.isNode(target)) {
           e.preventDefault();
           e.stopPropagation();
 
-          if (target.classList.contains(className)) {
-            key = detail === key ? compare :
-              compare === key ? detail :
-              detail + '/and/' + compare;
+          selected = this.$.detail.keys();
+
+          if (target.classList.contains(this.$options.selectors.selected.slice(1))) {
+            selectedI = selected.indexOf(key);
+            
+            if (selectedI > -1)
+              selected.splice(selectedI, 1);
           } else {
-            key = !detail ? key :
-              !compare && e.shiftKey ? detail + '/and/' + key :
-              detail + '/and/' + compare;
+            if (selected.length < 2) {
+              if (e.shiftKey) {
+                selected.push(key);
+              } else {
+                selected = [key];
+              }
+            }
           }
 
-          this.$root.route('/' + key);
+          this.map.selected = selected;
+          this.map.changed = true;
+
+          this.$root.$emit('route', '/' +
+            (selected.length > 1 ? selected.join('/and/') : selected[0] || ''));
         }
       }
-    },
-
-    /**
-     * @expose
-     * @param {string} key
-     * @return {?string}
-     * @this {views.Map}
-     */
-    getComponentNameByKey: function (key) {
-      if (this.map.detail === key)
-        return 'detail';
-
-      if (this.map.compare === key)
-        return 'compare';
-
-      return null;
     },
 
     /**
@@ -412,7 +411,7 @@ views.Map = View.extend({
           if (view.map.changed) {
             node.filter(selectors.selected)
                 .filter(function (n) {
-                  return view.map.detail !== n.key && view.map.compare !== n.key;
+                  return view.map.selected.indexOf(n.key) === -1;
                 })
                 .classed({'selected': false})
                 .transition()
@@ -421,7 +420,7 @@ views.Map = View.extend({
                 .attr('r', config.node.radius);
 
             node.filter(function (n) {
-                  return view.map.detail === n.key || view.map.compare === n.key;
+                  return view.map.selected.indexOf(n.key) > -1;
                 })
                 .classed({'selected': true})
                 .transition()
@@ -430,6 +429,7 @@ views.Map = View.extend({
                 .attr('r', config.node.radius * config.node.scaleFactor);
 
             view.map.changed = false;
+            view.map.force.start();
           }
         };
 
@@ -443,9 +443,9 @@ views.Map = View.extend({
           .gravity(config.force.gravity)
           .alpha(config.force.alpha)
           .charge(function (n) {
-            if (view.map.detail === n.key || view.map.compare === n.key) {
+            if (view.map.selected.indexOf(n.key) > -1)
               return config.force.charge * Math.pow(config.node.scaleFactor, 2);
-            }
+
             return config.force.charge;
           })
           .on('tick', tick);
@@ -487,12 +487,10 @@ views.Map = View.extend({
               .attr('width', config.sprite.width)
               .attr('height', config.sprite.height)
               .attr('class', function (n, i) {
-                var classes = n.classes.slice();
-
-                if (view.map.detail === n.key || view.map.compare === n.key)
+                if (view.map.selected.indexOf(n.key) > -1)
                   view.map.changed = true;
 
-                return classes.join(' ');
+                return n.classes.join(' ');
               })
               .call(force.drag);
 
@@ -507,9 +505,9 @@ views.Map = View.extend({
         view.map.root = root;
         view.map.force = force;
 
-        setTimeout(function () {
+        this.$root.nextTick(function () {
           update();
-        }, 0);
+        });
       } else {
         view.map.root = null;
         $(view.$options.selectors.map).innerHTML = '';
@@ -519,7 +517,7 @@ views.Map = View.extend({
 
     /**
      * @expose
-     * @param {UIEvent}
+     * @param {UIEvent} e
      */
     resize: function (e) {
       var width = this.$el.clientWidth,
@@ -540,10 +538,9 @@ views.Map = View.extend({
         };
       }
 
-      if (this.map.force)
-        this.map.force
-          .size([width, height])
-          .resume();
+      this.map.force
+        .size([width, height])
+        .resume();
     }
   },
 
@@ -552,6 +549,15 @@ views.Map = View.extend({
    * @this {views.Map}
    */
   ready: function () {
+    var mapSelector = this.$options.selectors.map;
+
+    this.$watch('active', function (active) {
+      if (active)
+        $(mapSelector).classList.remove('transparent');
+    });
+
+    this.resize = this.resize.bind(this);
+
     window.addEventListener('resize', this.resize);
   },
 
@@ -584,12 +590,13 @@ views.Map = View.extend({
     }
 
     if (graph) {
+      this.active = true;
       this.draw(graph);
-      $(this.$options.selectors.map).classList.remove('transparent');
     } else {
       this.map.changed = true;
-      this.map.force.start();
+
+      if (this.map.force)
+        this.map.force.start();
     }
-    
   }
 });

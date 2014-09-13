@@ -1,0 +1,50 @@
+@import "var/color"
+@import "core/form"
+@import "mixin/transition"
+
+#login
+  input
+    width: 100%
+    margin-bottom: 10px
+    border: 1px solid $grey
+    color: $grey
+    background-color: $grey-light
+    +transition-property(border-color, color, background-color)
+    +transition-duration(0.2s)
+    +transition-ease(ease)
+
+    &:focus
+      background-color: lighten($grey-light, 5%)
+      border-color: $grey-dark
+      color: $grey-dark
+
+    &::-webkit-input-placeholder
+      color: lighten($grey, 10%)
+
+  button
+    margin: 5px 0 0 10px
+    padding: 0 8px
+    border: none
+    background-color: $grey
+    color: $grey-light
+
+    &:hover
+      margin-top: 1px
+      background-color: lighten($grey-dark, 10%)
+
+    &:active
+      margin-top: 5px
+      background-color: $grey-dark
+
+  button#signup_submit
+    background-color: darken($brand-primary, 20%)
+
+    &:hover
+      background-color: darken($brand-primary, 10%)
+
+    &:active
+      background-color: $brand-primary
+
+#signup > div
+  margin-top: 15px
+  text-align: right

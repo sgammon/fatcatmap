@@ -23,7 +23,7 @@ views.Stage = View.extend({
    * @expose
    * @type {string}
    */
-  viewname: 'stage',
+  viewname: 'layout.stage',
 
   /**
    * @expose

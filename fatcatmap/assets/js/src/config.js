@@ -15,12 +15,12 @@ goog.provide('config');
 
 var config = {
   /**
-   * @type {JSContext|*}
+   * @type {JSContext}
    */
   context: JSON.parse($('#js-context').textContent || '{}'),
 
   /**
-   * @type {PageData|*}
+   * @type {PageData}
    */
   data: JSON.parse($('#js-data').textContent || '{}')
 };

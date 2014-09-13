@@ -230,7 +230,7 @@ Vue.config = function(key, value) {};
  * @static
  * @param {string} id
  * @param {function(...)|Object} definition
- * @return {*}
+ * @return {Vue}
  */
 Vue.directive = function(id, definition) {};
 
@@ -238,7 +238,7 @@ Vue.directive = function(id, definition) {};
  * @static
  * @param {string} id
  * @param {(function(...)|Object)=} definition
- * @return {*}
+ * @return {Vue}
  */
 Vue.filter = function(id, definition) {};
 
@@ -246,7 +246,7 @@ Vue.filter = function(id, definition) {};
  * @static
  * @param {string} id
  * @param {(function(...)|Object)=} definition
- * @return {*}
+ * @return {Vue}
  */
 Vue.component = function(id, definition) {};
 
@@ -254,7 +254,7 @@ Vue.component = function(id, definition) {};
  * @static
  * @param {string} id
  * @param {Object=} definition
- * @return {*}
+ * @return {Vue}
  */
 Vue.effect = function(id, definition) {};
 
@@ -284,3 +284,56 @@ Vue.require = function(module) {};
  * @param {...*} args
  */
 Vue.use = function(plugin, args) {};
+
+/**
+ * @typedef {Object}
+ */
+var Directive = {
+  /**
+   * @param {*} value
+   * @this {Directive}
+   */
+  bind: function (value) {},
+
+  /**
+   * @param {*} value
+   * @this {Directive}
+   */
+  update: function (value) {},
+
+  /**
+   * @param {*} value
+   * @this {Directive}
+   */
+  unbind: function (value) {},
+
+  /**
+   * @type {?Node}
+   */
+  el: null,
+
+  /**
+   * @type {string}
+   */
+  key: '',
+
+  /**
+   * @type {string}
+   */
+  expression: '',
+
+  /**
+   * @type {?string}
+   */
+  arg: null,
+
+  /**
+   * @type {?Vue}
+   */
+  vm: null,
+
+  /**
+   * @type {*}
+   */
+  value: null
+};

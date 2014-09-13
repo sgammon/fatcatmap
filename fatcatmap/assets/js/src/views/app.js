@@ -17,14 +17,14 @@ goog.require('views.Stage');
 goog.require('views.Login');
 goog.require('views.Map');
 
-goog.provide('views.Page');
+goog.provide('views.App');
 
 /**
  * @constructor
  * @extends {Vue}
  * @param {VueOptions} options
  */
-views.Page = Vue.extend({
+views.App = Vue.extend({
   /**
    * @expose
    * @type {Object}
@@ -58,29 +58,40 @@ views.Page = Vue.extend({
     /**
      * @expose
      * @param {(MouseEvent|string)} e
+     * @this {views.App}
      */
     route: function (e) {
       var route;
+
       if (e.target && e.target.hasAttribute('data-route')) {
         route = e.target.getAttribute('href');
         e.preventDefault();
         e.stopPropagation();
-      } else {
-        route = e;
       }
-      this.$emit('route', route);
+
+      if (route) {
+        this.$emit('route', route);
+      }
+    },
+
+    /**
+     * @expose
+     * @param {function()} cb
+     */
+    nextTick: function (cb) {
+      return Vue.nextTick(cb);
     }
   },
 
   /**
    * @expose
-   * @this {views.Page}
+   * @this {views.App}
    */
   ready: function () {
-    this.$on('route', function (route) {
-      services.router.route(route);
+    this.$on('route', function (route, request) {
+      services.router.route(route, request);
     });
   }
 });
 
-services.view.put('page', views.Page);
+services.view.put('app', views.App);

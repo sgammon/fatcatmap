@@ -27,11 +27,11 @@ _graphIndex = {
 /**
  * @expose
  */
-services.graph = /** @lends {Client.prototype.graph} */ {
+services.graph = /** @lends {ServiceContext.prototype.graph} */ {
   /**
    * @param {Object|PageData} data Graph data to initialize with.
    * @return {Object} Constructed graph object.
-   * @this {Client}
+   * @this {ServiceContext}
    */
   init: function (data) {
     GRAPH = this.graph.construct(data.graph, data.data);
@@ -42,7 +42,7 @@ services.graph = /** @lends {Client.prototype.graph} */ {
    * @param {Object} graph Graph index.
    * @param {Object} data Graph data.
    * @return {Object} Graph object.
-   * @this {Client}
+   * @this {ServiceContext}
    */
   construct: function (graph, data) {
 
@@ -64,7 +64,7 @@ services.graph = /** @lends {Client.prototype.graph} */ {
    * @param {Object} graph Graph index.
    * @param {Object} data Graph data.
    * @return {Object} Graph object.
-   * @this {Client}
+   * @this {ServiceContext}
    */
   add: function (graph, data) {
     var makeEdge, i, keys, key, node, nativeKey, native, targets, source;

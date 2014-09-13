@@ -33,7 +33,7 @@ var Request;
  */
 var Response;
 
-var _prepareRequest, _dispatch, _parseResponse;
+var _prepareRequest, _dispatchRequest, _parseResponse;
 
 /**
  * @param {string} method
@@ -93,7 +93,7 @@ _prepareRequest = function (method, request, handlers) {
  * @param {CallbackMap=} handlers
  * @return {XMLHttpRequest}
  */
-_dispatch = function (method, request, handlers) {
+_dispatchRequest = function (method, request, handlers) {
   var data = typeof request.data === 'object' ? JSON.stringify(request.data) :
     typeof request.data === 'string' ? request.data :
       request.data == null ? null : '' + request.data,
@@ -134,14 +134,14 @@ _parseResponse = function (response) {
 /**
  * @expose
  */
-services.http = /** @lends {Client.prototype.http} */{
+services.http = /** @lends {ServiceContext.prototype.http} */{
   /**
    * @param {Request} request
    * @param {CallbackMap=} handlers If not passed, executes synchronously.
    * @return {XMLHttpRequest|Response} XHR, or response if no handlers were passed. 
    */
   get: function (request, handlers) {
-    return _dispatch('GET', request, handlers);
+    return _dispatchRequest('GET', request, handlers);
   },
 
   /**
@@ -150,7 +150,7 @@ services.http = /** @lends {Client.prototype.http} */{
    * @return {XMLHttpRequest|Response} XHR, or response if no handlers were passed. 
    */
   delete: function (request, handlers) {
-    return _dispatch('DELETE', request, handlers);
+    return _dispatchRequest('DELETE', request, handlers);
   },
 
   /**
@@ -159,7 +159,7 @@ services.http = /** @lends {Client.prototype.http} */{
    * @return {XMLHttpRequest|Response} XHR, or response if no handlers were passed.
    */
   head: function (request, handlers) {
-    return _dispatch('HEAD', request, handlers);
+    return _dispatchRequest('HEAD', request, handlers);
   },
 
   /**
@@ -168,7 +168,7 @@ services.http = /** @lends {Client.prototype.http} */{
    * @return {XMLHttpRequest|Response} XHR, or response if no handlers were passed.
    */
   post: function (request, handlers) {
-    return _dispatch('POST', request, handlers);
+    return _dispatchRequest('POST', request, handlers);
   },
 
   /**
@@ -177,7 +177,7 @@ services.http = /** @lends {Client.prototype.http} */{
    * @return {XMLHttpRequest|Response} XHR, or response if no handlers were passed.
    */
   put: function (request, handlers) {
-    return _dispatch('PUT', request, handlers);
+    return _dispatchRequest('PUT', request, handlers);
   },
 
   /**
@@ -186,7 +186,7 @@ services.http = /** @lends {Client.prototype.http} */{
    * @return {XMLHttpRequest|Response} XHR, or response if no handlers were passed.
    */
   patch: function (request, handlers) {
-    return _dispatch('PATCH', request, handlers);
+    return _dispatchRequest('PATCH', request, handlers);
   },
 
   /**
@@ -195,6 +195,6 @@ services.http = /** @lends {Client.prototype.http} */{
    * @return {XMLHttpRequest|Response} XHR, or response if no handlers were passed.
    */
   options: function (request, handlers) {
-    return _dispatch('OPTIONS', request, handlers);
+    return _dispatchRequest('OPTIONS', request, handlers);
   }
 }.service('http');

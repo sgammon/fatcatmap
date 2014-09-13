@@ -1,10 +1,10 @@
-<div id="detail-{{key}}" class="{{class}}" data-kind="{{kind | lowercase}}">
+<div id="detail-{{key}}" data-kind="{{kind | lowercase}}">
   <section class="byline">
     <h2>{{firstname}} {{lastname}}</h2>
-    <h3>{{office}}, {{state}}<span v-if="district">-{{district}}</span></h3>
+    <span>{{node_key}}</span>
   </section>
 
   <section class="portrait">
-    <img class="{{kind | lowercase}} govtrack thumbnail" alt="{{title}}. {{firstname}} {{lastname}} [{{state}}]" src="{{portrait_url}}" />
+    <img class="{{kind | lowercase}} govtrack thumbnail" alt="{{firstname}} {{lastname}}" width="50" height="50"/>
   </section>
 </div>

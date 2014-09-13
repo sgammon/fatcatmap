@@ -19,4 +19,3 @@ goog.provide('init');
  * @expose
  */
 window.catnip_beta = catnip(config.context, config.data, routes);
-

@@ -1,16 +1,37 @@
 @import "var/color"
 @import "mixin/transition"
 
-#map_detail, #map_compare
+#detail_left, #detail_right
   position: fixed
   bottom: 15%
   height: 70%
   width: 21%
   background-color: $grey-light
-  +v-transition(width, 0%, 0.2s)
+  +transition(width 0.2s ease)
 
-#map_detail
+  &.v-enter, &.v-leave
+    width: 0%
+
+  &.v-enter
+    +transition-delay(0s)
+
+  &.v-leave
+    +transition-delay(0.15s)
+
+    .view
+      opacity: 0
+      +transition-delay(0s)
+
+  .view
+    opacity: 1
+    +transition(opacity 0.15s)
+
+    &.v-enter
+      opacity: 0
+      +transition-delay(0.2s)
+
+#detail_left
   left: 0
 
-#map_compare
+#detail_right
   right: 0

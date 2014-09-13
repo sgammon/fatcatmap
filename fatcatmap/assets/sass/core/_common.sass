@@ -3,8 +3,31 @@
 @import "mixin/transition"
 @import "mixin/animation"
 
-$logo-size: 3em
-$logo-slant: 45deg
+.relative
+  position: relative
+
+.close, .close-left
+  line-height: 1
+  color: $grey
+  cursor: pointer
+
+  & > span
+    font-weight: $font-weight-lighter
+    font-size: 2em
+
+  &:hover
+    color: $grey-dark
+
+  &:active
+    color: $grey-darker
+
+.close
+  text-align: right
+  padding: 5px 12px 0 0
+
+.close-left
+  text-align: left
+  padding: 5px 0 0 12px
 
 .hidden
   display: none
@@ -12,29 +35,14 @@ $logo-slant: 45deg
 .transparent
   opacity: 0
 
-.close, .l-close
-  margin-top: 6px
-  margin-bottom: 0
-  line-height: 1
-  color: $grey-dark
-  cursor: pointer
-
-  & > span
-    font-weight: 200
-    font-size: 26px
-
-  &:hover
-    color: $grey
-
-.close
+.right
   float: right
-  margin-right: 12px
-  margin-left: 0
 
-.l-close
-  float: left
-  margin-right: 0
-  margin-left: 12px
+.center
+  margin: 0 auto
+
+.text-center
+  text-align: center
 
 .fcm-pre
   font-family: "fcm"
@@ -51,15 +59,3 @@ $logo-slant: 45deg
     font-size: 2.2em
     text-align: center
     opacity: 0.75
-
-.fcm-logo
-  z-index: 1000
-  position: fixed
-  text-rendering: geometricPrecision
-  font-family: $font-family-heading
-  font-weight: $font-weight-heading
-  color: transparent
-  background: linear-gradient($logo-slant, $logo-gradient-start, $logo-gradient-end)
-  -webkit-background-clip: text
-  -webkit-text-fill-color: transparent
-  -webkit-font-smoothing: subpixel-antialiased

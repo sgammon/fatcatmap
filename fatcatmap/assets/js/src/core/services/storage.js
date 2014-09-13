@@ -64,7 +64,7 @@ StringStore = function (backend) {
    * @return {*}
    */
   this.get = function (key) {
-    return _deserialize(backend.getItem(key) || '');
+    return _deserialize(backend.getItem(key));
   };
 
   /**
@@ -86,7 +86,7 @@ StringStore = function (backend) {
 /**
  * @expose
  */
-services.storage = /** @lends {Client.prototype.storage} */{
+services.storage = /** @lends {ServiceContext.prototype.storage} */{
   /**
    * @type {?StringStore}
    */

@@ -16,12 +16,12 @@ goog.require('services.http');
 
 goog.provide('services.rpc');
 
-var _baseURL = '/_rpc/v1/',
+var _baseRPCURL = '/_rpc/v1/',
   RPCAPI;
 
 /**
  * @constructor
- * @extends {Client}
+ * @extends {ServiceContext}
  * @param {string} name
  * @param {Array.<string>} methods
  * @param {Object=} config
@@ -34,12 +34,12 @@ RPCAPI = function (name, methods, config) {
 
   methods.forEach(function (method) {
 
-    var endpoint = urlutil.join(_baseURL, api.name + '.' + method);
+    var endpoint = urlutil.join(_baseRPCURL, api.name + '.' + method);
 
     /**
      * @param {Request} request
      * @param {CallbackMap=} handlers
-     * @this {Client}
+     * @this {ServiceContext}
      */
     api[method] = function (request, handlers) {
       var req = {
@@ -53,7 +53,7 @@ RPCAPI = function (name, methods, config) {
       req.headers['Content-Type'] = 'application/json';
 
       return this.http.post(req, handlers)
-    }.client();
+    }.inject('http');
 
   });
 };
@@ -62,7 +62,7 @@ RPCAPI = function (name, methods, config) {
 /**
  * @expose
  */
-services.rpc = /** @lends {Client.prototype.rpc} */{
+services.rpc = /** @lends {ServiceContext.prototype.rpc} */{
 
   /**
    * @param {Array} manifest

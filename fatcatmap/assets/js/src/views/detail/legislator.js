@@ -9,22 +9,28 @@
  * copyright (c) momentum labs, 2014
  */
 
-goog.require('views.detail');
-goog.require('views.AppView');
+goog.require('View');
+goog.require('views.Detail');
 
 goog.provide('views.detail.Legislator');
 
 /**
  * @constructor
- * @extends {views.AppView}
+ * @extends {View}
  * @param {VueOptions} options
  */
-views.detail.Legislator = views.AppView.extend({
+views.detail.Legislator = View.extend({
   /**
    * @expose
    * @type {string}
    */
   viewname: 'detail.legislator',
+
+  /**
+   * @expose
+   * @type {boolean}
+   */
+  replace: true,
 
   /**
    * @expose
@@ -39,62 +45,147 @@ views.detail.Legislator = views.AppView.extend({
 
     /**
      * @expose
-     * @type {string}
+     * @type {?string}
      */
-    kind: '',
-
-    /**
-     * @expose
-     * @type {string}
-     */
-    class: '',
-
-    /**
-     * @expose
-     * @type {string}
-     */
-    firstname: '',
-
-    /**
-     * @expose
-     * @type {string}
-     */
-    lastname: '',
-
-    /**
-     * @expose
-     * @type {string}
-     */
-    office: '',
+    kind: null,
 
     /**
      * @expose
      * @type {?string}
      */
-    district: '',
+    fec_id: '',
 
     /**
      * @expose
-     * @type {string}
+     * @type {?string}
      */
-    title: '',
+    bioguideid: '',
 
     /**
      * @expose
-     * @type {string}
-     */
-    state: '',
-
-    /**
-     * @expose
-     * @type {string}
+     * @type {?string}
      */
     govtrack_id: '',
 
     /**
      * @expose
-     * @type {string}
+     * @type {?string}
      */
-    portrait_url: ''
+    thomas_id: '',
+
+    /**
+     * @expose
+     * @type {?string}
+     */
+    osid: '',
+
+    /**
+     * @expose
+     * @type {?string}
+     */
+    lismemberid: null,
+
+    /**
+     * @expose
+     * @type {?string}
+     */
+    icpsrid: null,
+
+    /**
+     * @expose
+     * @type {?string}
+     */
+    fbid: null,
+
+    /**
+     * @expose
+     * @type {?string}
+     */
+    twitterid: null,
+
+    /**
+     * @expose
+     * @type {?string}
+     */
+    metavidid: null,
+
+    /**
+     * @expose
+     * @type {?string}
+     */
+    pvsid: null,
+
+    /**
+     * @expose
+     * @type {?string}
+     */
+    firstname: '',
+
+    /**
+     * @expose
+     * @type {?string}
+     */
+    lastname: '',
+
+    /**
+     * @expose
+     * @type {?string}
+     */
+    gender: '',
+
+    /**
+     * @expose
+     * @type {?string}
+     */
+    birthday: '',
+
+    /**
+     * @expose
+     * @type {?string}
+     */
+    lastnameenc: '',
+
+    /**
+     * @expose
+     * @type {?string}
+     */
+    lastnamealt: null,
+
+    /**
+     * @expose
+     * @type {?string}
+     */
+    namemod: null,
+
+    /**
+     * @expose
+     * @type {?string}
+     */
+    nickname: null,
+
+    /**
+     * @expose
+     * @type {?string}
+     */
+    religion: null
+
+  },
+
+  /**
+   * @expose
+   * @this {views.detail.Legislator}
+   */
+  attached: function () {
+    var el = this.$el,
+      parent = el.parentNode,
+      transitionListener = function (e) {
+        parent.removeEventListener('transitionend', transitionListener);
+        parent.removeEventListener('webkitTransitionEnd', transitionListener);
+        el.classList.remove('v-enter');
+      };
+    
+    parent.addEventListener('webkitTransitionEnd', transitionListener);
+    parent.addEventListener('transitionend', transitionListener);
+    el.classList.add('v-enter');
   }
 });

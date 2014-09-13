@@ -39,9 +39,27 @@ views.Detail = View.extend({
   data: {
     /**
      * @expose
+     * @type {?Object}
+     */
+    left: null,
+
+    /**
+     * @expose
+     * @type {?Object}
+     */
+    right: null,
+
+    /**
+     * @expose
      * @type {string}
      */
-    kind: ''
+    leftview: '',
+
+    /**
+     * @expose
+     * @type {string}
+     */
+    rightview: ''
   },
 
   /**
@@ -52,88 +70,105 @@ views.Detail = View.extend({
     /**
      * @expose
      * @param {MouseEvent=} e
+     * @this {views.Detail}
      */
     close: function (e) {
-      if (e) {
+      var target = e.target,
+        parent = target.parentNode,
+        key, keys, keyI;
+
+      
+      if (parent.classList.contains('close')) {
         e.preventDefault();
         e.stopPropagation();
+
+        key = this[parent.parentNode.getAttribute('id').split('_').pop()].key;
+        keys = this.keys();
+        keyI = keys.indexOf(key);
+
+        if (keyI > -1) {
+          keyI = Math.abs(keyI - 1);
+          keys = keys[keyI] ? [keys[keyI]] : [];
+        }
+
+        parent.classList.add('transparent');
+
+        this.$root.$emit('route', '/' +
+          (keys.length > 1 ? keys.join('/and/') : keys[0] || ''));
+      }
+    },
+
+    /**
+     * @expose
+     * @return {Array.<string>}
+     * @this {views.Detail}
+     */
+    keys: function () {
+      var keys = [];
+
+      if (this.left)
+        keys.push(this.left.key);
+
+      if (this.right)
+        keys.push(this.right.key);
+
+      return keys;
+    },
+
+    /**
+     * @expose
+     * @param {?Array.<Object>} nodes
+     * @this {views.Detail}
+     */
+    select: function (nodes) {
+      var detail = this,
+        left, right, keys;
+
+      if (nodes && nodes.length) {
+        if (nodes.length > 2)
+          nodes = nodes.slice(0, 2);
+
+        nodes.forEach(function (node) {
+          if (detail.left && detail.left.key === node.key) {
+            left = node;
+          } else if (detail.right && detail.right.key === node.key) {
+            right = node;
+          } else {
+            if (left) {
+              right = node;
+            } else {
+              left = node;
+            }
+          }
+        });
       }
 
-      services.router.back();
+      keys = [];
+
+      if (left) {
+        detail.$set('leftview', 'detail.' + left.native.kind.toLowerCase());
+        keys.push(left.key);
+      }
+
+      if (right) {
+        detail.$set('rightview', 'detail.' + right.native.kind.toLowerCase());
+        keys.push(right.key);
+      }
+
+      detail.$set('left', left);
+      detail.$set('right', right);
+
+      detail.$parent.$set('map.selected', keys);
+      detail.$parent.$set('map.changed', true);
     }
   },
 
   /**
    * @expose
-   * @param {Object} data Data to render into detail view.
+   * @param {Array.<Object>} nodes
    * @this {views.Detail}
    */
-  handler: function (data) {
-    if (data && data.kind) {
-      this.$set('data', data);
-      this.$set('kind', 'detail.' + data.kind.toLowerCase());
-    }
-  }
-});
-
-/**
- * @constructor
- * @extends {View}
- * @param {VueOptions} options
- */
-views.Compare = View.extend({
-  /**
-   * @expose
-   * @type {string}
-   */
-  viewname: 'compare',
-
-  /**
-   * @expose
-   * @type {boolean}
-   */
-  replace: true,
-
-  /**
-   * @expose
-   * @type {Object.<string, *>}
-   */
-  data: {
-    /**
-     * @expose
-     * @type {string}
-     */
-    kind: ''
-  },
-
-  /**
-   * @expose
-   * @type {Object.<string, function(...[*])>}
-   */
-  methods: {
-    /**
-     * @expose
-     * @param {MouseEvent=} e
-     */
-    close: function (e) {
-      if (e) {
-        e.preventDefault();
-        e.stopPropagation();
-      }
-
-      services.router.back();
-    }
-  },
-
-  /**
-   * @expose
-   * @param {Object} data Data to render into detail view.
-   * @this {views.Compare}
-   */
-  handler: function (data) {
-    if (data && data.kind) {
-      this.$set('data', data);
-      this.$set('kind', 'detail.' + data.kind.toLowerCase());
-    }
+  handler: function (nodes) {
+    this.select(nodes); 
   }
 });

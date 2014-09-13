@@ -21,11 +21,11 @@ var TEMPLATES = {};
 /**
  * @expose
  */
-services.template = /** @lends {Client.prototype.template} */ {
+services.template = /** @lends {ServiceContext.prototype.template} */ {
   /**
    * @param {string} filename
    * @param {string} source
-   * @this {Client}
+   * @this {ServiceContext}
    */
   put: function (filename, source) {
     if (typeof filename === 'string' && typeof source === 'string')
@@ -36,7 +36,7 @@ services.template = /** @lends {Client.prototype.template} */ {
    * @param {string} filename
    * @param {CallbackMap} callbacks
    * @throws {TypeError} If either param is missing.
-   * @this {Client}
+   * @this {ServiceContext}
    */
   get: function (filename, callbacks) {
     if (!(typeof filename === 'string' &&
@@ -55,7 +55,7 @@ services.template = /** @lends {Client.prototype.template} */ {
   /**
    * @param {string} filename
    * @return {boolean}
-   * @this {Client}
+   * @this {ServiceContext}
    */
   has: function (filename) {
     return !!TEMPLATES[filename];
@@ -63,7 +63,7 @@ services.template = /** @lends {Client.prototype.template} */ {
 
   /**
    * @param {Object.<string, string>} manifest
-   * @this {Client}
+   * @this {ServiceContext}
    */
   init: function (manifest) {
     for (var k in manifest) {

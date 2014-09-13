@@ -23,7 +23,7 @@ views.Header = View.extend({
    * @expose
    * @type {string}
    */
-  viewname: 'header',
+  viewname: 'layout.header',
 
   /**
    * @expose
