@@ -94,8 +94,12 @@ config = cfg.Config(app={
 
     'sentry': {
       'endpoint': ('https://3de93e524e09448ea9d08ffda6c5059f:'
-                   '1b1fd3facfb9493aa3201a064d0c135b@app.getsentry.com/28386')
-    }
+                   '1b1fd3facfb9493aa3201a064d0c135b@app.getsentry.com/28386')},
+
+    'service': {
+      'installed': {
+        'id': '489276160057-jurcfiqvb7213lqu4q65fnqsocesma2m.apps.googleusercontent.com',
+        'secret': 'EdwXzTO0qe7X35MCa1UWM-tx'}}
 
   }
 
@@ -228,9 +232,13 @@ config = cfg.Config(app={
   'environments': freeze({'production', 'staging', 'sandbox'}),
 
   'gce': {
+
+    'id': '489276160057',
+
     'project': {
       'name': 'fcm-catnip',
-      'id': '489276160057-dffvig7s5uoqg0em72ndnsuvc72jb6m6@developer.gserviceaccount.com'},
+      'id': '489276160057-dffvig7s5uoqg0em72ndnsuvc72jb6m6@developer.gserviceaccount.com',
+      'secret': 'C2Dynyq3wBLawgA-INnIICq4'},
 
     'authorization': {
       'key': 'conf/keys/id_k9',
