@@ -201,11 +201,13 @@ class Committee(Vertex):
 
 
 ## +=+=+=+=+ Legislation +=+=+=+=+ ##
-@describe(root=True)
+@describe(parent=LegislativeSession, keyname=True)
 class Legislation(Vertex):
 
   ''' Describes a legislative proposal, made by a ``Legislator`` in a
       ``LegislativeHouse``. '''
+
+  # keyname: bill ID
 
   @describe
   class BillName(Name):
@@ -257,9 +259,8 @@ class Legislation(Vertex):
                                     val for (key, val) in BillOrigin]}
 
   ## -- structural details -- ##
-  name = BillName, {'indexed': True}
+  name = BillName, {'indexed': True, 'embedded': True, 'repeated': True}
   issues = Issue, {'indexed': True, 'repeated': True}
-  cycle = int, {'indexed': True, 'required': True, 'choices': xrange(1, 113)}
 
 
 @describe(parent=LegislativeSession, keyname=True, type=Event)

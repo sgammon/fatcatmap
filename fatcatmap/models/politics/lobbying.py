@@ -32,6 +32,8 @@ class Lobbyist(Vertex):
 
   '''  '''
 
+  firm = LobbyingFirm, {'indexed': True, 'default': None, 'embedded': False}
+
 
 ## +=+=+=+=+=+=+=+=+ Edges +=+=+=+=+=+=+=+=+ ##
 
