@@ -21,7 +21,7 @@ class Person(Vertex):
   '''  '''
 
   ## -- personal details -- ##
-  name = PersonName, {'indexed': True, 'required': True}
+  name = PersonName, {'indexed': True, 'required': True, 'embedded': True}
   gender = str, {'indexed': True, 'choices': {'m', 'f'}}
   birthdate = date, {'indexed': True, 'default': None}
   deathdate = date, {'indexed': True, 'default': None}

@@ -36,12 +36,10 @@ class BaseModel(model.Model):
   __adapter__, __description__ = "RedisWarehouse", None
 
 
-class BaseVertex(model.Vertex, BaseModel):
+class BaseVertex(BaseModel, model.Vertex):
 
   ''' Extended-functionality graph ``Vertex`` model, with builtin fcm
       functionality and driver support. '''
-
-  native = Key, {'embedded': True, 'indexed': True, 'required': True}
 
   @classmethod
   def new(cls, first=None, second=None, **kwargs):
@@ -70,6 +68,8 @@ class BaseVertex(model.Vertex, BaseModel):
           registered parent types for this subtype.
 
         :returns: Resulting subtype instance. '''
+
+    from canteen import model
 
     desc = cls.__description__
 
@@ -102,10 +102,27 @@ class BaseVertex(model.Vertex, BaseModel):
 
     kwargs.update({
       'key': cls.__keyclass__(cls, keyname, parent=parent)})
+
+    # add empty submodels if they aren't passed in, otherwise validate
+    for prop in (getattr(cls, n) for n in cls.__lookup__):
+      if prop._options.get('embedded') and (
+        issubclass(prop._basetype, model.Model)):
+        if prop.name in kwargs:
+          if not isinstance(kwargs[prop.name], prop._basetype):
+            raise TypeError('Embedded submodel at prop "%s" must be of type'
+                            ' "%s", but got "%s" instead.' % (
+                              prop.name,
+                              prop._basetype,
+                              kwargs[prop.name].__class__))
+          submodel = kwargs[prop.name]
+        else:
+          submodel = prop._basetype.new()
+        kwargs[prop.name] = submodel
+
     return cls(**kwargs)
 
 
-class BaseEdge(model.Edge, BaseModel):
+class BaseEdge(BaseModel, model.Edge):
 
   ''' Extended-functionality graph ``Edge`` model, with builtin fcm
       functionality and driver support. '''
@@ -249,6 +266,38 @@ class Spec(object):
 
     return True  # passed all tests
 
+  def inject(cls, target):
+
+    ''' Inject various useful methods onto a :py:class:`Model` subclass.
+
+        :param target: :py:class:`Model` subclass to inject useful shit
+          onto.
+
+        :returns: Original :py:class:`Model` subclass, post-inejction. '''
+
+    def injected_new(cls, *args, **kwargs):
+
+      ''' Default instance spawn method, overridden in subclasses to enforce
+          schema. Just passes args and kwargs along to the model constructor.
+
+          :param args: Positional arguments to spawn the target model isntance
+            with.
+
+          :param kwargs: Keyword arguments to spawn the target model instance
+            with.
+
+          :returns: Spawned :py:class:`Model` instance with positional and
+            keyword arguments ``args``/``kwargs``. '''
+
+      return cls(*args, **kwargs)
+
+    if not hasattr(target, 'new'):
+      target.new = classmethod(injected_new)
+
+    # unconditionally apply basemodel's adapter
+    target.__adapter__ = BaseModel.__adapter__
+    return target
+
   def register(self, target):
 
     ''' Register a ``target`` :py:class:`Model` subclass in fcm's known model
@@ -292,7 +341,7 @@ class Spec(object):
       elif hasattr(target, '__vertex__') and target.__vertex__:
         _graph[target]['_root_'] = target
 
-      return target
+      return self.inject(target)
 
   def __iter__(self):
 
