@@ -187,7 +187,7 @@ class LegislatorConverter(ModelBinding):
 
     if content:
       ext_ids.append(legislator.attach(ext.ExternalID.new(legislator,
-        provider=provider, name=name, content=str(content)))))
+        provider=provider, name=name, content=str(content))))
 
   def convert(self, data):
 

@@ -34,6 +34,12 @@ from canteen import model
 from canteen.util.struct import BidirectionalEnum
 
 
+## Globals
+us_congress = model.Key('Legislature', 'us-congress')
+us_house = model.Key('LegislativeHouse', 'house', parent=us_congress)
+us_senate = model.Key('LegislativeHouse', 'senate', parent=us_congress)
+
+
 
 ## +=+=+=+=+=+=+=+=+ Structure +=+=+=+=+=+=+=+=+ ##
 
@@ -52,9 +58,10 @@ class Legislature(Model):
 
     ''' Generate ``Legislature`` entities. '''
 
-    congress = cls.new(key=model.Key(cls, 'us-congress'))
-    congress.name.formal = 'United States Congress'
-    congress.name.informal = 'Congress'
+    congress = cls.new(key=us_congress)
+    congress.name = OrganizationName(
+      formal='United States Congress',
+      informal='Congress')
     yield congress
 
 
@@ -68,21 +75,29 @@ class LegislativeHouse(Model):
   type = str, {'indexed': True, 'choices': {'major', 'minor', 'primary'}}
 
   @classmethod
-  def fixture(cls, legislature):
+  def fixture(cls):
 
     ''' Generate ``LegislativeHouse`` entities. '''
 
-    if legislature.key.name == 'us-congress':
-      house = legislative.LegislativeHouse.new(congress, 'house')
-      house.term = 2
-      house.type = 'minor'
-      yield house
+    house = LegislativeHouse.new(key=us_house)
+    house.name = OrganizationName(
+      primary='Congress',
+      secondary='US Congress',
+      formal='United States House of Representatives',
+      informal='House of Representatives')
+    house.term = 2
+    house.type = 'minor'
+    yield house
 
-      senate = legislative.LegislativeHouse.new(congress, 'senate')
-      senate.term = 6
-      senate.type = 'major'
-      yield senate
-
+    senate = LegislativeHouse.new(key=us_senate)
+    senate.name = OrganizationName(
+      primary='Senate',
+      secondary='US Senate',
+      formal='United States Senate',
+      informal='US Senate')
+    senate.term = 6
+    senate.type = 'major'
+    yield senate
 
 
 @describe(parent=Legislature, keyname=True)
@@ -92,17 +107,19 @@ class LegislativeSession(Model):
       *in session*. '''
 
   number = int, {'indexed': True, 'required': True}
-  start = date, {'indexed': True, 'required': True}
-  end = date, {'indexed': True, 'required': True}
+  start = date, {'indexed': True}
+  end = date, {'indexed': True}
 
   @classmethod
-  def fixture(cls, legislature):
+  def fixture(cls):
 
     ''' Generate ``LegislativeSession`` entities. '''
 
     sessions = []
     for session_i in xrange(1, 114):
-      yield legislative.LegislativeSession.new(congress, str(session_i))
+      yield LegislativeSession.new(
+        key=Key(LegislativeSession, str(session_i), parent=us_congress),
+        number=session_i)
 
 
 @describe(parent=LegislativeHouse, type=Seat)
