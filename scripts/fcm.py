@@ -332,7 +332,7 @@ class FCM(cli.Tool):
         'RedisWarehouse': RedisWarehouse}
 
       source = arguments.source and _adapters.get(arguments.source)
-      target = arguments.target and _adapters.get(arguments.target)
+      target = _adapters.get(arguments.target or 'RedisWarehouse')
 
       # construct adapters
       source_a, target_a = source() if source else None, target()
