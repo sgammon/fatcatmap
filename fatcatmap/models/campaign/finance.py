@@ -37,10 +37,14 @@ class CampaignContribution(Contributor >> Campaign):
   ''' Describes a monetary contribution made from a ``Contributor`` to a
       ``Campaign``. '''
 
+
+
   ## -- contribution data -- ##
   cycle = int, {'indexed': True, 'choices': xrange(1900, 2014)}
   namespace = str, {'indexed': True, 'choices': {
       'urn:fec:transaction', 'urn:nimsp:transaction'}}
+
+  transaction_type = str, {'indexed': True}
 
   ## -- original data -- ##
   filing = URI, {'indexed': True}

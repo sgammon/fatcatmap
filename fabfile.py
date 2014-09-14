@@ -9,4 +9,4 @@
 
 '''
 
-from fatcatmap.ops import *
+from ops import *

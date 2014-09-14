@@ -25,7 +25,7 @@ _custom_jinja2_extensions = filter(lambda x: x is not None, [HamlishExtension if
 app = os.path.dirname(__file__)
 
 project = os.path.dirname(app)
-DEFAULT_BOOT_DISK = 'base-v11'
+DEFAULT_BOOT_DISK = 'base-prerelease-v12-alpha-2'
 freeze = lambda x: frozenset(x)
 
 
