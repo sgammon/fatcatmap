@@ -30,6 +30,7 @@ from ..politics.election import Election
 from ..politics.party import PoliticalParty
 
 # canteen struct
+from canteen import model
 from canteen.util.struct import BidirectionalEnum
 
 
@@ -38,7 +39,7 @@ from canteen.util.struct import BidirectionalEnum
 
 
 ## +=+=+=+=+ Legislatures +=+=+=+=+ ##
-@describe(root=True)
+@describe(root=True, keyname=True)
 class Legislature(Model):
 
   ''' Describes a legislative body. '''
@@ -46,8 +47,18 @@ class Legislature(Model):
   name = OrganizationName, {'embedded': True, 'indexed': True}
   jurisdiction = Geobounds, {'repeated': True, 'indexed': True}
 
+  @classmethod
+  def fixture(cls):
 
-@describe(parent=Legislature)
+    ''' Generate ``Legislature`` entities. '''
+
+    congress = cls.new(key=model.Key(cls, 'us-congress'))
+    congress.name.formal = 'United States Congress'
+    congress.name.informal = 'Congress'
+    yield congress
+
+
+@describe(parent=Legislature, keyname=True)
 class LegislativeHouse(Model):
 
   ''' Describes a minor, major, or primary house within a legislative body. '''
@@ -56,8 +67,25 @@ class LegislativeHouse(Model):
   term = int, {'indexed': True, 'range': xrange(2, 10)}
   type = str, {'indexed': True, 'choices': {'major', 'minor', 'primary'}}
 
+  @classmethod
+  def fixture(cls, legislature):
 
-@describe(parent=Legislature)
+    ''' Generate ``LegislativeHouse`` entities. '''
+
+    if legislature.key.name == 'us-congress':
+      house = legislative.LegislativeHouse.new(congress, 'house')
+      house.term = 2
+      house.type = 'minor'
+      yield house
+
+      senate = legislative.LegislativeHouse.new(congress, 'senate')
+      senate.term = 6
+      senate.type = 'major'
+      yield senate
+
+
+
+@describe(parent=Legislature, keyname=True)
 class LegislativeSession(Model):
 
   ''' Describes a session of time where a ``Legislature`` is considered to be
@@ -66,6 +94,15 @@ class LegislativeSession(Model):
   number = int, {'indexed': True, 'required': True}
   start = date, {'indexed': True, 'required': True}
   end = date, {'indexed': True, 'required': True}
+
+  @classmethod
+  def fixture(cls, legislature):
+
+    ''' Generate ``LegislativeSession`` entities. '''
+
+    sessions = []
+    for session_i in xrange(1, 114):
+      yield legislative.LegislativeSession.new(congress, str(session_i))
 
 
 @describe(parent=LegislativeHouse, type=Seat)
@@ -93,7 +130,7 @@ class LegislativeOffice(Model):
 
 
 ## +=+=+=+=+ Legislators +=+=+=+=+ ##
-@describe(parent=Person, type=Role)
+@describe(parent=Person, type=Role, keyname=True)
 class Legislator(Vertex):
 
   ''' Describes an individual legislative actor, who is an elected (or, in some
@@ -101,7 +138,7 @@ class Legislator(Vertex):
       of many ``LegislativeOffice``s. '''
 
   election = Election, {'indexed': True}
-  seat = LegislativeOffice, {'indexed': True, 'required': True}
+  seat = LegislativeOffice, {'indexed': True}
   campaigns = Campaign, {'indexed': True, 'embedded': True}
 
 
@@ -141,7 +178,7 @@ class Committee(Vertex):
 
   ## -- naming and resources -- ##
   name = OrganizationName, {'embedded': True, 'indexed': True}
-  website = URI, {'indexed': True}
+  website = URI, {'embedded': True, 'indexed': True}
 
 
 ## +=+=+=+=+ Legislation +=+=+=+=+ ##

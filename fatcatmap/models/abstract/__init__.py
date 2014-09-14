@@ -15,7 +15,8 @@ from . import (content,
                org,
                role,
                seat,
-               transaction)
+               transaction,
+               jurisdiction)
 
 # submodule symbols
 from .content import *
@@ -27,6 +28,7 @@ from .org import *
 from .role import *
 from .seat import *
 from .transaction import *
+from .jurisdiction import *
 
 
 __all__ = ('content',
@@ -37,4 +39,5 @@ __all__ = ('content',
            'org',
            'role',
            'seat',
-           'transaction')
+           'transaction',
+           'jurisdiction')

@@ -12,7 +12,8 @@ __author__ = "Sam Gammon <sam@momentum.io>"
 
 
 # stdlib
-import os, sys, time, urllib2, base64, collections, subprocess, StringIO
+import os, sys, time, inspect, urllib2
+import base64, collections, subprocess, StringIO
 
 project_root = os.path.abspath(os.path.dirname(os.path.dirname(__file__)))
 sys.path.insert(0, project_root)
@@ -417,22 +418,32 @@ class FCM(cli.Tool):
             logging.info('-- Queueing object write at key "%s" of type "%s"...' % (
               key, kind))
 
+            # try decompressing
+            try:
+              decompressed = source.EngineConfig.compression.decompress(entity)
+            except:
+              pass
+
+            obj = source.EngineConfig.serializer.loads(entity)
             if arguments.binding:
               # resolve binding
               if kind not in bindings._bindings[arguments.binding]:
                 raise RuntimeError('Binding category "%s" has no binding for model'
                                    ' "%s".' % (arguments.binding, kind))
 
-              _e = bindings._bindings[arguments.binding][kind]().convert(source.EngineConfig.serializer.loads(entity))
+              _binding = bindings._bindings[arguments.binding][kind]()
+
+              for entity in _binding.convert(obj):
+                _written += 1
+                _by_kind[entity.kind()] += 1
+                target.put(model.Key(urlsafe=key).flatten(True), entity, entity.__class__, pipeline=pipeline)
 
             else:
-              obj = source.EngineConfig.serializer.loads(entity)
               _e = target.get(key=None, _entity=obj)
+              target.put(model.Key(urlsafe=key).flatten(True), _e, _e.__class__, pipeline=pipeline)
 
-            target.put(model.Key(urlsafe=key).flatten(True), _e, _e.__class__, pipeline=pipeline)
-
-            _written += 1
-            _by_kind[kind] += 1
+              _written += 1
+              _by_kind[kind] += 1
 
           import pdb; pdb.set_trace()
           pipeline.execute()  # go

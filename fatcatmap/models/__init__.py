@@ -473,4 +473,5 @@ __all__ = ('abstract',
            'geo',
            'graph',
            'person',
-           'session')
+           'session',
+           'state')
