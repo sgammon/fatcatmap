@@ -40,6 +40,17 @@ class PlaceName(Name):
 
   '''  '''
 
+  long_name = str, {'indexed': True}
+  short_name = str, {'indexed': True}
+
+
+@describe(type=Name)
+class JurisdictionName(PlaceName):
+
+  '''  '''
+
+  abbreviation = str, {'indexed': True}  
+
 
 @describe(type=Name)
 class RoleName(Name):

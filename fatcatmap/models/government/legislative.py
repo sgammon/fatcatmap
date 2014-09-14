@@ -19,6 +19,8 @@ from ..abstract import (URI,
                         Name,
                         Seat,
                         Group,
+                        Event,
+                        Description,
                         OrganizationName)
 
 # fcm models
@@ -30,7 +32,14 @@ from ..politics.election import Election
 from ..politics.party import PoliticalParty
 
 # canteen struct
+from canteen import model
 from canteen.util.struct import BidirectionalEnum
+
+
+## Globals
+us_congress = model.Key('Legislature', 'us-congress')
+us_house = model.Key('LegislativeHouse', 'house', parent=us_congress)
+us_senate = model.Key('LegislativeHouse', 'senate', parent=us_congress)
 
 
 
@@ -38,7 +47,7 @@ from canteen.util.struct import BidirectionalEnum
 
 
 ## +=+=+=+=+ Legislatures +=+=+=+=+ ##
-@describe(root=True)
+@describe(root=True, keyname=True)
 class Legislature(Model):
 
   ''' Describes a legislative body. '''
@@ -46,8 +55,19 @@ class Legislature(Model):
   name = OrganizationName, {'embedded': True, 'indexed': True}
   jurisdiction = Geobounds, {'repeated': True, 'indexed': True}
 
+  @classmethod
+  def fixture(cls):
 
-@describe(parent=Legislature)
+    ''' Generate ``Legislature`` entities. '''
+
+    congress = cls.new(key=us_congress)
+    congress.name = OrganizationName(
+      formal='United States Congress',
+      informal='Congress')
+    yield congress
+
+
+@describe(parent=Legislature, keyname=True)
 class LegislativeHouse(Model):
 
   ''' Describes a minor, major, or primary house within a legislative body. '''
@@ -56,16 +76,52 @@ class LegislativeHouse(Model):
   term = int, {'indexed': True, 'range': xrange(2, 10)}
   type = str, {'indexed': True, 'choices': {'major', 'minor', 'primary'}}
 
+  @classmethod
+  def fixture(cls):
 
-@describe(parent=Legislature)
+    ''' Generate ``LegislativeHouse`` entities. '''
+
+    house = LegislativeHouse.new(key=us_house)
+    house.name = OrganizationName(
+      primary='Congress',
+      secondary='US Congress',
+      formal='United States House of Representatives',
+      informal='House of Representatives')
+    house.term = 2
+    house.type = 'minor'
+    yield house
+
+    senate = LegislativeHouse.new(key=us_senate)
+    senate.name = OrganizationName(
+      primary='Senate',
+      secondary='US Senate',
+      formal='United States Senate',
+      informal='US Senate')
+    senate.term = 6
+    senate.type = 'major'
+    yield senate
+
+
+@describe(parent=Legislature, keyname=True)
 class LegislativeSession(Model):
 
   ''' Describes a session of time where a ``Legislature`` is considered to be
       *in session*. '''
 
   number = int, {'indexed': True, 'required': True}
-  start = date, {'indexed': True, 'required': True}
-  end = date, {'indexed': True, 'required': True}
+  start = date, {'indexed': True}
+  end = date, {'indexed': True}
+
+  @classmethod
+  def fixture(cls):
+
+    ''' Generate ``LegislativeSession`` entities. '''
+
+    sessions = []
+    for session_i in xrange(1, 114):
+      yield LegislativeSession.new(
+        key=Key(LegislativeSession, str(session_i), parent=us_congress),
+        number=session_i)
 
 
 @describe(parent=LegislativeHouse, type=Seat)
@@ -93,7 +149,7 @@ class LegislativeOffice(Model):
 
 
 ## +=+=+=+=+ Legislators +=+=+=+=+ ##
-@describe(parent=Person, type=Role)
+@describe(parent=Person, type=Role, keyname=True)
 class Legislator(Vertex):
 
   ''' Describes an individual legislative actor, who is an elected (or, in some
@@ -101,7 +157,7 @@ class Legislator(Vertex):
       of many ``LegislativeOffice``s. '''
 
   election = Election, {'indexed': True}
-  seat = LegislativeOffice, {'indexed': True, 'required': True}
+  seat = LegislativeOffice, {'indexed': True}
   campaigns = Campaign, {'indexed': True, 'embedded': True}
 
 
@@ -141,15 +197,17 @@ class Committee(Vertex):
 
   ## -- naming and resources -- ##
   name = OrganizationName, {'embedded': True, 'indexed': True}
-  website = URI, {'indexed': True}
+  website = URI, {'embedded': True, 'indexed': True}
 
 
 ## +=+=+=+=+ Legislation +=+=+=+=+ ##
-@describe(root=True)
+@describe(parent=LegislativeSession, keyname=True)
 class Legislation(Vertex):
 
   ''' Describes a legislative proposal, made by a ``Legislator`` in a
       ``LegislativeHouse``. '''
+
+  # keyname: bill ID
 
   @describe
   class BillName(Name):
@@ -201,10 +259,22 @@ class Legislation(Vertex):
                                     val for (key, val) in BillOrigin]}
 
   ## -- structural details -- ##
-  name = BillName, {'indexed': True}
+  name = BillName, {'indexed': True, 'embedded': True, 'repeated': True}
   issues = Issue, {'indexed': True, 'repeated': True}
-  cycle = int, {'indexed': True, 'required': True, 'choices': xrange(1, 113)}
 
+
+@describe(parent=LegislativeSession, keyname=True, type=Event)
+class Rollcall(Vertex):
+
+  ''' Represents an event where a ``Legislature`` calls roll to vote on a
+      particular matter. Referenced from ``Vote``, which are individual
+      vote edges submitted by legislative members (``Legislator``s). '''
+
+  # keyname: special rollcall ID
+
+  passed = bool, {'indexed': True, 'default': False}
+  result = Description, {'embedded': True}
+  description = Description, {'embedded': True}
 
 
 ## +=+=+=+=+=+=+=+=+ Edges +=+=+=+=+=+=+=+=+ ##
@@ -217,7 +287,8 @@ class Vote(Legislator >> Legislation):
   ''' A ``Legislator``'s vote at a particular step in the legislative process
       concerning a piece of ``Legislation``. '''
 
-  call = bool, {'indexed': True, 'default': None, 'required': True}
+  rollcall = Rollcall, {'embedded': False, 'indexed': True}
+  vote = bool, {'indexed': True, 'default': None}
   procedural = bool, {'indexed': True, 'default': True}
   committee = Committee, {'indexed': True}
 

@@ -21,6 +21,7 @@ from canteen.model import (Key,
 
 
 ## Globals
+_fixtures = set()
 _spawn = lambda _t: defaultdict(_t)
 _ptree, _ttree, _models, _graph = (
   _spawn(set), _spawn(set), {}, _spawn(lambda: _spawn(set)))
@@ -308,7 +309,7 @@ class Spec(object):
 
         :returns: Original :py:class:`Model` subclass, after registration. '''
 
-    global _ttree, _ptree, _graph, _models
+    global _ttree, _ptree, _graph, _models, _fixtures
 
     # merge self with target
     if self.validate(self.merge(target)):
@@ -340,6 +341,9 @@ class Spec(object):
 
       elif hasattr(target, '__vertex__') and target.__vertex__:
         _graph[target]['_root_'] = target
+
+      if hasattr(target, 'fixture'):
+        _fixtures.add(target)
 
       return self.inject(target)
 
@@ -473,4 +477,5 @@ __all__ = ('abstract',
            'geo',
            'graph',
            'person',
-           'session')
+           'session',
+           'state')

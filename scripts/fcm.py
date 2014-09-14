@@ -12,7 +12,8 @@ __author__ = "Sam Gammon <sam@momentum.io>"
 
 
 # stdlib
-import os, sys, time, urllib2, base64, collections, subprocess, StringIO
+import os, sys, time, inspect, urllib2
+import base64, collections, subprocess, StringIO
 
 project_root = os.path.abspath(os.path.dirname(os.path.dirname(__file__)))
 sys.path.insert(0, project_root)
@@ -282,6 +283,7 @@ class FCM(cli.Tool):
       ('--target', {'type': str, 'help': 'adapter to migrate to'}),
       ('--binding', {'type': str, 'help': 'binding name to convert with, if any'}),
       ('--kinds', {'type': str, 'help': 'kinds to transfer, comma-delimited (no spaces)'}),
+      ('--fixtures', {'action': 'store_true', 'help': 'run fixtures before transfer'}),
       ('--update', {'action': 'store_true', 'help': 'download latest dataset package'}))
 
     def execute(arguments):
@@ -298,6 +300,7 @@ class FCM(cli.Tool):
           return codes. '''
 
       from canteen import model
+      from fatcatmap import models
       from canteen.model.adapter.redis import RedisAdapter
       from fatcatmap.logic.db.adapter import RedisWarehouse
 
@@ -329,119 +332,165 @@ class FCM(cli.Tool):
         'RedisWarehouse': RedisWarehouse}
 
       source = arguments.source and _adapters.get(arguments.source)
-      target = arguments.target and _adapters.get(arguments.target)
+      target = _adapters.get(arguments.target or 'RedisWarehouse')
 
-      # grab all keys
-      source_a, target_a = source(), target()
+      # construct adapters
+      source_a, target_a = source() if source else None, target()
 
-      if not arguments.kinds:
-        source_keys = source.execute(source.Operations.KEYS, '__meta__')
-      else:
-        source_keys = []
-        for kind in arguments.kinds.split(','):
-          source_keys += source.execute(source.Operations.SET_MEMBERS, '__meta__', )
+      if arguments.fixtures:
+        _dependencies = collections.defaultdict(lambda: set())
+        logging.info('Applying fixtures to target...')
 
-      found_keys = []
-
-      logging.info('Found %s keys. Beginning migration...' % len(source_keys))
-
-      for key in source_keys:
-
-        # skip meta/index keys
-        if key.startswith('__'):
-          logging.info('-- Skipping key "%s"...' % key)
-          continue
-
-        try:
-          unicode(key)
-          base64.b64decode(key)
-          model.Key(urlsafe=key)
-        except:
-          continue
-
-        logging.info('-- Processing key "%s"...' % key)
-        found_keys.append(key)
-
-      logging.info('Found %s object keys. Transferring...' % len(found_keys))
-
-      _keys, _by_kind = 0, collections.defaultdict(lambda: 0)
-      with source.channel('__meta__').pipeline() as pipeline:
-
-        _filtered_keys = []
-        for key in found_keys:
-
-          k = model.Key(urlsafe=key).kind
-          if (arguments.kinds and k in arguments.kinds.split(',')) or not arguments.kinds:
-            _keys += 1
-            _by_kind[model.Key(urlsafe=key).kind] += 1
-            source.get(model.Key(urlsafe=key).flatten(True), pipeline=pipeline)
-            logging.info('-- Queueing key "%s"...' % key)
-            _filtered_keys.append(key)
-
-        logging.debug('Entity type report (%s entities total):' % _keys)
-        for type in _by_kind:
-          logging.debug('-- "%s": %s entities' % (type, str(_by_kind[type])))
-
-        logging.info('Continuing in 3 seconds...')
-        time.sleep(3)
-
-        _keys, _by_kind = {}, collections.defaultdict(lambda: 0)
-        for key, result in zip(_filtered_keys, pipeline.execute()):
-          if result is not None:
-            logging.info('-- Fetched object at key "%s" of type "%s"...' % (
-              key, model.Key(urlsafe=key).kind))
-            _keys[key] = result
-            _by_kind[model.Key(urlsafe=key).kind] += 1
-          else:
-            logging.info('-- !! FETCH FAILED for key "%s"...' % key)
-
-        logging.info('Total of %s successfully packed objects.' % len(_keys))
-        logging.info('Loading bindings...')
-
-        from fatcatmap import bindings
-        logging.info('Found %s model binding categories.' % len(bindings._bindings))
-
-        if arguments.binding:
-          logging.info('Using bindings from category "%s"...' % arguments.binding)
-
-        logging.info('Beginning write in 3 seconds...')
-        time.sleep(3)
-
+        _fixtures_c, _fixtures_by_kind = 0, collections.defaultdict(lambda: 0)
         with target.channel('__meta__').pipeline() as pipeline:
 
-          _written, _by_kind = 0, collections.defaultdict(lambda: 0)
-          for key, entity in _keys.iteritems():
+          for fixtureset in models._fixtures:
+            logging.info('Applying fixtures for model "%s"...' % fixtureset.__name__)
 
-            kind = model.Key(urlsafe=key).kind
+            desc = fixtureset.__description__
 
-            logging.info('-- Queueing object write at key "%s" of type "%s"...' % (
-              key, kind))
+            for obj in fixtureset.fixture():
 
-            if arguments.binding:
-              # resolve binding
-              if kind not in bindings._bindings[arguments.binding]:
-                raise RuntimeError('Binding category "%s" has no binding for model'
-                                   ' "%s".' % (arguments.binding, kind))
+              if not isinstance(obj, (tuple, list)):
+                obj = [obj]
 
-              _e = bindings._bindings[arguments.binding][kind]().convert(source.EngineConfig.serializer.loads(entity))
+              for _obj in obj:
+                logging.info('-- Storing fixture of type "%s" at key "%s"...' % (_obj.key.kind, _obj.key.urlsafe()))
+                target_a._put(_obj, pipeline=pipeline)
 
+              _fixtures_c += 1
+              _fixtures_by_kind[_obj.key.kind] += 1
+
+          logging.info('Fixture report (%s entities total):' % _fixtures_c)
+          for _kind in _fixtures_by_kind:
+            logging.info('-- %s: %s entities' % (_kind, _fixtures_by_kind[_kind]))
+
+          pipeline.execute()
+
+          logging.info('Fixtures applied with great success.')
+          
+
+      if source and target:
+
+        # retrieve keys
+        if not arguments.kinds:
+          source_keys = source.execute(source.Operations.KEYS, '__meta__')
+        else:
+          source_keys = []
+          for kind in arguments.kinds.split(','):
+            source_keys += source.execute(source.Operations.SET_MEMBERS, '__meta__', )
+
+        found_keys = []
+
+        logging.info('Found %s keys. Beginning migration...' % len(source_keys))
+
+        for key in source_keys:
+
+          # skip meta/index keys
+          if key.startswith('__'):
+            logging.info('-- Skipping key "%s"...' % key)
+            continue
+
+          try:
+            unicode(key)
+            base64.b64decode(key)
+            model.Key(urlsafe=key)
+          except:
+            continue
+
+          logging.info('-- Processing key "%s"...' % key)
+          found_keys.append(key)
+
+        logging.info('Found %s object keys. Transferring...' % len(found_keys))
+
+        _keys, _by_kind = 0, collections.defaultdict(lambda: 0)
+        with source.channel('__meta__').pipeline() as pipeline:
+
+          _filtered_keys = []
+          for key in found_keys:
+
+            k = model.Key(urlsafe=key).kind
+            if (arguments.kinds and k in arguments.kinds.split(',')) or not arguments.kinds:
+              _keys += 1
+              _by_kind[model.Key(urlsafe=key).kind] += 1
+              source.get(model.Key(urlsafe=key).flatten(True), pipeline=pipeline)
+              logging.info('-- Queueing key "%s"...' % key)
+              _filtered_keys.append(key)
+
+          logging.debug('Entity type report (%s entities total):' % _keys)
+          for type in _by_kind:
+            logging.debug('-- "%s": %s entities' % (type, str(_by_kind[type])))
+
+          logging.info('Continuing in 3 seconds...')
+          time.sleep(3)
+
+          _keys, _by_kind = {}, collections.defaultdict(lambda: 0)
+          for key, result in zip(_filtered_keys, pipeline.execute()):
+            if result is not None:
+              logging.info('-- Fetched object at key "%s" of type "%s"...' % (
+                key, model.Key(urlsafe=key).kind))
+              _keys[key] = result
+              _by_kind[model.Key(urlsafe=key).kind] += 1
             else:
+              logging.info('-- !! FETCH FAILED for key "%s"...' % key)
+
+          logging.info('Total of %s successfully packed objects.' % len(_keys))
+          logging.info('Loading bindings...')
+
+          from fatcatmap import bindings
+          logging.info('Found %s model binding categories.' % len(bindings._bindings))
+
+          if arguments.binding:
+            logging.info('Using bindings from category "%s"...' % arguments.binding)
+
+          logging.info('Beginning write in 3 seconds...')
+          time.sleep(3)
+
+          with target.channel('__meta__').pipeline() as pipeline:
+
+            _written, _by_kind = 0, collections.defaultdict(lambda: 0)
+            for key, entity in _keys.iteritems():
+
+              kind = model.Key(urlsafe=key).kind
+
+              logging.info('-- Queueing object write at key "%s" of type "%s"...' % (
+                key, kind))
+
+              # try decompressing
+              try:
+                decompressed = source.EngineConfig.compression.decompress(entity)
+              except:
+                pass
+
               obj = source.EngineConfig.serializer.loads(entity)
-              _e = target.get(key=None, _entity=obj)
+              if arguments.binding:
+                # resolve binding
+                if kind not in bindings._bindings[arguments.binding]:
+                  raise RuntimeError('Binding category "%s" has no binding for model'
+                                     ' "%s".' % (arguments.binding, kind))
 
-            target.put(model.Key(urlsafe=key).flatten(True), _e, _e.__class__, pipeline=pipeline)
+                _binding = bindings._bindings[arguments.binding][kind]()
 
-            _written += 1
-            _by_kind[kind] += 1
+                for entity in _binding.convert(obj):
+                  _written += 1
+                  _by_kind[entity.kind()] += 1
+                  target_a._put(entity, pipeline=pipeline)
 
-          import pdb; pdb.set_trace()
-          pipeline.execute()  # go
+              else:
+                _e = target.get(key=None, _entity=obj)
+                target_a._put(_e, pipeline=pipeline)
 
-          logging.info('Written entity report (%s objects total):' % str(_written))
-          for kind in _by_kind:
-            logging.debug('-- "%s": %s entities' % (kind, str(_by_kind[kind])))
+                _written += 1
+                _by_kind[kind] += 1
 
-      logging.info('Migration complete.')
+            import pdb; pdb.set_trace()
+            pipeline.execute()  # go
+
+            logging.info('Written entity report (%s objects total):' % str(_written))
+            for kind in _by_kind:
+              logging.debug('-- "%s": %s entities' % (kind, str(_by_kind[kind])))
+
+        logging.info('Migration complete.')
 
 
 if __name__ == '__main__': FCM(autorun=True)  # initialize and run :)
