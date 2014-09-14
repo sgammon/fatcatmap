@@ -20,6 +20,8 @@ class NodeConverter(ModelBinding):
   ''' Converts instances of the old ``Node`` model into new
    	  ``Vertex`` records. '''
 
+  # {u'label': u'Norman_Sisisky_legacy', u'native': u'OkxlZ2lzbGF0b3I6Tm9ybWFuX1Npc2lza3lfbGVnYWN5'}
+
   def convert(self, data):
 
   	''' Convert legacy data into the target entity.
@@ -37,6 +39,8 @@ class EdgeConverter(ModelBinding):
 
   ''' Converts instances of the old ``Edge`` model into new
    	  ``Edge`` records. '''
+
+  # {u'node': [u'Ok5vZGU6QzAwMjkyMDk0', u'Ok5vZGU6TjAwMDAwNDgw'], u'label': u'Genesis HealthCare_C00292094_N00000480_Olympia Snowe', u'native': u'OkNvbnRyaWJ1dGlvbjpDMDAyOTIwOTRfTjAwMDAwNDgw'}
 
   def convert(self, data):
 
@@ -69,9 +73,7 @@ class MemberConverter(ModelBinding):
 
   	self.logging.info('----> Converting `Member`...')
   	self.logging.info(str(data))
-
   	import pdb; pdb.set_trace()
-
   	return data
 
 
@@ -94,6 +96,7 @@ class CommitteeConverter(ModelBinding):
 
   	self.logging.info('----> Converting `Committee`...')
   	self.logging.info(str(data))
+  	import pdb; pdb.set_trace()
   	return data
 
 
@@ -116,6 +119,7 @@ class ContributorConverter(ModelBinding):
 
   	self.logging.info('----> Converting `Contributor`...')
   	self.logging.info(str(data))
+  	import pdb; pdb.set_trace()
   	return data
 
 
@@ -138,6 +142,7 @@ class ContributionConverter(ModelBinding):
 
   	self.logging.info('----> Converting `Contribution`...')
   	self.logging.info(str(data))
+  	import pdb; pdb.set_trace()
   	return data
 
 
@@ -160,6 +165,7 @@ class RecipientConverter(ModelBinding):
 
   	self.logging.info('----> Converting `Recipient`...')
   	self.logging.info(str(data))
+  	import pdb; pdb.set_trace()
   	return data
 
 
@@ -168,6 +174,8 @@ class LegislatorConverter(ModelBinding):
 
   ''' Converts instances of the old ``Legislator`` model into new
    	  ``Legislator`` records. '''
+
+  # {u'lastnamealt': None, u'icpsrid': None, u'govtrack_id': 400574, u'lastnameenc': u'Canady', u'firstname': u'Charles', u'twitterid': None, u'lastname': u'Canady', u'lismemberid': None, u'bioguideid': u'C000107', u'namemod': None, u'fbid': None, u'fecid': None, u'religion': None, u'metavidid': None, u'birthday': u'1954-06-22', u'youtubeid': None, u'gender': u'M', u'osid': u'legacy', u'nickname': None, u'thomas_id': u'00171', u'pvsid': None}
 
   target = legislative.Legislator
 
@@ -180,6 +188,7 @@ class LegislatorConverter(ModelBinding):
 
   	self.logging.info('----> Converting `Legislator`...')
   	self.logging.info(str(data))
+  	import pdb; pdb.set_trace()
   	return data
 
 

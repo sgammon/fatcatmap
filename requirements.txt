@@ -8,3 +8,4 @@ msgpack-python
 ctypes-snappy
 raven
 fakeredis
+git+https://github.com/sgammon/libcloud.git#egg=libcloud

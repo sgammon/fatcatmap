@@ -75,6 +75,7 @@ class Deploy(object):
 
     # initialize driver
     driver = get_driver(Provider.GCE)
+
     self.driver = driver(self.ID, self.PEM, self.region, self.PROJECT)
     self.image = self.driver.ex_get_image(self.config['image'])
     self.size = self.driver.ex_get_size(self.config['size'])
