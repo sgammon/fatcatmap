@@ -6,6 +6,8 @@
 
 '''
 
+from __future__ import print_function
+
 # stdlib
 import time
 import settings
@@ -30,35 +32,44 @@ env.user = settings.USER  # username to use for GCE...should match key name
 env.key_filename = settings.KEY  # SSH key to use for GCE
 
 
-@notify
+#@notify
 @task
-def create(n=1, region=settings.REGION, environment=environment, group=group):
+def create(n=1, region=settings.DEFAULT_REGION, environment=environment, group=group):
 
   ''' Create new nodes allows chaining of deployment commands.
 
-      :param n: number of nodes to create
-      :param group: which group are these servers '''
+      :param n: Number of nodes to create.
+      :param region: GCE region to deploy to.
+      :param environment: ``production``/``staging``/``sandbox``.
+      :param group: Role (``group``) for these new instances. '''
 
-  print "Provisioning %s %s %s %s in %s..." % (
+  print("Provisioning %s %s %s %s in %s..." % (
     n, environment, group, 'instances' if n > 1 else 'instance', region
-  )
+  ))
 
   pause()  # 3 second chance to exit
 
   env.d = Deploy(environment, group, region)
-  env.d.deploy_many(n)
+  names = env.d.deploy_many(n)
 
-  print colors.yellow("Waiting for %s to finish provisioning..." % 'instances' if n > 1 else 'instance')
+  print(colors.yellow("Waiting for %s to finish provisioning..." % ('instances' if n > 1 else 'instance')))
   time.sleep(30)
-  nodes(environment, group)
+  if n==1:
+    nodes(environment=environment,name=names[0])
+  else:
+    print("warning all nodes selected because n > 1")
+    nodes(environment, group)
 
 
 @task
-def nodes(environment=environment, group=group, name=None, region=settings.REGION):
+def nodes(environment=environment, group=group, name=None, region=settings.DEFAULT_REGION):
 
-  ''' Lists and selects nodes based on specified group.
+  ''' Lists and selects nodes based on specified group, name, or region.
 
-      :param group: group to select '''
+      :param environment: Fabric environment.
+      :param group: Group (or instance role) to select.
+      :param name: Name (``str``) template to filter by.
+      :param region: GCE region to scan. '''
 
   env.d = Deploy(environment, group, region)
   env.node = lambda: get_node()  # set env.node for easy access to node object
@@ -71,7 +82,7 @@ def nodes(environment=environment, group=group, name=None, region=settings.REGIO
       env.hosts.append(node.ip)
       env.hosts_detail[node.ip] = node
 
-  print colors.green([node for ip, node in env.hosts_detail.iteritems()])
+  print(colors.green([node for ip, node in env.hosts_detail.iteritems()]))
   return env
 
 
@@ -81,7 +92,7 @@ def status():
   ''' Get status for existing nodes. '''
 
   node = env.node().node
-  print colors.green("status for node " + str(node))
+  print(colors.green("status for node " + str(node)))
 
 
 @notify
@@ -91,7 +102,7 @@ def destroy():
   ''' Destroy existing nodes. '''
 
   node = env.node().node
-  print colors.red("destroying node " + str(node))
+  print(colors.red("destroying node " + str(node)))
   env.d.driver.destroy_node(node)
 
 
@@ -101,8 +112,9 @@ def activate():
 
   ''' Activate nodes for live traffic. '''
 
-  node = env.node().node
-  print colors.yellow("activating node " + str(node))
+  node = env.node()
+  print(colors.yellow("activating node " + str(node)))
+  node.targetpool_add()
 
 
 @notify
@@ -111,5 +123,6 @@ def deactivate():
 
   ''' Deactivate nodes for live traffic. '''
 
-  node = env.node().node
-  print colors.yellow("deactivating node " + str(node))
+  node = env.node()
+  print(colors.yellow("deactivating node " + str(node)))
+  node.targetpool_remove()

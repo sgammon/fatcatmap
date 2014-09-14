@@ -53,7 +53,7 @@ class BQ(object):
         }
       }
     }
-    self.response = self.jobs.insert(projectId=projectId,
+    response = self.jobs.insert(projectId=projectId,
                                          body=jobData).execute()
     return BQResponse(response)
 

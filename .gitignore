@@ -27,3 +27,6 @@ build/
 fatcatmap.sublime-project
 doc/
 .gcloud/properties
+fatcatmap.ipr
+fatcatmap.iws
+fatcatmap.sublime-project
