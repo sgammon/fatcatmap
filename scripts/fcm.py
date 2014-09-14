@@ -333,7 +333,14 @@ class FCM(cli.Tool):
 
       # grab all keys
       source_a, target_a = source(), target()
-      source_keys = source.execute(source.Operations.KEYS, '__meta__')
+
+      if not arguments.kinds:
+        source_keys = source.execute(source.Operations.KEYS, '__meta__')
+      else:
+        source_keys = []
+        for kind in arguments.kinds.split(','):
+          source_keys += source.execute(source.Operations.SET_MEMBERS, '__meta__', )
+
       found_keys = []
 
       logging.info('Found %s keys. Beginning migration...' % len(source_keys))
