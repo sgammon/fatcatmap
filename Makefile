@@ -148,6 +148,7 @@ ifneq ($(CANTEEN),0)
 lib/canteen:
 	$(call say,"Linking in Canteen...")
 	-@ln -s $(CANTEEN) lib/canteen
+else
 ifeq ($(SANDBOX),1)
 lib/canteen:
 	$(call say,"Cloning Canteen from sandbox...")
