@@ -11,8 +11,7 @@ from .. import (Vertex,
                 describe)
 
 # abstract models
-from ..abstract import (Role,
-                        Contract)
+from ..abstract import Role
 
 # fcm models
 from ..person import Person
@@ -33,11 +32,3 @@ class Lobbyist(Vertex):
   '''  '''
 
   firm = LobbyingFirm, {'indexed': True, 'default': None, 'embedded': False}
-
-
-## +=+=+=+=+=+=+=+=+ Edges +=+=+=+=+=+=+=+=+ ##
-
-@describe(parent=Corporation, type=Contract)
-class Employs(Corporation >> (LobbyingFirm, Lobbyist)):
-
-  '''  '''
