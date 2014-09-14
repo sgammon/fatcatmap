@@ -5,7 +5,7 @@ fabtools
 fabric
 dogapi
 msgpack-python
-ctypes-snappy
+python-snappy
 raven
 fakeredis
 git+https://github.com/sgammon/libcloud.git#egg=libcloud

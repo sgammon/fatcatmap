@@ -22,6 +22,12 @@ try:
 except:
   msgpack = False
 
+# snappy
+try:
+  import snappy
+except:
+  snappy = False
+
 # canteen
 from canteen import decorators
 from canteen.model import adapter
@@ -304,8 +310,9 @@ class RedisWarehouse(WarehouseAdapter, redis.RedisAdapter):
 
     ''' Configuration for the `RedisWarehouse` engine. '''
 
-    serializer = json
-    mode = redis.RedisMode.toplevel_blob
+    serializer = msgpack
+    compression = snappy
+    mode = redis.RedisMode.hashkey_blob
 
   @decorators.classproperty
   def config(self):

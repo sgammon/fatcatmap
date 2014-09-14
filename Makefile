@@ -33,7 +33,7 @@ CANTEEN?=0
 CANTEEN_BRANCH?=feature/FLY-1
 BOOTSTRAP_BRANCH?=master
 SANDBOX_GIT?=$(USER)@sandbox
-BREWDEPS=openssl python haproxy redis pypy
+BREWDEPS=openssl python haproxy redis pypy snappy
 TEST_FLAGS?=
 
 ## == optionals == ##
@@ -247,7 +247,7 @@ $(DEVROOT)/bin/fcm:
 $(DEVROOT)/lib/python2.7/site-packages/canteen.pth:
 	@echo "$(DEVROOT)/lib/canteen" > lib/python2.7/site-packages/canteen.pth
 
-.develop: bin lib $(DEVROOT)/.env $(DEVROOT)/bin/fcm bootstrap canteen closure $(DEVROOT)/lib/python2.7/site-packages/canteen.pth brew $(OPTIONALS)
+.develop: brew bin lib $(DEVROOT)/.env $(DEVROOT)/bin/fcm bootstrap canteen closure $(DEVROOT)/lib/python2.7/site-packages/canteen.pth brew $(OPTIONALS)
 	@touch ./.env
 
 $(DEVROOT)/.env: closure bootstrap canteen npm
