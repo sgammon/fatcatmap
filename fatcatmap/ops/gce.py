@@ -180,15 +180,17 @@ class Deploy(object):
 
     # create node
     print(colors.yellow('Creating node "%s" of size "%s"...' % (name, self.config['size'])))
+
+    tags = settings.GROUP_SETTINGS[self.group].get('tags', set()) | \
+        settings.ENV_TAGS[self.environment].get('tags',set()) | \
+        self.config.get('tags', set())
+
     node = self.driver.create_node(
                      name=name,
                      size=self.config['size'],
                      image=self.config['image'],
                      location=self.region,
-                     ex_tags=(
-                      settings.GROUP_SETTINGS[self.group].get('tags', []) +
-                      settings.ENV_TAGS[self.environment]) +
-                      self.config.get('tags', set()),
+                     ex_tags=list(tags),
                      ex_network=self.environment,
                      ex_boot_disk=boot_volume,
                      ex_service_scopes=self.config.get('scopes', []),
@@ -198,6 +200,7 @@ class Deploy(object):
                                   'startup-script-url': (
                                     settings.DEFAULT_STARTUP_SCRIPT_URL)})
     print(colors.green('Node created: %s' % node))
+    return name
 
   def deploy_many(self, n=3):
 
@@ -206,5 +209,9 @@ class Deploy(object):
 
         :param n: Count of instances to deploy via ``deploy``. '''
 
+    names = []
+
     for i in range(int(n)):
-      self.deploy()
+      names.append(self.deploy())
+
+    return names

@@ -32,7 +32,7 @@ env.user = settings.USER  # username to use for GCE...should match key name
 env.key_filename = settings.KEY  # SSH key to use for GCE
 
 
-@notify
+#@notify
 @task
 def create(n=1, region=settings.DEFAULT_REGION, environment=environment, group=group):
 
@@ -50,11 +50,15 @@ def create(n=1, region=settings.DEFAULT_REGION, environment=environment, group=g
   pause()  # 3 second chance to exit
 
   env.d = Deploy(environment, group, region)
-  env.d.deploy_many(n)
+  names = env.d.deploy_many(n)
 
   print(colors.yellow("Waiting for %s to finish provisioning..." % ('instances' if n > 1 else 'instance')))
   time.sleep(30)
-  nodes(environment, group)
+  if n==1:
+    nodes(environment=environment,name=names[0])
+  else:
+    print("warning all nodes selected because n > 1")
+    nodes(environment, group)
 
 
 @task

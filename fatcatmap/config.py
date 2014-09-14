@@ -24,7 +24,7 @@ except ImportError:
 _custom_jinja2_extensions = filter(lambda x: x is not None, [HamlishExtension if HAML else None])
 app = os.path.dirname(__file__)
 project = os.path.dirname(app)
-DEFAULT_BOOT_DISK = 'base-prerelease-v12-alpha-2'
+DEFAULT_BOOT_DISK = 'base-v11'
 freeze = lambda x: frozenset(x)
 
 
@@ -84,7 +84,7 @@ config = cfg.Config(app={
 
     'templates': {
       'source': os.path.join(app, 'templates/source'),
-      'compiled': 'fatcatmap.templates.compiled'
+      #'compiled': 'fatcatmap.templates.compiled'
     }
 
   },
@@ -152,7 +152,7 @@ config = cfg.Config(app={
 
     'servers': {
 
-      'default': 'local',
+      'default': 'sandbox',
 
       # Redis Instances
       'local': {'host': '127.0.0.1', 'port': 6379},
@@ -166,7 +166,7 @@ config = cfg.Config(app={
 
     'servers': {
 
-      'default': 'local',
+      'default': 'sandbox',
 
       # Redis Instances
       'local': {'host': '127.0.0.1', 'port': 6379},
@@ -311,14 +311,15 @@ config = cfg.Config(app={
 
       'disk': {
         'size': 10,
-        'type': DiskType.SSD}},
+        'type': DiskType.SSD,
+        'snap': DEFAULT_BOOT_DISK}},
 
     'app': {  # app server role
 
       'size': 'n1-standard-2',
       'image': 'debian-7-wheezy-v20140606',
       'ip_forwarding': False,
-      'tags': ['app', 'db'],  # @TODO(sgammon): split out DB role
+      'tags': {'app', 'db'},  # @TODO(sgammon): split out DB role
 
       'scopes': freeze({
         "userinfo.email",
@@ -335,7 +336,8 @@ config = cfg.Config(app={
 
       'disk': {
         'size': 20,
-        'type': DiskType.SSD}},
+        'type': DiskType.SSD,
+        'snap': DEFAULT_BOOT_DISK}},
 
     'db': {  # @TODO(weisberger): for future use :)
 
@@ -356,7 +358,8 @@ config = cfg.Config(app={
 
       'disk': {
         'size': 40,
-        'type': DiskType.SSD}}
+        'type': DiskType.SSD,
+        'snap': DEFAULT_BOOT_DISK}}
 
   }
 
