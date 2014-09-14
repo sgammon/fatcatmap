@@ -19,6 +19,8 @@ from ..abstract import (URI,
                         Name,
                         Seat,
                         Group,
+                        Event,
+                        Description,
                         OrganizationName)
 
 # fcm models
@@ -260,6 +262,19 @@ class Legislation(Vertex):
   cycle = int, {'indexed': True, 'required': True, 'choices': xrange(1, 113)}
 
 
+@describe(parent=LegislativeSession, keyname=True, type=Event)
+class Rollcall(Vertex):
+
+  ''' Represents an event where a ``Legislature`` calls roll to vote on a
+      particular matter. Referenced from ``Vote``, which are individual
+      vote edges submitted by legislative members (``Legislator``s). '''
+
+  # keyname: special rollcall ID
+
+  passed = bool, {'indexed': True, 'default': False}
+  result = Description, {'embedded': True}
+  description = Description, {'embedded': True}
+
 
 ## +=+=+=+=+=+=+=+=+ Edges +=+=+=+=+=+=+=+=+ ##
 
@@ -271,7 +286,8 @@ class Vote(Legislator >> Legislation):
   ''' A ``Legislator``'s vote at a particular step in the legislative process
       concerning a piece of ``Legislation``. '''
 
-  call = bool, {'indexed': True, 'default': None, 'required': True}
+  rollcall = Rollcall, {'embedded': False, 'indexed': True}
+  vote = bool, {'indexed': True, 'default': None}
   procedural = bool, {'indexed': True, 'default': True}
   committee = Committee, {'indexed': True}
 
