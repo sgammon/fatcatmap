@@ -7,15 +7,20 @@
 '''
 
 # fcm models
-from .. import (Vertex,
+from .. import (Key,
+                Vertex,
                 describe,
                 VertexKey)
+
+# USA stuff
+from ..state import usa
 
 # person model
 from ..person import Person
 
 # abstract models
-from ..abstract import (Role,
+from ..abstract import (URI,
+                        Role,
                         Seat,
                         Group,
                         Government,
@@ -31,6 +36,36 @@ class ExecutiveAgency(Vertex):
       responsibility, such as the Department of Energy or the CIA. '''
 
   name = OrganizationName, {'embedded': True, 'indexed': True, 'required': True}
+  website = URI, {'embedded': True, 'indexed': True}
+
+  @classmethod
+  def fixture(cls):
+
+    ''' Construct base ``ExecutiveAgency`` entities. '''
+
+    for short, uri in (('Agriculture', 'http://usda.gov'),
+                       ('Commerce', 'http://commerce.gov'),
+                       ('Defense', 'http://defense.gov'),
+                       ('Education', 'http://ed.gov'),
+                       ('Energy', 'http://energy.gov'),
+                       ('Health and Human Services', 'http://hhs.gov'),
+                       ('Homeland Security', 'http://dhs.gov'),
+                       ('Urban Development', 'http://hud.gov'),
+                       ('Interior', 'http://interior.gov'),
+                       ('Justice', 'http://justice.gov'),
+                       ('Labor', 'http://dol.gov'),
+                       ('State', 'http://state.gov'),
+                       ('Transportation', 'http://dot.gov'),
+                       ('Treasury', 'http://treasury.gov'),
+                       ('Veterans Affairs', 'http://www.va.gov')):
+
+      yield cls(key=Key(cls, short.lower().replace(' ', '-')),
+                name=OrganizationName(
+                  primary='Department of %s' % short,
+                  secondary='US Department of %s' % short,
+                  formal='United States Department of %s' % short,
+                  informal='Department of %s' % short),
+                website=URI(location=uri))
 
 
 @describe(parent=Government, type=Seat)
@@ -45,6 +80,14 @@ class ExecutiveOffice(Vertex):
   term = int, {'indexed': True, 'choices': xrange(1, 25), 'default': None}
   max_terms = int, {'indexed': True, 'choices': xrange(2, 10), 'default': None}
   agency = ExecutiveAgency, {'indexed': True, 'embedded': True}
+
+  @classmethod
+  def fixtures(cls):
+
+    ''' Construct base ``ExecutiveOffice`` entities. '''
+
+    yield cls(key=Key(cls, 'president', parent=usa), type='elected', term=4, max_terms=2)
+    yield cls(key=Key(cls, 'vice-president', parent=usa), type='appointed', term=4)
 
 
 @describe(parent=Person, type=Role)
