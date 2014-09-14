@@ -15,6 +15,7 @@ from . import (content,
                org,
                role,
                seat,
+               stat,
                transaction,
                jurisdiction,
                text)
@@ -28,6 +29,7 @@ from .naming import *
 from .org import *
 from .role import *
 from .seat import *
+from .stat import *
 from .transaction import *
 from .jurisdiction import *
 from .text import *
@@ -41,6 +43,7 @@ __all__ = ('content',
            'org',
            'role',
            'seat',
+           'stat',
            'transaction',
            'jurisdiction',
            'text')
