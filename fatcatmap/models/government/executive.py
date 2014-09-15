@@ -13,19 +13,21 @@ from .. import (Key,
                 VertexKey)
 
 # USA stuff
-from ..state import usa
+from ..place import usa
 
 # person model
 from ..person import Person
 
 # abstract models
-from ..abstract import (URI,
-                        Role,
+from ..abstract import (Role,
                         Seat,
                         Group,
                         Government,
                         Organization,
                         OrganizationName)
+
+# descriptors
+from ..descriptors.ext import URI
 
 
 @describe(parent=Government, type=Organization)
@@ -91,7 +93,7 @@ class ExecutiveOffice(Vertex):
 
 
 @describe(parent=Person, type=Role)
-class ExecutiveOfficer(Vertex):
+class ExecutiveOfficial(Vertex):
 
   ''' Describes a government official that occupies an ``ExecutiveOffice`` for
       an amount of time, either via appointment or election to that office. '''

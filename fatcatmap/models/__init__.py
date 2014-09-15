@@ -245,25 +245,25 @@ class Spec(object):
     _l = lambda klass: klass.__name__  # quick utility to extract labels
 
     assert _l(target) not in _models, (
-      'Cannot register duplicate model `%s`' % _l(target))
+      'Cannot register duplicate model `%s`.' % _l(target))
 
     assert not (self.descriptor and self.parent), (
-      'Descriptor `%s` cannot restrict its `parent` types' % _l(target))
+      'Descriptor `%s` cannot restrict `parent` types.' % _l(target))
 
     assert not (self.abstract and self.descriptor), (
-      'Abstract model `%s` cannot be marked as descriptors' % _l(target))
+      'Abstract model `%s` cannot be marked as descriptor.' % _l(target))
 
     if issubclass(target, model.Edge):  # edges must have specs
       assert hasattr(target, '__spec__') and target.__spec__, (
-        'Edge (`%s`) must have specification objects' % _l(target))
+        'Edge (`%s`) must have specification object.' % _l(target))
 
     if not self.abstract and not self.descriptor:  # validate concrete models
 
       assert not (self.root and self.parent), (
-        'Cannot mark entity `%s` as `root` and with a `parent`' % _l(target))
+        'Cannot mark entity `%s` as `root` and with a `parent`.' % _l(target))
 
       assert self.root or self.parent, (
-        'Cannot mark entity `%s` non-root and as parentless' % _l(target))
+        'Cannot mark entity `%s` non-root and as parentless.' % _l(target))
 
     return True  # passed all tests
 
@@ -470,12 +470,15 @@ Model, Vertex, Edge = (BaseModel,
 __all__ = ('abstract',
            'campaign',
            'commercial',
+           'content',
+           'descriptors',
            'government',
            'politics',
            'social',
            'account',
+           'address',
            'geo',
            'graph',
            'person',
-           'session',
-           'state')
+           'place',
+           'session')

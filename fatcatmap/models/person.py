@@ -8,14 +8,27 @@
 
 # graph models
 from . import (date,
-			   Edge,
+			         Edge,
                Vertex,
                describe)
 
 # abstract models
-from .commercial.business import Corporation
-from .abstract import (Contract,
-					   PersonName)
+from .abstract import Name
+
+
+@describe(type=Name)
+class PersonName(Name):
+
+  '''  '''
+
+  ## -- basic naming -- ##
+  given = str, {'indexed': True}
+  family = str, {'indexed': True}
+
+  ## -- extra naming -- ##
+  prefix = str, {'indexed': True, 'repeated': True}
+  postfix = str, {'indexed': True, 'repeated': True}
+  nickname = str, {'indexed': True, 'repeated': True}
 
 
 @describe(root=True)
@@ -28,12 +41,3 @@ class Person(Vertex):
   gender = str, {'indexed': True, 'choices': {'m', 'f'}}
   birthdate = date, {'indexed': True, 'default': None}
   deathdate = date, {'indexed': True, 'default': None}
-
-
-
-## +=+=+=+=+=+=+=+=+ Edges +=+=+=+=+=+=+=+=+ ##
-
-@describe(type=Contract)
-class Employs(Corporation >> Person):
-
-  '''  '''
