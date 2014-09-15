@@ -55,7 +55,7 @@ class Legislature(Model):
   ''' Describes a legislative body. '''
 
   name = OrganizationName, {'embedded': True, 'indexed': True}
-  jurisdiction = Geobounds, {'repeated': True, 'indexed': True}
+  jurisdiction = Geobounds, {'repeated': True, 'indexed': True, 'embedded': True}
 
   @classmethod
   def fixture(cls):
@@ -64,8 +64,10 @@ class Legislature(Model):
 
     congress = cls.new(key=us_congress)
     congress.name = OrganizationName(
+      primary='US Congress',
+      secondary=('United States Congress', 'Congress'),
       formal='United States Congress',
-      informal='Congress')
+      informal=('Congress',))
     yield congress
 
 
@@ -74,7 +76,7 @@ class LegislativeHouse(Model):
 
   ''' Describes a minor, major, or primary house within a legislative body. '''
 
-  name = OrganizationName, {'indexed': True}
+  name = OrganizationName, {'embedded': True, 'indexed': True}
   term = int, {'indexed': True, 'range': xrange(2, 10)}
   type = str, {'indexed': True, 'choices': {'major', 'minor', 'primary'}}
 
@@ -86,9 +88,9 @@ class LegislativeHouse(Model):
     house = LegislativeHouse.new(key=us_house)
     house.name = OrganizationName(
       primary='Congress',
-      secondary='US Congress',
+      secondary=('US Congress', 'House of Representatives', 'House of Reps', 'House'),
       formal='United States House of Representatives',
-      informal='House of Representatives')
+      informal=('House of Representatives', 'House of Reps'))
     house.term = 2
     house.type = 'minor'
     yield house
@@ -96,9 +98,9 @@ class LegislativeHouse(Model):
     senate = LegislativeHouse.new(key=us_senate)
     senate.name = OrganizationName(
       primary='Senate',
-      secondary='US Senate',
+      secondary=('US Senate', 'United States Senate'),
       formal='United States Senate',
-      informal='US Senate')
+      informal=('Senate', 'US Senate'))
     senate.term = 6
     senate.type = 'major'
     yield senate

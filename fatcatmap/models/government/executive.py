@@ -38,7 +38,7 @@ class ExecutiveAgency(Vertex):
       responsibility, such as the Department of Energy or the CIA. '''
 
   name = OrganizationName, {'embedded': True, 'indexed': True, 'required': True}
-  website = URI, {'embedded': True, 'indexed': True}
+  website = URI, {'embedded': True, 'indexed': True, 'required': True}
 
   @classmethod
   def fixture(cls):
@@ -64,9 +64,9 @@ class ExecutiveAgency(Vertex):
       yield cls(key=Key(cls, short.lower().replace(' ', '-')),
                 name=OrganizationName(
                   primary='Department of %s' % short,
-                  secondary='US Department of %s' % short,
+                  secondary=('US Department of %s' % short,),
                   formal='United States Department of %s' % short,
-                  informal='Department of %s' % short),
+                  informal=('Department of %s' % short),),
                 website=URI(location=uri))
 
 
@@ -84,7 +84,7 @@ class ExecutiveOffice(Vertex):
   agency = ExecutiveAgency, {'indexed': True, 'embedded': True}
 
   @classmethod
-  def fixtures(cls):
+  def fixture(cls):
 
     ''' Construct base ``ExecutiveOffice`` entities. '''
 
@@ -99,4 +99,4 @@ class ExecutiveOfficial(Vertex):
       an amount of time, either via appointment or election to that office. '''
 
   reports_to = VertexKey, {'indexed': True}
-  seat = ExecutiveOffice, {'embedded': True, 'indexed': True}
+  seat = ExecutiveOffice, {'embedded': True, 'indexed': True, 'required': True}

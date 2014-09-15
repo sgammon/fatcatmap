@@ -26,4 +26,4 @@ class CommercialIndustry(Vertex):
   '''  '''
 
   ## -- corporate details -- ##
-  name = IndustryName, {'indexed': True, 'required': True}
+  name = IndustryName, {'indexed': True, 'required': True, 'embedded': True}

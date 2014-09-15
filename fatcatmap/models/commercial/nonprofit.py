@@ -23,3 +23,4 @@ class Nonprofit(Corporation):
   '''  '''
 
   ## -- nonprofit details -- ##
+  name = OrganizationName, {'embedded': True, 'indexed': True, 'required': True}

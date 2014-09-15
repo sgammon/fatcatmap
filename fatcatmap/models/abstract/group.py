@@ -20,6 +20,9 @@ class GroupName(Name):
   ''' Describes a name for some officially-endorsed entity, either
       in statute or declaration. '''
 
+  formal = str, {'indexed': True}
+  informal = str, {'indexed': True, 'repeated': True}
+
 
 @describe(abstract=True)
 class Group(Vertex):

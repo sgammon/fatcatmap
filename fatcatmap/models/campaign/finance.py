@@ -52,14 +52,14 @@ class CampaignContribution(Contributor >> Campaign):
     # @TODO(sgammon): fill out contribution types
 
   ## -- contribution data -- ##
-  type = ContributionType, {'indexed': True, 'required': True}
+  type = int, {'indexed': True, 'required': True}
   cycle = int, {'indexed': True, 'choices': xrange(1900, 2014)}
   namespace = str, {'indexed': True, 'choices': {
       'urn:fec:transaction', 'urn:nimsp:transaction'}}
 
   ## -- original data -- ##
-  filing = URI, {'indexed': True}
-  document = URI, {'indexed': True}
+  filing = URI, {'indexed': True, 'embedded': True}
+  document = URI, {'indexed': True, 'embedded': True}
 
   ## -- time -- ##
   filed = date, {'indexed': True}

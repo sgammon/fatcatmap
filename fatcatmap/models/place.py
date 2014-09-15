@@ -38,7 +38,6 @@ class Nation(Vertex):
   name = JurisdictionName, {'indexed': True, 'embedded': True}
   center = Geopoint, {'indexed': True, 'embedded': True}
   boundary = Geobounds, {'indexed': True, 'embedded': True}
-  founded = date, {'indexed': True}
 
   @classmethod
   def fixture(cls):
@@ -54,7 +53,6 @@ class Nation(Vertex):
                 long_name='United States of America',
                 short_name='United States',
                 abbreviation='USA'),
-              founded=date(year=1776, month=7, day=4),
               center=Geopoint(latitude=39.828127,
                               longitude=-98.579404))
 
@@ -68,9 +66,8 @@ class State(Vertex):
 
   name = JurisdictionName, {'indexed': True, 'embedded': True}
   center = Geopoint, {'indexed': True, 'embedded': True}
-  boundary = Geobounds, {'indexed': True}
-  nation = Nation, {'indexed': True}
-  founded = date, {'indexed': True}
+  boundary = Geobounds, {'indexed': True, 'embedded': True}
+  nation = Nation, {'indexed': True, 'embedded': False}
 
   @classmethod
   def fixture(cls):
@@ -115,7 +112,6 @@ class County(Vertex):
   center = Geopoint, {'indexed': True, 'embedded': True}
   boundary = Geobounds, {'indexed': True}
   state = State, {'indexed': True}
-  founded = date, {'indexed': True}
 
 
 @describe(parent=State, keyname=True, type=Government)
@@ -130,4 +126,3 @@ class City(Vertex):
   boundary = Geobounds, {'indexed': True}
   state = State, {'indexed': True}
   county = County, {'indexed': True}
-  founded = date, {'indexed': True}
