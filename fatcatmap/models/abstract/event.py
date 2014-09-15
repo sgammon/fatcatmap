@@ -2,13 +2,16 @@
 
 '''
 
-    fcm: event models
+  fcm: abstract event models
 
 '''
 
+# stdlib
+from datetime import datetime
+
 # graph models
-import datetime
-from .. import describe, Model
+from .. import (Model,
+                describe)
 
 
 @describe(abstract=True)
@@ -17,4 +20,4 @@ class Event(Model):
   ''' Specifies an action that occurred at a specific (or
       vague) single moment in time. '''
 
-  occurred = datetime.datetime, {'indexed': True}
+  occurred = datetime, {'indexed': True}
