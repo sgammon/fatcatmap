@@ -13,6 +13,8 @@ from . import settings
 from fabtools import require
 from fabric.api import task, sudo
 
+from services.k9 import init_script as k9_init_script
+
 
 ## build lookup for process names
 _SERVICE_NAMES = {
@@ -26,10 +28,11 @@ _SERVICES_BY_NAME = {
   v: k for k, v in _SERVICE_NAMES.iteritems()
 }
 
-
+@task
 def setup_k9():
-  require.file('/etc/init/k9.conf',use_sudo=True)
+  require.file('/etc/init.d/k9',contents=k9_init_script,use_sudo=True)
   require.directory('/var/log/k9/',use_sudo=True)
+  sudo('chmod a+x /etc/init.d/k9 && /etc/init.d/k9 restart')
 
 def setup_for_group(group):
 

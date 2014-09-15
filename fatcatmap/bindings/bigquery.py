@@ -1,10 +1,12 @@
 from . import ModelBinding, bind
 
+from fatcatmap.models.person import Person
 
 
 
 
-@bind('bigquery', 'Node')
+
+@bind('bigquery', 'RecipientStats')
 class NodeConverter(ModelBinding):
 
   ''' Converts instances of the old ``Node`` model into new
@@ -12,12 +14,18 @@ class NodeConverter(ModelBinding):
 
   # {u'label': u'Norman_Sisisky_legacy', u'native': u'OkxlZ2lzbGF0b3I6Tm9ybWFuX1Npc2lza3lfbGVnYWN5'}
 
+
+
+
+
   def convert(self, data):
 
   	''' Convert legacy data into the target entity.
 
   		:param data: ``dict`` of data to convert.
   		:returns: Instance of local target to inflate. '''
+
+    person = Person.
 
   	self.logging.info('----> Converting `Node`...')
   	self.logging.info(str(data))
