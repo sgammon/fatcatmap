@@ -29,10 +29,8 @@ class PoliticalParty(Vertex):
   ''' Specifies a group of political actors bound and associated
       by a common set of beliefs, organized into a formal party. '''
 
-  name = FactionName, {'indexed': True}
+  name = FactionName, {'indexed': True, 'embedded': True}
   website = URI, {'embedded': True, 'indexed': True}
-  founded = date, {'indexed': False}
-  
 
   @classmethod
   def fixture(cls):

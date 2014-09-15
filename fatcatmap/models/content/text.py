@@ -23,15 +23,11 @@ class UnstructuredText(Model):
 
   '''  '''
 
-  pass
-
 
 @describe(descriptor=True, type=Prose)
 class Description(UnstructuredText):
 
   '''  '''
-
-  pass
 
 
 @describe(parent=Vertex, type=Prose)
@@ -39,15 +35,11 @@ class PressRelease(UnstructuredText):
 
   '''  '''
 
-  pass
-
 
 @describe(parent=Vertex, type=Prose)
 class Article(UnstructuredText):
 
   '''  '''
-
-  pass
 
 
 @describe(parent=Media, type=Prose)
@@ -55,20 +47,14 @@ class Caption(UnstructuredText):
 
   '''  '''
 
-  pass
-
 
 @describe(parent=Vertex, type=Prose)
 class Document(UnstructuredText):
 
   '''  '''
 
-  pass
-
 
 @describe(parent=Vertex, type=Token)
 class Title(UnstructuredText):
 
   '''  '''
-
-  pass
