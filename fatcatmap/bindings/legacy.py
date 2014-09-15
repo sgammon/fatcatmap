@@ -9,8 +9,8 @@
 from . import ModelBinding, bind
 
 # models
-from fatcatmap.models.abstract import ext
 from fatcatmap.models.person import Person
+from fatcatmap.models.descriptors import ext
 from fatcatmap.models.campaign import finance
 from fatcatmap.models.politics import campaign
 from fatcatmap.models.government import legislative
