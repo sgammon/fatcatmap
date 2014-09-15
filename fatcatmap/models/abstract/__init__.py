@@ -2,48 +2,51 @@
 
 '''
 
-    fcm: abstract models
+  fcm: abstract models
 
 '''
 
 # submodules
 from . import (content,
                event,
-               ext,
                group,
-               naming,
+               jurisdiction,
+               name,
                org,
+               place,
                role,
                seat,
                stat,
-               transaction,
-               jurisdiction,
-               text)
+               token,
+               topic,
+               transaction)
 
 # submodule symbols
 from .content import *
 from .event import *
-from .ext import *
 from .group import *
-from .naming import *
+from .jurisdiction import *
+from .name import *
 from .org import *
+from .place import *
 from .role import *
 from .seat import *
 from .stat import *
+from .token import *
+from .topic import *
 from .transaction import *
-from .jurisdiction import *
-from .text import *
 
 
 __all__ = ('content',
            'event',
-           'ext',
            'group',
-           'naming',
+           'jurisdiction',
+           'name',
            'org',
+           'place',
            'role',
            'seat',
            'stat',
-           'transaction',
-           'jurisdiction',
-           'text')
+           'token',
+           'topic',
+           'transaction')

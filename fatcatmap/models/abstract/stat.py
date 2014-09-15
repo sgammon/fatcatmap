@@ -2,7 +2,7 @@
 
 '''
 
-    fcm: seat models
+  fcm: abstract stat models
 
 '''
 
@@ -10,22 +10,28 @@
 from canteen import model
 
 # graph models
-from .. import describe, Model
+from .. import (Edge,
+                Model,
+                Vertex,
+                describe)
 
 
-@describe(descriptor=True)
+@describe(abstract=True)
 class Stat(Model):
 
-  '''  '''
+  ''' Describes the abstract concept of a calculated statistic attached
+      to some other entity after analysis. '''
 
 
-@describe(descriptor=True)
-class StatValue(Model):
+@describe(abstract=True, parent=Edge)
+class EdgeStat(Stat):
 
-  '''  '''
+  ''' Describes the concept of a statistic descriptor that is applied to
+      an ``Edge`` object. '''
 
-  # stat value: can be an int or float
-  value = (int, float), {'indexed': True}
 
-  # stat rank: first is global rank, second is category (if any)
-  rank = float, {'indexed': True, 'repeated': True}
+@describe(abstract=True, parent=Vertex)
+class VertexStat(Stat):
+
+  ''' Describes the concept of a statistic descriptor that is applied to
+      a ``Vertex`` object. '''
