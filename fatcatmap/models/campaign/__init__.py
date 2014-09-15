@@ -2,12 +2,15 @@
 
 '''
 
-    fcm: campaign models
+  fcm: campaign models
 
 '''
 
 # submodules
 from . import finance
+
+# symbols
+from .finance import *
 
 
 __all__ = ('finance',)

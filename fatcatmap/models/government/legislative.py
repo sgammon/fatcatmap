@@ -14,22 +14,24 @@ from .. import (Key,
                 describe)
 
 # abstract models
-from ..abstract import (URI,
-                        Role,
+from ..abstract import (Role,
                         Name,
                         Seat,
                         Group,
                         Event,
-                        Description,
                         OrganizationName)
 
 # fcm models
 from ..geo import Geobounds
 from ..person import Person
 from ..social.issues import Issue
+from ..content.text import Description
 from ..politics.campaign import Campaign
 from ..politics.election import Election
 from ..politics.party import PoliticalParty
+
+# descriptors
+from ..descriptors.ext import URI
 
 # canteen struct
 from canteen import model
