@@ -18,7 +18,9 @@ from ..abstract import (Role,
 # fcm models
 from ..person import Person
 from ..commercial.business import Corporation
-from ..government.legislative import Legislation
+from ..government.executive import ExecutiveOfficial
+from ..government.legislative import (Legislator,
+                                      Legislation)
 
 
 ## +=+=+=+=+=+=+=+=+ Vertexes +=+=+=+=+=+=+=+=+ ##
@@ -52,8 +54,27 @@ class Retains(Corporation >> LobbyingFirm):
 
 
 @describe(type=Event)
-class Lobbying(Lobbyist >> (Person, Legislation)):
+class LegislationLobbying(Lobbyist >> Legislation):
 
   ''' Specifies activity performed by a ``Lobbyist``,
       sometimes under the banner of a ``LobbyingFirm``
       but always on behalf of a client. '''
+
+
+@describe(type=Event)
+class LegislatorLobbying(Lobbyist >> Legislator):
+
+  ''' Specifies activity performed by a ``Lobbyist``,
+      sometimes under the banner of a ``LobbyingFirm``
+      but always on behalf of a client, to sway the
+      opinion of or gain influcen from a ``Legislator``. '''
+
+
+@describe(type=Event)
+class ExecutiveLobbying(Lobbyist >> ExecutiveOfficial):
+
+  ''' Specifies activity performed by a ``Lobbyist``,
+      sometimes under the banner of a ``LobbyingFirm``
+      but always on behalf of a client, to sway the
+      opinion of or gain influence from an
+      ``ExecutiveOfficial``. '''

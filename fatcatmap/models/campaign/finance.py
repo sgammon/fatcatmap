@@ -8,21 +8,23 @@
 
 # graph models
 from .. import (date,
-                Model,
                 Vertex,
                 describe)
 
 # abstract models
-from ..abstract import (URI,
-                        Role,
+from ..abstract import (Role,
                         Stat,
-                        StatValue,
-                        Organization,
-                        CurrencyTransaction)
+                        Transaction,
+                        Organization)
+
 
 # parent models
 from ..person import Person
 from ..politics.campaign import Campaign
+
+# descriptors
+from ..descriptors.ext import URI
+from ..descriptors.stat import CategoricalStatValue
 
 # canteen structs
 from canteen.util.struct import BidirectionalEnum
@@ -37,7 +39,7 @@ class Contributor(Vertex):
   fec_category = str, {'indexed': True}
 
 
-@describe(type=CurrencyTransaction)
+@describe(type=Transaction)
 class CampaignContribution(Contributor >> Campaign):
 
   ''' Describes a monetary contribution made from a ``Contributor`` to a
@@ -47,7 +49,7 @@ class CampaignContribution(Contributor >> Campaign):
 
     ''' Maps FEC contribution type codes. '''
 
-    pass
+    # @TODO(sgammon): fill out contribution types
 
   ## -- contribution data -- ##
   type = ContributionType, {'indexed': True, 'required': True}
@@ -65,22 +67,16 @@ class CampaignContribution(Contributor >> Campaign):
 
 
 @describe(type=Stat, descriptor=True, keyname=True)
-class ContributorStats(Model):
+class ContributorStats(CategoricalStatValue):
 
   '''  '''
 
   # keyname: transaction type
-
-  count = StatValue, {'indexed': True, 'embedded': True}
-  total = StatValue, {'indexed': True, 'embedded': True}
 
 
 @describe(type=Stat, descriptor=True, keyname=True)
-class RecipientStats(Model):
+class RecipientStats(CategoricalStatValue):
 
   '''  '''
 
   # keyname: transaction type
-
-  count = StatValue, {'indexed': True, 'embedded': True}
-  total = StatValue, {'indexed': True, 'embedded': True}

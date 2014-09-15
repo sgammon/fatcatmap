@@ -10,8 +10,12 @@
 from .. import (Vertex,
                 describe)
 
+# address models
+from ..address import Address
+
 # abstract models
-from ..abstract import (Organization,
+from ..abstract import (Place,
+                        Organization,
                         OrganizationName)
 
 
@@ -22,3 +26,12 @@ class Corporation(Vertex):
 
   ## -- personal details -- ##
   name = OrganizationName, {'indexed': True, 'required': True}
+
+
+@describe(parent=Corporation, type=Place)
+class CorporateOffice(Vertex):
+
+  '''  '''
+
+  address = Address, {'embedded': True, 'indexed': True}
+  headquarters = bool, {'indexed': True, 'default': False}
