@@ -53,13 +53,13 @@ var routes = {"/":function(a) {
 }, "/<key1>/and/<key2>":function(a) {
   var b = this.data, c = this.app, d = a.args.key1, e = a.args.key2;
   a = a.state || {};
-  var f = c.$.stage && c.$.stage.$.map.active ? null : this.graph.construct();
+  var g = c.$.stage && c.$.stage.$.map.active ? null : this.graph.construct();
   a.page = a.page || {active:!0};
   a.modal = a.modal || null;
   c.$set("page", a.page);
   c.$set("modal", a.modal);
   c.nextTick(function() {
-    c.$broadcast("page.map", f);
+    c.$broadcast("page.map", g);
     b.getAll([d, e], {success:function(a) {
       c.$broadcast("detail", a);
     }, error:function(a) {
@@ -181,6 +181,9 @@ var urlutil = {addParams:function(a, b) {
   }
   return d.join("/");
 }};
+var VALIDATIONS = {email:/[\w\-\+\.]+@[a-z0-9\-]+\.[a-z]{2,}(?:\.[a-z]{2, 3})*/}, validation = {email:function(a) {
+  return VALIDATIONS.email.test(a);
+}};
 var _dataCache, watchers, _resolveAndSet;
 _dataCache = {};
 watchers = {};
@@ -191,9 +194,9 @@ _resolveAndSet = function(a, b) {
   d[c.shift()] = b;
 };
 services.data = {init:function(a, b) {
-  var c = this.data.normalize(a), d = c.data.keys, e = c.data.objects, f, g, h;
+  var c = this.data.normalize(a), d = c.data.keys, e = c.data.objects, g, f, h;
   for (h = 0;d && h < d.length;h++) {
-    f = d[h], g = e[h], g.key || (g.key = f), g.native || (g.kind = g.govtrack_id ? "legislator" : "contributor"), _dataCache[f] = g;
+    g = d[h], f = e[h], f.key || (f.key = g), f.native || (f.kind = f.govtrack_id ? "legislator" : "contributor"), _dataCache[g] = f;
   }
   window.DATACACHE = _dataCache;
   b(c);
@@ -222,9 +225,9 @@ services.data = {init:function(a, b) {
   debugger;
 }, getAll:function(a, b) {
   var c = [], d = !0;
-  a.forEach(function(e, f) {
+  a.forEach(function(e, g) {
     services.data.get(e, {success:function(d) {
-      c[f] = d;
+      c[g] = d;
       c.length === a.length && b.success(c);
     }, error:function(a) {
       d && (d = !1, b.error(a));
@@ -258,7 +261,7 @@ services.graph = {init:function(a) {
   GRAPH = {nodes:[], edges:[], natives:[], origin:a.origin, origin_key:b.keys[a.origin]};
   return this.graph.add(a, b);
 }, add:function(a, b) {
-  var c, d, e, f, g, h;
+  var c, d, e, g, f, h;
   c = function(a, b) {
     return function(c) {
       var d;
@@ -275,8 +278,8 @@ services.graph = {init:function(a) {
   };
   d = 0;
   for (e = b.keys;d < e.length;) {
-    f = e[d], d <= a.nodes ? _graphIndex.nodesByKey[f] || (g = {key:f, classes:["node"]}, h = b.objects[d].native, h = b.objects[e.indexOf(h)], h.govtrack_id ? (g.classes.push("legislator"), g.classes.push("M" === h.gender ? "male" : "female"), g.classes.push(Math.ceil(100 * Math.random()) % 2 ? "democrat" : "republican"), .1869 > Math.random() && g.classes.push("senate")) : (g.classes.push("contributor"), g.classes.push("C" == h.contributor_type ? "corporate" : "individual")), _graphIndex.nodesByKey[f] = 
-    GRAPH.nodes.push(g) - 1) : d <= a.edges && (_graphIndex.edgesByKey[f] || (_graphIndex.edgesByKey[f] = []), g = b.objects[d].node.slice(), h = g.shift(), g.forEach(c(h, f))), d++;
+    g = e[d], d <= a.nodes ? _graphIndex.nodesByKey[g] || (f = {key:g, classes:["node"]}, h = b.objects[d].native, h = b.objects[e.indexOf(h)], h.govtrack_id ? (f.classes.push("legislator"), f.classes.push("M" === h.gender ? "male" : "female"), f.classes.push(Math.ceil(100 * Math.random()) % 2 ? "democrat" : "republican"), .1869 > Math.random() && f.classes.push("senate")) : (f.classes.push("contributor"), f.classes.push("C" == h.contributor_type ? "corporate" : "individual")), _graphIndex.nodesByKey[g] = 
+    GRAPH.nodes.push(f) - 1) : d <= a.edges && (_graphIndex.edgesByKey[g] || (_graphIndex.edgesByKey[g] = []), f = b.objects[d].node.slice(), h = f.shift(), f.forEach(c(h, g))), d++;
   }
   return this.graph.get();
 }, get:function() {
@@ -289,8 +292,8 @@ _prepareRequest = function(a, b, c) {
   d.open(a.toUpperCase(), e, !!c);
   if (b.headers) {
     a = b.headers;
-    for (var f in a) {
-      a.hasOwnProperty(f) && d.setRequestHeader(f, a[f]);
+    for (var g in a) {
+      a.hasOwnProperty(g) && d.setRequestHeader(g, a[g]);
     }
   }
   d.data = b.data;
@@ -338,20 +341,21 @@ services.http = {get:function(a, b) {
 }, options:function(a, b) {
   return _dispatchRequest("OPTIONS", a, b);
 }}.service("http");
-var ROUTES = {resolved:[], dynamic:[]}, ROUTE_EVENTS = {route:[], routed:[], error:[]}, _dispatchRoute, Route, router;
+var ROUTES = {resolved:[], dynamic:[]}, ROUTE_EVENTS = {route:[], routed:[], error:[]}, ROUTE_HISTORY = {back:{length:0, head:null, tail:null}, forward:{length:0, head:null, tail:null}, current:null}, _dispatchRoute, Route, router;
 _dispatchRoute = function(a, b, c) {
-  for (var d = 0, e, f, g, h = function(a, c) {
+  for (var d = 0, e, g, f, h = function(a, c) {
     b.args[e.keys[c]] = a;
   };(e = c[d++]) && e.id <= a;) {
     if (e.matcher.test(a)) {
-      f = !0;
+      g = !0;
       a = a.match(e.matcher).slice(1);
       a.forEach(h);
-      g = e.handler.call(new ServiceContext, b);
+      f = e.handler.call(new ServiceContext, b);
+      f.routeID = e.id;
       break;
     }
   }
-  return{matched:f, response:g};
+  return{matched:g, response:f};
 };
 Route = function(a, b) {
   var c = this;
@@ -395,6 +399,36 @@ services.router = {register:function(a, b) {
     c(a, b, e);
   }));
   return e;
+}, back:function() {
+  var a = ROUTE_HISTORY.back, b = ROUTE_HISTORY.forward, c = ROUTE_HISTORY.current, d = a.tail;
+  if (d) {
+    if (c) {
+      for (c._next = b.head, c._previous = null, b.head ? b.head._previous = c : b.tail = c, b.head = c, b.length += 1;10 < b.length;) {
+        b.tail = b.tail._previous, b.tail._previous = null, b.length -= 1;
+      }
+    }
+    a.tail = a.tail._previous;
+    a.tail && (a.tail._next = null);
+    ROUTE_HISTORY.current = d;
+    this.router.route(d.path, d.request);
+  } else {
+    this.router.route("/");
+  }
+}, forward:function() {
+  var a = ROUTE_HISTORY.back, b = ROUTE_HISTORY.forward, c = ROUTE_HISTORY.current, d = b.head;
+  if (d) {
+    if (c) {
+      for (c._previous = a.tail, c._next = null, a.tail ? a.tail._next = c : a.head = c, a.tail = c, a.length += 1;10 < a.length;) {
+        a.head = a.head._next, a.head._previous = null, a.length -= 1;
+      }
+    }
+    b.head = b.head._next;
+    b.head && (b.head._previous = null);
+    ROUTE_HISTORY.current = d;
+    this.router.route(d.path, d.request);
+  } else {
+    this.router.route("/");
+  }
 }, on:function(a, b) {
   ROUTE_EVENTS[a] || (ROUTE_EVENTS[a] = []);
   ROUTE_EVENTS[a].push(b);
@@ -405,6 +439,17 @@ services.router = {register:function(a, b) {
   for (var c in a) {
     a.hasOwnProperty(c) && "function" === typeof a[c] && this.router.register(c, a[c]);
   }
+  this.router.on("routed", function(a, b, c) {
+    var f = c.routeID, h = ROUTE_HISTORY.current;
+    if (h && h.routeID !== f) {
+      for (f = ROUTE_HISTORY.back, h._previous = f.tail, h._next = null, f.tail ? f.tail._next = h : f.head = h, f.tail = h, f.length += 1;10 < f.length;) {
+        f.head = f.head._next, f.head._previous = null, f.length -= 1;
+      }
+    }
+    c.path = a;
+    c.request = b;
+    ROUTE_HISTORY.current = c;
+  });
   b && b(window.location.pathname);
 }}.service("router");
 services.history = {push:function(a, b) {
@@ -414,12 +459,6 @@ services.history = {push:function(a, b) {
   a.router.on("routed", function(a, c, d) {
     "history" !== c.source && services.history.push(a, d.state);
   });
-  a.router.back = function() {
-    window.history.back();
-  };
-  a.router.forward = function() {
-    window.history.forward();
-  };
   supports.history.html5 && (window.onpopstate = function(b) {
     a.router.route(window.location.pathname, {source:"history", state:b.state || {}});
   });
@@ -466,24 +505,24 @@ services.template = {put:function(a, b) {
 var VIEWS = {}, getSelfAndChildren = function(a, b) {
   var c = a.replace(".", "/") + ".html";
   services.template.get(c, {success:function(d) {
-    var e = [], f, g;
+    var e = [], g, f;
     if ("string" !== typeof d.data) {
       return b(!1, d);
     }
-    f = d.data.replace(/v-component=("|')([\w\.\-]+)\1/g, function(a, b, c) {
+    g = d.data.replace(/v-component=("|')([\w\.\-]+)\1/g, function(a, b, c) {
       e.push(c);
       return a;
     });
-    g = e.length;
-    VIEWS[a] && (VIEWS[a].options.template = f);
-    services.template.put(c, f);
-    if (0 === g) {
+    f = e.length;
+    VIEWS[a] && (VIEWS[a].options.template = g);
+    services.template.put(c, g);
+    if (0 === f) {
       return b();
     }
     e.forEach(function(a) {
       getSelfAndChildren(a, function() {
-        g -= 1;
-        0 === g && b(f);
+        f -= 1;
+        0 === f && b(g);
       });
     });
   }, error:function(a) {
@@ -506,16 +545,16 @@ services.view = {put:function(a, b) {
     throw Error("view.init() cannot be called with unregistered view " + a);
   }
   getSelfAndChildren(a, function(d) {
-    var e, f;
+    var e, g;
     document.body.innerHTML = "";
     d && (c.options.template = d);
     services.view.put(a, c);
     d = new c({ready:b, el:"body"});
     window.__ROOTVIEW = d;
     for (e in VIEWS) {
-      VIEWS.hasOwnProperty(e) && (f = VIEWS[e], f.options.template || getSelfAndChildren(e, function(a) {
-        a && (f.options.template = a);
-        services.view.put(e, f);
+      VIEWS.hasOwnProperty(e) && (g = VIEWS[e], g.options.template || getSelfAndChildren(e, function(a) {
+        a && (g.options.template = a);
+        services.view.put(e, g);
       }));
     }
   });
@@ -577,10 +616,39 @@ views.detail.Legislator = View.extend({viewname:"detail.legislator", replace:!0,
 }});
 views.Header = View.extend({viewname:"layout.header", replace:!0});
 views.Stage = View.extend({viewname:"layout.stage", replace:!0});
-views.Login = View.extend({viewname:"page.login", replace:!0, methods:{login:function(a) {
+views.page = {};
+views.page.Login = View.extend({viewname:"page.login", replace:!0, methods:{login:function(a) {
   a.preventDefault();
   a.stopPropagation();
-}}, data:{session:null}});
+  console.log("Login.login() called.");
+}, signup:function(a) {
+  a.preventDefault();
+  a.stopPropagation();
+  console.log("Login.signup() called.");
+}, validate:function(a) {
+  a = a.target;
+  var b = validation[a.type];
+  a.hasAttribute("data-validate") && (b = validation[a.getAttribute("data-validate")]);
+  b && a.classList.add(b(a.value) ? "valid" : "invalid");
+}, clearValidation:function(a) {
+  a = a.target;
+  a.classList.remove("valid");
+  a.classList.remove("invalid");
+}}, data:{session:null}, ready:function() {
+  var a = this;
+  a.validate = a.validate.bind(a);
+  a.clearValidation = a.clearValidation.bind(a);
+  $("input", a.$el).forEach(function(b) {
+    b.addEventListener("blur", a.validate);
+    b.addEventListener("focus", a.clearValidation);
+  });
+}, beforeDestroy:function() {
+  var a = this;
+  $("input", a.$el).forEach(function(b) {
+    b.removeEventListener("blur", a.validate);
+    b.removeEventListener("focus", a.clearValidation);
+  });
+}});
 views.Map = View.extend({viewname:"page.map", replace:!0, selectors:{map:"#map", edge:".edge", node:".node", selected:".selected"}, data:{map:{selected:[], changed:!1}, config:{width:0, height:0, force:{alpha:.75, strength:1, friction:.9, theta:.7, gravity:.1, charge:-600, distance:180}, origin:{snap:!1, dynamic:!1, position:null}, node:{radius:25, scaleFactor:1.6, classes:["node"]}, labels:{enable:!1, distance:0}, edge:{width:2, stroke:"#999", classes:["link"]}, sprite:{width:60, height:60}}, dragging:!1, 
 active:!1}, methods:{isNode:function(a) {
   return a.classList.contains("node");
@@ -588,7 +656,7 @@ active:!1}, methods:{isNode:function(a) {
   return a.classList.contains("link");
 }, viewDetail:function(a) {
   var b, c, d;
-  this.dragging || (b = a.target, c = b.id.split("-").pop(), this.isNode(b) && (a.preventDefault(), a.stopPropagation(), d = this.$.detail.keys(), b.classList.contains(this.$options.selectors.selected.slice(1)) ? (a = d.indexOf(c), -1 < a && d.splice(a, 1)) : 2 > d.length && (a.shiftKey ? d.push(c) : d = [c]), this.map.selected = d, this.map.changed = !0, this.$root.$emit("route", "/" + (1 < d.length ? d.join("/and/") : d[0] || ""))));
+  this.dragging || (b = a.target, c = b.id.split("-").pop(), this.isNode(b) && (a.preventDefault(), a.stopPropagation(), d = this.$.detail.keys(), b.classList.contains(this.$options.selectors.selected.slice(1)) ? (a = d.indexOf(c), -1 < a && d.splice(a, 1)) : a.shiftKey ? 2 > d.length && d.push(c) : d = [c], this.map.selected = d, this.map.changed = !0, this.$root.$emit("route", "/" + (1 < d.length ? d.join("/and/") : d[0] || ""))));
 }, browseTo:function(a) {
   console.log("map.browseTo()");
 }, startDrag:function(a) {
@@ -596,11 +664,11 @@ active:!1}, methods:{isNode:function(a) {
 }, endDrag:function(a) {
   this.dragging = !1;
 }, draw:function(a) {
-  var b = this, c, d, e, f, g, h, k, l;
+  var b = this, c, d, e, g, f, h, k, l;
   if (a && !b.map.root) {
-    c = b.config, d = b.$options.selectors, e = d3.select(d.map).attr("width", c.width).attr("height", c.height), f = e.selectAll(d.node), g = e.selectAll(d.edge), h = function() {
+    c = b.config, d = b.$options.selectors, e = d3.select(d.map).attr("width", c.width).attr("height", c.height), g = e.selectAll(d.node), f = e.selectAll(d.edge), h = function() {
       b.config.origin.snap ? (a.nodes[a.origin].x = b.config.origin.position.x, a.nodes[a.origin].y = b.config.origin.position.y) : b.config.origin.position = {x:a.nodes[a.origin].x, y:a.nodes[a.origin].y};
-      g.attr("x1", function(a) {
+      f.attr("x1", function(a) {
         return a.source.x - b.config.node.radius;
       }).attr("y1", function(a) {
         return a.source.y - b.config.node.radius;
@@ -609,14 +677,14 @@ active:!1}, methods:{isNode:function(a) {
       }).attr("y2", function(a) {
         return a.target.y - b.config.node.radius;
       });
-      f.attr("cx", function(a) {
+      g.attr("cx", function(a) {
         return a.x - b.config.node.radius;
       }).attr("cy", function(a) {
         return a.y - b.config.node.radius;
       });
-      b.map.changed && (f.filter(d.selected).filter(function(a) {
+      b.map.changed && (g.filter(d.selected).filter(function(a) {
         return-1 === b.map.selected.indexOf(a.key);
-      }).classed({selected:!1}).transition().duration(150).ease("cubic").attr("r", c.node.radius), f.filter(function(a) {
+      }).classed({selected:!1}).transition().duration(150).ease("cubic").attr("r", c.node.radius), g.filter(function(a) {
         return-1 < b.map.selected.indexOf(a.key);
       }).classed({selected:!0}).transition().duration(150).ease("cubic").attr("r", c.node.radius * c.node.scaleFactor), b.map.changed = !1, b.map.force.start());
     }, k = d3.layout.force().size([c.width, c.height]).linkDistance(c.force.distance).linkStrength(c.force.strength).friction(c.force.friction).theta(c.force.theta).gravity(c.force.gravity).alpha(c.force.alpha).charge(function(a) {
@@ -624,11 +692,11 @@ active:!1}, methods:{isNode:function(a) {
     }).on("tick", h), l = function() {
       var d = a.nodes, e = a.edges;
       k.nodes(d).links(e).start();
-      g = g.data(e, function(a) {
+      f = f.data(e, function(a) {
         return a.key;
       });
-      g.exit().remove();
-      g.enter().insert("line", ".node").attr("id", function(a) {
+      f.exit().remove();
+      f.enter().insert("line", ".node").attr("id", function(a) {
         return "edge-" + a.key;
       }).attr("x1", function(a) {
         return a.source.x;
@@ -639,11 +707,11 @@ active:!1}, methods:{isNode:function(a) {
       }).attr("y2", function(a) {
         return a.target.y;
       }).attr("stroke-width", c.edge.width).attr("stroke", c.edge.stroke).attr("class", c.edge.classes);
-      f = f.data(d, function(a) {
+      g = g.data(d, function(a) {
         return a.key;
       });
-      f.exit().remove();
-      f.enter().append("svg:circle").attr("id", function(a) {
+      g.exit().remove();
+      g.enter().append("svg:circle").attr("id", function(a) {
         return "node-" + a.key;
       }).attr("cx", function(a) {
         return a.x;
@@ -653,7 +721,7 @@ active:!1}, methods:{isNode:function(a) {
         -1 < b.map.selected.indexOf(a.key) && (b.map.changed = !0);
         return a.classes.join(" ");
       }).call(k.drag);
-      f.filter(function(b, c) {
+      g.filter(function(b, c) {
         return b.key === a.origin_key;
       });
       b.map.changed && k.start();

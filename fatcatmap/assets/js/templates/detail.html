@@ -1,7 +1,7 @@
 <section id="detail" v-ref="detail">
 
   <div id="detail_left" class="detail" v-if="left" v-transition>
-    <div class="close">
+    <div class="close close-right">
       <span v-on="click: close">x</span>
     </div>
     <div class="view" v-view="leftview" v-with="left.native" v-transition></div>

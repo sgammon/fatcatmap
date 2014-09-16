@@ -14,8 +14,8 @@ goog.require('services.view');
 goog.require('views.Header');
 goog.require('views.Modal');
 goog.require('views.Stage');
-goog.require('views.Login');
 goog.require('views.Map');
+goog.require('views.page.Login');
 
 goog.provide('views.App');
 

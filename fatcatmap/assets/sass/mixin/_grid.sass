@@ -1,4 +1,7 @@
 @import "var/layout"
 
 =column-span($cols)
-  width: percentage($cols/$columns)
+  flex-grow: ($cols/$columns) * 10
+
+=row-span($rws)
+  flex-grow: ($rws/$rows) * 10

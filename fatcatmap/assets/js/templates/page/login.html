@@ -1,21 +1,38 @@
-<div id="login" class="gridrow">
+<div id="login" class="row8 gridcol-stretch">
 
-  <div id="service_signin" class="col4">
-    <h4>sign in with:</h4>
-    <ul>
-      <li>facebook <span class="icon-facebook"></span></li>
-      <li>google <span class="icon-google"></span></li>
-    </ul>
-  </div>
+  <div id="service_signin" class="row3 gridcol">
 
-  <div id="signup" class="col7">
-    <h4>or enter your info to sign up or log in:</h4>
-    <input type="email" id="signup_email" class="email" placeholder="you@youmail.com">
-    <input type="password" id="signup_password" class="password" placeholder="password">
-    <div class="center text-center">
-      <button id="signup_submit">sign up</button>
-      <button id="signin_submit">sign in</button>
+    <div class="row8 gridrow">
+      <h3>sign in via</h3>
+      <ul class="gridcol">
+        <li class="row4">
+          <div class="icon-facebook"></div>
+          <div>facebook</div>
+        </li>
+        <li class="row4">
+          <div class="icon-google"></div>
+          <div>google</div>
+        </li>
+      </ul>
     </div>
-  </div>
+
+  </div> <!-- end #service_signin -->
+
+  <div id="signup" class="row5 gridrow-start">
+
+    <div class="col8 gridcol-stretch">
+      <div class="row8">
+        <h3>or enter your info below:</h3>
+        <input type="email" id="email" class="email" placeholder="you@youmail.com" v-model="email">
+        <input type="password" id="password" class="password" placeholder="password" v-model="password">
+      </div>
+    </div>
+
+    <div class="col4 gridcol">
+      <button id="signup_submit" v-on="click: signup">sign up</button>
+      <button id="login_submit" v-on="click: login">log in</button>
+    </div>
+
+  </div> <!-- end #signup -->
 
 </div>

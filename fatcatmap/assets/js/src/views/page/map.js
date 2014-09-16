@@ -322,12 +322,11 @@ views.Map = View.extend({
             if (selectedI > -1)
               selected.splice(selectedI, 1);
           } else {
-            if (selected.length < 2) {
-              if (e.shiftKey) {
+            if (e.shiftKey) {
+              if (selected.length < 2)
                 selected.push(key);
-              } else {
-                selected = [key];
-              }
+            } else {
+              selected = [key];
             }
           }
 

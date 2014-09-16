@@ -1,10 +1,16 @@
+@import "var/form"
+@import "var/font"
 @import "var/color"
+@import "var/animation"
+@import "mixin/animation"
+@import "mixin/transition"
 
 input, textarea, button
   outline: none
+  font-weight: $font-weight-lighter
 
 input, button
-  border-radius: 2px
+  border-radius: $input-border-radius
   height: 50px
   padding: 6px
   font-size: 26px
@@ -13,4 +19,37 @@ input, button
 
 input
   display: block
-  background-color: transparent
+  color: $input-text-color
+  background-color: $input-background-color
+  border: 1px solid $transparent
+  border-bottom-color: $input-border-color
+
+  &::-webkit-input-placeholder
+    color: $input-text-color
+
+  &:focus
+    background-color: $input-focus-background-color
+    border-bottom-color: $input-focus-border-color
+    color: $input-focus-text-color
+
+    &::-webkit-input-placeholder
+      color: $input-focus-text-color
+
+input, select, textarea
+  position: relative
+  +transition-property(border-bottom-color, background-color, color)
+  +transition-duration(0.2s)
+  +transition-ease(ease)
+
+  &.valid
+    border-bottom-color: $input-valid-border-color !important
+    color: $input-valid-text-color !important
+
+  &.invalid
+    border-bottom-color: $input-invalid-border-color !important
+    color: $input-invalid-text-color !important
+    text-decoration: line-through
+    +animation(headshake, 0.3s ease)
+
+button
+  cursor: pointer

@@ -6,14 +6,14 @@
 .relative
   position: relative
 
-.close, .close-left
+.close-right, .close-left
+  position: absolute
+  top: 0
   line-height: 1
   color: $grey
   cursor: pointer
-
-  & > span
-    font-weight: $font-weight-lighter
-    font-size: 2em
+  font-family: $sans-serif
+  z-index: 9999
 
   &:hover
     color: $grey-dark
@@ -21,13 +21,18 @@
   &:active
     color: $grey-darker
 
-.close
-  text-align: right
-  padding: 5px 12px 0 0
+  & > span
+    font-weight: $font-weight-lighter
+    font-size: 2.5em
+
+.close-right
+  right: 12px
 
 .close-left
-  text-align: left
-  padding: 5px 0 0 12px
+  left: 12px
+
+  & + div
+    margin-left: 2.5em
 
 .hidden
   display: none
@@ -35,14 +40,26 @@
 .transparent
   opacity: 0
 
+.text-left
+  text-align: left
+
+.text-right
+  text-align: right
+
+.text-center
+  text-align: center
+
+.vertical-middle
+  vertical-align: middle
+
+.left
+  float: left
+
 .right
   float: right
 
 .center
   margin: 0 auto
-
-.text-center
-  text-align: center
 
 .fcm-pre
   font-family: "fcm"

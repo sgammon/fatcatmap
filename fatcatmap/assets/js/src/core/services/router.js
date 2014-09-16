@@ -21,12 +21,42 @@ var ROUTES = {
   },
 
   ROUTE_EVENTS = {
-    /** @expose */
+    /**
+     * @expose
+     */
     route: [],
-    /** @expose */
+
+    /**
+     * @expose
+     */
     routed: [],
-    /** @expose */
+
+    /**
+     * @expose
+     */
     error: []
+  },
+
+  ROUTE_HISTORY = {
+    /**
+     * @expose
+     */
+    back: {
+      length: 0,
+      head: null,
+      tail: null
+    },
+
+    /**
+     * @expose
+     */
+    forward: {
+      length: 0,
+      head: null,
+      tail: null
+    },
+
+    current: null
   },
 
   _dispatchRoute, Route, router;
@@ -56,6 +86,7 @@ _dispatchRoute = function (path, request, _routes) {
       match.forEach(setArg);
 
       response = route.handler.call(new ServiceContext(), request);
+      response.routeID = route.id;
 
       break;
     }
@@ -161,7 +192,7 @@ services.router = /** @lends {ServiceContext.prototype.router} */ {
       response = response.response;
 
       ROUTE_EVENTS.routed.forEach(function (fn) {
-        fn(path, request, response)
+        fn(path, request, response);
       });
     } else {
       response = {
@@ -177,6 +208,95 @@ services.router = /** @lends {ServiceContext.prototype.router} */ {
   },
 
   /**
+   * @expose
+   * @this {ServiceContext}
+   */
+  back: function () {
+    var back = ROUTE_HISTORY.back,
+      forward = ROUTE_HISTORY.forward,
+      current = ROUTE_HISTORY.current,
+      target = back.tail;
+
+    if (target) {
+      if (current) {
+        current._next = forward.head;
+        current._previous = null;
+
+        if (forward.head) {
+          forward.head._previous = current;
+        } else {
+          forward.tail = current;
+        }
+
+        forward.head = current;
+        forward.length += 1;
+
+        while (forward.length > 10) {
+          forward.tail = forward.tail._previous;
+          forward.tail._previous = null;
+          forward.length -= 1;
+        }
+      }
+
+      back.tail = back.tail._previous;
+
+      if (back.tail)
+        back.tail._next = null;
+
+      ROUTE_HISTORY.current = target;
+
+      this.router.route(target.path, target.request);
+    } else {
+      this.router.route('/');
+    }
+  },
+
+  /**
+   * @expose
+   * @this {ServiceContext}
+   */
+  forward: function () {
+    var back = ROUTE_HISTORY.back,
+      forward = ROUTE_HISTORY.forward,
+      current = ROUTE_HISTORY.current,
+      target = forward.head;
+
+    if (target) {
+      if (current) {
+        current._previous = back.tail;
+        current._next = null;
+
+        if (back.tail) {
+          back.tail._next = current;
+        } else {
+          back.head = current;
+        }
+
+        back.tail = current;
+        back.length += 1;
+
+        while (back.length > 10) {
+          back.head = back.head._next;
+          back.head._previous = null;
+          back.length -= 1;
+        }
+      }
+
+      forward.head = forward.head._next;
+
+      if (forward.head)
+        forward.head._previous = null;
+
+      ROUTE_HISTORY.current = target;
+
+      this.router.route(target.path, target.request);
+    } else {
+      this.router.route('/');
+    }
+  },
+
+  /**
+   * @expose
    * @param {string} event
    * @param {function(string, Object=, Object=)} callback
    */
@@ -188,6 +308,7 @@ services.router = /** @lends {ServiceContext.prototype.router} */ {
   },
 
   /**
+   * @expose
    * @param {string} event
    * @param {function (string, Object=, Object=)=} callback
    */
@@ -212,6 +333,39 @@ services.router = /** @lends {ServiceContext.prototype.router} */ {
       if (routes.hasOwnProperty(k) && typeof routes[k] === 'function')
         this.router.register(k, routes[k]);
     }
+
+    this.router.on('routed', function (path, request, response) {
+      var routeID = response.routeID,
+        current = ROUTE_HISTORY.current,
+        back;
+
+      if (current && current.routeID !== routeID) {
+        back = ROUTE_HISTORY.back;
+
+        current._previous = back.tail;
+        current._next = null;
+
+        if (back.tail) {
+          back.tail._next = current;
+        } else {
+          back.head = current;
+        }
+
+        back.tail = current;
+        back.length += 1;
+
+        while (back.length > 10) {
+          back.head = back.head._next;
+          back.head._previous = null;
+          back.length -= 1;
+        }
+      }
+
+      response.path = path;
+      response.request = request;
+
+      ROUTE_HISTORY.current = response;
+    });
 
     if (handleInitial)
       handleInitial(window.location.pathname);
