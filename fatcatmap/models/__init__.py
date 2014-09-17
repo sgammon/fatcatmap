@@ -15,13 +15,14 @@ from datetime import date, time, datetime
 # canteen model API
 from canteen import meta
 from canteen import model
+from canteen import struct
 from canteen.model import (Key,
                            EdgeKey,
                            VertexKey)
 
 
 ## Globals
-_fixtures = set()
+fixtures = set()
 _spawn = lambda _t: defaultdict(_t)
 _ptree, _ttree, _models, _graph = (
   _spawn(set), _spawn(set), {}, _spawn(lambda: _spawn(set)))
@@ -70,13 +71,16 @@ class BaseVertex(BaseModel, model.Vertex):
 
         :returns: Resulting subtype instance. '''
 
-    from canteen import model
-
     desc = cls.__description__
 
     # special case: no parent and a keyname means keyname is first
-    parent, keyname = first, second if desc.keyname and not desc.parent else (
-                      second, first)
+    parent, keyname = None, None
+    if desc.keyname and not desc.parent:
+      keyname, parent = first, second
+    elif desc.parent and desc.keyname:
+      parent, keyname = first, second
+    elif desc.parent:
+      parent, keyname = first, None
 
     if desc.keyname:
       if keyname is None:
@@ -309,7 +313,7 @@ class Spec(object):
 
         :returns: Original :py:class:`Model` subclass, after registration. '''
 
-    global _ttree, _ptree, _graph, _models, _fixtures
+    global _ttree, _ptree, _graph, _models, fixtures
 
     # merge self with target
     if self.validate(self.merge(target)):
@@ -343,7 +347,7 @@ class Spec(object):
         _graph[target]['_root_'] = target
 
       if hasattr(target, 'fixture'):
-        _fixtures.add(target)
+        fixtures.add(target)
 
       return self.inject(target)
 
@@ -459,6 +463,10 @@ def report_structure():  # pragma: no cover
   print("================================================================")
   print("\n\n")
 
+
+# bind model metadata
+meta = struct.ObjectProxy({
+  'graph': _graph, 'tree': _ttree, 'hierarchy': _ptree})
 
 # map aliases
 describe = Spec.describe

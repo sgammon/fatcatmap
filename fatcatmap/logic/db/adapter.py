@@ -320,9 +320,7 @@ class RedisWarehouse(WarehouseAdapter, redis.RedisAdapter):
     ''' Return adapter config. '''
 
     from fatcatmap import config
-
-    profile = config.config['RedisWarehouse']['servers']['default']
-    return config.config['RedisWarehouse']['servers'][profile]
+    return config.config['RedisWarehouse']
 
   ## +=+=+ Basic Methods +=+=+ ##
   @classmethod

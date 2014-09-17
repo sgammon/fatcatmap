@@ -16,21 +16,18 @@ from fatcatmap import url, Page
 from canteen.base import handler
 
 
-# if there's realtime support, mount appropriate handler...
-if hasattr(handler, 'RealtimeHandler'):
+@url('socket', '/sock')
+class RealtimePage(handler.RealtimeHandler):
 
-  @url('socket', '/sock')
-  class RealtimePage(handler.RealtimeHandler):
+  ''' WIP '''
+
+  def on_message(self, message):
 
     ''' WIP '''
 
-    def on_message(self, message):
-
-      ''' WIP '''
-
-      if message == 'hi':
-        yield 'hey there'
-        yield 'this is cool'
+    if message == 'hi':
+      yield 'hey there'
+      yield 'this is cool'
 
 
 

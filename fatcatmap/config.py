@@ -85,7 +85,7 @@ config = cfg.Config(app={
 
     'templates': {
       'source': os.path.join(app, 'templates/source'),
-      #'compiled': 'fatcatmap.templates.compiled'
+      'compiled': 'fatcatmap.templates.compiled'
     }
 
   },
@@ -153,10 +153,10 @@ config = cfg.Config(app={
 
   ## - Redis
   'RedisAdapter': {
+
     'debug': True,
 
     'servers': {
-
 
       'default': 'sandbox',
 
@@ -168,16 +168,16 @@ config = cfg.Config(app={
 
   ## - Redis
   'RedisWarehouse': {
+
     'debug': True,
 
     'servers': {
 
-      'default': 'sandbox',
+      'default': 'local',
 
       # Redis Instances
       'local': {'host': '127.0.0.1', 'port': 6379},
       'sandbox': {'host': '10.0.5.5', 'port': 6379}}
-
 
   },
 
