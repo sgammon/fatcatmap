@@ -15,7 +15,7 @@ import settings
 # local
 from .gce import Deploy
 from .helpers import pause
-from .helpers import notify
+#from .helpers import notify
 from .helpers import get_node
 
 # fabric
@@ -97,7 +97,6 @@ def status():
   print(colors.green("status for node " + str(node)))
 
 
-@notify
 @task
 def destroy():
 
@@ -108,7 +107,6 @@ def destroy():
   env.d.driver.destroy_node(node)
 
 
-@notify
 @task
 def activate():
 
@@ -119,7 +117,6 @@ def activate():
   node.targetpool_add()
 
 
-@notify
 @task
 def deactivate():
 

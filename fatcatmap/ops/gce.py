@@ -20,6 +20,7 @@ from libcloud.compute.providers import get_driver
 
 
 ## Globals
+security.VERIFY_SSL_CERT = False
 security.CA_CERTS_PATH.append('/usr/local/etc/openssl/cert.pem')
 
 

@@ -24,9 +24,9 @@ from fabric.api import env
 from libcloud.common.google import ResourceNotFoundError
 
 # fabric integration
-from dogapi.fab import setup
-from dogapi.fab import notify
-setup(settings.DATADOG_KEY)
+#from dogapi.fab import setup
+#from dogapi.fab import notify
+#setup(settings.DATADOG_KEY)
 
 
 def get_node():

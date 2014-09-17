@@ -18,7 +18,7 @@ from time import sleep
 from . import support
 from . import helpers
 from . import settings
-from .helpers import notify
+#from .helpers import notify
 from .support import service
 from .helpers import get_node
 
@@ -28,7 +28,7 @@ from fabric.api import env, task
 from fabtools import require, deb
 
 
-@notify
+#@notify
 @task
 def bootstrap():
 
@@ -57,7 +57,7 @@ def bootstrap():
   support.start(*services)
 
 
-@notify
+#@notify
 @task
 def fatcatmap(environment):
 
