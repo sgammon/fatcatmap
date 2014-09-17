@@ -62,7 +62,7 @@ var urlutil = {
   },
 
   /**
-   * Parses a URL into easily-consumable parts.
+   * Parses a URL into an easily-consumable object.
    * @param {string} url
    * @return {{
    *   protocol: string,

@@ -10,6 +10,7 @@
  */
 
 goog.require('urlutil');
+goog.require('structs');
 goog.require('supports');
 goog.require('services');
 
@@ -38,24 +39,8 @@ var ROUTES = {
   },
 
   ROUTE_HISTORY = {
-    /**
-     * @expose
-     */
-    back: {
-      length: 0,
-      head: null,
-      tail: null
-    },
-
-    /**
-     * @expose
-     */
-    forward: {
-      length: 0,
-      head: null,
-      tail: null
-    },
-
+    back: new BiLinkedList(null, 10),
+    forward: new BiLinkedList(null, 10),
     current: null
   },
 
@@ -86,8 +71,6 @@ _dispatchRoute = function (path, request, _routes) {
       match.forEach(setArg);
 
       response = route.handler.call(new ServiceContext(), request);
-      response.routeID = route.id;
-
       break;
     }
   }
@@ -212,38 +195,13 @@ services.router = /** @lends {ServiceContext.prototype.router} */ {
    * @this {ServiceContext}
    */
   back: function () {
-    var back = ROUTE_HISTORY.back,
-      forward = ROUTE_HISTORY.forward,
-      current = ROUTE_HISTORY.current,
-      target = back.tail;
+    var target = ROUTE_HISTORY.back.rpop();
 
     if (target) {
-      if (current) {
-        current._next = forward.head;
-        current._previous = null;
+      if (ROUTE_HISTORY.current)
+        ROUTE_HISTORY.forward.lpush(ROUTE_HISTORY.current);
 
-        if (forward.head) {
-          forward.head._previous = current;
-        } else {
-          forward.tail = current;
-        }
-
-        forward.head = current;
-        forward.length += 1;
-
-        while (forward.length > 10) {
-          forward.tail = forward.tail._previous;
-          forward.tail._previous = null;
-          forward.length -= 1;
-        }
-      }
-
-      back.tail = back.tail._previous;
-
-      if (back.tail)
-        back.tail._next = null;
-
-      ROUTE_HISTORY.current = target;
+      ROUTE_HISTORY.current = null;
 
       this.router.route(target.path, target.request);
     } else {
@@ -256,39 +214,9 @@ services.router = /** @lends {ServiceContext.prototype.router} */ {
    * @this {ServiceContext}
    */
   forward: function () {
-    var back = ROUTE_HISTORY.back,
-      forward = ROUTE_HISTORY.forward,
-      current = ROUTE_HISTORY.current,
-      target = forward.head;
+    var target = ROUTE_HISTORY.forward.lpop();
 
     if (target) {
-      if (current) {
-        current._previous = back.tail;
-        current._next = null;
-
-        if (back.tail) {
-          back.tail._next = current;
-        } else {
-          back.head = current;
-        }
-
-        back.tail = current;
-        back.length += 1;
-
-        while (back.length > 10) {
-          back.head = back.head._next;
-          back.head._previous = null;
-          back.length -= 1;
-        }
-      }
-
-      forward.head = forward.head._next;
-
-      if (forward.head)
-        forward.head._previous = null;
-
-      ROUTE_HISTORY.current = target;
-
       this.router.route(target.path, target.request);
     } else {
       this.router.route('/');
@@ -335,31 +263,8 @@ services.router = /** @lends {ServiceContext.prototype.router} */ {
     }
 
     this.router.on('routed', function (path, request, response) {
-      var routeID = response.routeID,
-        current = ROUTE_HISTORY.current,
-        back;
-
-      if (current && current.routeID !== routeID) {
-        back = ROUTE_HISTORY.back;
-
-        current._previous = back.tail;
-        current._next = null;
-
-        if (back.tail) {
-          back.tail._next = current;
-        } else {
-          back.head = current;
-        }
-
-        back.tail = current;
-        back.length += 1;
-
-        while (back.length > 10) {
-          back.head = back.head._next;
-          back.head._previous = null;
-          back.length -= 1;
-        }
-      }
+      if (ROUTE_HISTORY.current)
+        ROUTE_HISTORY.back.rpush(ROUTE_HISTORY.current);
 
       response.path = path;
       response.request = request;

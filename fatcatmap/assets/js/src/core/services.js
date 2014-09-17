@@ -47,7 +47,7 @@ Service = function (name, methods) {
   if (methods) {
     for (var k in methods) {
       if (methods.hasOwnProperty(k) && methods[k] instanceof Function)
-        this[k] = methods[k].__injected__ ? methods[k] : methods[k].inject();
+        this[k] = methods[k];
     }
   }
 

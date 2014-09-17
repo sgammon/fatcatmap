@@ -122,7 +122,7 @@ services.data = /** @lends {ServiceContext.prototype.data} */ {
 
         return cbs.success(item);
       } else {
-        // Retrieve from server.
+        // Retrieve from localStorage & server.
         debugger;
       }
     }

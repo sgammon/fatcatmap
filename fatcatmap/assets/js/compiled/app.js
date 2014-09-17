@@ -34,32 +34,30 @@ var routes = {"/":function(a) {
 }, "/settings":function(a) {
 }, "/404":function(a) {
 }, "/<key>":function(a) {
-  var b = this.data, c = this.app, d = a.args.key;
-  a = a.state || {};
-  var e = c.$.stage && c.$.stage.$.map.active ? null : this.graph.construct();
-  a.page = a.page || {active:!0};
-  a.modal = a.modal || null;
-  c.$set("page", a.page);
-  c.$set("modal", a.modal);
+  var b = this.data, c = this.app, d = a.state || {}, e = c.$.stage && c.$.stage.$.map.active ? null : this.graph.construct();
+  d.page = d.page || {active:!0};
+  d.modal = d.modal || null;
+  c.$set("page", d.page);
+  c.$set("modal", d.modal);
   c.nextTick(function() {
     c.$broadcast("page.map", e);
-    b.get(d, {success:function(a) {
+    b.get(a.args.key, {success:function(a) {
       c.$broadcast("detail", [a]);
     }, error:function(a) {
       c.$emit("route", "/404", {error:a});
     }});
   });
-  return a;
+  return d;
 }, "/<key1>/and/<key2>":function(a) {
   var b = this.data, c = this.app, d = a.args.key1, e = a.args.key2;
   a = a.state || {};
-  var g = c.$.stage && c.$.stage.$.map.active ? null : this.graph.construct();
+  var f = c.$.stage && c.$.stage.$.map.active ? null : this.graph.construct();
   a.page = a.page || {active:!0};
   a.modal = a.modal || null;
   c.$set("page", a.page);
   c.$set("modal", a.modal);
   c.nextTick(function() {
-    c.$broadcast("page.map", g);
+    c.$broadcast("page.map", f);
     b.getAll([d, e], {success:function(a) {
       c.$broadcast("detail", a);
     }, error:function(a) {
@@ -97,7 +95,7 @@ Service = function(a, b) {
   }
   if (b) {
     for (var c in b) {
-      b.hasOwnProperty(c) && b[c] instanceof Function && (this[c] = b[c].__injected__ ? b[c] : b[c].inject());
+      b.hasOwnProperty(c) && b[c] instanceof Function && (this[c] = b[c]);
     }
   }
   ServiceContext.register(a, this);
@@ -134,6 +132,57 @@ Object.defineProperty(Function.prototype, "service", {value:function(a) {
 Object.defineProperty(Object.prototype, "service", {value:function(a) {
   return new Service(a, this);
 }});
+var structs = {}, ListItem, BiLinkedList;
+ListItem = function(a, b, c) {
+  this.data = a;
+  this.previous = b || null;
+  this.next = c || null;
+};
+BiLinkedList = function(a, b) {
+  this.tail = this.head = null;
+  this.length = 0;
+  this.limit = b || Infinity;
+  a && Array.isArray(a) && this.rpushAll(a);
+};
+BiLinkedList.prototype._increment = function() {
+  for (this.length += 1;this.length > this.limit;) {
+    this.tail = this.tail.previous, this.tail.next = null, this.length -= 1;
+  }
+};
+BiLinkedList.prototype.lpush = function(a) {
+  a = new ListItem(a);
+  this.head ? (a.next = this.head, this.head = this.head.previous = a, this._increment()) : this.head = this.tail = a;
+};
+BiLinkedList.prototype.rpush = function(a) {
+  a = new ListItem(a);
+  this.tail ? (a.previous = this.tail, this.tail = this.tail.next = a, this._increment()) : this.head = this.tail = a;
+};
+BiLinkedList.prototype.lpushAll = function(a) {
+  var b = 0;
+  a = a || [];
+  for (b;b < a.length;b++) {
+    this.lpush(a[b]);
+  }
+};
+BiLinkedList.prototype.rpushAll = function(a) {
+  var b = 0;
+  a = a || [];
+  for (b;b < a.length;b++) {
+    this.rpush(a[b]);
+  }
+};
+BiLinkedList.prototype.lpop = function() {
+  var a;
+  if (this.head) {
+    return a = this.head, this.head = this.head.next, this.length -= 1, a.data;
+  }
+};
+BiLinkedList.prototype.rpop = function() {
+  var a;
+  if (this.tail) {
+    return a = this.tail, this.tail = this.tail.previous, this.length -= 1, a.data;
+  }
+};
 var supports = {cookies:navigator.cookieEnabled, retina:2 == window.devicePixelRatio, workers:!!window.Worker, sharedWorkers:!!window.SharedWorker, sockets:!!window.WebSocket, sse:!!window.EventSource, geo:!!navigator.geolocation, touch:0 < navigator.maxTouchPoints, history:{html5:!!window.history.pushState, hash:!!window.onhashchange}, storage:{local:!!window.localStorage, session:!!window.sessionStorage, indexed:!!window.IDBFactory}};
 var urlutil = {addParams:function(a, b) {
   var c = !0;
@@ -181,9 +230,42 @@ var urlutil = {addParams:function(a, b) {
   }
   return d.join("/");
 }};
-var VALIDATIONS = {email:/[\w\-\+\.]+@[a-z0-9\-]+\.[a-z]{2,}(?:\.[a-z]{2, 3})*/}, validation = {email:function(a) {
-  return VALIDATIONS.email.test(a);
-}};
+var validation = {}, VALIDATIONS = {email:function(a) {
+  return/[\w\-\+\.]+@[a-z0-9\-]+\.[a-z]{2,}(?:\.[a-z]{2,3})*/.test(a);
+}, number:function(a) {
+  return "number" === typeof a || /^\d*$/.test(a);
+}, alpha:function(a) {
+  return/^[a-z]*$/i.test(a);
+}, alphanum:function(a) {
+  return/^[a-z\d]*$/i.test(a);
+}, length:function(a, b) {
+  return VALIDATIONS.number(a) ? b.length === +a : (console.warn("validation.length requires a length to be passed"), !0);
+}}, _validations = {}, _validateInput = function(a) {
+  a = a.target;
+  var b = _validations[a.__validate], c;
+  if (b && b.length) {
+    for (c = 0;c < b.length;c++) {
+      if (!b[c](a.value)) {
+        return a.classList.add("invalid");
+      }
+    }
+  }
+  a.classList.add("valid");
+}, _removeValidation = function(a) {
+  a.target.classList.remove("valid");
+  a.target.classList.remove("invalid");
+};
+Vue.directive("validate", {isLiteral:!0, bind:function(a) {
+  a = this.arg ? this.key : this.arg;
+  var b = VALIDATIONS[this.arg ? this.arg : this.key], c = _validations[this.el.__validate] || [];
+  b && (a && (b = b.bind(null, a)), c.push(b));
+  this.el.__validate || (this.el.__validate = this.el.tagName + this.key + Date.now(), this.el.addEventListener("blur", _validateInput), this.el.addEventListener("focus", _removeValidation));
+  _validations[this.el.__validate] = c;
+}, unbind:function(a) {
+  this.el.removeEventListener("blur", _validateInput);
+  this.el.removeEventListener("focus", _removeValidation);
+  _validations[this.el.__validate] = null;
+}});
 var _dataCache, watchers, _resolveAndSet;
 _dataCache = {};
 watchers = {};
@@ -194,9 +276,9 @@ _resolveAndSet = function(a, b) {
   d[c.shift()] = b;
 };
 services.data = {init:function(a, b) {
-  var c = this.data.normalize(a), d = c.data.keys, e = c.data.objects, g, f, h;
+  var c = this.data.normalize(a), d = c.data.keys, e = c.data.objects, f, g, h;
   for (h = 0;d && h < d.length;h++) {
-    g = d[h], f = e[h], f.key || (f.key = g), f.native || (f.kind = f.govtrack_id ? "legislator" : "contributor"), _dataCache[g] = f;
+    f = d[h], g = e[h], g.key || (g.key = f), g.native || (g.kind = g.govtrack_id ? "legislator" : "contributor"), _dataCache[f] = g;
   }
   window.DATACACHE = _dataCache;
   b(c);
@@ -225,9 +307,9 @@ services.data = {init:function(a, b) {
   debugger;
 }, getAll:function(a, b) {
   var c = [], d = !0;
-  a.forEach(function(e, g) {
+  a.forEach(function(e, f) {
     services.data.get(e, {success:function(d) {
-      c[g] = d;
+      c[f] = d;
       c.length === a.length && b.success(c);
     }, error:function(a) {
       d && (d = !1, b.error(a));
@@ -261,7 +343,7 @@ services.graph = {init:function(a) {
   GRAPH = {nodes:[], edges:[], natives:[], origin:a.origin, origin_key:b.keys[a.origin]};
   return this.graph.add(a, b);
 }, add:function(a, b) {
-  var c, d, e, g, f, h;
+  var c, d, e, f, g, h;
   c = function(a, b) {
     return function(c) {
       var d;
@@ -278,8 +360,8 @@ services.graph = {init:function(a) {
   };
   d = 0;
   for (e = b.keys;d < e.length;) {
-    g = e[d], d <= a.nodes ? _graphIndex.nodesByKey[g] || (f = {key:g, classes:["node"]}, h = b.objects[d].native, h = b.objects[e.indexOf(h)], h.govtrack_id ? (f.classes.push("legislator"), f.classes.push("M" === h.gender ? "male" : "female"), f.classes.push(Math.ceil(100 * Math.random()) % 2 ? "democrat" : "republican"), .1869 > Math.random() && f.classes.push("senate")) : (f.classes.push("contributor"), f.classes.push("C" == h.contributor_type ? "corporate" : "individual")), _graphIndex.nodesByKey[g] = 
-    GRAPH.nodes.push(f) - 1) : d <= a.edges && (_graphIndex.edgesByKey[g] || (_graphIndex.edgesByKey[g] = []), f = b.objects[d].node.slice(), h = f.shift(), f.forEach(c(h, g))), d++;
+    f = e[d], d <= a.nodes ? _graphIndex.nodesByKey[f] || (g = {key:f, classes:["node"]}, h = b.objects[d].native, h = b.objects[e.indexOf(h)], h.govtrack_id ? (g.classes.push("legislator"), g.classes.push("M" === h.gender ? "male" : "female"), g.classes.push(Math.ceil(100 * Math.random()) % 2 ? "democrat" : "republican"), .1869 > Math.random() && g.classes.push("senate")) : (g.classes.push("contributor"), g.classes.push("C" == h.contributor_type ? "corporate" : "individual")), _graphIndex.nodesByKey[f] = 
+    GRAPH.nodes.push(g) - 1) : d <= a.edges && (_graphIndex.edgesByKey[f] || (_graphIndex.edgesByKey[f] = []), g = b.objects[d].node.slice(), h = g.shift(), g.forEach(c(h, f))), d++;
   }
   return this.graph.get();
 }, get:function() {
@@ -292,8 +374,8 @@ _prepareRequest = function(a, b, c) {
   d.open(a.toUpperCase(), e, !!c);
   if (b.headers) {
     a = b.headers;
-    for (var g in a) {
-      a.hasOwnProperty(g) && d.setRequestHeader(g, a[g]);
+    for (var f in a) {
+      a.hasOwnProperty(f) && d.setRequestHeader(f, a[f]);
     }
   }
   d.data = b.data;
@@ -341,21 +423,20 @@ services.http = {get:function(a, b) {
 }, options:function(a, b) {
   return _dispatchRequest("OPTIONS", a, b);
 }}.service("http");
-var ROUTES = {resolved:[], dynamic:[]}, ROUTE_EVENTS = {route:[], routed:[], error:[]}, ROUTE_HISTORY = {back:{length:0, head:null, tail:null}, forward:{length:0, head:null, tail:null}, current:null}, _dispatchRoute, Route, router;
+var ROUTES = {resolved:[], dynamic:[]}, ROUTE_EVENTS = {route:[], routed:[], error:[]}, ROUTE_HISTORY = {back:new BiLinkedList(null, 10), forward:new BiLinkedList(null, 10), current:null}, _dispatchRoute, Route, router;
 _dispatchRoute = function(a, b, c) {
-  for (var d = 0, e, g, f, h = function(a, c) {
+  for (var d = 0, e, f, g, h = function(a, c) {
     b.args[e.keys[c]] = a;
   };(e = c[d++]) && e.id <= a;) {
     if (e.matcher.test(a)) {
-      g = !0;
+      f = !0;
       a = a.match(e.matcher).slice(1);
       a.forEach(h);
-      f = e.handler.call(new ServiceContext, b);
-      f.routeID = e.id;
+      g = e.handler.call(new ServiceContext, b);
       break;
     }
   }
-  return{matched:g, response:f};
+  return{matched:f, response:g};
 };
 Route = function(a, b) {
   var c = this;
@@ -400,35 +481,11 @@ services.router = {register:function(a, b) {
   }));
   return e;
 }, back:function() {
-  var a = ROUTE_HISTORY.back, b = ROUTE_HISTORY.forward, c = ROUTE_HISTORY.current, d = a.tail;
-  if (d) {
-    if (c) {
-      for (c._next = b.head, c._previous = null, b.head ? b.head._previous = c : b.tail = c, b.head = c, b.length += 1;10 < b.length;) {
-        b.tail = b.tail._previous, b.tail._previous = null, b.length -= 1;
-      }
-    }
-    a.tail = a.tail._previous;
-    a.tail && (a.tail._next = null);
-    ROUTE_HISTORY.current = d;
-    this.router.route(d.path, d.request);
-  } else {
-    this.router.route("/");
-  }
+  var a = ROUTE_HISTORY.back.rpop();
+  a ? (ROUTE_HISTORY.current && ROUTE_HISTORY.forward.lpush(ROUTE_HISTORY.current), ROUTE_HISTORY.current = null, this.router.route(a.path, a.request)) : this.router.route("/");
 }, forward:function() {
-  var a = ROUTE_HISTORY.back, b = ROUTE_HISTORY.forward, c = ROUTE_HISTORY.current, d = b.head;
-  if (d) {
-    if (c) {
-      for (c._previous = a.tail, c._next = null, a.tail ? a.tail._next = c : a.head = c, a.tail = c, a.length += 1;10 < a.length;) {
-        a.head = a.head._next, a.head._previous = null, a.length -= 1;
-      }
-    }
-    b.head = b.head._next;
-    b.head && (b.head._previous = null);
-    ROUTE_HISTORY.current = d;
-    this.router.route(d.path, d.request);
-  } else {
-    this.router.route("/");
-  }
+  var a = ROUTE_HISTORY.forward.lpop();
+  a ? this.router.route(a.path, a.request) : this.router.route("/");
 }, on:function(a, b) {
   ROUTE_EVENTS[a] || (ROUTE_EVENTS[a] = []);
   ROUTE_EVENTS[a].push(b);
@@ -440,12 +497,7 @@ services.router = {register:function(a, b) {
     a.hasOwnProperty(c) && "function" === typeof a[c] && this.router.register(c, a[c]);
   }
   this.router.on("routed", function(a, b, c) {
-    var f = c.routeID, h = ROUTE_HISTORY.current;
-    if (h && h.routeID !== f) {
-      for (f = ROUTE_HISTORY.back, h._previous = f.tail, h._next = null, f.tail ? f.tail._next = h : f.head = h, f.tail = h, f.length += 1;10 < f.length;) {
-        f.head = f.head._next, f.head._previous = null, f.length -= 1;
-      }
-    }
+    ROUTE_HISTORY.current && ROUTE_HISTORY.back.rpush(ROUTE_HISTORY.current);
     c.path = a;
     c.request = b;
     ROUTE_HISTORY.current = c;
@@ -483,7 +535,7 @@ RPCAPI = function(a, b, c) {
 };
 services.rpc = {factory:function(a) {
   var b = a[0];
-  services.rpc[b] = new RPCAPI(b, a[1], a[2]);
+  "string" === typeof b && (services.rpc[b] = new RPCAPI(b, a[1], a[2]));
 }, init:function(a) {
   a.forEach(services.rpc.factory);
 }}.service("rpc");
@@ -505,24 +557,24 @@ services.template = {put:function(a, b) {
 var VIEWS = {}, getSelfAndChildren = function(a, b) {
   var c = a.replace(".", "/") + ".html";
   services.template.get(c, {success:function(d) {
-    var e = [], g, f;
+    var e = [], f, g;
     if ("string" !== typeof d.data) {
       return b(!1, d);
     }
-    g = d.data.replace(/v-component=("|')([\w\.\-]+)\1/g, function(a, b, c) {
+    f = d.data.replace(/v-component=("|')([\w\.\-]+)\1/g, function(a, b, c) {
       e.push(c);
       return a;
     });
-    f = e.length;
-    VIEWS[a] && (VIEWS[a].options.template = g);
-    services.template.put(c, g);
-    if (0 === f) {
+    g = e.length;
+    VIEWS[a] && (VIEWS[a].options.template = f);
+    services.template.put(c, f);
+    if (0 === g) {
       return b();
     }
     e.forEach(function(a) {
       getSelfAndChildren(a, function() {
-        f -= 1;
-        0 === f && b(g);
+        g -= 1;
+        0 === g && b(f);
       });
     });
   }, error:function(a) {
@@ -545,16 +597,16 @@ services.view = {put:function(a, b) {
     throw Error("view.init() cannot be called with unregistered view " + a);
   }
   getSelfAndChildren(a, function(d) {
-    var e, g;
+    var e, f;
     document.body.innerHTML = "";
     d && (c.options.template = d);
     services.view.put(a, c);
     d = new c({ready:b, el:"body"});
     window.__ROOTVIEW = d;
     for (e in VIEWS) {
-      VIEWS.hasOwnProperty(e) && (g = VIEWS[e], g.options.template || getSelfAndChildren(e, function(a) {
-        a && (g.options.template = a);
-        services.view.put(e, g);
+      VIEWS.hasOwnProperty(e) && (f = VIEWS[e], f.options.template || getSelfAndChildren(e, function(a) {
+        a && (f.options.template = a);
+        services.view.put(e, f);
       }));
     }
   });
@@ -625,30 +677,7 @@ views.page.Login = View.extend({viewname:"page.login", replace:!0, methods:{logi
   a.preventDefault();
   a.stopPropagation();
   console.log("Login.signup() called.");
-}, validate:function(a) {
-  a = a.target;
-  var b = validation[a.type];
-  a.hasAttribute("data-validate") && (b = validation[a.getAttribute("data-validate")]);
-  b && a.classList.add(b(a.value) ? "valid" : "invalid");
-}, clearValidation:function(a) {
-  a = a.target;
-  a.classList.remove("valid");
-  a.classList.remove("invalid");
-}}, data:{session:null}, ready:function() {
-  var a = this;
-  a.validate = a.validate.bind(a);
-  a.clearValidation = a.clearValidation.bind(a);
-  $("input", a.$el).forEach(function(b) {
-    b.addEventListener("blur", a.validate);
-    b.addEventListener("focus", a.clearValidation);
-  });
-}, beforeDestroy:function() {
-  var a = this;
-  $("input", a.$el).forEach(function(b) {
-    b.removeEventListener("blur", a.validate);
-    b.removeEventListener("focus", a.clearValidation);
-  });
-}});
+}}, data:{session:null}});
 views.Map = View.extend({viewname:"page.map", replace:!0, selectors:{map:"#map", edge:".edge", node:".node", selected:".selected"}, data:{map:{selected:[], changed:!1}, config:{width:0, height:0, force:{alpha:.75, strength:1, friction:.9, theta:.7, gravity:.1, charge:-600, distance:180}, origin:{snap:!1, dynamic:!1, position:null}, node:{radius:25, scaleFactor:1.6, classes:["node"]}, labels:{enable:!1, distance:0}, edge:{width:2, stroke:"#999", classes:["link"]}, sprite:{width:60, height:60}}, dragging:!1, 
 active:!1}, methods:{isNode:function(a) {
   return a.classList.contains("node");
@@ -656,7 +685,7 @@ active:!1}, methods:{isNode:function(a) {
   return a.classList.contains("link");
 }, viewDetail:function(a) {
   var b, c, d;
-  this.dragging || (b = a.target, c = b.id.split("-").pop(), this.isNode(b) && (a.preventDefault(), a.stopPropagation(), d = this.$.detail.keys(), b.classList.contains(this.$options.selectors.selected.slice(1)) ? (a = d.indexOf(c), -1 < a && d.splice(a, 1)) : a.shiftKey ? 2 > d.length && d.push(c) : d = [c], this.map.selected = d, this.map.changed = !0, this.$root.$emit("route", "/" + (1 < d.length ? d.join("/and/") : d[0] || ""))));
+  this.dragging || (b = a.target, this.isNode(b) && (a.preventDefault(), a.stopPropagation(), c = b.getAttribute("id").split("-").pop(), d = this.$.detail.keys(), b.classList.contains(this.$options.selectors.selected.slice(1)) ? (a = d.indexOf(c), -1 < a && d.splice(a, 1)) : a.shiftKey ? 2 > d.length && d.push(c) : d = [c], this.map.selected = d, this.map.changed = !0, this.$root.$emit("route", "/" + (1 < d.length ? d.join("/and/") : d[0] || ""))));
 }, browseTo:function(a) {
   console.log("map.browseTo()");
 }, startDrag:function(a) {
@@ -664,11 +693,11 @@ active:!1}, methods:{isNode:function(a) {
 }, endDrag:function(a) {
   this.dragging = !1;
 }, draw:function(a) {
-  var b = this, c, d, e, g, f, h, k, l;
+  var b = this, c, d, e, f, g, h, k, l;
   if (a && !b.map.root) {
-    c = b.config, d = b.$options.selectors, e = d3.select(d.map).attr("width", c.width).attr("height", c.height), g = e.selectAll(d.node), f = e.selectAll(d.edge), h = function() {
+    c = b.config, d = b.$options.selectors, e = d3.select(d.map).attr("width", c.width).attr("height", c.height), f = e.selectAll(d.node), g = e.selectAll(d.edge), h = function() {
       b.config.origin.snap ? (a.nodes[a.origin].x = b.config.origin.position.x, a.nodes[a.origin].y = b.config.origin.position.y) : b.config.origin.position = {x:a.nodes[a.origin].x, y:a.nodes[a.origin].y};
-      f.attr("x1", function(a) {
+      g.attr("x1", function(a) {
         return a.source.x - b.config.node.radius;
       }).attr("y1", function(a) {
         return a.source.y - b.config.node.radius;
@@ -677,14 +706,14 @@ active:!1}, methods:{isNode:function(a) {
       }).attr("y2", function(a) {
         return a.target.y - b.config.node.radius;
       });
-      g.attr("cx", function(a) {
+      f.attr("cx", function(a) {
         return a.x - b.config.node.radius;
       }).attr("cy", function(a) {
         return a.y - b.config.node.radius;
       });
-      b.map.changed && (g.filter(d.selected).filter(function(a) {
+      b.map.changed && (f.filter(d.selected).filter(function(a) {
         return-1 === b.map.selected.indexOf(a.key);
-      }).classed({selected:!1}).transition().duration(150).ease("cubic").attr("r", c.node.radius), g.filter(function(a) {
+      }).classed({selected:!1}).transition().duration(150).ease("cubic").attr("r", c.node.radius), f.filter(function(a) {
         return-1 < b.map.selected.indexOf(a.key);
       }).classed({selected:!0}).transition().duration(150).ease("cubic").attr("r", c.node.radius * c.node.scaleFactor), b.map.changed = !1, b.map.force.start());
     }, k = d3.layout.force().size([c.width, c.height]).linkDistance(c.force.distance).linkStrength(c.force.strength).friction(c.force.friction).theta(c.force.theta).gravity(c.force.gravity).alpha(c.force.alpha).charge(function(a) {
@@ -692,11 +721,11 @@ active:!1}, methods:{isNode:function(a) {
     }).on("tick", h), l = function() {
       var d = a.nodes, e = a.edges;
       k.nodes(d).links(e).start();
-      f = f.data(e, function(a) {
+      g = g.data(e, function(a) {
         return a.key;
       });
-      f.exit().remove();
-      f.enter().insert("line", ".node").attr("id", function(a) {
+      g.exit().remove();
+      g.enter().insert("line", ".node").attr("id", function(a) {
         return "edge-" + a.key;
       }).attr("x1", function(a) {
         return a.source.x;
@@ -707,11 +736,11 @@ active:!1}, methods:{isNode:function(a) {
       }).attr("y2", function(a) {
         return a.target.y;
       }).attr("stroke-width", c.edge.width).attr("stroke", c.edge.stroke).attr("class", c.edge.classes);
-      g = g.data(d, function(a) {
+      f = f.data(d, function(a) {
         return a.key;
       });
-      g.exit().remove();
-      g.enter().append("svg:circle").attr("id", function(a) {
+      f.exit().remove();
+      f.enter().append("svg:circle").attr("id", function(a) {
         return "node-" + a.key;
       }).attr("cx", function(a) {
         return a.x;
@@ -721,7 +750,7 @@ active:!1}, methods:{isNode:function(a) {
         -1 < b.map.selected.indexOf(a.key) && (b.map.changed = !0);
         return a.classes.join(" ");
       }).call(k.drag);
-      g.filter(function(b, c) {
+      f.filter(function(b, c) {
         return b.key === a.origin_key;
       });
       b.map.changed && k.start();
@@ -812,7 +841,7 @@ catnip.ready = function(a) {
   READY.push(a);
 };
 var init = {};
-window.catnip_beta = catnip(config.context, config.data, routes);
+window.fcm = init = catnip(config.context, config.data, routes);
 
 })();
 

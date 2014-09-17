@@ -54,10 +54,10 @@ views.App = Vue.extend({
    * @expose
    * @type {Object}
    */
-  methods: {
+  methods: /** @lends {View.prototype.$root} */{
     /**
      * @expose
-     * @param {(MouseEvent|string)} e
+     * @param {MouseEvent} e
      * @this {views.App}
      */
     route: function (e) {

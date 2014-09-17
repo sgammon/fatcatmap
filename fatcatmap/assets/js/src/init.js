@@ -18,4 +18,4 @@ goog.provide('init');
 /**
  * @expose
  */
-window.catnip_beta = catnip(config.context, config.data, routes);
+window.fcm = init = catnip(config.context, config.data, routes);

@@ -57,14 +57,19 @@ _deserialize = function (item) {
 /**
  * @constructor
  * @param {Storage} backend
+ * @param {string=} namespace
  */
-StringStore = function (backend) {
+StringStore = function (backend, namespace) {
+  /**
+   * @type {string}
+   */
+  this.ns = namespace || 'stringstore' + this.constructor.storeCount++;
   /**
    * @param {string} key
    * @return {*}
    */
   this.get = function (key) {
-    return _deserialize(backend.getItem(key));
+    return _deserialize(backend.getItem(this.ns + '::' + key));
   };
 
   /**
@@ -72,28 +77,41 @@ StringStore = function (backend) {
    * @param {*} value
    */
   this.put = function (key, value) {
-    backend.setItem(key, _serialize(value));
+    backend.setItem(this.ns + '::' + key, _serialize(value));
   };
 
   /**
    * @param {string} key
    */
   this.del = function (key) {
-    backend.removeItem(key);
+    backend.removeItem(this.ns + '::' + key);
   };
 };
 
 /**
+ * @static
+ * @type {number}
+ */
+StringStore.storeCount = 0;
+
+
+/**
  * @expose
  */
-services.storage = /** @lends {ServiceContext.prototype.storage} */{
-  /**
-   * @type {?StringStore}
-   */
-  local: supports.storage.local ? new StringStore(window.localStorage) : null,
+services.storage = /** @lends {ServiceContext.prototype.storage} */{};
 
+if (supports.storage.local) {
   /**
+   * @expose
    * @type {?StringStore}
    */
-  session: supports.storage.session ? new StringStore(window.sessionStorage) : null
-}.service('storage');
+  services.storage.local = new StringStore(window.localStorage, 'service');
+}
+
+if (supports.storage.session) {
+  /**
+   * @expose
+   * @type {?StringStore}
+   */
+  services.storage.session = new StringStore(window.sessionStorage, 'service');
+}

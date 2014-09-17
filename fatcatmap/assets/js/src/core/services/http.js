@@ -16,20 +16,20 @@ goog.require('services');
 goog.provide('services.http');
 
 /**
- * @typedef {{
+ * @typedef {Object.<{
  *    url: string,
  *    headers: ?Object.<string, string>,
  *    params: ?Object.<string, string>,
  *    data: ?(string|Object)
- * }}
+ * }>}
  */
 var Request;
 
 /**
- * @typedef {{
+ * @typedef {Object.<{
  *    data: *,
  *    headers: Object.<string, string>
- * }}
+ * }>}
  */
 var Response;
 

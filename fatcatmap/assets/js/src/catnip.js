@@ -77,7 +77,7 @@ catnip = function (context, data, routes) {
       });
     });
 
-    fcm.view.init('app', /** @this {Vue} */function () {
+    fcm.view.init('app', /** @this {views.App} */function () {
       this.$set('active', true);
       this.$.stage.$set('active', true);
 

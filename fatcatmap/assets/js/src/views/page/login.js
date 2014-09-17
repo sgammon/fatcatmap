@@ -59,32 +59,6 @@ views.page.Login = View.extend({
       e.preventDefault();
       e.stopPropagation();
       console.log('Login.signup() called.');
-    },
-
-    /**
-     * @expose
-     * @param {Event} e
-     */
-    validate: function (e) {
-      var input = e.target,
-        rule = validation[input.type];
-
-      if (input.hasAttribute('data-validate'))
-        rule = validation[input.getAttribute('data-validate')];
-
-      if (rule)
-        input.classList.add(rule(input.value) ? 'valid' : 'invalid');
-    },
-
-    /**
-     * @expose
-     * param {Event} e
-     */
-    clearValidation: function (e) {
-      var input = e.target;
-
-      input.classList.remove('valid');
-      input.classList.remove('invalid');
     }
   },
 
@@ -98,34 +72,5 @@ views.page.Login = View.extend({
      * @type {?string}
      */
     session: null
-  },
-
-  /**
-   * @expose
-   * @this {views.page.Login}
-   */
-  ready: function () {
-    var _this = this;
-
-    _this.validate = _this.validate.bind(_this);
-    _this.clearValidation = _this.clearValidation.bind(_this);
-
-    $('input', _this.$el).forEach(function (input) {
-      input.addEventListener('blur', _this.validate);
-      input.addEventListener('focus', _this.clearValidation);
-    });
-  },
-
-  /**
-   * @expose
-   * @this {views.page.Login}
-   */
-  beforeDestroy: function () {
-    var _this = this;
-
-    $('input', _this.$el).forEach(function (input) {
-      input.removeEventListener('blur', _this.validate);
-      input.removeEventListener('focus', _this.clearValidation);
-    })
   }
 });

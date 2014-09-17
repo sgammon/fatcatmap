@@ -308,12 +308,12 @@ views.Map = View.extend({
 
       if (!this.dragging) {
         target = e.target;
-        key = target.id.split('-').pop();
 
         if (this.isNode(target)) {
           e.preventDefault();
           e.stopPropagation();
 
+          key = target.getAttribute('id').split('-').pop();
           selected = this.$.detail.keys();
 
           if (target.classList.contains(this.$options.selectors.selected.slice(1))) {
@@ -409,18 +409,14 @@ views.Map = View.extend({
 
           if (view.map.changed) {
             node.filter(selectors.selected)
-                .filter(function (n) {
-                  return view.map.selected.indexOf(n.key) === -1;
-                })
+                .filter(function (n) { return view.map.selected.indexOf(n.key) === -1; })
                 .classed({'selected': false})
                 .transition()
                 .duration(150)
                 .ease('cubic')
                 .attr('r', config.node.radius);
 
-            node.filter(function (n) {
-                  return view.map.selected.indexOf(n.key) > -1;
-                })
+            node.filter(function (n) { return view.map.selected.indexOf(n.key) > -1; })
                 .classed({'selected': true})
                 .transition()
                 .duration(150)

@@ -88,7 +88,6 @@ var routes = {
   '/<key>': function (request) {
     var data = this.data,
       app = this.app,
-      key = request.args.key,
       state = request.state || {},
       graph = (!app.$.stage || !app.$.stage.$.map.active) ?
         this.graph.construct() : null;
@@ -102,7 +101,7 @@ var routes = {
     app.nextTick(function () {
       app.$broadcast('page.map', graph);
 
-      data.get(key, /** @type {CallbackMap} */({
+      data.get(request.args.key, /** @type {CallbackMap} */({
         success: function (data) {
           app.$broadcast('detail', [data]);
         },

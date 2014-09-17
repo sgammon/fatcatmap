@@ -69,7 +69,9 @@ services.rpc = /** @lends {ServiceContext.prototype.rpc} */{
    */
   factory: function (manifest) {
     var name = manifest[0];
-    services.rpc[name] = new RPCAPI(name, manifest[1], manifest[2]);
+
+    if (typeof name === 'string')
+      services.rpc[name] = new RPCAPI(name, manifest[1], manifest[2]);
   },
 
   /**
