@@ -52,7 +52,7 @@ class CampaignContribution(Contributor >> Campaign):
     # @TODO(sgammon): fill out contribution types
 
   ## -- contribution data -- ##
-  type = int, {'indexed': True, 'required': True}
+  type = ContributionType, {'indexed': True, 'required': True}
   cycle = int, {'indexed': True, 'choices': xrange(1900, 2014)}
   namespace = str, {'indexed': True, 'choices': {
       'urn:fec:transaction', 'urn:nimsp:transaction'}}

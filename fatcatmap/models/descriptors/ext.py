@@ -51,7 +51,7 @@ class URI(Model):
     HTTPS = 0x3  # HTTP, wrapped by TLS/SSL
 
   ## -- content -- ##
-  protocol = int, {'indexed': True, 'repeated': True}
+  protocol = Protocols, {'indexed': True, 'repeated': True}
   location = str, {'indexed': True, 'repeated': True}
   content = str, {'indexed': False, 'compressed': True}
 

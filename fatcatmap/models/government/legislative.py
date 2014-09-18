@@ -145,7 +145,7 @@ class LegislativeOffice(Model):
     POPULATION = 0x1  # population-based jurisdictions
 
   boundary = Geobounds, {'indexed': True, 'repeated': True}
-  type = int, {'indexed': True, 'choices': [val for (key, val) in SeatType]}
+  type = SeatType, {'indexed': True, 'required': True}
 
 
 
@@ -207,7 +207,7 @@ class Committee(Vertex):
 
   ## -- structure -- ##
   super = Key, {'indexed': True}
-  type = CommitteeType, {'indexed': True}
+  type = CommitteeType, {'indexed': True, 'required': True}
 
   ## -- naming and resources -- ##
   name = CommitteeName, {'embedded': True, 'indexed': True}
@@ -268,9 +268,8 @@ class Legislation(Vertex):
 
   ## -- filing details -- ##
   code = str, {'indexed': True, 'required': True}
-  type = int, {'indexed': True, 'choices': [val for (key, val) in BillType]}
-  origin = int, {'indexed': True, 'choices': [
-                                    val for (key, val) in BillOrigin]}
+  type = BillType, {'indexed': True, 'required': True}
+  origin = BillOrigin, {'indexed': True, 'required': True}
 
   ## -- structural details -- ##
   name = BillName, {'indexed': True, 'embedded': True, 'repeated': True}
@@ -327,8 +326,6 @@ class CommitteeMember(Legislator > Committee):
         ``chair`` of the committee (essentially, the leader), the ``co-chair``
         of the committee (backup/2nd-level leader, usually opposing party). '''
 
-    COCHAIR = 0x1
-    CHAIR = 0x2
+    COCHAIR, CHAIR = 0x1, 0x2
 
-  leadership = int, {'indexed': True, 'default': None, 'choices': [
-    val for (key, val) in CommitteeLeadership]}
+  leadership = CommitteeLeadership, {'indexed': True, 'default': None}
