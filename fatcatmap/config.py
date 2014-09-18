@@ -98,6 +98,8 @@ config = cfg.Config(app={
                    '1b1fd3facfb9493aa3201a064d0c135b@app.getsentry.com/28386')},
 
     'service': {
+      'apikey': 'AIzaSyBWGO4-IomeAn14S32tgZwcFf9C_yg83y4',
+
       'installed': {
         'id': '489276160057-jurcfiqvb7213lqu4q65fnqsocesma2m.apps.googleusercontent.com',
         'secret': 'EdwXzTO0qe7X35MCa1UWM-tx'}}

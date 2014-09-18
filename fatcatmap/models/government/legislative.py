@@ -178,7 +178,18 @@ class PartyLeadership(Vertex):
 
 
 ## +=+=+=+=+ Committees +=+=+=+=+ ##
-@describe(parent=Legislature, type=Group)
+@describe(type=OrganizationName)
+class CommitteeName(OrganizationName):
+
+  ''' Describes the naming structure for a legislative committee, including
+      indexed separation of the super- and sub-codes, if any. '''
+
+  code = str, {'indexed': True}  # `SSAS16` - 'senate select armed services #16'
+  subcode = str, {'indexed': True}  # `16` - committee #16
+  supercode = str, {'indexed': True}  # `SSAS` - senate select...
+
+
+@describe(parent=(LegislativeHouse, Legislature), type=Group)
 class Committee(Vertex):
 
   ''' Describes a committee within one (or sometimes bridging two) house(s)
@@ -196,11 +207,10 @@ class Committee(Vertex):
 
   ## -- structure -- ##
   super = Key, {'indexed': True}
-  type = str, {'indexed': True, 'choices': (
-                        [val for (key, val) in CommitteeType])}
+  type = CommitteeType, {'indexed': True}
 
   ## -- naming and resources -- ##
-  name = OrganizationName, {'embedded': True, 'indexed': True}
+  name = CommitteeName, {'embedded': True, 'indexed': True}
   website = URI, {'embedded': True, 'indexed': True}
 
 

@@ -12,6 +12,9 @@ import datetime
 # bindings
 from . import ModelBinding, bind
 
+# canteen
+from canteen import model
+
 # govtrack bindings
 from .govtrack import GovtrackPerson
 
@@ -99,10 +102,58 @@ class CommitteeConverter(ModelBinding):
       :param data: ``dict`` of data to convert.
       :returns: Instance of local target to inflate. '''
 
-    self.logging.info('----> Converting `Committee`...')
-    self.logging.info(str(data))
-    import pdb; pdb.set_trace()
-    yield data
+    # utilities
+    clean = lambda s: s.strip()
+    code = lambda s: clean(s).upper()
+
+    # assertions
+    assert data['id'], "committees must have an ID"
+    assert data['display'], "committees must have display names"
+    assert code(data['id'])[0] in frozenset(('S', 'H', 'J')), (
+      "committee ID must start with `S`, `H` or `J`")
+
+    chambers = {
+      'J': (
+        legislative.us_congress,
+        legislative.Committee.CommitteeType.JOINT),
+      'S': (
+        legislative.us_senate,
+        legislative.Committee.CommitteeType.MAJOR),
+      'H': (
+        legislative.us_house,
+        legislative.Committee.CommitteeType.MINOR)}
+
+    # make committee and set type
+    committee = self.target.new(
+      chambers[code(data['id'])[0]][0], data['id'].upper(),
+      type=chambers[code(data['id'])[0]][1])
+
+    # naming - primary/secondary
+    committee.name.primary, committee.name.secondary = (
+      data['display'], None)  # @TODO(sgammon): secondary committee names
+
+    # naming - formal/informal
+    committee.name.formal, committee.name.informal = (
+      data['display'], None)  # @TODO(sgammon): informal committee names
+
+    # naming - codes
+    committee.name.code, committee.name.subcode, committee.name.supercode = (
+      code(data['id']),
+      code(data['id']).replace(
+        code(data['super']), '') if (data['super']) else None,
+      code(data['id']).replace(
+        code(data['id']).replace(code(data['super']), ''), '') if (
+        data['super']) else code(data['id']))
+
+    # add super, if any
+    if 'super' in data and data['super']:
+      committee.super = model.Key(legislative.Committee, code(data['super']))
+
+    # add website, if any
+    if 'url' in data and data['url']:
+      committee.website.location = data['url']
+
+    yield committee
 
 
 @bind('legacy', 'Contributor', finance.Contributor)
@@ -199,10 +250,7 @@ class LegislatorConverter(ModelBinding):
     person = yield GovtrackPerson(self)
 
     # legislator
-    assert data['govtrack_id'], "legislators must have a govtrack ID"
     legislator = yield legislative.Legislator.new(person, str(data['govtrack_id']))
-
-    assert legislator, "legislator failed to write: %s" % legislator
 
     # external ID records
     for provider, value in (('govtrack', 'govtrack_id'),

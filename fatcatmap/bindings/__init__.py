@@ -37,10 +37,7 @@ class ModelBinding(object):
 
     ''' Re-initialize at a higher context. '''
 
-    self.chain, self.__logging__ = (
-      chain or self.chain,
-      logging or self.logging)
-    return self
+    return self.__init__(chain, logging) and self
 
   @property
   def logging(self):
@@ -109,8 +106,6 @@ class ModelBinding(object):
           item = next(base)
 
     return _rollup(binding)
-
-
 
 bind = ModelBinding.register  # alias
 

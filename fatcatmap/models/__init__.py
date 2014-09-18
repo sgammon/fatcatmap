@@ -101,12 +101,15 @@ class BaseVertex(BaseModel, model.Vertex):
                         ' a valid `Model` or `Key`. Instead, got'
                         ' item of type "%s".' % (cls, parent.__class__))
 
-      if not isinstance(parent, desc.parent):
+      if (isinstance(parent, model.Key) and (
+            parent.kind not in (p.__name__ for p in tupleify(desc.parent))) or (
+          isinstance(parent, model.Model) and not isinstance(parent, desc.parent))):
         raise ValueError('`%s` is not a valid parent object'
                          ' for model class `%s`.' % (parent, cls))
 
     kwargs.update({
-      'key': cls.__keyclass__(cls, keyname, parent=parent)})
+      'key': cls.__keyclass__(cls, keyname, parent=(
+        parent.key if isinstance(parent, model.Model) else parent))})
 
     # add empty submodels if they aren't passed in, otherwise validate
     for prop in (getattr(cls, n) for n in cls.__lookup__):
