@@ -37,7 +37,8 @@ class ModelBinding(object):
 
     ''' Re-initialize at a higher context. '''
 
-    return self.__init__(chain, logging) and self
+    self.__init__(chain, logging)
+    return self
 
   @property
   def logging(self):
