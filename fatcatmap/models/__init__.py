@@ -352,6 +352,8 @@ class Spec(object):
       if hasattr(target, 'fixture'):
         fixtures.add(target)
 
+      # add to `all` alias
+      all[target.kind()] = target
       return self.inject(target)
 
   def __iter__(self):
@@ -470,6 +472,7 @@ def report_structure():  # pragma: no cover
 # bind model metadata
 meta = struct.ObjectProxy({
   'graph': _graph, 'tree': _ttree, 'hierarchy': _ptree})
+all = struct.WritableObjectProxy()  # shortcut to all models
 
 # map aliases
 describe = Spec.describe
