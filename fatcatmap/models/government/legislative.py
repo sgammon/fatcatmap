@@ -162,7 +162,7 @@ class Legislator(Vertex):
 
   election = Election, {'indexed': True}
   seat = LegislativeOffice, {'indexed': True}
-  campaigns = Campaign, {'indexed': True, 'embedded': True}
+  campaign = Campaign, {'indexed': True, 'embedded': True}
 
 
 @describe(parent=Legislator, type=Role)
