@@ -30,7 +30,7 @@ SANDBOX?=0
 BUILDBOX?=0
 USER?=`whoami`
 CANTEEN?=0
-CANTEEN_BRANCH?=0.3/cleanup
+CANTEEN_BRANCH?=feature/FLY-8
 BOOTSTRAP_BRANCH?=master
 SANDBOX_GIT?=$(USER)@sandbox
 BREWDEPS=openssl python haproxy redis pypy snappy
@@ -129,7 +129,7 @@ canteen: lib/canteen
 
 js:
 	$(call say,"Minifying Javascript...")
-	@-node_modules/gulp/bin/gulp.js closure
+	@-JAVA_HOME=$$JAVA_HOME node_modules/gulp/bin/gulp.js closure
 
 styles:
 	$(call say,"Compiling Less...")
