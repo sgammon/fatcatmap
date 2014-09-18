@@ -7,7 +7,7 @@
 '''
 
 # stdlib
-import datetime
+import datetime, hashlib
 
 # bindings
 from . import ModelBinding, bind
@@ -237,7 +237,7 @@ class LegislatorConverter(ModelBinding):
 
     if content:
       return ext.ExternalID(
-        key=model.Key(ext.ExternalID, '::'.join(map(str, (provider, content))), parent=legislator),
+        key=model.Key(ext.ExternalID, hashlib.md5('::'.join(map(str, (provider, content)))).hexdigest(), parent=legislator),
         provider=provider, name=name, content=(str(content),))
 
   def convert(self, data):
