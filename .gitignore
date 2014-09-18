@@ -30,3 +30,4 @@ doc/
 fatcatmap.ipr
 fatcatmap.iws
 fatcatmap.sublime-project
+.gcloud/*
