@@ -44,4 +44,4 @@ class GovtrackPerson(ModelBinding):
     if data.get('gender'): person.gender = data['gender'].lower()
     if data.get('birthday'): person.birthdate = data['birthday']
 
-    yield person
+    result = yield person

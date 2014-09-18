@@ -295,7 +295,8 @@ class FCM(cli.Tool):
       ('--dataset', {'type': str, 'help': 'specify package name/version to update to - corresponds to package/version in GS'}),
       ('--clean', {'action': 'store_true', 'help': 'clean all data from target adapter (DANGEROUS!)'}),
       ('--fixtures', {'action': 'store_true', 'help': 'run fixtures against target (before transfer, if any)'}),
-      ('--update', {'action': 'store_true', 'help': 'download latest dataset package (applies to source if any, else target)'}))
+      ('--update', {'action': 'store_true', 'help': 'download latest dataset package (applies to source if any, else target)'}),
+      ('--limit', {'type': int, 'help': 'key limit for testing migrations'}))
 
     @staticmethod
     def build_cli_args(arguments, adapter):
@@ -427,7 +428,9 @@ class FCM(cli.Tool):
           model.Key(urlsafe=key)
         except: continue
 
-        logging.info('-- Processing key "%s"...' % key)
+        if arguments.limit and len(found_keys) >= arguments.limit:
+          break  # limit keys if desired
+
         found_keys.append(key)
 
       logging.info('Found %s object keys. Transferring...' % len(found_keys))
@@ -443,7 +446,6 @@ class FCM(cli.Tool):
             _keys += 1
             _by_kind[model.Key(urlsafe=key).kind] += 1
             source.get(model.Key(urlsafe=key).flatten(True), pipeline=pipeline)
-            logging.info('-- Queueing key "%s"...' % key)
             _filtered_keys.append(key)
 
         logging.debug('Entity type report (%s entities total):' % _keys)
@@ -473,7 +475,7 @@ class FCM(cli.Tool):
 
       kind = model.Key(urlsafe=key).kind
 
-      logging.info('-- Transforming object at key "%s" of type "%s"...' % (
+      logging.info('----- Transforming object at key "%s" of type "%s"...' % (
         key, kind))
 
       try:  # try applying decompression
@@ -481,59 +483,7 @@ class FCM(cli.Tool):
       except:
         decompressed = entity
 
-      obj = source.EngineConfig.serializer.loads(entity)
-
-      if arguments.binding:
-        binding = bindings.ModelBinding.resolve(arguments.binding, kind)
-        logging.info('----> Using binding "%s"...' % binding.__name__)
-
-        if not binding:
-          if arguments.kinds:
-            raise RuntimeError('No model binding found for type "%s",'
-                               ' but kind was explicitly specified for migration.' % kind)
-          logging.warning('!!! No model binding found for kind "%s". !!!' % kind)
-          return
-
-        _llgen = binding(logging=logging)(obj)
-
-        _count = 0
-        for bundle in _llgen:
-          _count += 1
-          response = yield bundle
-
-          if response:
-            logging.info('------ Object emitted of type "%s" with key "%s"...' % (
-              response.kind(), response.key.urlsafe()))
-          elif isinstance(bundle, model.Model):
-            logging.info('------ Object emitted of type "%s"...' % bundle.kind())
-
-          if response: _llgen.send(response)
-
-        logging.info('---- Binding procedure produced %s entities.' % _count)
-      else:
-        yield obj
-
-    @staticmethod
-    def collapse_bindings(arguments, source, target, binding, key, entity):
-
-      '''  '''
-
-      if binding:  # bindings transform model structure
-        _transformed, _by_target_kind = 0, collections.defaultdict(lambda: 0)
-        entity_generator = FCM.Migrate.expand_entity(arguments, source, key, entity)
-
-        for bundle in entity_generator:
-          if isinstance(bundle, tuple) and len(bundle) == 2 and isinstance(bundle[0], model.Key):
-            result = yield bundle
-            entity_generator.send(result)
-          elif isinstance(bundle, (tuple, list)):
-            for item in bundle:
-              yield item
-
-      else:  # no binding, raw translate (with no structure change)
-        raise NotImplementedError('woops, you\'re a dick')
-
-      ## yield key, inflated
+      return source.EngineConfig.serializer.loads(entity)
 
     @staticmethod
     def write_object(target, key, entity, pipeline=None):
@@ -555,48 +505,63 @@ class FCM(cli.Tool):
       with target.channel('__meta__').pipeline() as pipeline:
         _written, _by_kind = 0, collections.defaultdict(lambda: 0)
 
-        ## 1) read sources
-        sources = FCM.Migrate.read_sources(arguments, source)
-
         if arguments.binding:
           logging.info('Loading bindings...')
           assert bindings.ModelBinding.resolve(arguments.binding)
           logging.info('Using bindings from package "%s"...' % arguments.binding)
 
+        def emit(entity):
+
+          ''' Emit a key/entity for storage. '''
+
+          wkey = FCM.Migrate.write_object(target, entity.key, entity, pipeline=pipeline)
+          logging.info('------ Emitted object of type "%s" at key "%s"...' % (
+            wkey.kind, wkey.urlsafe()))
+
+          assert wkey.id, "found key without ID: %s" % wkey
+
+          return wkey, entity
+
+        ## 1) read sources
         for key, entity in FCM.Migrate.read_sources(arguments, source):
           kind = model.Key(urlsafe=key).kind
 
           ## 2) apply bindings
           binding = None
           if arguments.binding:
+
             binding = bindings.ModelBinding.resolve(arguments.binding, kind)
+            if not binding:
+              if arguments.kinds:
+                raise RuntimeError('No model binding found for type "%s",'
+                                   ' but kind was explicitly specified for migration.' % kind)
+              else:
+                logging.warning('!!! No model binding found for kind "%s". !!!' % kind)
 
-          binding_generator = FCM.Migrate.collapse_bindings(*(
-            arguments, source, target, binding, key, entity))
+            logging.info('---> Using binding "%s"...' % binding.__name__)
+            entity_generator = binding(logging=logging)(FCM.Migrate.expand_entity(arguments, source, key, entity))
 
-          for key, inflated in binding_generator:
-            if inflated:
+            for result in entity_generator:
+
               _written += 1
-              _by_kind[key.kind] += 1
-              FCM.Migrate.write_object(target, key, inflated, pipeline=pipeline)
-
+              _by_kind[result.key.kind] += 1
+              wkey, wentity = emit(result)
               try:
-                binding_generator.send(inflated)
-              except StopIteration:
-                break
+                entity_generator.send(wentity)
+              except (GeneratorExit, StopIteration):
+                pass
 
         logging.info('Beginning write in 3 seconds...')
         time.sleep(3)
 
         ## 3) write results
-        import pdb; pdb.set_trace()
         pipeline.execute()  # go
 
       logging.info('Written entity report (%s objects total):' % str(_written))
       for kind in _by_kind:
         logging.debug('-- "%s": %s entities' % (kind, str(_by_kind[kind])))
 
-    logging.info('Migration complete.')
+      logging.info('Migration complete.')
 
     def execute(arguments):
 

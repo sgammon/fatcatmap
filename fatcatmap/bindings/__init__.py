@@ -33,6 +33,15 @@ class ModelBinding(object):
       chain,  # dependent task
       logging)  # logging pipe from caller
 
+  def initialize(self, chain=None, logging=None):
+
+    ''' Re-initialize at a higher context. '''
+
+    self.chain, self.__logging__ = (
+      chain or self.chain,
+      logging or self.logging)
+    return self
+
   @property
   def logging(self):
 
@@ -69,32 +78,38 @@ class ModelBinding(object):
 
     ''' Pass off to ``convert``, which is the point of a model binding. '''
 
-    self.logging.info('------ Converting %s entity...' % ('' if not self.target else self.target.kind()))
-
     binding = self.convert(data)
-    for result in binding:
-      if not result: continue  # skip null values
-      if isinstance(result, ModelBinding):
-        subbinding = result(data)
-        subresponse = None
-        for subresult in subbinding:  # collapse sub-binding
-          try:
-            _subresponse = yield subresult
-            if _subresponse:
-              if not subresponse:
-                subresponse = _subresponse
-              subbinding.send(_subresponse)
-          except StopIteration:
-            break
-        if subresponse:
-          try:
-            binding.send(subresponse)
-          except StopIteration:
-            continue
-      elif isinstance(result, dict):
-        yield result
-      elif isinstance(result, model.Model):
-        yield result.key, result
+
+    def _rollup(base):
+
+      '''  '''
+
+      item = next(base)
+      while item:
+        result = None  # result of the deferred call
+
+        if isinstance(item, model.Model):
+          result = yield item
+
+        # dependent sub-binding
+        elif isinstance(item, ModelBinding):
+          subbinding = item.initialize(logging=self.logging)(data)
+
+          for subitem in subbinding:
+            result = yield subitem
+            if result:
+              try:
+                item = subbinding.send(result)
+              except (GeneratorExit, StopIteration):
+                pass
+
+        if result:
+          item = base.send(result)
+        if not item:
+          item = next(base)
+
+    return _rollup(binding)
+
 
 
 bind = ModelBinding.register  # alias

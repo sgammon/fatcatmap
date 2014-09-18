@@ -199,17 +199,23 @@ class LegislatorConverter(ModelBinding):
     person = yield GovtrackPerson(self)
 
     # legislator
-    legislator = legislative.Legislator.new(person, str(data['govtrack_id']))
-    legislator = yield legislator
+    assert data['govtrack_id'], "legislators must have a govtrack ID"
+    legislator = yield legislative.Legislator.new(person, str(data['govtrack_id']))
+
+    assert legislator, "legislator failed to write: %s" % legislator
 
     # external ID records
-    yield self.ext_id(legislator, 'govtrack', 'id', data.get('govtrack_id'))
-    yield self.ext_id(legislator, 'fec', 'id', data.get('fecid'))
-    yield self.ext_id(legislator, 'icpsr', 'id', data.get('icpsrid'))
-    yield self.ext_id(legislator, 'twitter', 'id', data.get('twitterid'))
-    yield self.ext_id(legislator, 'lis', 'id', data.get('lismemberid'))
-    yield self.ext_id(legislator, 'bioguide', 'id', data.get('bioguideid'))
-    yield self.ext_id(legislator, 'facebook', 'id', data.get('fbid'))
-    yield self.ext_id(legislator, 'metavid', 'id', data.get('metavidid'))
-    yield self.ext_id(legislator, 'youtube', 'id', data.get('youtubeid'))
-    yield self.ext_id(legislator, 'thomas', 'id', data.get('thomas_id'))
+    for provider, value in (('govtrack', 'govtrack_id'),
+                            ('fec', 'fecid'),
+                            ('icpsr', 'icpsrid'),
+                            ('twitter', 'twitterid'),
+                            ('lis', 'lismemberid'),
+                            ('bioguide', 'bioguideid'),
+                            ('facebook', 'fbid'),
+                            ('metavid', 'metavidid'),
+                            ('youtube', 'youtubeid'),
+                            ('thomas', 'thomas_id')):
+      if data.get(value):
+        ext_id = self.ext_id(legislator, provider, 'id', data[value])
+        if ext_id:
+          result = yield ext_id
