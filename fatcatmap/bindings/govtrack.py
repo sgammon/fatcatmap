@@ -25,7 +25,9 @@ from fatcatmap.models.government import legislative
 _known_religions = {  # @TODO(sgammon): make this not suck
   'presbyterian': religion.presbyterian,
   'episcopalian': religion.episcopalian,
+  'episcopal': religion.episcopalian,
   'mormon': religion.lds,
+  'latter day saints': religion.lds,
   'jewish': religion.judaism,
   'catholic': religion.catholic,
   'christian': religion.christianity,
@@ -60,5 +62,21 @@ class GovtrackPerson(ModelBinding):
     if data.get('lastnamealt'): person.name.secondary = ('%s %s',) % (data['firstname'], data['lastnamealt'])
     if data.get('gender'): person.gender = data['gender'].lower()
     if data.get('birthday'): person.birthdate = data['birthday']
+
+    if data.get('religion'):
+      # @TODO(sgammon): yielding records with errors for tracking
+      religion = data['religion']
+
+      # might have it straight up
+      if religion.lower() in _known_religions:
+        person.religion = _known_religions[religion.lower()]
+      else:
+        logging.warning('!! ------ Unknown religion "%s". ------ !!' % data['religion'])
+
+        # otherwise look for it
+        for label, key in _known_religions.iteritems():
+          if label in religion:
+            logging.warning('!! ------ Substituting "%s". ------ !!' % label)
+          person.religion = key
 
     yield person
