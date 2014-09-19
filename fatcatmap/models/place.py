@@ -10,8 +10,8 @@
 from datetime import date
 
 # graph models
-from . import (Key,
-               Vertex,
+from . import (Vertex,
+               VertexKey,
                describe)
 
 # geo models
@@ -26,7 +26,7 @@ from .abstract import (PlaceName,
 
 
 ## Globals
-usa = Key('Nation', 'united-states')
+usa = VertexKey('Nation', 'united-states')
 
 
 @describe(root=True, keyname=True, type=Government)
@@ -94,7 +94,7 @@ class State(Vertex):
          ('WA', 'Washington'), ('WV', 'West Virginia'), ('WI', 'Wisconsin'),
          ('WY', 'Wyoming')):
 
-      yield cls(key=Key(cls, abbr, parent=usa), name=JurisdictionName(
+      yield cls(key=VertexKey(cls, abbr, parent=usa), name=JurisdictionName(
         primary=name, secondary='State of %s' % name,
         long_name='Great State of %s' % name, short_name=name,
         abbreviation=abbr),

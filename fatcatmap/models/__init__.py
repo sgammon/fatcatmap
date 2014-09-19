@@ -151,7 +151,8 @@ class Spec(object):
                                   ('__abstract__', False),
                                   ('__descriptor__', False),
                                   ('__keyname__', False),
-                                  ('__graph_spec__', None)))
+                                  ('__graph_spec__', None),
+                                  ('__topic__', None)))
 
   def __init__(self,
                root=False,
@@ -159,7 +160,8 @@ class Spec(object):
                type=None,
                abstract=False,
                descriptor=False,
-               keyname=False):
+               keyname=False,
+               topic=None):
 
     ''' Describe a catnip model class with extra, model-level schema. This
         includes any of the following:
@@ -199,15 +201,18 @@ class Spec(object):
 
         :param keyname: ``bool`` flag indicating that this ``Model`` makes
           logical use of its ``Key.name``. Setting this flag to ``True`` makes
-          a primary key/entity name required during instantiation. '''
+          a primary key/entity name required during instantiation.
+
+        :param topic: ``str`` topic matching this type from ``Freebase``, if any.
+          Takes the form of a URI-style path like ``/religion`` or ``/movies``. '''
 
     # initialize
     self.__root__, self.__parent__, self.__type__, self.__keyname__ = (
       root, tupleify(parent, None), tupleify(type, None), keyname)
 
     # extended flags
-    self.__abstract__, self.__descriptor__, self.__graph_spec__ = (
-      abstract, descriptor, None)
+    self.__abstract__, self.__descriptor__, self.__graph_spec__, self.__topic__ = (
+      abstract, descriptor, None, topic)
 
   def merge(self, target):
 

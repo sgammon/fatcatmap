@@ -6,6 +6,9 @@
 
 '''
 
+# stdlib
+import hashlib
+
 # graph models
 from .. import (Model,
                 describe)
@@ -13,7 +16,8 @@ from .. import (Model,
 # abstract models
 from ..abstract import Token
 
-# struct
+# canteen
+from canteen import model
 from canteen.util import struct
 
 
@@ -30,6 +34,36 @@ class ExternalID(Model):
   ## -- ID structure -- ##
   name = str, {'indexed': True, 'required': True}
   provider = str, {'indexed': True, 'required': True}
+
+  @classmethod
+  def new(cls, parent, provider, name, content):
+
+    ''' Make a new ``ExternalID`` object, from all the required
+        parts - a ``provider``, ``name`` for the ID, and of
+        course, the ``content`` to store.
+
+        :param parent: Parent object to store ``ExternalID``
+          under.
+
+        :param provider: String provider name that carries this
+          ``ExternalID`` in their datasets.
+
+        :param name: Name of the ID to be stored.
+
+        :param content: Content of the ID to be stored.
+
+        :returns: Instance of ``ExternalID``, ready to be stored. '''
+
+    # @TODO(sgammon): descriptors are broken
+    # @TODO(sgammon): trade MD5 for enum
+
+    keyname = hashlib.md5('::'.join(map(str, (provider, content)))).hexdigest()
+    parent = parent.key if isinstance(parent, model.Model) else parent
+
+    return cls(key=model.Key(cls, keyname, parent=parent),
+               name=name, provider=provider,
+               content=(content,) if not (
+                isinstance(content, (list, tuple))) else content)
 
 
 @describe(descriptor=True, type=Token)

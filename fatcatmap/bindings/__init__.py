@@ -7,7 +7,7 @@
 '''
 
 # stdlib
-import collections, hashlib
+import collections
 
 # models
 from canteen import model
@@ -41,16 +41,17 @@ class ModelBinding(object):
     self.__init__(chain, logging)
     return self
 
-  def get_by_ext(self, provider, id):
+  def get_by_ext(self, id, provider=None):
 
     ''' Retrieve an entity by a unique external ID. '''
 
-    assert provider, "ext ID lookup requires valid provider"
     assert id, "ext ID lookup requires valid ID"
 
     query = models.all.ExternalID.query(keys_only=True)
-    query.filter(models.all.ExternalID.provider == provider)
     query.filter(models.all.ExternalID.content == str(id))
+
+    if provider:
+      query.filter(models.all.ExternalID.provider == provider)
 
     result = query.fetch(limit=5)
     if len(result) > 0:
@@ -58,7 +59,7 @@ class ModelBinding(object):
         raise RuntimeError('Encountered ambiguous external ID'
                            ' "%s::%s" with resultset "%s".' % (provider, id, result))
 
-      return result[0].parent  # things worked
+      return result[0].parent  # things worked somehow
 
     raise RuntimeError('Dependent foreign record at external ID'
                        ' "%s::%s" could not be found.' % (provider, id))
@@ -69,15 +70,8 @@ class ModelBinding(object):
 
     from canteen import model
 
-    # @TODO(sgammon): descriptors are broken
-    # @TODO(sgammon): trade MD5 for enum
-
     if content:
-      return models.all.ExternalID(
-        key=model.Key(models.all.ExternalID,
-                      hashlib.md5('::'.join(map(str, (provider, content)))).hexdigest(),
-                      parent=parent),
-        provider=provider, name=name, content=(str(content),))
+      return models.all.ExternalID.new(parent, provider, name, content)
 
   @property
   def logging(self):
