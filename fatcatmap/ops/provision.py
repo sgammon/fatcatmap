@@ -17,7 +17,7 @@ from .gce import Deploy
 from .helpers import pause
 #from .helpers import notify
 from .helpers import get_node
-
+from .deploy import bootstrap
 # fabric
 from fabric import colors
 from fabric.api import env
@@ -53,14 +53,19 @@ def create(n=1, region=settings.DEFAULT_REGION, environment=environment, group=g
   env.d = Deploy(environment, group, region)
   names = env.d.deploy_many(n)
   env.created = True
+  print(colors.green("found names: \n %s" % "\n".join(names)))
 
   print(colors.yellow("Waiting for %s to finish provisioning..." % ('instances' if n > 1 else 'instance')))
   time.sleep(30)
   if n==1:
+    print("running nodes()")
     nodes(environment=environment,name=names[0])
+
   else:
     print("warning all nodes selected because n > 1")
     nodes(environment, group)
+
+
 
 
 @task

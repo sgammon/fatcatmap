@@ -324,7 +324,7 @@ config = cfg.Config(app={
 
       'disk': {
         'size': 10,
-        'type': DiskType.SSD,
+        'type': DiskType.MAGNETIC,
         'snap': DEFAULT_BOOT_DISK}},
 
     'app': {  # app server role
@@ -348,8 +348,8 @@ config = cfg.Config(app={
         Components.DATABASE],
 
       'disk': {
-        'size': 20,
-        'type': DiskType.SSD,
+        'size': 100,
+        'type': DiskType.MAGNETIC,
         'snap': DEFAULT_BOOT_DISK}},
 
     'db': {  # @TODO(weisberger): for future use :)
@@ -371,7 +371,7 @@ config = cfg.Config(app={
 
       'disk': {
         'size': 40,
-        'type': DiskType.SSD,
+        'type': DiskType.MAGNETIC,
         'snap': DEFAULT_BOOT_DISK}}
 
   }

@@ -24,8 +24,32 @@ from .helpers import get_node
 
 # fabric
 from fabric import colors, api
-from fabric.api import env, task
+from fabric.api import env, task,hide
 from fabtools import require, deb
+from fabric.api import settings as f_settings
+
+def is_finished():
+
+  ''' @todo fix base image to not have ghost startup script run and figure out better error handling'''
+
+  command = 'grep -v "Aug 23 09:01:46 bullpen-sandbox startupscript: Finished" /var/log/startupscript.log | ' \
+            'grep "Finished running startup"'
+
+  for i in xrange(30):
+    with hide('warnings'), f_settings(warn_only=True,):
+      output = api.sudo(command)
+
+      if "Finished running startup" in output:
+        print(colors.green("node finished running startup script"))
+        print(colors.yellow(output))
+        return True
+
+      elif any((word in output.lower() for word in ["error","failed"])): #@todo this won't run currently
+        print(colors.red("oops sam fucked up"))
+        return False
+
+    print(colors.yellow("not ready yet....sleeping for 10 seconds"))
+    sleep(10)
 
 
 #@notify
@@ -34,11 +58,12 @@ def bootstrap():
 
   ''' Prepare a newly-provisioned node with supporting software. Install,
       enable, and start services for any role-scoped services.'''
-  node = get_node()
 
-  if env.created:
-    # if we just created the server wait a little bit
-    sleep(10)
+  if not is_finished():
+    print(colors.red("unable to bootstrap, startup script failed"))
+    return
+
+  node = get_node()
 
   ## ~~ app nodes ~~ ##
   if node.group == 'app':
