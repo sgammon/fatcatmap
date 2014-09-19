@@ -90,7 +90,9 @@ class BaseVertex(BaseModel, model.Vertex):
         raise TypeError('Keyname for `%s` instance must be'
                         ' a string or unicode type. Instead, got'
                         ' item of type "%s".' % (cls, keyname.__class__))
-
+    elif keyname and not desc.keyname:
+      raise TypeError('Keyname given for `%s` instance but'
+                      ' model accepts no keyname.' % (cls))
 
     if desc.parent:
       if parent is None:

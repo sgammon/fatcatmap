@@ -189,7 +189,7 @@ class CommitteeName(OrganizationName):
   supercode = str, {'indexed': True}  # `SSAS` - senate select...
 
 
-@describe(parent=(LegislativeHouse, Legislature), type=Group)
+@describe(parent=(LegislativeHouse, Legislature), type=Group, keyname=True)
 class Committee(Vertex):
 
   ''' Describes a committee within one (or sometimes bridging two) house(s)

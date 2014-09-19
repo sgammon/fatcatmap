@@ -7,10 +7,11 @@
 '''
 
 # stdlib
-import collections
+import collections, hashlib
 
 # models
 from canteen import model
+from fatcatmap import models
 
 
 ## Globals
@@ -39,6 +40,44 @@ class ModelBinding(object):
 
     self.__init__(chain, logging)
     return self
+
+  def get_by_ext(self, provider, id):
+
+    ''' Retrieve an entity by a unique external ID. '''
+
+    assert provider, "ext ID lookup requires valid provider"
+    assert id, "ext ID lookup requires valid ID"
+
+    query = models.all.ExternalID.query(keys_only=True)
+    query.filter(models.all.ExternalID.provider == provider)
+    query.filter(models.all.ExternalID.content == str(id))
+
+    result = query.fetch(limit=5)
+    if len(result) > 0:
+      if len(result) > 1:
+        raise RuntimeError('Encountered ambiguous external ID'
+                           ' "%s::%s" with resultset "%s".' % (provider, id, result))
+
+      return result[0].parent  # things worked
+
+    raise RuntimeError('Dependent foreign record at external ID'
+                       ' "%s::%s" could not be found.' % (provider, id))
+
+  def ext_id(self, parent, provider, name, content):
+
+    ''' Create an external ID descriptor. '''
+
+    from canteen import model
+
+    # @TODO(sgammon): descriptors are broken
+    # @TODO(sgammon): trade MD5 for enum
+
+    if content:
+      return models.all.ExternalID(
+        key=model.Key(models.all.ExternalID,
+                      hashlib.md5('::'.join(map(str, (provider, content)))).hexdigest(),
+                      parent=parent),
+        provider=provider, name=name, content=(str(content),))
 
   @property
   def logging(self):

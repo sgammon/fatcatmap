@@ -27,7 +27,7 @@ from fatcatmap.models.government import legislative
 
 
 @bind('legacy', 'Node')
-class NodeConverter(ModelBinding):
+class LegacyNode(ModelBinding):
 
   ''' Converts instances of the old ``Node`` model into new
       ``Vertex`` records. '''
@@ -47,7 +47,7 @@ class NodeConverter(ModelBinding):
 
 
 @bind('legacy', 'Edge')
-class EdgeConverter(ModelBinding):
+class LegacyEdge(ModelBinding):
 
   ''' Converts instances of the old ``Edge`` model into new
       ``Edge`` records. '''
@@ -67,7 +67,7 @@ class EdgeConverter(ModelBinding):
 
 
 @bind('legacy', 'Member', legislative.CommitteeMember)
-class MemberConverter(ModelBinding):
+class LegacyMember(ModelBinding):
 
   ''' Converts instances of the old ``Member`` model into new
       ``CommitteeMember`` records. '''
@@ -83,12 +83,23 @@ class MemberConverter(ModelBinding):
 
     self.logging.info('----> Converting `Member`...')
     self.logging.info(str(data))
+
+    # grab committee
+    if 'housecode' in data and data['housecode']:
+      committee = self.get_by_ext('house', data['housecode'])
+
+    elif 'senatecode' in data and data['senatecode']:
+      committee = self.get_by_ext('senate', data['senatecode'])
+
+    # grab legislator
+    legislator = self.get_by_ext('fec', str(data['legislator']))
+
     import pdb; pdb.set_trace()
-    yield data
+    yield legislative.CommitteeMember(legislator, committee)
 
 
 @bind('legacy', 'Committee', legislative.Committee)
-class CommitteeConverter(ModelBinding):
+class LegacyCommittee(ModelBinding):
 
   ''' Converts instances of the old ``Committee`` model into new
       ``LegislativeCommittee`` records. '''
@@ -125,7 +136,7 @@ class CommitteeConverter(ModelBinding):
 
     # make committee and set type
     committee = self.target.new(
-      chambers[code(data['id'])[0]][0], data['id'].upper(),
+      chambers[code(data['id'])[0]][0], code(data['id']),
       type=chambers[code(data['id'])[0]][1])
 
     # naming - primary/secondary
@@ -153,11 +164,13 @@ class CommitteeConverter(ModelBinding):
     if 'url' in data and data['url']:
       committee.website.location = data['url']
 
+    # external ID mapping for direct code
+    yield self.ext_id(committee, 'senate', 'committee-code', code(data['id']))
     yield committee
 
 
 @bind('legacy', 'Contributor', finance.Contributor)
-class ContributorConverter(ModelBinding):
+class LegacyContributor(ModelBinding):
 
   ''' Converts instances of the old ``Contributor`` model into new
       ``Contributor`` records. '''
@@ -178,7 +191,7 @@ class ContributorConverter(ModelBinding):
 
 
 @bind('legacy', 'Contribution', finance.CampaignContribution)
-class ContributionConverter(ModelBinding):
+class LegacyContribution(ModelBinding):
 
   ''' Converts instances of the old ``Contribution`` model into new
       ``Contribution`` records. '''
@@ -199,7 +212,7 @@ class ContributionConverter(ModelBinding):
 
 
 @bind('legacy', 'Recipient', campaign.CandidateCampaign)
-class RecipientConverter(ModelBinding):
+class LegacyRecipient(ModelBinding):
 
   ''' Converts instances of the old ``Recipient`` model into new
       ``Campaign`` records. '''
@@ -220,25 +233,12 @@ class RecipientConverter(ModelBinding):
 
 
 @bind('legacy', 'Legislator', legislative.Legislator)
-class LegislatorConverter(ModelBinding):
+class LegacyLegislator(ModelBinding):
 
   ''' Converts instances of the old ``Legislator`` model into new
       ``Legislator`` records. '''
 
   # {u'lastnamealt': None, u'icpsrid': None, u'govtrack_id': 400574, u'lastnameenc': u'Canady', u'firstname': u'Charles', u'twitterid': None, u'lastname': u'Canady', u'lismemberid': None, u'bioguideid': u'C000107', u'namemod': None, u'fbid': None, u'fecid': None, u'religion': None, u'metavidid': None, u'birthday': u'1954-06-22', u'youtubeid': None, u'gender': u'M', u'osid': u'legacy', u'nickname': None, u'thomas_id': u'00171', u'pvsid': None}
-
-  def ext_id(self, legislator, provider, name, content):
-
-    ''' Create an external ID descriptor. '''
-
-    from canteen import model
-
-    # @TODO(sgammon): descriptors are broken
-
-    if content:
-      return ext.ExternalID(
-        key=model.Key(ext.ExternalID, hashlib.md5('::'.join(map(str, (provider, content)))).hexdigest(), parent=legislator),
-        provider=provider, name=name, content=(str(content),))
 
   def convert(self, data):
 
