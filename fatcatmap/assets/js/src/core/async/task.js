@@ -11,10 +11,10 @@
  */
 
 goog.require('$');
-goog.require('async');
-goog.require('future');
+goog.require('async.decorators');
+goog.require('async.future');
 
-goog.provide('task');
+goog.provide('async.task');
 
 var TaskStep, TaskContinuation, Task;
 
@@ -41,19 +41,22 @@ TaskContinuation = function (task) {
 
   /**
    * @expose
-   * @param {TaskStep} fn
+   * @param {TaskStep=} fn
    * @return {Task}
    */
-  this.last = function (fn) {
-    task._complete.push(fn);
+  this.done = function (fn) {
+    if (fn)
+      task._complete = fn;
+
     return task;
   };
 };
 
 /**
  * @constructor
+ * @param {TaskStep=} first
  */
-Task = function () {
+Task = function (first) {
 
   /**
    * @expose
@@ -76,9 +79,9 @@ Task = function () {
 
   /**
    * @protected
-   * @type {Array.<TaskStep>}
+   * @type {?TaskStep}
    */
-  this._complete = [];
+  this._complete = null;
 
   /**
    * @protected
@@ -91,6 +94,9 @@ Task = function () {
    * @type {boolean}
    */
   this._finishing = false;
+
+  if (typeof first === 'function')
+    return this.first(first);
 };
 
 /**
@@ -103,6 +109,10 @@ Task.prototype.reset = function () {
   this._args = [];
   this._step = 0;
   this._finishing = false;
+
+  if (this._complete && this._complete.__task__)
+    this._complete = this._complete.__orig__;
+
   return this;
 };
 
@@ -149,18 +159,26 @@ Task.prototype.args = function (args) {
 Task.prototype.run = function (args) {
   var task = this,
     result = new Future(),
-    _args;
+    complete = task._complete;
 
   if (args) {
     task._args.push.apply(task._args, toArray(arguments));
   }
 
-  task._complete.push(function () {
-    if (task.error)
-      return result.fulfill(false, task.error);
+  if (!complete || !complete.__task__) {
+    task._complete = function () {
+      if (typeof complete === 'function')
+        complete.apply(task, task._args);
 
-    result.fulfill(task._args);
-  });
+      if (task.error)
+        return result.fulfill(false, task.error);
+
+      result.fulfill(task._args);
+    };
+
+    task._complete.__task__ = this;
+    task._complete.__orig__ = complete;
+  }
 
   (function () { task.resume(); }).async();
 
@@ -172,16 +190,12 @@ Task.prototype.run = function (args) {
  * @expose
  */
 Task.prototype.finish = function () {
-  var task = this;
-
-  if (task._finishing === true) {
-    task._finishing = false;
-    task._complete.forEach(function (fn) {
-      fn.apply(task, task._args);
-    });
+  if (this._finishing === true) {
+    this._finishing = false;
+    this._complete.apply(this, this._args);
   } else {
-    task._finishing = true;
-    task.resume();
+    this._finishing = true;
+    this.resume();
   }
 };
 
@@ -223,7 +237,11 @@ Task.prototype.resume = function () {
     return task.finish();
   }
 
-  args = next() || [];
+  try {
+    args = next();
+  } catch (e) {
+    pendingCb(args, e);
+  }
 
   if (args instanceof Task) {
 
@@ -235,25 +253,25 @@ Task.prototype.resume = function () {
 
   } else {
 
+    if (!Array.isArray(args))
+      args = [args];
+
     args.forEach(function (arg, i) {
+      var futureCb = function (v, e) {
+        args[i] = v;
+
+        if (--pending === 0)
+          pendingCb(args, e);
+      };
+
       if (arg instanceof Task) {
         pending += 1;
 
-        arg._complete.push(function () {
-          args[i] = this._args;
-          
-          if (--pending === 0)
-            pendingCb(args, this.error);
-        });
+        arg.run().then(futureCb);
       } else if (arg instanceof Future) {
         pending += 1;
 
-        arg.then(function (v, e) {
-          args[i] = v;
-
-          if (--pending === 0)
-            pendingCb(args, e);
-        });
+        arg.then(futureCb);
       }
     });
 
@@ -266,6 +284,3 @@ Task.prototype.resume = function () {
     }
   }
 };
-
-/** @expose */
-window.Task = Task;

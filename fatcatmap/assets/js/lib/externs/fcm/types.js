@@ -62,3 +62,8 @@ var MessageCallbackMap;
  * @typedef {function(*=, Error=)}
  */
 var PipelinedCallback;
+
+/**
+ * @type {boolean}
+ */
+PipelinedCallback.__pipe__;

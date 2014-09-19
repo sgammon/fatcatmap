@@ -9,8 +9,8 @@
  * copyright (c) momentum labs, 2014
  */
 
-goog.require('task');
-goog.require('future');
+goog.require('async.task');
+goog.require('async.future');
 goog.require('supports');
 goog.require('services');
 goog.require('services.storage');

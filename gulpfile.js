@@ -391,7 +391,7 @@ task('test:clean', function () {
 task('default', [
   'less',
   'sass',
-  'templates'
+  'templates',
   'closure:all'
 ]);
 

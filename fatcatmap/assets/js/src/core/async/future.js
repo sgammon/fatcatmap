@@ -8,8 +8,9 @@
  * 
  * copyright (c) momentum labs, 2014
  */
-goog.require('async');
-goog.provide('future');
+goog.require('async.decorators');
+
+goog.provide('async.future');
 
 /**
  * @constructor
@@ -41,6 +42,8 @@ var Future = function () {
  * @return {Future}
  */
 Future.prototype.fulfill = function (value, error) {
+  var waiting = this._waiting;
+
   if (this.status !== 'PENDING') {
     value = false;
     error = new Error('Can\'t fulfill already-fulfilled future.');
@@ -51,26 +54,26 @@ Future.prototype.fulfill = function (value, error) {
     return value.then(this);
   }
 
-  this._waiting.forEach(function (cb) {
+  this.status = error ? 'FAILED' : 'FULFILLED';
+  this._waiting = null;
+  this._result = [value, error];
+
+  waiting.forEach(function (cb) {
     (function () {
       if (cb instanceof Future) {
         cb.fulfill(value, error);
       } else {
-        cb(value, error);
+        cb.call(null, value, error);
       }
     }).async();
   });
-
-  this.status = error ? 'FAILED' : 'FULFILLED';
-  this._waiting = null;
-  this._result = [value, error];
 
   return this;
 };
 
 /**
  * Returns a new Future waiting for the result of the current Future.
- * @param {(PipelinedCallback|Future)}
+ * @param {(PipelinedCallback|Future)} waiting
  * @return {Future}
  */
 Future.prototype.then = function (waiting) {
@@ -79,15 +82,13 @@ Future.prototype.then = function (waiting) {
       var result;
       if (waiting instanceof Future) {
         waiting.then(function (v, e) { next.fulfill(v, e); });
-        waiting.fulfill(value, error);
-      } else {
-        try {
-          result = waiting(value, error);
-        } catch (e) {
-          return next.fulfill(false, e);
-        }
+        return waiting.fulfill(value, error);
+      }
 
-        next.fulfill(result);
+      try {
+        next.fulfill(waiting.pipe(value, error));
+      } catch (e) {
+        next.fulfill(false, e);
       }
     };
 

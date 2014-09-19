@@ -1,5 +1,5 @@
 /**
- * @fileoverview Async utilities.
+ * @fileoverview Async function decorators.
  *
  * @author  David Rekow <david@momentum.io>,
  *          Sam Gammon <sam@momentum.io>,
@@ -9,7 +9,7 @@
  * copyright (c) momentum labs, 2014
  */
 
-goog.provide('async');
+goog.provide('async.decorators');
 
 /**
  * @expose
@@ -61,5 +61,40 @@ Object.defineProperty(Function.prototype, 'throttle', {
         }, interval);
       }
     };
+  }
+});
+
+/**
+ * @expose
+ * @param {*=} value
+ * @param {Error=} error
+ * @return {PipelinedCallback}
+ */
+Function.prototype.pipe;
+
+Object.defineProperty(Function.prototype, 'pipe', {
+  /**
+   * @expose
+   * @param {*=} value
+   * @param {Error=} error
+   * @return {PipelinedCallback}
+   */
+  value: /** @this {Function} */ function (value, error) {
+    var fn = this,
+      piped;
+
+    if (fn.__pipe__)
+      return fn;
+
+    piped = function (value, error) {
+      if (error)
+        throw error;
+
+      return fn(value);
+    };
+
+    piped.__pipe__ = true;
+
+    return (value || error) ? piped(value, error) : piped;
   }
 });
