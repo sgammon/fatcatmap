@@ -197,7 +197,7 @@ class FCM(cli.Tool):
 
           return TemplateCompiler(*(
                     module, sources, target, config, 'fatcatmap.templates'),
-                    debug=arguments.debug)()
+                    debug=not arguments.quiet)()
 
         except:
           logging.error('An exception was encountered while '
