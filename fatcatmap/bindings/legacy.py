@@ -92,9 +92,7 @@ class LegacyMember(ModelBinding):
       committee = self.get_by_ext('senate', data['senatecode'])
 
     # grab legislator
-    legislator = self.get_by_ext('fec', str(data['legislator']))
-
-    import pdb; pdb.set_trace()
+    legislator = self.get_by_ext(str(data['legislator']), provider='opensecrets')
     yield legislative.CommitteeMember(legislator, committee)
 
 
@@ -262,8 +260,15 @@ class LegacyLegislator(ModelBinding):
                             ('facebook', 'fbid'),
                             ('metavid', 'metavidid'),
                             ('youtube', 'youtubeid'),
-                            ('thomas', 'thomas_id')):
+                            ('thomas', 'thomas_id'),
+                            ('opensecrets', 'osid'),
+                            ('votesmart', 'pvsid')):
       if data.get(value):
-        ext_id = self.ext_id(legislator, provider, 'id', data[value])
+        prop = 'id' if provider not in ('twitter', 'facebook', 'youtube') else 'handle'
+        if provider == 'opensecrets' and value == 'legacy':
+          self.logging.info('------- Corner case: found legacy legislator. Skipping OSID.')
+          continue
+
+        ext_id = self.ext_id(legislator, provider, prop, data[value])
         if ext_id:
           result = yield ext_id
