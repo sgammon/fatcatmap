@@ -14,10 +14,26 @@ from . import ModelBinding, bind
 
 # models
 from fatcatmap.models.person import Person
+from fatcatmap.models.social import religion
 from fatcatmap.models.descriptors import ext
 from fatcatmap.models.campaign import finance
 from fatcatmap.models.politics import campaign
 from fatcatmap.models.government import legislative
+
+
+## Globals
+_known_religions = {  # @TODO(sgammon): make this not suck
+  'presbyterian': religion.presbyterian,
+  'episcopalian': religion.episcopalian,
+  'mormon': religion.lds,
+  'jewish': religion.judaism,
+  'catholic': religion.catholic,
+  'christian': religion.christianity,
+  'baptist': religion.baptist,
+  'lutheran': religion.lutheran,
+  'unitarian': religion.unitarian,
+  'nazarene': religion.disciples,
+  'protestant': religion.protestant}
 
 
 @bind('govtrack', 'Person', Person)
