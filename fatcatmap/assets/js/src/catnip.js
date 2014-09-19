@@ -14,8 +14,10 @@ goog.require('services');
 goog.require('services.router');
 goog.require('services.history');
 goog.require('services.template');
+goog.require('services.data');
 goog.require('services.view');
 goog.require('services.graph');
+goog.require('services.indexer');
 goog.require('views.App');
 
 goog.provide('catnip');
@@ -58,8 +60,11 @@ catnip = function (context, data, routes) {
     if (context.session && context.session.established)
       fcm.session = context.session.payload;
 
-    if (context.services && context.protocol.rpc.enabled)
+    if (context.services && context.protocol.rpc.enabled) {
       fcm.rpc.init(context.services);
+    } else {
+      services.rpc = null;
+    }
 
     if (context.template.manifest)
       fcm.template.init(context.template.manifest);

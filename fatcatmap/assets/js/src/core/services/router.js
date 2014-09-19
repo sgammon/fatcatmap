@@ -9,8 +9,8 @@
  * copyright (c) momentum labs, 2014
  */
 
-goog.require('urlutil');
-goog.require('structs');
+goog.require('util.url');
+goog.require('util.structs');
 goog.require('supports');
 goog.require('services');
 
@@ -39,8 +39,8 @@ var ROUTES = {
   },
 
   ROUTE_HISTORY = {
-    back: new BiLinkedList(null, 10),
-    forward: new BiLinkedList(null, 10),
+    back: new util.structs.BiLinkedList(null, 10),
+    forward: new util.structs.BiLinkedList(null, 10),
     current: null
   },
 
@@ -154,7 +154,7 @@ services.router = /** @lends {ServiceContext.prototype.router} */ {
     request.args = {};
     request.params = request.params || {};
 
-    params = urlutil.parseParams(path);
+    params = util.url.parseParams(path);
 
     for (param in params) {
       if (params.hasOwnProperty(param)) {

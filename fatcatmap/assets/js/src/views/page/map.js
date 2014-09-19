@@ -10,7 +10,6 @@
  */
 
 goog.require('$');
-goog.require('async');
 goog.require('View');
 goog.require('views.Detail');
 goog.require('views.detail.Legislator');

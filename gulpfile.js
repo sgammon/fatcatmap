@@ -390,6 +390,8 @@ task('test:clean', function () {
 // Default task - runs with bare 'gulp'.
 task('default', [
   'less',
+  'sass',
+  'templates'
   'closure:all'
 ]);
 

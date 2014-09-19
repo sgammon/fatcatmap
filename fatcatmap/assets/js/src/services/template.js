@@ -10,7 +10,6 @@
  * @todo batched requests
  */
 
-goog.require('async');
 goog.require('services');
 goog.require('services.rpc');
 

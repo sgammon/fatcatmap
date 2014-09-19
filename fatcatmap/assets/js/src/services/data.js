@@ -9,31 +9,21 @@
  * copyright (c) momentum labs, 2014
  */
 
-goog.require('async');
+goog.require('util.object');
+goog.require('supports');
 goog.require('services');
+goog.require('services.storage');
 
 goog.provide('services.data');
 
-var _dataCache, watchers, _resolveAndSet;
+var _dataCache, _dataStore, watchers;
 
 _dataCache = {};
 
-watchers = {};
+if (supports.storage.local)
+  _dataStore = new Store(window.localStorage, 'data', 'storage.data');
 
-/**
- * @private
- * @param {string} key
- * @param {*} data
- */
-_resolveAndSet = function (key, data) {
-  var keys = key.split('.'),
-    obj = _dataCache;
-  while (keys.length > 1) {
-    key = keys.shift();
-    obj = obj[key] || (obj[key] = {}, obj[key]);
-  }
-  obj[keys.shift()] = data;
-};
+watchers = {};
 
 /**
  * @expose
@@ -50,6 +40,7 @@ services.data = /** @lends {ServiceContext.prototype.data} */ {
       keys = data.data.keys,
       objects = data.data.objects,
       key, object, i;
+
     for (i = 0; keys && i < keys.length; i++) {
       key = keys[i];
       object = objects[i];
@@ -64,7 +55,6 @@ services.data = /** @lends {ServiceContext.prototype.data} */ {
       _dataCache[key] = object;
     }
 
-    window['DATACACHE'] = _dataCache;
     cb(data);
   },
 
@@ -123,7 +113,6 @@ services.data = /** @lends {ServiceContext.prototype.data} */ {
         return cbs.success(item);
       } else {
         // Retrieve from localStorage & server.
-        debugger;
       }
     }
   },
@@ -166,7 +155,7 @@ services.data = /** @lends {ServiceContext.prototype.data} */ {
   set: function (key, data) {
     var _watchers = watchers[key];
 
-    _resolveAndSet(key, data);
+    util.object.resolveAndSet(_dataCache, key, data);
 
     if (_watchers && _watchers.length) {
       _watchers.forEach(function (watcher) {

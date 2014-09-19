@@ -10,7 +10,6 @@
  */
 
 goog.require('$');
-goog.require('async');
 goog.require('validation');
 goog.require('View');
 

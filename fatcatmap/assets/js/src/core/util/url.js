@@ -9,18 +9,20 @@
  * copyright (c) momentum labs, 2014
  */
 
-goog.provide('urlutil');
+goog.provide('util.url');
 
-var urlutil = {
+util.url = {
 
   /**
    * Encodes & appends a param object to a url.
+   * @expose
    * @param {string} url
    * @param {Object.<string, string>} params
    * @return {string}
    */
   addParams: function (url, params) {
     var needsAmp = true;
+
     if (url.indexOf('?') === -1) {
       url += '?';
       needsAmp = false;
@@ -42,6 +44,7 @@ var urlutil = {
 
   /**
    * Parses & inflates a query param object from a url.
+   * @expose
    * @param {string} url
    * @return {Object.<string, string>} params
    */
@@ -63,6 +66,7 @@ var urlutil = {
 
   /**
    * Parses a URL into an easily-consumable object.
+   * @expose
    * @param {string} url
    * @return {{
    *   protocol: string,
@@ -79,7 +83,7 @@ var urlutil = {
       chunks, host;
 
     parsed.url = url;
-    parsed.params = urlutil.parseParams(url);
+    parsed.params = util.url.parseParams(url);
 
     chunks = url.split('//');
 
@@ -97,9 +101,10 @@ var urlutil = {
     if (host.charAt(0) === '/') {
       parsed.hostname = parsed.port = '';
     } else {
-      host = chunks.shift().split('?').shift().split(':');
+      host = chunks.shift().split(':');
       parsed.hostname = host[0];
-      parsed.port = host[1] || '';
+      parsed.port = +host[1] ||
+        (parsed.protocol === 'http' ? 80 : parsed.protocol === 'https' ? 443 : '');
     }
 
     parsed.path = chunks.join('/').split('?').shift();
@@ -108,7 +113,8 @@ var urlutil = {
   },
 
   /**
-   * Joins path fragments into a path.
+   * Joins path fragments into a path, resolving relative directories.
+   * @expose
    * @param {...string} var_args
    * @return {string}
    */
@@ -116,7 +122,7 @@ var urlutil = {
     var paths = Array.prototype.slice.call(arguments),
       base = paths.shift(),
       parts = [],
-      path;
+      path, slashI;
 
     if (!paths.length)
       return base;
@@ -132,8 +138,18 @@ var urlutil = {
       if (!path)
         continue;
 
+      slashI = path.indexOf('/');
+
+      if (path.charAt(0) === '.' && slashI > -1) {
+        if (path.charAt(1) === '.')
+          parts.pop();
+
+        path = path.slice(slashI + 1);
+
+      }
+
       if (path.charAt(0) === '/')
-        path = path.slice(1);
+        continue;
 
       if (path.charAt(path.length - 1) === '/')
         path = path.slice(0, -1);

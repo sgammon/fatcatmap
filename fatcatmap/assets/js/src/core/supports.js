@@ -36,7 +36,7 @@ var supports = /** @struct */{
   /**
    * @type {boolean}
    */
-  sockets: !!window.WebSocket,
+  socket: !!window.WebSocket,
 
   /**
    * @type {boolean}

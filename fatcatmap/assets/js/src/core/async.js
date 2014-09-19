@@ -11,16 +11,35 @@
 
 goog.provide('async');
 
+/**
+ * @expose
+ * @param {number} interval
+ * @return {function(...)}
+ */
+Function.prototype.async;
+
+Object.defineProperty(Function.prototype, 'async', {
+  /**
+   * @expose
+   * @param {number} delay
+   * @return {number}
+   */
+  value: /** @this {Function} */ function (delay) {
+    var fn = this;
+
+    if (typeof delay !== 'number');
+      delay = 0;
+
+    return setTimeout(this, delay);
+  }
+});
 
 /**
- * Represents an asynchronous callback object.
- * @typedef {{
- *    success: function(Object),
- *    error: function(Error)
- * }}
+ * @expose
+ * @param {number} interval
+ * @return {function(...)}
  */
-var CallbackMap;
-
+Function.prototype.throttle;
 
 Object.defineProperty(Function.prototype, 'throttle', {
   /**
@@ -44,10 +63,3 @@ Object.defineProperty(Function.prototype, 'throttle', {
     };
   }
 });
-
-/**
- * @expose
- * @param {number} interval
- * @return {function(...)}
- */
-Function.prototype.throttle;

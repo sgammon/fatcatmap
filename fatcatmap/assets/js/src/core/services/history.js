@@ -38,7 +38,7 @@ services.history = /** @lends {ServiceContext.prototype.history} */ {
 
     hist.router.on('routed', function (url, request, response) {
       if (request.source !== 'history')
-        services.history.push(url, response.state);
+        services.history.push(url, response);
     });
 
     if (supports.history.html5) {

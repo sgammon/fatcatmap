@@ -9,29 +9,10 @@
  * copyright (c) momentum labs, 2014
  */
 
-goog.require('async');
-goog.require('urlutil');
+goog.require('util.url');
 goog.require('services');
 
 goog.provide('services.http');
-
-/**
- * @typedef {Object.<{
- *    url: string,
- *    headers: ?Object.<string, string>,
- *    params: ?Object.<string, string>,
- *    data: ?(string|Object)
- * }>}
- */
-var Request;
-
-/**
- * @typedef {Object.<{
- *    data: *,
- *    headers: Object.<string, string>
- * }>}
- */
-var Response;
 
 var _prepareRequest, _dispatchRequest, _parseResponse;
 
@@ -46,7 +27,7 @@ _prepareRequest = function (method, request, handlers) {
     url, headers;
 
   if (request.params) {
-    url = urlutil.addParams(request.url, request.params);
+    url = util.url.addParams(request.url, request.params);
   } else {
     url = request.url;
   }
@@ -94,6 +75,7 @@ _prepareRequest = function (method, request, handlers) {
  * @return {XMLHttpRequest}
  */
 _dispatchRequest = function (method, request, handlers) {
+  /*jshint eqnull:true */
   var data = typeof request.data === 'object' ? JSON.stringify(request.data) :
     typeof request.data === 'string' ? request.data :
       request.data == null ? null : '' + request.data,

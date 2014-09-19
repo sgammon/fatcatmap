@@ -9,7 +9,6 @@
  * copyright (c) momentum labs, 2014
  */
 
-goog.require('async');
 goog.require('services');
 goog.require('services.template');
 
@@ -92,9 +91,9 @@ services.view = /** @lends {ServiceContext.prototype.view} */{
    * @this {ServiceContext}
    */
   init: function (rootname, cb) {
-    var V = services.view.get(rootname);
+    var Root = services.view.get(rootname);
 
-    if (!V)
+    if (!Root)
       throw new Error('view.init() cannot be called with unregistered view ' + rootname);
 
     getSelfAndChildren(rootname, function (template) {
@@ -104,21 +103,12 @@ services.view = /** @lends {ServiceContext.prototype.view} */{
       document.body.innerHTML = '';
 
       if (template)
-        V.options.template = template;
+        Root.options.template = template;
 
-      services.view.put(rootname, V);
-
-      var rootview = new V({
-        ready: cb,
-        el: 'body'
-      });
-
-      /**
-       * @expose
-       */
-      window.__ROOTVIEW = rootview;
+      services.view.put(rootname, Root);
 
       for (viewname in VIEWS) {
+        /*jshint loopfunc:true */
         if (VIEWS.hasOwnProperty(viewname)) {
           view = VIEWS[viewname];
   
@@ -131,11 +121,11 @@ services.view = /** @lends {ServiceContext.prototype.view} */{
             });
         }
       }
+
+      return new Root({
+        ready: cb,
+        el: 'body'
+      });
     });
   }
 }.service('view');
-
-/**
- * @expose
- */
-window.__VIEWS = VIEWS;

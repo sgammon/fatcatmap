@@ -9,8 +9,6 @@
  * copyright (c) momentum labs, 2014
  */
 
-goog.require('async');
-
 goog.provide('routes');
 
 var routes = {

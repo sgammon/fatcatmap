@@ -9,14 +9,18 @@
  * copyright (c) momentum labs, 2014
  */
 
+goog.require('supports');
 goog.require('services');
 goog.require('services.data');
 
 goog.provide('services.graph');
 
-var _graphCache, _graphIndex, GRAPH;
+var _graphCache, _graphStore, _graphIndex, GRAPH;
 
 _graphCache = {};
+
+if (supports.storage.local)
+  _graphStore = new Store(window.localStorage, 'graph', 'storage.graph');
 
 _graphIndex = {
   adjacency: {},
@@ -70,14 +74,17 @@ services.graph = /** @lends {ServiceContext.prototype.graph} */ {
     var makeEdge, i, keys, key, node, nativeKey, native, targets, source;
 
     makeEdge = function (source, key) {
+      /*jshint eqnull:true */
       return function (target) {
         var _i;
 
         if (!_graphIndex.adjacency[source] || !_graphIndex.adjacency[source][target]) {
-          if (_graphIndex.nodesByKey[source] == null ||
-              _graphIndex.nodesByKey[target] == null) {
-            debugger;
-          }
+          if (_graphIndex.nodesByKey[source] == null)
+            console.warn('Making edge with unencountered source ' + source);
+
+          if (_graphIndex.nodesByKey[target] == null)
+            console.warn('Making edge with unencountered target ' + target);
+
           _i = GRAPH.edges.push({
             'key': key,
             'source': _graphIndex.nodesByKey[source],

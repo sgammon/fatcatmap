@@ -10,6 +10,8 @@
  * copyright (c) momentum labs, 2014
  */
 
+goog.require('util.object');
+
 goog.provide('services');
 
 var ServiceContext, Service;
@@ -29,7 +31,7 @@ ServiceContext.prototype = {};
  * @return {(function(*)|Object.<string, function(*)>)}
  */
 ServiceContext.register = function (name, service) {
-  ServiceContext.prototype[name] = service;
+  util.object.resolveAndSet(ServiceContext.prototype, name, service);
   return service;
 };
 
@@ -88,7 +90,8 @@ Object.defineProperty(Function.prototype, 'inject', {
       if (!inject)
         inject = {};
 
-      inject[serviceName] = ServiceContext.prototype[serviceName];
+      util.object.resolveAndSet(
+        inject, serviceName, util.object.resolve(ServiceContext.prototype, serviceName));
     });
 
     injected = function () {};

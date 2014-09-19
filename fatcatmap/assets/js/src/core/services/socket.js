@@ -9,4 +9,42 @@
  * copyright (c) momentum labs, 2014
  */
 
+goog.require('util.url');
+goog.require('supports');
+goog.require('services');
+
 goog.provide('services.socket');
+
+var Socket, SOCKETS;
+
+/**
+ * @constructor
+ * @param {string} url
+ * @param {MessageCallbackMap=} listeners
+ */
+Socket = function (url, listeners) {
+
+};
+
+if (supports.socket) {
+  /**
+   * @expose
+   */
+  services.socket = /** @lends {ServiceContext.prototype.socket} */{
+    /**
+     * @expose
+     * @param {string} url
+     * @param {MessageCallbackMap=} listeners
+     * @return {Socket}
+     */
+    spawn: function (url, listeners) {
+      var socket = new Socket(url, listeners);
+
+      SOCKETS[socket.url] = socket;
+
+      return socket;
+    }
+  }.service('socket');
+} else {
+  services.socket = null;
+}

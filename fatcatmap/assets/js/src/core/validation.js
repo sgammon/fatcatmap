@@ -66,7 +66,7 @@ var VALIDATIONS = {
   _validations = {},
 
   /**
-   * @param {Event}
+   * @param {Event} e
    */
   _validateInput = function (e) {
     var input = e.target,
@@ -84,7 +84,7 @@ var VALIDATIONS = {
   },
 
   /**
-   * @param {Event}
+   * @param {Event} e
    */
   _removeValidation = function (e) {
     e.target.classList.remove('valid');
@@ -119,7 +119,7 @@ Vue.directive('validate', {
       /**
        * @expose
        */
-      this.el.__validate = this.el.tagName + this.key + Date.now();
+      this.el.__validate = this.el.tagName + key + Date.now();
 
       this.el.addEventListener('blur', _validateInput);
       this.el.addEventListener('focus', _removeValidation);

@@ -9,8 +9,7 @@
  * copyright (c) momentum labs, 2014
  */
 
-goog.require('async');
-goog.require('urlutil');
+goog.require('util.url');
 goog.require('services');
 goog.require('services.http');
 
@@ -34,7 +33,7 @@ RPCAPI = function (name, methods, config) {
 
   methods.forEach(function (method) {
 
-    var endpoint = urlutil.join(_baseRPCURL, api.name + '.' + method);
+    var endpoint = util.url.join(_baseRPCURL, api.name + '.' + method);
 
     /**
      * @param {Request} request
@@ -49,10 +48,14 @@ RPCAPI = function (name, methods, config) {
         headers: request.headers || {},
       };
 
-      req.headers['Accept'] = 'application/json';
+      /**
+       * @expose
+       */
+      req.headers.Accept = 'application/json';
+
       req.headers['Content-Type'] = 'application/json';
 
-      return this.http.post(req, handlers)
+      return this.http.post(req, handlers);
     }.inject('http');
 
   });
