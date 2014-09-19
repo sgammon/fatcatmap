@@ -20,10 +20,15 @@ from .govtrack import GovtrackPerson
 
 # models
 from fatcatmap.models.person import Person
-from fatcatmap.models.descriptors import ext
-from fatcatmap.models.campaign import finance
-from fatcatmap.models.politics import campaign
-from fatcatmap.models.government import legislative
+from fatcatmap.models.politics.campaign import CandidateCampaign
+from fatcatmap.models.campaign.finance import (Contributor,
+                                               CampaignContribution)
+from fatcatmap.models.government.legislative import (us_house,
+                                                     us_senate,
+                                                     Committee,
+                                                     Legislator,
+                                                     us_congress,
+                                                     CommitteeMember)
 
 
 @bind('legacy', 'Node')
@@ -66,7 +71,7 @@ class LegacyEdge(ModelBinding):
     yield data
 
 
-@bind('legacy', 'Member', legislative.CommitteeMember)
+@bind('legacy', 'Member', CommitteeMember)
 class LegacyMember(ModelBinding):
 
   ''' Converts instances of the old ``Member`` model into new
@@ -81,26 +86,33 @@ class LegacyMember(ModelBinding):
       :param data: ``dict`` of data to convert.
       :returns: Instance of local target to inflate. '''
 
-    self.logging.info('----> Converting `Member`...')
-    self.logging.info(str(data))
-
     # grab committee
-    if 'housecode' in data and data['housecode']:
-      committee = self.get_by_ext('house', data['housecode'])
-
-    elif 'senatecode' in data and data['senatecode']:
-      committee = self.get_by_ext('senate', data['senatecode'])
+    committee = self.get_by_ext(data['committee'], provider='congress')
 
     # grab legislator
     legislator = self.get_by_ext(str(data['legislator']), provider='opensecrets')
-    yield legislative.CommitteeMember(legislator, committee)
+
+    # make membership
+    membership = CommitteeMember(legislator, committee)
+
+    if data.get('role'):
+      membership.leadership = {
+        'chair': CommitteeMember.CommitteeLeadership.CHAIR,
+        'chairman': CommitteeMember.CommitteeLeadership.CHAIR,
+        'cochairman': CommitteeMember.CommitteeLeadership.COCHAIR,
+        'exofficio': CommitteeMember.CommitteeLeadership.EX_OFFICIO,
+        'rankingmember': CommitteeMember.CommitteeLeadership.RANKING,
+        'vicechairman': CommitteeMember.CommitteeLeadership.VICECHAIR
+      }.get(data['role'].lower().strip().replace(' ', ''), None)
+
+    yield membership
 
 
-@bind('legacy', 'Committee', legislative.Committee)
+@bind('legacy', 'Committee', Committee)
 class LegacyCommittee(ModelBinding):
 
   ''' Converts instances of the old ``Committee`` model into new
-      ``LegislativeCommittee`` records. '''
+      ``Committee`` records. '''
 
   # {u'url': None, u'type': u'', u'super': u'SSAS', u'display': u'Strategic Forces', u'id': u'SSAS16'}
 
@@ -122,15 +134,9 @@ class LegacyCommittee(ModelBinding):
       "committee ID must start with `S`, `H` or `J`")
 
     chambers = {
-      'J': (
-        legislative.us_congress,
-        legislative.Committee.CommitteeType.JOINT),
-      'S': (
-        legislative.us_senate,
-        legislative.Committee.CommitteeType.MAJOR),
-      'H': (
-        legislative.us_house,
-        legislative.Committee.CommitteeType.MINOR)}
+      'J': (us_congress, Committee.CommitteeType.JOINT),
+      'S': (us_senate, Committee.CommitteeType.MAJOR),
+      'H': (us_house, Committee.CommitteeType.MINOR)}
 
     # make committee and set type
     committee = self.target.new(
@@ -156,18 +162,18 @@ class LegacyCommittee(ModelBinding):
 
     # add super, if any
     if 'super' in data and data['super']:
-      committee.super = model.Key(legislative.Committee, code(data['super']))
+      committee.super = model.Key(Committee, code(data['super']))
 
     # add website, if any
     if 'url' in data and data['url']:
       committee.website.location = data['url']
 
     # external ID mapping for direct code
-    yield self.ext_id(committee, 'senate', 'committee-code', code(data['id']))
+    yield self.ext_id(committee, 'congress', 'committee', code(data['id']))
     yield committee
 
 
-@bind('legacy', 'Contributor', finance.Contributor)
+@bind('legacy', 'Contributor', Contributor)
 class LegacyContributor(ModelBinding):
 
   ''' Converts instances of the old ``Contributor`` model into new
@@ -188,7 +194,7 @@ class LegacyContributor(ModelBinding):
     yield data
 
 
-@bind('legacy', 'Contribution', finance.CampaignContribution)
+@bind('legacy', 'Contribution', CampaignContribution)
 class LegacyContribution(ModelBinding):
 
   ''' Converts instances of the old ``Contribution`` model into new
@@ -209,7 +215,7 @@ class LegacyContribution(ModelBinding):
     yield data
 
 
-@bind('legacy', 'Recipient', campaign.CandidateCampaign)
+@bind('legacy', 'Recipient', CandidateCampaign)
 class LegacyRecipient(ModelBinding):
 
   ''' Converts instances of the old ``Recipient`` model into new
@@ -230,7 +236,7 @@ class LegacyRecipient(ModelBinding):
     yield data
 
 
-@bind('legacy', 'Legislator', legislative.Legislator)
+@bind('legacy', 'Legislator', Legislator)
 class LegacyLegislator(ModelBinding):
 
   ''' Converts instances of the old ``Legislator`` model into new
@@ -248,7 +254,7 @@ class LegacyLegislator(ModelBinding):
     person = yield GovtrackPerson(self)
 
     # legislator
-    legislator = yield legislative.Legislator.new(person, str(data['govtrack_id']))
+    legislator = yield Legislator.new(person, str(data['govtrack_id']))
 
     # external ID records
     for provider, value in (('govtrack', 'govtrack_id'),

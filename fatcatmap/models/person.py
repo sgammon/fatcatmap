@@ -7,7 +7,8 @@
 '''
 
 # graph models
-from . import (date,
+from . import (Key,
+               date,
 			         Edge,
                Vertex,
                describe)
@@ -41,3 +42,4 @@ class Person(Vertex):
   gender = str, {'indexed': True, 'choices': {'m', 'f'}}
   birthdate = str, {'indexed': True, 'default': None}
   deathdate = str, {'indexed': True, 'default': None}
+  religion = Key, {'indexed': True, 'embedded': False, 'default': None}

@@ -326,6 +326,10 @@ class CommitteeMember(Legislator > Committee):
         ``chair`` of the committee (essentially, the leader), the ``co-chair``
         of the committee (backup/2nd-level leader, usually opposing party). '''
 
-    COCHAIR, CHAIR = 0x1, 0x2
+    CHAIR = 0x0  # single and sole leader of the committee
+    COCHAIR = 0x1  # leader of the committee, shared with other people
+    VICECHAIR = 0x2  # second-in-command leader of the committee
+    RANKING = 0x3  # second-in-command for majority or minority party
+    EX_OFFICIO = 0x4  # holder of a seat on the committee because of another office
 
   leadership = CommitteeLeadership, {'indexed': True, 'default': None}

@@ -35,7 +35,10 @@ _known_religions = {  # @TODO(sgammon): make this not suck
   'lutheran': religion.lutheran,
   'unitarian': religion.unitarian,
   'nazarene': religion.disciples,
-  'protestant': religion.protestant}
+  'protestant': religion.protestant,
+  'methodist': religion.methodist,
+  'adventist': religion.adventist,
+  'christ': religion.christianity}
 
 
 @bind('govtrack', 'Person', Person)
@@ -59,7 +62,7 @@ class GovtrackPerson(ModelBinding):
 
     if data.get('namemod'): person.name.postfix = (data['namemod'],)
     if data.get('nickname'): person.name.nickname = (data['nickname'],)
-    if data.get('lastnamealt'): person.name.secondary = ('%s %s',) % (data['firstname'], data['lastnamealt'])
+    if data.get('lastnamealt'): person.name.secondary = ('%s %s' % (data['firstname'], data['lastnamealt']),)
     if data.get('gender'): person.gender = data['gender'].lower()
     if data.get('birthday'): person.birthdate = data['birthday']
 
@@ -67,16 +70,17 @@ class GovtrackPerson(ModelBinding):
       # @TODO(sgammon): yielding records with errors for tracking
       religion = data['religion']
 
-      # might have it straight up
-      if religion.lower() in _known_religions:
-        person.religion = _known_religions[religion.lower()]
-      else:
-        logging.warning('!! ------ Unknown religion "%s". ------ !!' % data['religion'])
-
-        # otherwise look for it
-        for label, key in _known_religions.iteritems():
-          if label in religion:
-            logging.warning('!! ------ Substituting "%s". ------ !!' % label)
-          person.religion = key
+      if religion.lower().strip().replace(' ', '') != 'unknown':
+        # might have it straight up
+        if religion.lower() in _known_religions:
+          person.religion = _known_religions[religion.lower()]
+        else:
+          # otherwise look for it
+          for label, key in _known_religions.iteritems():
+            if label in religion.lower().strip().replace(' ', ''):
+              person.religion = key
+              break
+          if not person.religion:
+            self.logging.warning('!! ------ Unknown religion "%s". ------ !!' % data['religion'])
 
     yield person

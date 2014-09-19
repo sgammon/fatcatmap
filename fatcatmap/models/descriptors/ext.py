@@ -62,8 +62,8 @@ class ExternalID(Model):
 
     return cls(key=model.Key(cls, keyname, parent=parent),
                name=name, provider=provider,
-               content=(content,) if not (
-                isinstance(content, (list, tuple))) else content)
+               content=(str(content),) if not (
+                isinstance(content, (list, tuple))) else str(content))
 
 
 @describe(descriptor=True, type=Token)

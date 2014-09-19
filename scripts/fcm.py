@@ -53,8 +53,8 @@ except ImportError:
 
 
 ## Globals
+dataset = 'legacy-v2'
 logging = debug.Logger(name='fcm')
-dataset = 'fcm-dev/redis-data/backup-v1.aof'
 project_root = os.path.dirname(os.path.dirname(__file__))
 UWSGI_BASE_ARGS, UWSGI_PROD_ARGS = [
   "--pcre-jit",
@@ -172,14 +172,14 @@ class FCM(cli.Tool):
         from fatcatmap.config import config
         from canteen.logic.template import TemplateCompiler
 
-        logging.info('Compiling app templates...')
+        if not arguments.quiet: logging.info('Compiling app templates...')
 
         # delete existing templates first, if any
-        logging.info('Cleaning existing template path...')
+        if not arguments.quiet: logging.info('Cleaning existing template path...')
         module_root = os.path.join(project_root, "fatcatmap", "templates")
 
         clean_command = "rm -fr %s" % os.path.join(module_root, "compiled", "*")
-        if config.get('debug', False):
+        if config.get('debug', False) or arguments.debug:
           logging.debug('Executing command: "%s".' % clean_command)
         os.system(clean_command)
 
@@ -196,14 +196,16 @@ class FCM(cli.Tool):
             root + '/fatcatmap/templates/compiled')
 
           return TemplateCompiler(*(
-            module, sources, target, config, 'fatcatmap.templates'))()
+                    module, sources, target, config, 'fatcatmap.templates'),
+                    debug=arguments.debug)()
 
         except:
           logging.error('An exception was encountered while '
                         ' compiling templates.')
           raise
         else:
-          logging.info('Templates compiled successfully.')
+          if not arguments.quiet:
+            logging.info('Templates compiled successfully.')
 
 
   class Shell(cli.Tool):
@@ -293,10 +295,11 @@ class FCM(cli.Tool):
       ('--binding', {'type': str, 'help': 'binding name to convert with, if any'}),
       ('--kinds', {'type': str, 'help': 'kinds to transfer, comma-delimited (no spaces)'}),
       ('--dataset', {'type': str, 'help': 'specify package name/version to update to - corresponds to package/version in GS'}),
+      ('--limit', {'type': int, 'help': 'key limit for testing migrations'}),
       ('--clean', {'action': 'store_true', 'help': 'clean all data from target adapter (DANGEROUS!)'}),
       ('--fixtures', {'action': 'store_true', 'help': 'run fixtures against target (before transfer, if any)'}),
       ('--update', {'action': 'store_true', 'help': 'download latest dataset package (applies to source if any, else target)'}),
-      ('--limit', {'type': int, 'help': 'key limit for testing migrations'}))
+      ('--no-report', {'action': 'store_true', 'help': 'don\'t output reports about stuff'}))
 
     @staticmethod
     def build_cli_args(arguments, adapter):
@@ -320,13 +323,15 @@ class FCM(cli.Tool):
 
       '''  '''
 
-      logging.info('Resolving adapters for migration...')
+      if not arguments.quiet:
+        logging.info('Resolving adapters for migration...')
       source = arguments.source and FCM.Migrate.adapters[arguments.source]
       target = FCM.Migrate.adapters[arguments.target or 'RedisWarehouse']
 
-      if source:
+      if source and not arguments.quiet:
         logging.info('Selected source adapter %s...' % source.__name__)
-      logging.info('Selected target adapter %s...' % target.__name__)
+      if not arguments.quiet:
+        logging.info('Selected target adapter %s...' % target.__name__)
 
       return source() if source else None, target()  # construct adapters
 
@@ -336,7 +341,7 @@ class FCM(cli.Tool):
       '''  '''
 
       assert arguments.clean
-      logging.info('Cleaning target storage...')
+      if not arguments.quiet: logging.info('Cleaning target "%s" storage...' % target)
       target.execute(target.Operations.FLUSH_ALL, '__meta__')
 
     @staticmethod
@@ -346,13 +351,16 @@ class FCM(cli.Tool):
 
       # select a data package
       if not arguments.dataset:
-        logging.info('Using latest AOF data package...')
-        data_file_name = 'latest.aof.gz'
+        if arguments.verbose and not arguments.quiet:
+          logging.info('Using latest AOF data package...')
+        data_file_name = '.'.join((dataset, 'aof', 'gz'))
       else:
-        logging.info('Using AOF data package "%s"...' % arguments.dataset)
+        if arguments.verbose and not arguments.quiet:
+          logging.info('Using AOF data package "%s"...' % arguments.dataset)
         data_file_name = '.'.join((arguments.dataset, 'aof', 'gz'))
 
-      logging.info('Starting dataset update...')
+      if not arguments.quiet:
+        logging.info('Starting dataset update...')
 
       command = ' | '.join((
         'curl --progress-bar https://storage.googleapis.com/fcm-dataset/%s' % data_file_name,
@@ -361,7 +369,7 @@ class FCM(cli.Tool):
 
       os.system(command)
 
-      logging.info('Dataset update complete.')
+      if not arguments.quiet: logging.info('Dataset update complete.')
 
     @staticmethod
     def apply_fixtures(arguments, target):
@@ -369,13 +377,16 @@ class FCM(cli.Tool):
       '''  '''
 
       _dependencies = collections.defaultdict(lambda: set())
-      logging.info('Applying fixtures to target...')
+
+      if not arguments.quiet:
+        logging.info('Applying fixtures to target...')
 
       _fixtures_c, _fixtures_by_kind = 0, collections.defaultdict(lambda: 0)
       with target.channel('__meta__').pipeline() as pipeline:
 
         for fixtureset in models.fixtures:
-          logging.info('Applying fixtures for model "%s"...' % fixtureset.__name__)
+          if not arguments.quiet:
+            logging.info('Applying fixtures for model "%s"...' % fixtureset.__name__)
           desc = fixtureset.__description__
 
           for obj in fixtureset.fixture():
@@ -383,90 +394,99 @@ class FCM(cli.Tool):
               obj = [obj]
 
             for _obj in obj:
-              logging.info('-- Storing fixture of type "%s" at key "%s"...' % (_obj.key.kind, _obj.key.urlsafe()))
+              if arguments.verbose and not arguments.quiet:
+                logging.info('-- Storing fixture of type "%s" at key "%s"...' % (_obj.key.kind, _obj.key.urlsafe()))
               target._put(_obj, pipeline=pipeline)
 
             _fixtures_c += 1
             _fixtures_by_kind[_obj.key.kind] += 1
 
-        logging.info('Fixture report (%s entities total):' % _fixtures_c)
-        for _kind in _fixtures_by_kind:
-          logging.info('-- %s: %s entities' % (_kind, _fixtures_by_kind[_kind]))
+        if not arguments.no_report and not arguments.quiet:
+          logging.info('Fixture report (%s entities total):' % _fixtures_c)
+          for _kind in _fixtures_by_kind:
+            logging.info('-- %s: %s entities' % (_kind, _fixtures_by_kind[_kind]))
 
         pipeline.execute()
-        logging.info('Fixtures applied with great success.')
+        if not arguments.quiet: logging.info('Fixtures applied with great success.')
 
     @staticmethod
     def read_sources(arguments, source):
 
       '''  '''
 
-      logging.info('Reading from migration source...')
-      source_keys, found_keys = [], []
+      if not arguments.quiet:
+        logging.info('Reading from migration source...')
 
       # retrieve keys
+      sourcekey_bundles = collections.deque()
       if not arguments.kinds:
-        source_keys = source.execute(source.Operations.KEYS, '__meta__')
+        sourcekey_bundles.append(source.execute(source.Operations.KEYS, '__meta__'))
       else:
         # if kinds are requested, merge target kind indexes
         for kind in arguments.kinds.split(','):
-          source_keys += source.execute(source.Operations.SET_MEMBERS, '__meta__', '::'.join((
-            '__kind__', kind)))
+          sourcekey_bundles.append(source.execute(source.Operations.SET_MEMBERS, '__meta__', '::'.join((
+            '__kind__', kind))))
 
-      logging.info('Found %s keys. Beginning migration...' % len(source_keys))
+      if not arguments.quiet:
+        logging.info('Found %s key bundles with a total of %s keys for migration. Beginning migration...' % (
+          len(sourcekey_bundles), sum((len(i) for i in sourcekey_bundles))))
+        time.sleep(3)
 
-      for key in source_keys:
-        # skip meta/index keys
-        if key.startswith('__'):
-          logging.info('-- Skipping key "%s"...' % key)
-          continue
+      for source_keys in sourcekey_bundles:
+        found_keys = collections.deque()
 
-        # if the boot fits...
-        try:
-          unicode(key)
-          base64.b64decode(key)
-          model.Key(urlsafe=key)
-        except: continue
+        for key in source_keys:
+          # skip meta/index keys
+          if key.startswith('__'):
+            if arguments.verbose:
+              logging.info('-- Skipping key "%s"...' % key)
+            continue
 
-        if arguments.limit and len(found_keys) >= arguments.limit:
-          break  # limit keys if desired
+          # if the boot fits...
+          try:
+            unicode(key)
+            base64.b64decode(key)
+            model.Key(urlsafe=key)
+          except: continue
 
-        found_keys.append(key)
+          if arguments.limit and len(found_keys) >= arguments.limit:
+            break  # limit keys if desired
 
-      logging.info('Found %s object keys. Transferring...' % len(found_keys))
+          found_keys.append(key)
 
-      _keys, _by_kind = 0, collections.defaultdict(lambda: 0)
-      with source.channel('__meta__').pipeline() as pipeline:
+        if not arguments.quiet:
+          logging.info('Transferring %s objects...' % len(found_keys))
 
-        _filtered_keys = []
-        for key in found_keys:
+        _keys, _by_kind = 0, collections.defaultdict(lambda: 0)
+        with source.channel('__meta__').pipeline() as pipeline:
 
-          k = model.Key(urlsafe=key).kind
-          if (arguments.kinds and k in arguments.kinds.split(',')) or not arguments.kinds:
-            _keys += 1
+          _filtered_keys = []
+          for key in found_keys:
+
+            k = model.Key(urlsafe=key).kind
+            if (arguments.kinds and k in arguments.kinds.split(',')) or not arguments.kinds:
+              _keys += 1
+              _by_kind[model.Key(urlsafe=key).kind] += 1
+              source.get(model.Key(urlsafe=key).flatten(True), pipeline=pipeline)
+              _filtered_keys.append(key)
+
+          _objects, _by_kind = {}, collections.defaultdict(lambda: 0)
+          for key, result in zip(_filtered_keys, pipeline.execute()):
+            if result is None:
+              if not arguments.quiet:
+                logging.info('-- !! FETCH FAILED for key "%s"...' % key)
+              continue
+
+            if arguments.verbose and not arguments.quiet:
+              logging.info('-- Fetched object at key "%s" of type "%s"...' % (
+                key, model.Key(urlsafe=key).kind))
             _by_kind[model.Key(urlsafe=key).kind] += 1
-            source.get(model.Key(urlsafe=key).flatten(True), pipeline=pipeline)
-            _filtered_keys.append(key)
+            yield key, result
 
+      if not arguments.no_report and not arguments.quiet:
         logging.debug('Entity type report (%s entities total):' % _keys)
         for type in _by_kind:
           logging.debug('-- "%s": %s entities' % (type, str(_by_kind[type])))
-
-        logging.info('Continuing in 3 seconds...')
-        time.sleep(3)
-
-        _objects, _by_kind = {}, collections.defaultdict(lambda: 0)
-        for key, result in zip(_filtered_keys, pipeline.execute()):
-          if result is not None:
-            logging.info('-- Fetched object at key "%s" of type "%s"...' % (
-              key, model.Key(urlsafe=key).kind))
-            _objects[key] = result
-            _by_kind[model.Key(urlsafe=key).kind] += 1
-          else:
-            logging.info('-- !! FETCH FAILED for key "%s"...' % key)
-
-        logging.info('Total of %s successfully packed objects.' % len(_objects))
-      return _objects.iteritems()  # return generator of tupled (key, value) pairs
 
     @staticmethod
     def expand_entity(arguments, source, key, entity):
@@ -475,8 +495,9 @@ class FCM(cli.Tool):
 
       kind = model.Key(urlsafe=key).kind
 
-      logging.info('----- Transforming object at key "%s" of type "%s"...' % (
-        key, kind))
+      if arguments.verbose and not arguments.quiet:
+        logging.info('----- Transforming object at key "%s" of type "%s"...' % (
+          key, kind))
 
       try:  # try applying decompression
         decompressed = source.EngineConfig.compression.decompress(entity)
@@ -499,24 +520,29 @@ class FCM(cli.Tool):
 
       '''  '''
 
-      logging.info('Performing data migration...')
+      if not arguments.quiet:
+        logging.info('Performing data migration...')
 
       ## enter pipelined mode
       with target.channel('__meta__').pipeline() as pipeline:
         _written, _by_kind = 0, collections.defaultdict(lambda: 0)
 
         if arguments.binding:
-          logging.info('Loading bindings...')
+          if not arguments.quiet:
+            logging.info('Loading bindings...')
+            logging.info('Using bindings from package "%s"...' % arguments.binding)
+
           assert bindings.ModelBinding.resolve(arguments.binding)
-          logging.info('Using bindings from package "%s"...' % arguments.binding)
 
         def emit(entity):
 
           ''' Emit a key/entity for storage. '''
 
           wkey = FCM.Migrate.write_object(target, entity.key, entity, pipeline=pipeline)
-          logging.info('------ Emitted object of type "%s" at key "%s"...' % (
-            wkey.kind, wkey.urlsafe()))
+          
+          if arguments.debug or arguments.verbose:
+            logging.info('------ Emitted object of type "%s" at key "%s"...' % (
+              wkey.kind, wkey.urlsafe()))
 
           assert wkey.id, "found key without ID: %s" % wkey
 
@@ -536,9 +562,11 @@ class FCM(cli.Tool):
                 raise RuntimeError('No model binding found for type "%s",'
                                    ' but kind was explicitly specified for migration.' % kind)
               else:
-                logging.warning('!!! No model binding found for kind "%s". !!!' % kind)
+                if not arguments.quiet:
+                  logging.warning('!!! No model binding found for kind "%s". !!!' % kind)
 
-            logging.info('---> Using binding "%s"...' % binding.__name__)
+            if arguments.verbose:
+              logging.info('---> Using binding "%s"...' % binding.__name__)
             entity_generator = binding(logging=logging)(FCM.Migrate.expand_entity(arguments, source, key, entity))
 
             for result in entity_generator:
@@ -551,17 +579,20 @@ class FCM(cli.Tool):
               except (GeneratorExit, StopIteration):
                 pass
 
-        logging.info('Beginning write in 3 seconds...')
-        time.sleep(3)
+        if not arguments.quiet:
+          logging.info('Beginning write in 3 seconds...')
+          time.sleep(3)
 
         ## 3) write results
         pipeline.execute()  # go
 
-      logging.info('Written entity report (%s objects total):' % str(_written))
-      for kind in _by_kind:
-        logging.debug('-- "%s": %s entities' % (kind, str(_by_kind[kind])))
+      if not arguments.no_report and not arguments.quiet:
+        logging.info('Written entity report (%s objects total):' % str(_written))
+        for kind in _by_kind:
+          logging.debug('-- "%s": %s entities' % (kind, str(_by_kind[kind])))
 
-      logging.info('Migration complete.')
+      if not arguments.quiet:
+        logging.info('Migration complete.')
 
     def execute(arguments):
 
@@ -589,6 +620,8 @@ class FCM(cli.Tool):
 
       ## finally, migrate data
       if source and target: FCM.Migrate.apply_migration(arguments, source, target)
+
+      if not arguments.quiet: logging.info('~~~ Data operations finished. ~~~')
 
 
 if __name__ == '__main__': FCM(autorun=True)  # initialize and run :)
