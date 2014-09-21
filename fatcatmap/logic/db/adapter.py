@@ -57,15 +57,11 @@ class WarehouseAdapter(abstract.DirectedGraphAdapter):
         ''' Converts a ``Node`` key to a ``Hint`` key, given a ``spec`` where
             the ``Node``'s ``key`` is taken as the origin. '''
 
-        pass
-
       @staticmethod
       def to_native(key, type):
 
         ''' Converts a ``Node`` key to a ``Native`` key, given the target
             ``Native`` ``type``. '''
-
-        pass
 
       @staticmethod
       def to_descriptor(key, type, name=None):
@@ -73,14 +69,11 @@ class WarehouseAdapter(abstract.DirectedGraphAdapter):
         ''' Converts a ``Node`` key to a ``Descriptor`` key, given the target
             ``Descriptor`` ``type`` and an optional ``name`` specification. '''
 
-        pass
-
       @staticmethod
       def from_native(key):
 
         ''' Converts a ``Native`` key to a ``Node`` key. '''
 
-        pass
 
     class hint(object):
 
@@ -93,7 +86,6 @@ class WarehouseAdapter(abstract.DirectedGraphAdapter):
         ''' Converts a ``Hint`` key to a ``Node`` key, using the
             ``Hint``'s specified origin. '''
 
-        pass
 
     class edge(object):
 
@@ -105,23 +97,17 @@ class WarehouseAdapter(abstract.DirectedGraphAdapter):
 
         ''' Extracts member ``Node`` keys for a given ``Edge``. '''
 
-        pass
-
       @staticmethod
       def to_native(key, type):
 
         ''' Converts an ``Edge`` key to a ``Native`` key, given the target
             ``Native`` type. '''
 
-        pass
-
       @staticmethod
       def to_descriptor(key, type, name=None):
 
         ''' Converts an ``Edge`` key to a ``Descriptor`` key, given the target
             ``Descriptor`` ``type`` and an optional ``name`` specification. '''
-
-        pass
 
   translate = KeyTranslator()
 
@@ -131,21 +117,15 @@ class WarehouseAdapter(abstract.DirectedGraphAdapter):
     ''' Internal method that dispatches matching implementation ``hints`` on
         child classes. '''
 
-    pass
-
   def _native(self, subject, version=None, **kwargs):
 
     ''' Internal method that dispatches matching implementation ``native`` on
         child classes. '''
 
-    pass
-
   def _descriptors(self, subject, type=None, **kwargs):
 
     ''' Internal method that dispatches matching implementation ``descriptors``
         on child classes. '''
-
-    pass
 
   ## +=+=+ Abstract Methods +=+=+ ##
   @abc.abstractmethod
