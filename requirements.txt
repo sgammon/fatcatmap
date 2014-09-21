@@ -14,3 +14,4 @@ eventlet
 gevent
 git+https://github.com/sgammon/libcloud.git#egg=libcloud
 dogapi
+hiredis
