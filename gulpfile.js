@@ -274,7 +274,7 @@ task('closure:clean', function () {
 });
 
 task('closure', ['closure:min']);
-task('closure:all', ['closure:min', 'closure:debug', 'closure:pretty']);
+task('closure:all', ['closure:min', 'closure:debug', 'closure:pretty', 'closure:test']);
 
 // Build templates
 task('templates', function (cb) {
@@ -330,7 +330,10 @@ task('test:release', ['closure:test'], function (cb) {
 
 // Clean JS test output
 task('test:clean', function () {
-  return src(['.develop/coverage/js/*', '.develop/test-reports/js/*'])
+  return src([
+    '.develop/coverage/js/**/*',
+    '.develop/test-reports/js/**/*',
+  ])
     .pipe(rmrf());
 });
 
@@ -338,7 +341,7 @@ task('test:clean', function () {
 task('default', [
   'sass',
   'templates',
-  'closure:all'
+  'test'
 ]);
 
 // Develop task
@@ -361,8 +364,9 @@ task('release', [
 task('clean', [
   'style:clean',
   'closure:clean',
-  'templates:clean'
+  'templates:clean',
+  'test:clean'
 ], function () {
-  return src(outputs.sourcemaps)
+  return src(outputs.sourcemaps + '/*')
     .pipe(rmrf());
 });

@@ -150,6 +150,7 @@ services.router = /** @lends {ServiceContext.prototype.router} */ {
     var matched = false,
       params, param, findRoute, response;
 
+
     request = request || {};
     request.args = {};
     request.params = request.params || {};
@@ -174,9 +175,10 @@ services.router = /** @lends {ServiceContext.prototype.router} */ {
     if (response.matched) {
       response = response.response;
 
-      ROUTE_EVENTS.routed.forEach(function (fn) {
-        fn(path, request, response);
-      });
+      if (!(ROUTE_HISTORY.current && ROUTE_HISTORY.current.path === path))
+        ROUTE_EVENTS.routed.forEach(function (fn) {
+          fn(path, request, response);
+        });
     } else {
       response = {
         status: 404
@@ -263,6 +265,7 @@ services.router = /** @lends {ServiceContext.prototype.router} */ {
     }
 
     this.router.on('routed', function (path, request, response) {
+      // @TODO david: handle forward/backward via path compare?
       if (ROUTE_HISTORY.current)
         ROUTE_HISTORY.back.rpush(ROUTE_HISTORY.current);
 

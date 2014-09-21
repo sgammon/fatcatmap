@@ -24,8 +24,9 @@ Object.defineProperty(Function.prototype, 'async', {
    * @expose
    * @param {number=} delay
    * @return {number} Timer ID.
+   * @this {Function}
    */
-  value: /** @this {Function} */ function (delay) {
+  value: function (delay) {
     var fn = this;
 
     if (typeof delay !== 'number')
@@ -47,8 +48,9 @@ Object.defineProperty(Function.prototype, 'throttle', {
    * @expose
    * @param {number} interval
    * @return {function(...)}
+   * @this {Function}
    */
-  value: /** @this {Function} */ function (interval) {
+  value: function (interval) {
     var fn = this,
       timerID, args, that;
 
@@ -62,5 +64,42 @@ Object.defineProperty(Function.prototype, 'throttle', {
         }, interval);
       }
     };
+  }
+});
+
+/**
+ * @expose
+ * @param {number} delay
+ * @return {function(...)}
+ */
+Function.prototype.debounce;
+
+Object.defineProperty(Function.prototype, 'debounce', {
+  /**
+   * @expose
+   * @param {number} delay
+   * @param {boolean=} triggerFirst
+   * @return {function(...)}
+   * @this {Function}
+   */
+  value: function (delay, triggerFirst) {
+    var fn = this,
+      timerID, args, that;
+
+    return function () {
+      var cb = function () { fn.apply(that, args); };
+
+      args = arguments;
+      that = this;
+
+      if (!timerID) {
+        if (triggerFirst === true)
+          cb();
+      } else {
+        clearTimeout(timerID);
+      }
+
+      timerID = setTimeout(cb, delay);
+    }
   }
 });
