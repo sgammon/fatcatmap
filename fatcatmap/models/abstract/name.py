@@ -15,7 +15,7 @@ from .. import (Model,
 from .token import Token
 
 
-@describe(abstract=True, type=Token)
+@describe(abstract=True, type=Token, reindex=True)
 class Name(Model):
 
   ''' Describes the abstract concept of a string term (or set of

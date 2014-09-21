@@ -49,7 +49,8 @@ class WarehouseAdapter(abstract.DirectedGraphAdapter):
   _abstract_prefix = '__abstract__'
 
   # extra tokens
-  _types_prefix = 'types'
+  _type_token = 'type'
+  _types_token = 'types'
 
 
   class KeyTranslator(object):
@@ -242,11 +243,11 @@ class WarehouseAdapter(abstract.DirectedGraphAdapter):
           if supertype.__description__.reindex:
             
             # `__abstract__::Type` => target
-            abstract_fcm.append((cls._abstract_prefix, supertype.kind()))
+            abstract_fcm.append((cls._abstract_prefix, cls._types_token, supertype.kind()))
 
             if keyroot != key:
-              # `__abstract__::Type::<parent>` => target
-              abstract_fcm.append((cls._abstract_prefix, (supertype.kind(),), keyroot.urlsafe()))
+              # `__abstract__::Type::<root>` => target
+              abstract_fcm.append((cls._abstract_prefix, (cls._type_token, supertype.kind(),), keyroot.urlsafe()))
 
             for encoder, bundle in properties:
               prefix, kind, prop, value = bundle
@@ -279,6 +280,8 @@ class WarehouseAdapter(abstract.DirectedGraphAdapter):
               meta_fcm.append(extra)
             else:
               raise RuntimeError('Model `on_index` event provided invalid index bundle: "%s".' % extra)
+
+        import pdb; pdb.set_trace()
 
         return (encoded,
                 tuple(itertools.chain(meta, meta_fcm)),
