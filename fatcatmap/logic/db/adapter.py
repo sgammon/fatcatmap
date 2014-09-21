@@ -9,6 +9,8 @@
 # stdlib
 import abc
 import json
+import base64
+import itertools
 
 # redis
 try:
@@ -40,6 +42,15 @@ class WarehouseAdapter(abstract.DirectedGraphAdapter):
 
   ''' Specifies an abstract adapter that is capable of supporting proprietary,
       ``fatcatmap``-related driver functionality. '''
+
+  # extra prefixes
+  _topic_prefix = '__topic__'
+  _topics_prefix = '__topics__'
+  _abstract_prefix = '__abstract__'
+
+  # extra tokens
+  _types_prefix = 'types'
+
 
   class KeyTranslator(object):
 
@@ -112,20 +123,151 @@ class WarehouseAdapter(abstract.DirectedGraphAdapter):
   translate = KeyTranslator()
 
   ## +=+=+ Internal Methods +=+=+ ##
-  def _hints(self, subject, **kwargs):
+  @classmethod
+  def _hints(subject, **kwargs):
 
     ''' Internal method that dispatches matching implementation ``hints`` on
         child classes. '''
 
-  def _native(self, subject, version=None, **kwargs):
-
-    ''' Internal method that dispatches matching implementation ``native`` on
-        child classes. '''
-
-  def _descriptors(self, subject, type=None, **kwargs):
+  @classmethod
+  def _descriptors(cls, subject, type=None, **kwargs):
 
     ''' Internal method that dispatches matching implementation ``descriptors``
         on child classes. '''
+
+  ## +=+=+ Overridden Methods +=+=+ ##
+  def _put(self, entity, **kwargs):
+
+    ''' Override low-level storage logic for regular entities to add extra
+        validation/rich property functionality. In particular:
+
+          - expand created/modified fields
+          - send blobs to external storage
+          - descriptor storage (coming soon)
+
+        :param entity:
+        :param kwargs:
+        :raises:
+        :returns: '''
+
+    from fatcatmap import models
+    model = entity.__class__
+
+    with entity:
+      updates = {}  # updates to apply
+      for prop, val in ((model.__dict__[name], val) for name, val in entity):
+
+        # enforce property-level validators
+        if 'validate' in prop._options:
+          value = updates[prop.name] = prop['validate'](val)
+
+      # apply updates
+      if updates: entity.update(updates)
+
+    return super(WarehouseAdapter, self)._put(entity, **kwargs)
+
+  @classmethod
+  def generate_indexes(cls, key, entity=None, properties=None):
+
+    ''' Add extra functionality to indexing calls for certain FCM structures,
+        for instance:
+
+          - ask the entity for extra indexes
+          - apply indexes for topics in freebase
+          - apply 2nd-level graph indexes to key root
+          - index against abstract types bound to model class
+          - marking indexes to send search services
+
+        :param key:
+        :param entity:
+        :param properties:
+        :raises:
+        :returns: '''
+
+    from fatcatmap import models
+
+    supergen = super(WarehouseAdapter, cls).generate_indexes
+    meta_fcm, prop_fcm, graph_fcm, external = [], [], [], []
+
+    if key and properties is None:
+      # @TODO(sgammon): support cleaning proprietary indexes
+      return supergen(key)
+
+    # fcm-based extensions
+    if hasattr(entity, '__description__'):
+      model, description = cls.registry[entity.kind()], entity.__description__
+
+      # abstract type indexes
+
+      # roll-up hierarchy of type abstraction
+      def types(target):
+
+        ''' Walk the ``target`` :py:class:`models.BaseModel` abstract type tree,
+            iterating all the way up to the root. '''
+
+        desc = target.__description__
+
+        for supertype in (desc.type or tuple()):
+          for _inner_supertype in types(supertype):
+            yield _inner_supertype
+          yield supertype
+        else:
+          yield target
+
+      # prepare typestack for later, along with key root
+      typestack = (_t for _t in types(model))
+      keyroot = (_k for _k in key.ancestry).next()
+
+      # yield upwards to generate meta/graph/property indexes
+      encoded, meta, properties, graph = supergen(key, entity, properties)
+
+      # apply typestack
+      for supertype in typestack:
+        if supertype.__description__.reindex:
+          import pdb; pdb.set_trace()
+
+      # double-level edge/neighbor indexes
+
+      # apply freebase topic indexes
+      if description.topic:
+
+        # topics + topic indexes
+        meta_fcm.append((cls._topics_prefix, description.topic))
+        meta_fcm.append((cls._topic_prefix, base64.b64encode(description.topic)))
+
+      # ask entity for extra indexes
+      if hasattr(entity, 'on_index'):
+        for extra in entity.on_index(encoded, standard=(tuple(meta), tuple(properties), tuple(graph)),
+                                              proprietary=(tuple(meta_fcm), tuple(prop_fcm), tuple(graph_fcm)),
+                                              external=external):
+
+          if extra[0] == cls._index_prefix:
+            prop_fcm.append(extra)
+          elif extra[0] == cls._graph_prefix:
+            graph_fcm.append(extra)
+          elif extra[0] in frozenset((cls._key_prefix, cls._kind_prefix, cls._group_prefix)):
+            meta_fcm.append(extra)
+          else:
+            raise RuntimeError('Model `on_index` event provided invalid index bundle: "%s".' % extra)
+
+    return (encoded,
+            tuple(itertools.chain(meta, meta_fcm)),
+            tuple(itertools.chain(properties, prop_fcm)),
+            tuple(itertools.chain(graph, graph_fcm)))
+
+  @classmethod
+  def write_indexes(cls, writes, graph, **kwargs):
+
+    ''' Override index write functionality to commit external indexes upon
+        internal index commit.
+
+        :param writes:
+        :param graph:
+        :param kwargs:
+        :raises:
+        :returns: '''
+
+    pass
 
   ## +=+=+ Abstract Methods +=+=+ ##
   @abc.abstractmethod
