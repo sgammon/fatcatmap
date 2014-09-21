@@ -21,9 +21,10 @@ class IndustryName(Name):
 
 
 @describe(root=True)
-class CommercialIndustry(Vertex):
+class Industry(Vertex):
 
   '''  '''
 
   ## -- corporate details -- ##
   name = IndustryName, {'indexed': True, 'required': True, 'embedded': True}
+  #super = Key, {'indexed': True, 'default': None}  # super-industry

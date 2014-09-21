@@ -37,6 +37,10 @@ class BaseModel(model.Model):
 
   __adapter__, __description__ = "RedisWarehouse", None
 
+  # created/modified
+  created = datetime, {'indexed': True, 'default': lambda: datetime.now()}
+  modified = datetime, {'indexed': True, 'validate': lambda: datetime.now()}
+
 
 class BaseVertex(BaseModel, model.Vertex):
 
@@ -152,7 +156,8 @@ class Spec(object):
                                   ('__descriptor__', False),
                                   ('__keyname__', False),
                                   ('__graph_spec__', None),
-                                  ('__topic__', None)))
+                                  ('__topic__', None),
+                                  ('__reindex__', None)))
 
   def __init__(self,
                root=False,
@@ -161,7 +166,8 @@ class Spec(object):
                abstract=False,
                descriptor=False,
                keyname=False,
-               topic=None):
+               topic=None,
+               reindex=None):
 
     ''' Describe a catnip model class with extra, model-level schema. This
         includes any of the following:
@@ -204,7 +210,11 @@ class Spec(object):
           a primary key/entity name required during instantiation.
 
         :param topic: ``str`` topic matching this type from ``Freebase``, if any.
-          Takes the form of a URI-style path like ``/religion`` or ``/movies``. '''
+          Takes the form of a URI-style path like ``/religion`` or ``/movies``.
+
+        :param reindex: Flag indicating that this type should be indexed against
+          when saving indexes for child types. Defaults to ``False``, unless this
+          type is ``abstract``, in which case it defaults to ``True``. '''
 
     # initialize
     self.__root__, self.__parent__, self.__type__, self.__keyname__ = (
@@ -213,6 +223,7 @@ class Spec(object):
     # extended flags
     self.__abstract__, self.__descriptor__, self.__graph_spec__, self.__topic__ = (
       abstract, descriptor, None, topic)
+    self.__reindex__ = abstract if (reindex is None) else reindex
 
   def merge(self, target):
 
@@ -233,6 +244,8 @@ class Spec(object):
       other = getattr(base, '__description__', None)
       if other:
         for (prop, value), default in zip(other, self.__defaults__):
+          if prop == '__type__' and self.__type__:
+            continue
           if value != default and prop not in frozenset((
                                                     '__root__', '__parent__')):
             setattr(self, prop, value)
@@ -426,13 +439,16 @@ class Spec(object):
     return _apply(target) if target else _apply
 
   # -- property accessors -- #
-  root, type, parent, keyname, descriptor, abstract = (
+  root, type, parent, keyname, descriptor, abstract, graph, topic, reindex = (
     property(lambda self: self.__root__),
     property(lambda self: self.__type__),
     property(lambda self: self.__parent__),
     property(lambda self: self.__keyname__),
     property(lambda self: self.__descriptor__),
-    property(lambda self: self.__abstract__))
+    property(lambda self: self.__abstract__),
+    property(lambda self: self.__graph_spec__),
+    property(lambda self: self.__topic__),
+    property(lambda self: self.__reindex__))
 
 
 def report_structure():  # pragma: no cover

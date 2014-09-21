@@ -10,7 +10,8 @@
 from .. import (Vertex,
                 describe)
 
-# address models
+# concrete models
+from ..person import Person
 from ..address import Address
 
 # abstract models
@@ -26,6 +27,7 @@ class Corporation(Vertex):
 
   ## -- personal details -- ##
   name = OrganizationName, {'indexed': True, 'required': True, 'embedded': True}
+  #industries = 
 
 
 @describe(parent=Corporation, type=Place)
@@ -35,3 +37,19 @@ class CorporateOffice(Vertex):
 
   address = Address, {'embedded': True, 'indexed': True, 'required': True}
   headquarters = bool, {'indexed': True, 'default': False}
+
+
+@describe
+class Ownership(Person >> Corporation):
+
+  '''  '''
+
+  effective = float, {'indexed': True}
+
+
+#@describe(parent=Person, type=Role)
+#class CorporateOfficer(Role):
+
+#  '''  '''
+
+
