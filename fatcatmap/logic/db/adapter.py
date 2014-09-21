@@ -194,7 +194,7 @@ class WarehouseAdapter(abstract.DirectedGraphAdapter):
     from fatcatmap import models
 
     supergen = super(WarehouseAdapter, cls).generate_indexes
-    meta_fcm, prop_fcm, graph_fcm, external = [], [], [], []
+    external = []
 
     if key and properties is None:
       # @TODO(sgammon): support cleaning proprietary indexes
@@ -210,8 +210,8 @@ class WarehouseAdapter(abstract.DirectedGraphAdapter):
         encoded, meta, properties, graph = supergen(key, entity, properties)
 
         ## 2) abstract type indexes
-        sub_meta, prop_fcm = cls.generate_abstract_indexes(key, entity, properties)
-        meta_fcm += sub_meta
+        meta_fcm, prop_fcm, graph_fcm = (
+          cls.generate_abstract_indexes(key, entity, meta, properties, graph))
 
         # @TODO(sgammon): double-level edge/neighbor indexes
 
@@ -222,21 +222,6 @@ class WarehouseAdapter(abstract.DirectedGraphAdapter):
           meta_fcm.append((cls._topics_prefix, description.topic))
           meta_fcm.append((cls._topic_prefix, base64.b64encode(description.topic)))
 
-        # ask entity for extra indexes
-        if hasattr(entity, 'on_index'):
-          for extra in entity.on_index(encoded, standard=(tuple(meta), tuple(properties), tuple(graph)),
-                                                proprietary=(tuple(meta_fcm), tuple(prop_fcm), tuple(graph_fcm)),
-                                                external=external):
-
-            if extra[0] == cls._index_prefix:
-              prop_fcm.append(extra)
-            elif extra[0] == cls._graph_prefix:
-              graph_fcm.append(extra)
-            elif extra[0] in frozenset((cls._key_prefix, cls._kind_prefix, cls._group_prefix)):
-              meta_fcm.append(extra)
-            else:
-              raise RuntimeError('Model `on_index` event provided invalid index bundle: "%s".' % extra)
-
         return (encoded,
                 set(itertools.chain(meta, meta_fcm)),
                 set(prop_fcm),
@@ -245,7 +230,7 @@ class WarehouseAdapter(abstract.DirectedGraphAdapter):
     return supergen(key, entity, properties)
 
   @classmethod
-  def generate_abstract_indexes(cls, key, entity, properties):
+  def generate_abstract_indexes(cls, key, entity, meta, properties, graph):
 
     '''  '''
 
@@ -271,7 +256,7 @@ class WarehouseAdapter(abstract.DirectedGraphAdapter):
     typestack = (_t for _t in types(model))
     keyroot = (_k for _k in key.ancestry).next()
 
-    considered, abstract_fcm, prop_fcm = set(), [], []
+    considered, abstract_fcm, prop_fcm, graph_fcm, external = set(), [], [], [], []
     for supertype in typestack:
       
       # skip conditions
@@ -296,12 +281,17 @@ class WarehouseAdapter(abstract.DirectedGraphAdapter):
           # look for embedded model indexes
           subprop_name, deep_path = psplit[0], psplit[1:]
           subprop = entity.__class__[subprop_name]
+          deep_prop = '.'.join(deep_path)
 
           if isinstance(subprop._basetype, type) and (
             issubclass(subprop._basetype, model_api.Model)) and subprop.options.get('embedded'):
 
-            _subabs, _subprop = cls.generate_abstract_indexes(key, getattr(entity, subprop.name),
-                                [(encoder, (prefix, subprop._basetype.kind(), '.'.join(deep_path), value))])
+            # don't need created/modified for sub-entities
+            if deep_prop in frozenset(('modified', 'created')):
+              continue
+
+            encoded, _subabs, _subprop, _subgraph = cls.generate_indexes(key, getattr(entity, subprop.name), {
+              deep_prop: (subprop, value)})
             abstract_fcm += _subabs
             prop_fcm += _subprop
 
@@ -309,10 +299,25 @@ class WarehouseAdapter(abstract.DirectedGraphAdapter):
           if hasattr(supertype, prop) and supertype.__dict__[prop].indexed:
             # append supertype abstract index
             prop_fcm.append((encoder, (prefix, supertype.kind(), prop, value)))
-          else:
-            prop_fcm.append((encoder, bundle))
 
-    return abstract_fcm, prop_fcm
+      # ask entity for extra indexes
+      if hasattr(supertype, 'on_index'):
+        for extra in supertype.on_index(entity, standard=(tuple(meta), tuple(properties), tuple(graph)),
+                                              proprietary=(tuple(abstract_fcm), tuple(prop_fcm), tuple(graph_fcm)),
+                                              external=external):
+
+          encoder = cls._index_basetypes.get(extra[-1].__class__, cls.serializer.dumps)
+
+          if extra[0] == cls._index_prefix:
+            prop_fcm.append((encoder, extra))
+          elif extra[0] == cls._graph_prefix:
+            graph_fcm.append((encoder, extra))
+          elif extra[0] in frozenset((cls._key_prefix, cls._kind_prefix, cls._group_prefix)):
+            meta_fcm.append((encoder, extra))
+          else:
+            raise RuntimeError('Model `on_index` event provided invalid index bundle: "%s".' % extra)
+
+    return abstract_fcm, prop_fcm, graph_fcm
 
 
   @classmethod
