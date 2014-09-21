@@ -9,6 +9,7 @@
 from __future__ import print_function
 
 # stdlib
+import time as stdtime
 from collections import defaultdict
 from datetime import date, time, datetime
 
@@ -38,8 +39,8 @@ class BaseModel(model.Model):
   __adapter__, __description__ = "RedisWarehouse", None
 
   # created/modified
-  created = datetime, {'indexed': True, 'default': lambda: datetime.now()}
-  modified = datetime, {'indexed': True, 'validate': lambda: datetime.now()}
+  created = datetime, {'indexed': True, 'default': lambda _: datetime.now()}
+  modified = datetime, {'indexed': True, 'validate': lambda _: datetime.now()}
 
 
 class BaseVertex(BaseModel, model.Vertex):

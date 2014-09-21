@@ -53,7 +53,7 @@ except ImportError:
 
 
 ## Globals
-dataset = 'legacy-v2'
+dataset = config.config['fcm']['dataset']
 logging = debug.Logger(name='fcm')
 project_root = os.path.dirname(os.path.dirname(__file__))
 UWSGI_BASE_ARGS, UWSGI_PROD_ARGS = [
@@ -446,7 +446,7 @@ class FCM(cli.Tool):
           try:
             unicode(key)
             base64.b64decode(key)
-            model.Key(urlsafe=key)
+            model.Key.from_urlsafe(key)
           except: continue
 
           if arguments.limit and len(found_keys) >= arguments.limit:
@@ -463,11 +463,12 @@ class FCM(cli.Tool):
           _filtered_keys = []
           for key in found_keys:
 
-            k = model.Key(urlsafe=key).kind
+            k = model.Key.from_urlsafe(key).kind
             if (arguments.kinds and k in arguments.kinds.split(',')) or not arguments.kinds:
               _keys += 1
-              _by_kind[model.Key(urlsafe=key).kind] += 1
-              source.get(model.Key(urlsafe=key).flatten(True), pipeline=pipeline)
+              _by_kind[model.Key.from_urlsafe(key).kind] += 1
+              _joined, _flattened = model.Key.from_urlsafe(key).flatten(True)
+              source.get((source.encode_key(_joined, _flattened), _flattened), pipeline=pipeline)
               _filtered_keys.append(key)
 
           _objects, _by_kind = {}, collections.defaultdict(lambda: 0)
@@ -479,8 +480,8 @@ class FCM(cli.Tool):
 
             if arguments.verbose and not arguments.quiet:
               logging.info('-- Fetched object at key "%s" of type "%s"...' % (
-                key, model.Key(urlsafe=key).kind))
-            _by_kind[model.Key(urlsafe=key).kind] += 1
+                key, model.Key.from_urlsafe(key).kind))
+            _by_kind[model.Key.from_urlsafe(key).kind] += 1
             yield key, result
 
       if not arguments.no_report and not arguments.quiet:
@@ -493,7 +494,7 @@ class FCM(cli.Tool):
 
       '''  '''
 
-      kind = model.Key(urlsafe=key).kind
+      kind = model.Key.from_urlsafe(key).kind
 
       if arguments.verbose and not arguments.quiet:
         logging.info('----- Transforming object at key "%s" of type "%s"...' % (
@@ -550,7 +551,7 @@ class FCM(cli.Tool):
 
         ## 1) read sources
         for key, entity in FCM.Migrate.read_sources(arguments, source):
-          kind = model.Key(urlsafe=key).kind
+          kind = model.Key.from_urlsafe(key).kind
 
           ## 2) apply bindings
           binding = None

@@ -145,10 +145,10 @@ class WarehouseAdapter(abstract.DirectedGraphAdapter):
           - send blobs to external storage
           - descriptor storage (coming soon)
 
-        :param entity:
-        :param kwargs:
-        :raises:
-        :returns: '''
+        :param entity: Entity to store using this adapter.
+        :param kwargs: Keyword arguments to pass to underlying implementations.
+        
+        :returns: Result of internal adapter ``_put``. '''
 
     from fatcatmap import models
     model = entity.__class__
@@ -159,7 +159,7 @@ class WarehouseAdapter(abstract.DirectedGraphAdapter):
 
         # enforce property-level validators
         if 'validate' in prop._options:
-          value = updates[prop.name] = prop['validate'](val)
+          value = updates[prop.name] = prop._options['validate'](val)
 
       # apply updates
       if updates: entity.update(updates)
@@ -178,11 +178,17 @@ class WarehouseAdapter(abstract.DirectedGraphAdapter):
           - index against abstract types bound to model class
           - marking indexes to send search services
 
-        :param key:
-        :param entity:
-        :param properties:
-        :raises:
-        :returns: '''
+        :param key: :py:class:`canteen.model.Key` for the entity we're generating
+          indexes for.
+
+        :param entity: Full :py:class:`canteen.model.Model` instance that we are
+          generating indexes for.
+
+        :param properties: Properties selected for indexing storage by the builtin
+          ``_pluck_indexes`` method. ``dict``.
+
+        :returns: Result of internal adapter ``generate_indexes``, appended with
+          proprietary catnip indexes. '''
 
     from fatcatmap import models
 
@@ -193,67 +199,93 @@ class WarehouseAdapter(abstract.DirectedGraphAdapter):
       # @TODO(sgammon): support cleaning proprietary indexes
       return supergen(key)
 
-    # fcm-based extensions
-    if hasattr(entity, '__description__'):
-      model, description = cls.registry[entity.kind()], entity.__description__
+    if key:
 
-      # abstract type indexes
+      # fcm-based extensions
+      if hasattr(entity, '__description__'):
+        model, description = cls.registry[entity.kind()], entity.__description__
 
-      # roll-up hierarchy of type abstraction
-      def types(target):
+        # 1) abstract type indexes
 
-        ''' Walk the ``target`` :py:class:`models.BaseModel` abstract type tree,
-            iterating all the way up to the root. '''
+        ## roll-up hierarchy of type abstraction
+        def types(target):
 
-        desc = target.__description__
+          ''' Walk the ``target`` :py:class:`models.BaseModel` abstract type tree,
+              iterating all the way up to the root. '''
 
-        for supertype in (desc.type or tuple()):
-          for _inner_supertype in types(supertype):
-            yield _inner_supertype
-          yield supertype
-        else:
-          yield target
+          desc = target.__description__
 
-      # prepare typestack for later, along with key root
-      typestack = (_t for _t in types(model))
-      keyroot = (_k for _k in key.ancestry).next()
-
-      # yield upwards to generate meta/graph/property indexes
-      encoded, meta, properties, graph = supergen(key, entity, properties)
-
-      # apply typestack
-      for supertype in typestack:
-        if supertype.__description__.reindex:
-          import pdb; pdb.set_trace()
-
-      # double-level edge/neighbor indexes
-
-      # apply freebase topic indexes
-      if description.topic:
-
-        # topics + topic indexes
-        meta_fcm.append((cls._topics_prefix, description.topic))
-        meta_fcm.append((cls._topic_prefix, base64.b64encode(description.topic)))
-
-      # ask entity for extra indexes
-      if hasattr(entity, 'on_index'):
-        for extra in entity.on_index(encoded, standard=(tuple(meta), tuple(properties), tuple(graph)),
-                                              proprietary=(tuple(meta_fcm), tuple(prop_fcm), tuple(graph_fcm)),
-                                              external=external):
-
-          if extra[0] == cls._index_prefix:
-            prop_fcm.append(extra)
-          elif extra[0] == cls._graph_prefix:
-            graph_fcm.append(extra)
-          elif extra[0] in frozenset((cls._key_prefix, cls._kind_prefix, cls._group_prefix)):
-            meta_fcm.append(extra)
+          for supertype in (desc.type or tuple()):
+            for _inner_supertype in types(supertype):
+              yield _inner_supertype
+            yield supertype
           else:
-            raise RuntimeError('Model `on_index` event provided invalid index bundle: "%s".' % extra)
+            yield target
 
-    return (encoded,
-            tuple(itertools.chain(meta, meta_fcm)),
-            tuple(itertools.chain(properties, prop_fcm)),
-            tuple(itertools.chain(graph, graph_fcm)))
+        ## prepare typestack for later, along with key root
+        typestack = (_t for _t in types(model))
+        keyroot = (_k for _k in key.ancestry).next()
+
+        ## 2) yield upwards to generate meta/graph/property indexes
+        encoded, meta, properties, graph = supergen(key, entity, properties)
+
+        ## 3) apply typestack
+        considered, abstract_fcm = set(), []
+        for supertype in typestack:
+          
+          # skip conditions
+          if supertype is model: continue
+          if supertype in considered: continue
+          considered.add(supertype)
+
+          # if re-indexing is enabled, append indexes
+          if supertype.__description__.reindex:
+            
+            # `__abstract__::Type` => target
+            abstract_fcm.append((cls._abstract_prefix, supertype.kind()))
+
+            if keyroot != key:
+              # `__abstract__::Type::<parent>` => target
+              abstract_fcm.append((cls._abstract_prefix, (supertype.kind(),), keyroot.urlsafe()))
+
+            for encoder, bundle in properties:
+              prefix, kind, prop, value = bundle
+
+              # append supertype abstract index
+              prop_fcm.append((encoder, (prefix, supertype.kind(), prop, value)))
+
+        meta_fcm += abstract_fcm
+
+        # @TODO(sgammon): double-level edge/neighbor indexes
+
+        # apply freebase topic indexes
+        if description.topic:
+
+          # topics + topic indexes
+          meta_fcm.append((cls._topics_prefix, description.topic))
+          meta_fcm.append((cls._topic_prefix, base64.b64encode(description.topic)))
+
+        # ask entity for extra indexes
+        if hasattr(entity, 'on_index'):
+          for extra in entity.on_index(encoded, standard=(tuple(meta), tuple(properties), tuple(graph)),
+                                                proprietary=(tuple(meta_fcm), tuple(prop_fcm), tuple(graph_fcm)),
+                                                external=external):
+
+            if extra[0] == cls._index_prefix:
+              prop_fcm.append(extra)
+            elif extra[0] == cls._graph_prefix:
+              graph_fcm.append(extra)
+            elif extra[0] in frozenset((cls._key_prefix, cls._kind_prefix, cls._group_prefix)):
+              meta_fcm.append(extra)
+            else:
+              raise RuntimeError('Model `on_index` event provided invalid index bundle: "%s".' % extra)
+
+        return (encoded,
+                tuple(itertools.chain(meta, meta_fcm)),
+                tuple(itertools.chain(properties, prop_fcm)),
+                tuple(itertools.chain(graph, graph_fcm)))
+
+    return supergen(key, entity, properties)
 
   @classmethod
   def write_indexes(cls, writes, graph, **kwargs):
@@ -261,13 +293,16 @@ class WarehouseAdapter(abstract.DirectedGraphAdapter):
     ''' Override index write functionality to commit external indexes upon
         internal index commit.
 
-        :param writes:
-        :param graph:
-        :param kwargs:
-        :raises:
-        :returns: '''
+        :param writes: Indexes to write the target key to, as a tuple of the items
+          ``(meta, properties)``.
 
-    pass
+        :param graph: Writes to apply to graph indexes.
+
+        :param kwargs: Keyword arguments to pass to the underlying implementation.
+
+        :returns: Result of internal call to ``write_indexes``. '''
+
+    return super(WarehouseAdapter, cls).write_indexes(writes, graph, **kwargs)
 
   ## +=+=+ Abstract Methods +=+=+ ##
   @abc.abstractmethod

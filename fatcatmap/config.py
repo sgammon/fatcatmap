@@ -116,6 +116,8 @@ config = cfg.Config(app={
     'tools': {
       'enabled': True},
 
+    'dataset': 'legacy-v3'
+
   },
 
   #### ==== CANTEEN CONFIGURATION ==== ####
