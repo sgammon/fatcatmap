@@ -65,11 +65,6 @@ var MessageCallbackMap;
 var PipelinedCallback;
 
 /**
- * @type {?boolean}
- */
-PipelinedCallback.__pipe__;
-
-/**
  * Represents a chainable step in an execution flow.
  * @typedef {Object.<{
  *    then: (function(this: Continuation, PipelinedCallback): Continuation)

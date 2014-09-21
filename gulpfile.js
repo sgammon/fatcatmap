@@ -247,7 +247,7 @@ task('closure:test', function (cb) {
         .on('finish', function () {
           setTimeout(function () {
             cb()
-          }, 5000);
+          }, 7000);
         });
     };
 
@@ -324,9 +324,7 @@ task('test', ['test:release']);
 
 // Run JS tests in release mode
 task('test:release', ['closure:test'], function (cb) {
-  setTimeout(function () {
-    karma.start(merge({}, config.karma));
-  }, 1000);
+  karma.start(merge({}, config.karma));
   cb();
 });
 

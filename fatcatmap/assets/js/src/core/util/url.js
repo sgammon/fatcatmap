@@ -50,8 +50,13 @@ util.url = {
    */
   parseParams: function (url) {
     var params = {},
-      tuples = url.split('?').pop().split('&'),
+      tuples = url.split('?'),
       tuple, v;
+
+    if (tuples.length === 1 && tuples[0].indexOf('=') === -1)
+      return params;
+
+    tuples = tuples.pop().split('&')
 
     for (var i = 0; i < tuples.length; i++) {
       tuple = tuples[i].split('=');
@@ -98,8 +103,12 @@ util.url = {
     chunks = chunks.shift().split('/');
     host = chunks[0];
 
-    if (host.charAt(0) === '/') {
-      parsed.hostname = parsed.port = '';
+    if (host.charAt(0) === '/' || host.indexOf('.') === -1) {
+      parsed.hostname = '';
+      parsed.port = parsed.protocol === 'http' ?
+        80 : parsed.protocol === 'https' ? 443 : '';
+      if (host.indexOf('.') === -1)
+        chunks.shift();
     } else {
       host = chunks.shift().split(':');
       parsed.hostname = host[0].split('?').shift();

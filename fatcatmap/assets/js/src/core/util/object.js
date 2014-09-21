@@ -46,7 +46,11 @@ util.object = {
     var keys = key.split('.');
     while (keys.length > 1) {
       key = keys.shift();
-      obj = obj[key] || (obj[key] = {}, obj[key]);
+
+      if (!obj[key])
+        obj[key] = {};
+
+      obj = obj[key];
     }
     obj[keys.shift()] = data;
   }

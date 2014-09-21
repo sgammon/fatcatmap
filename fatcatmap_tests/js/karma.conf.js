@@ -35,7 +35,8 @@ module.exports = {
   },
 
   coverageReporter: {
-    type: 'cobertura',
+    type: 'text',
+    // type: 'cobertura',
     dir: REPORT_BASE + 'coverage/js/'
   },
 
