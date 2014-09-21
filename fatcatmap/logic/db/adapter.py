@@ -206,56 +206,12 @@ class WarehouseAdapter(abstract.DirectedGraphAdapter):
       if hasattr(entity, '__description__'):
         model, description = cls.registry[entity.kind()], entity.__description__
 
-        # 1) abstract type indexes
-
-        ## roll-up hierarchy of type abstraction
-        def types(target):
-
-          ''' Walk the ``target`` :py:class:`models.BaseModel` abstract type tree,
-              iterating all the way up to the root. '''
-
-          desc = target.__description__
-
-          for supertype in (desc.type or tuple()):
-            for _inner_supertype in types(supertype):
-              yield _inner_supertype
-            yield supertype
-          else:
-            yield target
-
-        ## prepare typestack for later, along with key root
-        typestack = (_t for _t in types(model))
-        keyroot = (_k for _k in key.ancestry).next()
-
-        ## 2) yield upwards to generate meta/graph/property indexes
+        ## 1) yield upwards to generate meta/graph/property indexes
         encoded, meta, properties, graph = supergen(key, entity, properties)
 
-        ## 3) apply typestack
-        considered, abstract_fcm = set(), []
-        for supertype in typestack:
-          
-          # skip conditions
-          if supertype is model: continue
-          if supertype in considered: continue
-          considered.add(supertype)
-
-          # if re-indexing is enabled, append indexes
-          if supertype.__description__.reindex:
-            
-            # `__abstract__::Type` => target
-            abstract_fcm.append((cls._abstract_prefix, cls._types_token, supertype.kind()))
-
-            if keyroot != key:
-              # `__abstract__::Type::<root>` => target
-              abstract_fcm.append((cls._abstract_prefix, (cls._type_token, supertype.kind(),), keyroot.urlsafe()))
-
-            for encoder, bundle in properties:
-              prefix, kind, prop, value = bundle
-
-              # append supertype abstract index
-              prop_fcm.append((encoder, (prefix, supertype.kind(), prop, value)))
-
-        meta_fcm += abstract_fcm
+        ## 2) abstract type indexes
+        sub_meta, prop_fcm = cls.generate_abstract_indexes(key, entity, properties)
+        meta_fcm += sub_meta
 
         # @TODO(sgammon): double-level edge/neighbor indexes
 
@@ -281,14 +237,83 @@ class WarehouseAdapter(abstract.DirectedGraphAdapter):
             else:
               raise RuntimeError('Model `on_index` event provided invalid index bundle: "%s".' % extra)
 
-        import pdb; pdb.set_trace()
-
         return (encoded,
-                tuple(itertools.chain(meta, meta_fcm)),
-                tuple(itertools.chain(properties, prop_fcm)),
-                tuple(itertools.chain(graph, graph_fcm)))
+                set(itertools.chain(meta, meta_fcm)),
+                set(prop_fcm),
+                set(itertools.chain(graph, graph_fcm)))
 
     return supergen(key, entity, properties)
+
+  @classmethod
+  def generate_abstract_indexes(cls, key, entity, properties):
+
+    '''  '''
+
+    from canteen import model as model_api
+    model, description = entity.__class__, entity.__description__
+
+    ## roll-up hierarchy of type abstraction
+    def types(target):
+
+      ''' Walk the ``target`` :py:class:`models.BaseModel` abstract type tree,
+          iterating all the way up to the root. '''
+
+      desc = target.__description__
+
+      for supertype in (desc.type or tuple()):
+        for _inner_supertype in types(supertype):
+          yield _inner_supertype
+        yield supertype
+      else:
+        yield target
+
+    ## prepare typestack for later, along with key root
+    typestack = (_t for _t in types(model))
+    keyroot = (_k for _k in key.ancestry).next()
+
+    considered, abstract_fcm, prop_fcm = set(), [], []
+    for supertype in typestack:
+      
+      # skip conditions
+      if supertype in considered: continue
+      considered.add(supertype)
+
+      # if re-indexing is enabled, append indexes
+      if supertype.__description__.reindex:
+        
+        # `__abstract__::Type` => target
+        abstract_fcm.append((cls._abstract_prefix, (cls._types_token,), supertype.kind()))
+
+        if keyroot != key:
+          # `__abstract__::Type::<root>` => target
+          abstract_fcm.append((cls._abstract_prefix, (cls._type_token, supertype.kind(),), keyroot.urlsafe()))
+
+      for encoder, bundle in properties:
+        prefix, kind, prop, value = bundle
+
+        psplit = prop.split('.')
+        if len(psplit) > 1:
+          # look for embedded model indexes
+          subprop_name, deep_path = psplit[0], psplit[1:]
+          subprop = entity.__class__[subprop_name]
+
+          if isinstance(subprop._basetype, type) and (
+            issubclass(subprop._basetype, model_api.Model)) and subprop.options.get('embedded'):
+
+            _subabs, _subprop = cls.generate_abstract_indexes(key, getattr(entity, subprop.name),
+                                [(encoder, (prefix, subprop._basetype.kind(), '.'.join(deep_path), value))])
+            abstract_fcm += _subabs
+            prop_fcm += _subprop
+
+        else:
+          if hasattr(supertype, prop) and supertype.__dict__[prop].indexed:
+            # append supertype abstract index
+            prop_fcm.append((encoder, (prefix, supertype.kind(), prop, value)))
+          else:
+            prop_fcm.append((encoder, bundle))
+
+    return abstract_fcm, prop_fcm
+
 
   @classmethod
   def write_indexes(cls, writes, graph, **kwargs):
