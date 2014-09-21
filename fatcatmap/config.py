@@ -37,6 +37,7 @@ class Components:
   PROXY = 'haproxy'
   WEBSERVER = 'httpd'
   DATABASE = 'redis'
+  SEARCH = 'elasticsearch'
 
 
 class DiskType:
@@ -85,8 +86,7 @@ config = cfg.Config(app={
 
     'templates': {
       'source': os.path.join(app, 'templates/source'),
-      'compiled': 'fatcatmap.templates.compiled'
-    }
+      'compiled': 'fatcatmap.templates.compiled'}
 
   },
 
@@ -235,7 +235,7 @@ config = cfg.Config(app={
 
 }, infrastructure={
 
-  'groups': freeze({'lb', 'app', 'master', 'db'}),
+  'groups': freeze({'lb', 'app', 'master', 'db', 'es'}),
   'environments': freeze({'production', 'staging', 'sandbox'}),
 
   'gce': {
@@ -286,7 +286,7 @@ config = cfg.Config(app={
     'dev': {  # development machines - full access, bleeding edge
 
       'size': 'n1-standard-1-1x-ssd',
-      'image': 'backports-debian-7-wheezy-v20140814',
+      'image': 'backports-debian-7-wheezy-v20140904',
       'ip_forwarding': True,
       'tags': {'internal', 'dev', 'sandbox'},
 
@@ -374,7 +374,29 @@ config = cfg.Config(app={
       'disk': {
         'size': 40,
         'type': DiskType.MAGNETIC,
-        'snap': DEFAULT_BOOT_DISK}}
+        'snap': DEFAULT_BOOT_DISK}},
+
+    'es': {
+
+      'size': 'n1-standard-2',
+      'image': 'backports-debian-7-wheezy-v20140904',
+      'ip_forwarding': False,
+      'tags': ['db', 'es', 'search'],
+
+      'scopes': freeze({
+        "userinfo.email",
+        "devstorage.read_write",
+        "taskqueue"}),
+
+      'services': [Components.SEARCH,
+                   Components.DATABASE],
+
+      'disk': {
+        'size': 40,
+        'type': DiskType.MAGNETIC,
+        'snap': DEFAULT_BOOT_DISK}
+
+    }
 
   }
 

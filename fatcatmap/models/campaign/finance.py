@@ -33,7 +33,8 @@ from canteen.util.struct import BidirectionalEnum
 @describe(parent=(Person, Organization), type=Role)
 class Contributor(Vertex):
 
-  ''' Represents a Contributor from the :py:mod:`fatcatmap` graph. '''
+  ''' Represents a financial support role that a ``Person`` or
+      ``Corporation`` can assume in a campaign politics context. '''
 
   ## -- naming / categorization -- ##
   fec_category = str, {'indexed': True}
@@ -43,7 +44,7 @@ class Contributor(Vertex):
 class CampaignContribution(Contributor >> Campaign):
 
   ''' Describes a monetary contribution made from a ``Contributor`` to a
-      ``Campaign``. '''
+      candidate's ``Campaign``. '''
 
   class ContributionType(BidirectionalEnum):
 
@@ -71,7 +72,8 @@ class CampaignContribution(Contributor >> Campaign):
 @describe(type=Stat, descriptor=True, keyname=True)
 class ContributorStats(CategoricalStatValue):
 
-  '''  '''
+  ''' Describes campaign finance-related statistics for a
+      ``Contributor`` record. Attached as a descriptor object. '''
 
   # keyname: transaction type
 
@@ -79,6 +81,7 @@ class ContributorStats(CategoricalStatValue):
 @describe(type=Stat, descriptor=True, keyname=True)
 class RecipientStats(CategoricalStatValue):
 
-  '''  '''
+  ''' Describes campaign finance-related statistics for a ``Campaign``
+      record. Attached as a descriptor object. '''
 
   # keyname: transaction type
