@@ -43,8 +43,8 @@ class LegacyNode(ModelBinding):
 
     ''' Convert legacy data into the target entity.
 
-      :param data: ``dict`` of data to convert.
-      :returns: Instance of local target to inflate. '''
+        :param data: ``dict`` of data to convert.
+        :returns: Instance of local target to inflate. '''
 
     self.logging.info('----> Converting `Node`...')
     self.logging.info(str(data))
@@ -63,8 +63,8 @@ class LegacyEdge(ModelBinding):
 
     ''' Convert legacy data into the target entity.
 
-      :param data: ``dict`` of data to convert.
-      :returns: Instance of local target to inflate. '''
+        :param data: ``dict`` of data to convert.
+        :returns: Instance of local target to inflate. '''
 
     self.logging.info('----> Converting `Edge`...')
     self.logging.info(str(data))
@@ -83,8 +83,8 @@ class LegacyMember(ModelBinding):
 
     ''' Convert legacy data into the target entity.
 
-      :param data: ``dict`` of data to convert.
-      :returns: Instance of local target to inflate. '''
+        :param data: ``dict`` of data to convert.
+        :returns: Instance of local target to inflate. '''
 
     # grab committee
     committee = self.get_by_ext(data['committee'], provider='congress')
@@ -120,8 +120,8 @@ class LegacyCommittee(ModelBinding):
 
     ''' Convert legacy data into the target entity.
 
-      :param data: ``dict`` of data to convert.
-      :returns: Instance of local target to inflate. '''
+        :param data: ``dict`` of data to convert.
+        :returns: Instance of local target to inflate. '''
 
     # utilities
     clean = lambda s: s.strip()
@@ -185,8 +185,8 @@ class LegacyContributor(ModelBinding):
 
     ''' Convert legacy data into the target entity.
 
-      :param data: ``dict`` of data to convert.
-      :returns: Instance of local target to inflate. '''
+        :param data: ``dict`` of data to convert.
+        :returns: Instance of local target to inflate. '''
 
     self.logging.info('----> Converting `Contributor`...')
     self.logging.info(str(data))
@@ -206,8 +206,8 @@ class LegacyContribution(ModelBinding):
 
     ''' Convert legacy data into the target entity.
 
-      :param data: ``dict`` of data to convert.
-      :returns: Instance of local target to inflate. '''
+        :param data: ``dict`` of data to convert.
+        :returns: Instance of local target to inflate. '''
 
     self.logging.info('----> Converting `Contribution`...')
     self.logging.info(str(data))
@@ -227,8 +227,8 @@ class LegacyRecipient(ModelBinding):
 
     ''' Convert legacy data into the target entity.
 
-      :param data: ``dict`` of data to convert.
-      :returns: Instance of local target to inflate. '''
+        :param data: ``dict`` of data to convert.
+        :returns: Instance of local target to inflate. '''
 
     self.logging.info('----> Converting `Recipient`...')
     self.logging.info(str(data))
