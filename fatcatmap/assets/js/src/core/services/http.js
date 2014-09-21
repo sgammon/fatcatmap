@@ -10,6 +10,7 @@
  */
 
 goog.require('util.url');
+goog.require('async.future');
 goog.require('services');
 
 goog.provide('services.http');
@@ -19,10 +20,11 @@ var _prepareRequest, _dispatchRequest, _parseResponse;
 /**
  * @param {string} method
  * @param {Request} request
- * @param {CallbackMap=} handlers
+ * @param {Future} response
+ * @param {boolean} async
  * @return {XMLHttpRequest}
  */
-_prepareRequest = function (method, request, handlers) {
+_prepareRequest = function (method, request, response, async) {
   var xhr = new XMLHttpRequest(),
     url, headers;
 
@@ -32,7 +34,7 @@ _prepareRequest = function (method, request, handlers) {
     url = request.url;
   }
 
-  xhr.open(method.toUpperCase(), url, !!handlers);
+  xhr.open(method.toUpperCase(), url, async);
 
   if (request.headers) {
     headers = request.headers;
@@ -44,26 +46,23 @@ _prepareRequest = function (method, request, handlers) {
 
   xhr.data = request.data;
 
-  if (handlers) {
-    xhr.onerror = handlers.error;
-    xhr.onloadend = function () {
-      xhr.responseJSON = _parseResponse(xhr);
-      handlers.success(xhr.responseJSON);
-    };
-  } else {
-    xhr.onerror = function (e) {
-      /**
-       * @expose
-       */
-      xhr.error = e;
-    };
-    xhr.onloadend = function () {
-      /**
-       * @expose
-       */
-      xhr.responseJSON = _parseResponse(xhr);
-    };
-  }
+  xhr.onerror = function (e) {
+    /**
+     * @expose
+     */
+    xhr.error = e;
+
+    response.fulfill(false, e);
+  };
+
+  xhr.onloadend = function () {
+    /**
+     * @expose
+     */
+    xhr.responseJSON = _parseResponse(xhr);
+
+    response.fulfill(xhr.responseJSON);
+  };
 
   return xhr;
 };
@@ -71,18 +70,27 @@ _prepareRequest = function (method, request, handlers) {
 /**
  * @param {string} method
  * @param {Request} request
- * @param {CallbackMap=} handlers
- * @return {XMLHttpRequest}
+ * @param {PipelinedCallback} handler
+ * @return {Future|Response}
  */
-_dispatchRequest = function (method, request, handlers) {
+_dispatchRequest = function (method, request, handler) {
   /*jshint eqnull:true */
-  var data = typeof request.data === 'object' ? JSON.stringify(request.data) :
-    typeof request.data === 'string' ? request.data :
-      request.data == null ? null : '' + request.data,
+  var response = new Future(),
+    data = typeof request.data === 'object' ? JSON.stringify(request.data) :
+      typeof request.data === 'string' ? request.data :
+      request.data == null ? null : '' + request.data;
 
-    req = _prepareRequest(method, request, handlers);
-  req.send(data);
-  return req;
+  request = _prepareRequest(method, request, response, !!handler);
+
+  if (!handler) {
+    request.send(data);
+    response = request.responseJSON;
+  } else {
+    request.send.bind(request, data).async()
+    response = handler.pipe(response);
+  }
+
+  return response;
 };
 
 /**
@@ -119,64 +127,64 @@ _parseResponse = function (response) {
 services.http = /** @lends {ServiceContext.prototype.http} */{
   /**
    * @param {Request} request
-   * @param {CallbackMap=} handlers If not passed, executes synchronously.
-   * @return {XMLHttpRequest|Response} XHR, or response if no handlers were passed. 
+   * @param {PipelinedCallback=} handler If not passed, executes synchronously.
+   * @return {Future|Response} Future response, or response if no handler was passed. 
    */
-  get: function (request, handlers) {
-    return _dispatchRequest('GET', request, handlers);
+  get: function (request, handler) {
+    return _dispatchRequest('GET', request, handler);
   },
 
   /**
    * @param {Request} request
-   * @param {CallbackMap=} handlers If not passed, executes synchronously.
-   * @return {XMLHttpRequest|Response} XHR, or response if no handlers were passed. 
+   * @param {PipelinedCallback=} handler If not passed, executes synchronously.
+   * @return {Future|Response} Future response, or response if no handler was passed. 
    */
-  delete: function (request, handlers) {
-    return _dispatchRequest('DELETE', request, handlers);
+  delete: function (request, handler) {
+    return _dispatchRequest('DELETE', request, handler);
   },
 
   /**
    * @param {Request} request
-   * @param {CallbackMap=} handlers If not passed, executes synchronously.
-   * @return {XMLHttpRequest|Response} XHR, or response if no handlers were passed.
+   * @param {PipelinedCallback=} handler If not passed, executes synchronously.
+   * @return {Future|Response} Future response, or response if no handler was passed.
    */
-  head: function (request, handlers) {
-    return _dispatchRequest('HEAD', request, handlers);
+  head: function (request, handler) {
+    return _dispatchRequest('HEAD', request, handler);
   },
 
   /**
    * @param {Request} request
-   * @param {CallbackMap=} handlers If not passed, executes synchronously.
-   * @return {XMLHttpRequest|Response} XHR, or response if no handlers were passed.
+   * @param {PipelinedCallback=} handler If not passed, executes synchronously.
+   * @return {Future|Response} Future response, or response if no handler was passed.
    */
-  post: function (request, handlers) {
-    return _dispatchRequest('POST', request, handlers);
+  post: function (request, handler) {
+    return _dispatchRequest('POST', request, handler);
   },
 
   /**
    * @param {Request} request
-   * @param {CallbackMap=} handlers If not passed, executes synchronously.
-   * @return {XMLHttpRequest|Response} XHR, or response if no handlers were passed.
+   * @param {PipelinedCallback=} handler If not passed, executes synchronously.
+   * @return {Future|Response} Future response, or response if no handler was passed.
    */
-  put: function (request, handlers) {
-    return _dispatchRequest('PUT', request, handlers);
+  put: function (request, handler) {
+    return _dispatchRequest('PUT', request, handler);
   },
 
   /**
    * @param {Request} request
-   * @param {CallbackMap=} handlers If not passed, executes synchronously.
-   * @return {XMLHttpRequest|Response} XHR, or response if no handlers were passed.
+   * @param {PipelinedCallback=} handler If not passed, executes synchronously.
+   * @return {Future|Response} Future response, or response if no handler was passed.
    */
-  patch: function (request, handlers) {
-    return _dispatchRequest('PATCH', request, handlers);
+  patch: function (request, handler) {
+    return _dispatchRequest('PATCH', request, handler);
   },
 
   /**
    * @param {Request} request
-   * @param {CallbackMap=} handlers If not passed, executes synchronously.
-   * @return {XMLHttpRequest|Response} XHR, or response if no handlers were passed.
+   * @param {PipelinedCallback=} handler If not passed, executes synchronously.
+   * @return {Future|Response} Future response, or response if no handler was passed.
    */
-  options: function (request, handlers) {
-    return _dispatchRequest('OPTIONS', request, handlers);
+  options: function (request, handler) {
+    return _dispatchRequest('OPTIONS', request, handler);
   }
 }.service('http');

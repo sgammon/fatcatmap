@@ -37,11 +37,12 @@ RPCAPI = function (name, methods, config) {
 
     /**
      * @param {Request} request
-     * @param {CallbackMap=} handlers
+     * @param {PipelinedCallback=} handler
+     * @return {Future|Response}
      * @this {ServiceContext}
      */
-    api[method] = function (request, handlers) {
-      var req = {
+    api[method] = function (request, handler) {
+      request = {
         url: endpoint,
         data: request.data || {},
         params: request.params || {},
@@ -51,11 +52,11 @@ RPCAPI = function (name, methods, config) {
       /**
        * @expose
        */
-      req.headers.Accept = 'application/json';
+      request.headers.Accept = 'application/json';
 
-      req.headers['Content-Type'] = 'application/json';
+      request.headers['Content-Type'] = 'application/json';
 
-      return this.http.post(req, handlers);
+      return this.http.post(request, handler);
     }.inject('http');
 
   });

@@ -81,71 +81,56 @@ services.data = /** @lends {ServiceContext.prototype.data} */ {
   /**
    * @expose
    * @param {(string|Array.<string>)} key
-   * @param {CallbackMap} cbs
+   * @return {Future}
    * @this {ServiceContext}
    */
-  get: function (key, cbs) {
-    var item, nativeKey;
+  get: function (key) {
+    var result, item;
 
     if (Array.isArray(key)) {
-      return this.data.getAll(key, cbs);
+      return this.data.getAll(key);
     } else {
       item = _dataCache[key];
+      result = new Future();
 
       if (item) {
-        nativeKey = item.native;
-        if (nativeKey && typeof nativeKey === 'string') {
-
-          if (_dataCache[nativeKey]) {
-            _dataCache[nativeKey].node_key = key;
-            this.data.set(key + '.native', _dataCache[nativeKey]);
-          } else {
-            this.data.get(nativeKey, /** @type {CallbackMap} */({
-              success: function (data) {
-                data.node_key = key;
-                services.data.set(key + '.native', data);
-                services.data.set(nativeKey, data);
-              },
-
-              error: function (e) {}
-            }));
-          }
-        }
-
-        return cbs.success(item);
+        result.fulfill(item);
       } else {
         // Retrieve from localStorage & server.
       }
+      return result;
     }
   },
 
   /**
    * @expose
    * @param {Array.<string>} keys
-   * @param {CallbackMap} cbs
+   * @return {Future}
    * @this {ServiceContext}
    */
-  getAll: function (keys, cbs) {
-    var items = [],
-      shouldErr = true;
+  getAll: function (keys) {
+    var result = new Future(),
+      items = [],
+      shouldErr;
 
     keys.forEach(function (key, i) {
-      services.data.get(key, /** @type {CallbackMap} */({
-        success: function (data) {
-          items[i] = data;
-
-          if (items.length === keys.length)
-            cbs.success(items);
-        },
-
-        error: function (e) {
+      services.data.get(key).then(function (data, err) {
+        if (err) {
           if (shouldErr) {
             shouldErr = false;
-            cbs.error(e);
+            result.fulfill(false, err);
           }
+          return;
         }
-      }));
+
+        items[i] = data;
+
+        if (items.length === keys.length)
+          result.fulfill(items);
+      });
     });
+
+    return result;
   },
 
   /**

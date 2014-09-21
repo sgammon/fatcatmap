@@ -19,40 +19,39 @@ var VIEWS = {},
   getSelfAndChildren = function (viewname, cb) {
     var filename = viewname.replace('.', '/') + '.html';
 
-    services.template.get(filename, {
-      success: function (resp) {
-        var children = [],
-          source, count;
+    services.template.get(filename).then(function (response, error) {
+      var children, source, count;
 
-        if (typeof resp.data !== 'string')
-          return cb(false, resp);
+      if (error)
+        return cb(false, error);
 
-        source = resp.data.replace(/v-component=("|')([\w\.\-]+)\1/g, function (_, __, childname) {
-          children.push(childname);
-          return _;
+      if (typeof response.data !== 'string')
+        return cb(false, response);
+
+      children = [];
+
+      source = response.data.replace(/v-component=("|')([\w\.\-]+)\1/g, function (_, __, childname) {
+        children.push(childname);
+        return _;
+      });
+
+      count = children.length;
+
+      if (VIEWS[viewname])
+        VIEWS[viewname].options.template = source;
+
+      services.template.put(filename, source);
+
+      if (count === 0)
+        return cb(source);
+
+      children.forEach(function (childname) {
+        getSelfAndChildren(childname, function () {
+          count -= 1;
+          if (count === 0)
+            cb(source);
         });
-
-        count = children.length;
-
-        if (VIEWS[viewname])
-          VIEWS[viewname].options.template = source;
-
-        services.template.put(filename, source);
-
-        if (count === 0)
-          return cb();
-
-        children.forEach(function (childname) {
-          getSelfAndChildren(childname, function () {
-            count -= 1;
-            if (count === 0)
-              cb(source);
-          });
-        });
-      },
-      error: function (err) {
-        cb(false, err);
-      }
+      });
     });
   };
 

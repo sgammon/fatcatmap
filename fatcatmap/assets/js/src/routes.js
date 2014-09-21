@@ -98,18 +98,13 @@ var routes = {
 
     app.nextTick(function () {
       app.$broadcast('page.map', graph);
+    });
 
-      data.get(request.args.key, /** @type {CallbackMap} */({
-        success: function (data) {
-          app.$broadcast('detail', [data]);
-        },
+    data.get(request.args.key).then(function (data, err) {
+      if (err)
+        return app.error(err);
 
-        error: function (e) {
-          app.$emit('route', '/404', {
-            error: e
-          });
-        }
-      }));
+      app.$broadcast('detail', [data]);
     });
 
     return state;
@@ -137,18 +132,13 @@ var routes = {
 
     app.nextTick(function () {
       app.$broadcast('page.map', graph);
+    });
 
-      data.getAll([key1, key2], /** @type {CallbackMap} */({
-        success: function (data) {
-          app.$broadcast('detail', data);
-        },
+    data.getAll([key1, key2]).then(function (data, err) {
+      if (err)
+        return app.error(err);
 
-        error: function (e) {
-          app.$emit('route', '/404', {
-            error: e
-          });
-        }
-      }));
+      app.$broadcast('detail', data);
     });
 
     return state;

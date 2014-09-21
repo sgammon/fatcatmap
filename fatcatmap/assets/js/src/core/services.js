@@ -27,8 +27,8 @@ ServiceContext.prototype = {};
 /**
  * @static
  * @param {string} name
- * @param {(function(*)|Object.<string, function(*)>)} service
- * @return {(function(*)|Object.<string, function(*)>)}
+ * @param {(Service|function(this: ServiceContext, ...[*]))} service
+ * @return {(Service|function(this: ServiceContext, ...[*]))}
  */
 ServiceContext.register = function (name, service) {
   util.object.resolveAndSet(ServiceContext.prototype, name, service);
@@ -62,8 +62,8 @@ Service.prototype = new ServiceContext();
 Object.defineProperty(Function.prototype, 'inject', {
   /**
    * @expose
-   * @return {function(...)}
-   * @param {string|Array.<string>} _services
+   * @param {(string|Array.<string>)=} _services
+   * @return {function(this: ServiceContext, ...[*])}
    * @throws {TypeError}
    */
   value: /** @this {Function} */ function (_services) {
@@ -94,6 +94,9 @@ Object.defineProperty(Function.prototype, 'inject', {
         inject, serviceName, util.object.resolve(ServiceContext.prototype, serviceName));
     });
 
+    /**
+     * @constructor
+     */
     injected = function () {};
     injected.prototype = inject || new ServiceContext();
 
@@ -110,7 +113,7 @@ Object.defineProperty(Function.prototype, 'inject', {
 
 /**
  * @expose
- * @param {string|Array.<string>} _services
+ * @param {(string|Array.<string>)=} _services
  * @return {function(...)}
  */
 Function.prototype.inject;
@@ -120,7 +123,7 @@ Object.defineProperty(Function.prototype, 'service', {
   /**
    * @expose
    * @param {string} name Service name.
-   * @return {function(...)}
+   * @return {function(this: ServiceContext, ...[*])}
    * @this {Function}
    */
    value: function (name) {
@@ -141,7 +144,7 @@ Object.defineProperty(Object.prototype, 'service', {
   /**
    * @expose
    * @param {string} name Service name.
-   * @return {Object.<string, function(...)>}
+   * @return {ServiceContext}
    * @throws {Error|TypeError}
    * @this {Object}
    */

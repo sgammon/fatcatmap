@@ -10,6 +10,7 @@
  * @todo batched requests
  */
 
+goog.require('async.future');
 goog.require('services');
 goog.require('services.rpc');
 
@@ -33,22 +34,30 @@ services.template = /** @lends {ServiceContext.prototype.template} */ {
 
   /**
    * @param {string} filename
-   * @param {CallbackMap} callbacks
-   * @throws {TypeError} If either param is missing.
+   * @return {Future}
+   * @throws {TypeError} If filename is not a string.
    * @this {ServiceContext}
    */
-  get: function (filename, callbacks) {
-    if (!(typeof filename === 'string' &&
-          typeof callbacks.success === 'function' &&
-          typeof callbacks.error === 'function'))
-      throw new TypeError('template.get() requires a filename and CallbackMap.');
+  get: function (filename) {
+    var template = new Future();
 
-    if (TEMPLATES[filename])
-      return callbacks.success({ data: TEMPLATES[filename] });
+    if (typeof filename !== 'string')
+      throw new TypeError('template.get() requires a string filename.');
 
-    return this.rpc.content.template({
-      data: { path: filename }
-    }, callbacks);
+    if (TEMPLATES[filename]) {
+      template.fulfill(TEMPLATES[filename]);
+    } else {
+      this.rpc.content.template({
+        data: { path: filename }
+      }, function (tpl, err) {
+        if (err)
+          return template.fulfill(false, err);
+
+        template.fulfill(tpl);
+      });
+    }
+
+    return template;
   },
 
   /**

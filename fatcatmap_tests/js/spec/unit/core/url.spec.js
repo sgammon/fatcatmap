@@ -8,49 +8,51 @@
  * copyright (c) momentum labs, 2014
  */
 
-// describe("The core url utility", function () {
+goog.require('util.url');
 
-//   var params, url;
+describe("The core url utility", function () {
 
-//   beforeEach(function () {
-//     params = {
-//       'a': 'b',
-//       'c': 2,
-//       'd': 'the yellow brick road',
-//       'e': true
-//     };
-//     url = {
-//       base: 'http://google.com',
-//       qs: 'a=b&c=2&d=the%20yellow%20brick%20road&e=true',
-//       full: 'http://google.com?a=b&c=2&d=the%20yellow%20brick%20road&e=true'
-//     };
-//   });
+  var params, url;
 
-//   afterEach(function () {
-//     params = url = null;
-//   });
+  beforeEach(function () {
+    params = {
+      'a': 'b',
+      'c': 2,
+      'd': 'the yellow brick road',
+      'e': true
+    };
+    url = {
+      base: 'http://google.com',
+      qs: 'a=b&c=2&d=the%20yellow%20brick%20road&e=true',
+      full: 'http://google.com?a=b&c=2&d=the%20yellow%20brick%20road&e=true'
+    };
+  });
 
-//   it('should correctly append URL params to a naked URL', function () {
-//     expect(urlutil.addParams('http://google.com', params)).toEqual(url.full);
-//   });
+  afterEach(function () {
+    params = url = null;
+  });
 
-//   it('should correctly append URL params to a URL with existing params', function () {
-//     expect(urlutil.addParams('http://google.com?f=f', params)).toEqual(
-//       url.base + '?' + 'f=f&' + url.qs);
-//   });
+  it('should correctly append URL params to a naked URL', function () {
+    expect(util.url.addParams('http://google.com', params)).toEqual(url.full);
+  });
 
-//   it('should correctly parse URL parameters', function () {
-//     expect(urlutil.parseParams(url.full)).toEqual(params);
-//   });
+  it('should correctly append URL params to a URL with existing params', function () {
+    expect(util.url.addParams('http://google.com?f=f', params)).toEqual(
+      url.base + '?' + 'f=f&' + url.qs);
+  });
 
-//   it('should correctly parse a url into an object', function () {
-//     expect(urlutil.parse(url.full)).toEqual({
-//       protocol: 'http',
-//       hostname: 'google.com',
-//       port: '',
-//       path: '',
-//       url: url.full,
-//       params: params
-//     });
-//   });
-// });
+  it('should correctly parse URL parameters', function () {
+    expect(util.url.parseParams(url.full)).toEqual(params);
+  });
+
+  it('should correctly parse a url into an object', function () {
+    expect(util.url.parse(url.full)).toEqual({
+      protocol: 'http',
+      hostname: 'google.com',
+      port: 80,
+      path: '',
+      url: url.full,
+      params: params
+    });
+  });
+});

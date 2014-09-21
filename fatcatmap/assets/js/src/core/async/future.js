@@ -1,3 +1,4 @@
+/*jshint -W030 */
 /**
  * @fileoverview Future class.
  *
@@ -8,12 +9,14 @@
  * 
  * copyright (c) momentum labs, 2014
  */
+
 goog.require('async.decorators');
 
 goog.provide('async.future');
 
 /**
  * @constructor
+ * @extends {Continuation}
  */
 var Future = function () {
   /**
@@ -42,7 +45,11 @@ var Future = function () {
  * @return {Future}
  */
 Future.prototype.fulfill = function (value, error) {
-  var waiting = this._waiting;
+  var waiting;
+
+  if (value instanceof Future && value.status !== 'FULFILLED') {
+    return value.then(this);
+  }
 
   if (this.status !== 'PENDING') {
     value = false;
@@ -50,23 +57,19 @@ Future.prototype.fulfill = function (value, error) {
     error.source = this;
   }
 
-  if (value instanceof Future && value.status !== 'FULFILLED') {
-    return value.then(this);
-  }
+  waiting = this._waiting;
 
   this.status = error ? 'FAILED' : 'FULFILLED';
   this._waiting = null;
   this._result = [value, error];
 
-  waiting.forEach(function (cb) {
-    (function () {
-      if (cb instanceof Future) {
-        cb.fulfill(value, error);
-      } else {
-        cb.call(null, value, error);
-      }
-    }).async();
-  });
+  waiting.forEach.bind(waiting, function (cb) {
+    if (cb instanceof Future) {
+      cb.fulfill(value, error);
+    } else {
+      cb.call(null, value, error);
+    }
+  }).async();
 
   return this;
 };
@@ -76,27 +79,79 @@ Future.prototype.fulfill = function (value, error) {
  * @param {(PipelinedCallback|Future)} waiting
  * @return {Future}
  */
-Future.prototype.then = function (waiting) {
+Future.prototype.then = function (pending) {
   var next = new Future(),
+    cb;
+
+  if (pending instanceof Future) {
+    pending.then(next);
+
+    if (!this._waiting) {
+      pending.fulfill.apply(pending, this._result);
+    } else {
+      this._waiting.push(pending);
+    }
+  } else {
     cb = function (value, error) {
-      var result;
-      if (waiting instanceof Future) {
-        waiting.then(function (v, e) { next.fulfill(v, e); });
-        return waiting.fulfill(value, error);
-      }
+      if (error)
+        return next.fulfill(false, error);
 
       try {
-        next.fulfill(waiting.pipe(value, error));
+        next.fulfill(pending(value, error));
       } catch (e) {
         next.fulfill(false, e);
       }
     };
 
-  if (this._result) {
-    cb.apply(null, this._result);
-  } else {
-    this._waiting.push(cb);
+    if (!this._waiting) {
+      cb.apply(null, this._result);
+    } else {
+      this._waiting.push(cb);
+    }
   }
 
   return next;
 };
+
+/**
+ * @expose
+ * @param {(Continuation|*)} next
+ * @param {Error=} err
+ * @return {Future}
+ */
+Function.prototype.pipe;
+
+Object.defineProperty(Function.prototype, 'pipe', {
+  /**
+   * @expose
+   * @param {(Continuation|*)} next
+   * @param {Error=} err
+   * @return {Future}
+   * @this {Function}
+   */
+  value: function (next, err) {
+    var fn = this,
+      piped = new Future(),
+      cb = function (value, error) {
+        if (err)
+          return piped.fulfill(false, err);
+
+        if (error)
+          return piped.fulfill(false, error);
+
+        try {
+          piped.fulfill(fn(value));
+        } catch (e) {
+          piped.fulfill(false, e);
+        }
+      };
+
+    if (next && next.then && typeof next.then === 'function') {
+      next.then(cb);
+    } else {
+      cb.bind(null, next).async();
+    }
+
+    return piped;
+  }
+});

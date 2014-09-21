@@ -10,29 +10,29 @@
  * copyright (c) momentum labs, 2014
  */
 
-goog.require('$');
 goog.require('async.decorators');
 goog.require('async.future');
 
 goog.provide('async.task');
 
-var TaskStep, TaskContinuation, Task;
-
 /**
- * @typedef {function(this: Task, ...[*]): ?(Array.<*>|Task|Future)}
+ * @typedef {function(this: Task, ...[*]): (Array.<*>|Task|Future|null)}
  */
-TaskStep;
+var Tasklet;
+
+var TaskSpec, Task;
 
 /**
- * Represents an intermediate step in a Task control flow declaration.
+ * Manages declaring dependent Tasklets for a Task.
  * @constructor
+ * @extends {Continuation}
  * @param {Task} task
  */
-TaskContinuation = function (task) {
+TaskSpec = function (task) {
   /**
    * @expose
-   * @param {TaskStep} fn
-   * @return {TaskContinuation}
+   * @param {Tasklet} fn
+   * @return {TaskSpec}
    */
   this.then = function (fn) {
     task._steps.push(fn);
@@ -41,7 +41,7 @@ TaskContinuation = function (task) {
 
   /**
    * @expose
-   * @param {TaskStep=} fn
+   * @param {Tasklet=} fn
    * @return {Task}
    */
   this.done = function (fn) {
@@ -54,9 +54,23 @@ TaskContinuation = function (task) {
 
 /**
  * @constructor
- * @param {TaskStep=} first
+ * @extends {Future}
+ * @param {Tasklet=} first
  */
 Task = function (first) {
+  Future.call(this);
+
+  /**
+   * @protected
+   * @this {Task}
+   */
+  this.resume = this.resume.bind(this);
+
+  /**
+   * @expose
+   * @type {boolean}
+   */
+  this.done = false;
 
   /**
    * @expose
@@ -72,14 +86,13 @@ Task = function (first) {
 
   /**
    * @protected
-   * @type {Array.<TaskStep>}
+   * @type {Array.<Tasklet>}
    */
   this._steps = [];
 
-
   /**
    * @protected
-   * @type {?TaskStep}
+   * @type {?Tasklet}
    */
   this._complete = null;
 
@@ -99,6 +112,16 @@ Task = function (first) {
     return this.first(first);
 };
 
+Task.prototype = new Future();
+
+/**
+ * Make <code>Task.fulfill</code> a no-op.
+ * @return {Task}
+ */
+Task.prototype.fulfill = function () {
+  return this;
+};
+
 /**
  * Resets the Task execution state.
  * @expose
@@ -107,6 +130,7 @@ Task = function (first) {
 Task.prototype.reset = function () {
   this.error = null;
   this._args = [];
+  this._waiting = []
   this._step = 0;
   this._finishing = false;
 
@@ -117,27 +141,17 @@ Task.prototype.reset = function () {
 };
 
 /**
- * Resets the Task state completely.
+ * Sets the initial Tasklet step and returns chainable TaskSpec to add steps.
  * @expose
- * @return {Task}
- */
-Task.prototype.reinit = function () {
-  Task.call(this);
-  return this;
-};
-
-/**
- * Sets the initial step in the task flow.
- * @expose
- * @param {TaskStep} fn
- * @return {TaskContinuation}
+ * @param {Tasklet} fn
+ * @return {TaskSpec}
  * @throws {Error} If <code>first</code> has already been called.
  */
 Task.prototype.first = function (fn) {
   if (this._steps.length)
     throw new Error('Task.first() can only be called once.');
 
-  return new TaskContinuation(this).then(fn);
+  return new TaskSpec(this).then(fn);
 };
 
 /**
@@ -162,7 +176,7 @@ Task.prototype.run = function (args) {
     complete = task._complete;
 
   if (args) {
-    task._args.push.apply(task._args, toArray(arguments));
+    task._args.push.apply(task._args, arguments);
   }
 
   if (!complete || !complete.__task__) {
@@ -180,7 +194,7 @@ Task.prototype.run = function (args) {
     task._complete.__orig__ = complete;
   }
 
-  (function () { task.resume(); }).async();
+  task.resume.async();
 
   return result;
 };
@@ -190,9 +204,29 @@ Task.prototype.run = function (args) {
  * @expose
  */
 Task.prototype.finish = function () {
+  var task = this,
+    value, error, waiting;
+
   if (this._finishing === true) {
+    value = this._args;
+    error = this.error;
+    waiting = this._waiting;
+
     this._finishing = false;
-    this._complete.apply(this, this._args);
+    this._complete.apply(this, value);
+
+    waiting.forEach.bind(waiting, function (cb) {
+      if (cb instanceof Future) {
+        cb.fulfill(value, error);
+      } else if (cb instanceof Task) {
+        cb.error = error;
+        cb.args(value);
+        cb.run();
+      } else {
+        cb.call(null, value, error);
+      }
+    }).async();
+
   } else {
     this._finishing = true;
     this.resume();
@@ -202,7 +236,7 @@ Task.prototype.finish = function () {
 /**
  * Returns the bound next step in the task flow, if one exists.
  * @protected
- * @return {?TaskStep}
+ * @return {?Tasklet}
  */
 Task.prototype.next = function () {
   var task = this,
@@ -221,6 +255,10 @@ Task.prototype.resume = function () {
   var task = this,
     next = task.next(),
     pending = 0,
+    /**
+     * @param {Array.<*>=} args
+     * @param {Error=} err
+     */
     pendingCb = function (args, err) {
       task.error = err;
 

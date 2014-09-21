@@ -76,6 +76,15 @@ views.App = Vue.extend({
 
     /**
      * @expose
+     * @param {Error} e
+     * @this {views.App}
+     */
+    error: function (e) {
+      this.$emit('route', '/404', { error: e });
+    },
+
+    /**
+     * @expose
      * @param {function()} cb
      */
     nextTick: function (cb) {

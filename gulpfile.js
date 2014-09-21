@@ -1,9 +1,9 @@
 var fs = require('fs'),
   path = require('path'),
-  less = require('less-stream'),
   sass = require('sass-stream'),
   closure = require('closure-compiler-stream'),
   gulp = require('gulp'),
+  tap = require('gulp-tap'),
   rmrf = require('gulp-rimraf'),
   svgmin = require('gulp-svgmin'),
   concat = require('gulp-concat'),
@@ -51,7 +51,6 @@ var fs = require('fs'),
 // Asset input globs.
 inputs = {
   img: ASSET_PREFIX + 'img/**/*.{png,jpg,gif}',
-  less: ASSET_PREFIX + 'less/**/*.less',
   sass: ASSET_PREFIX + 'sass/catnip.sass',
   js: {
     app: ASSET_PREFIX + 'js/src/**/*.js',
@@ -61,7 +60,6 @@ inputs = {
     externs: ASSET_PREFIX + 'js/externs/*.js',
     test: 'fatcatmap_tests/js/spec/unit/**/*.spec.js'
   },
-  themes: ASSET_PREFIX + 'less/site/home.less',
   templates: 'fatcatmap/templates/source/**/*',
 };
 
@@ -72,11 +70,6 @@ outputs = {
   js: {
     app: ASSET_PREFIX + 'js/compiled/',
     test: 'fatcatmap_tests/js/spec/compiled/'
-  },
-  themes: {
-    dark: ASSET_PREFIX + 'style/themes/dark/',
-    light: ASSET_PREFIX + 'style/themes/light/',
-    scaffold: ASSET_PREFIX + 'style/themes/scaffold/'
   },
   templates: 'fatcatmap/templates/compiled',
   sourcemaps: '.develop/maps/'
@@ -104,32 +97,6 @@ config = {
     }]
   },
 
-  // Less
-  less: {
-    options: {
-      compress: true,
-      cleancss: true,
-      ieCompat: false,
-      report: 'min',
-      optimization: 2,
-      paths: [
-        ASSET_PREFIX + "less",
-        ASSET_PREFIX + "bootstrap"
-      ]
-    },
-    themes: {
-      dark: {
-        modifyVars: { theme: 'dark' }
-      },
-      light: {
-        modifyVars: { theme: 'light' }
-      },
-      scaffold: {
-        modifyVars: { theme: 'scaffold' }
-      }
-    }
-  },
-
   // Sass
   sass: {
     compileOptions: {
@@ -154,10 +121,12 @@ config = {
       use_types_for_optimization: null,
       generate_exports: null,
       externs: [
-        ASSET_PREFIX + 'js/lib/externs/jasmine/jasmine.js',
         ASSET_PREFIX + 'js/lib/externs/w3c/EventSource.js',
         ASSET_PREFIX + 'js/lib/externs/w3c/pointer-events.js',
+        ASSET_PREFIX + 'js/lib/externs/jasmine/jasmine.js',
         ASSET_PREFIX + 'js/lib/externs/fcm/jsconfig.js',
+        ASSET_PREFIX + 'js/lib/externs/fcm/pagedata.js',
+        ASSET_PREFIX + 'js/lib/externs/fcm/types.js',
         ASSET_PREFIX + 'js/lib/externs/vue/vue.js',
         ASSET_PREFIX + 'js/lib/externs/d3/d3.js'
       ]
@@ -188,11 +157,10 @@ config = {
       output_wrapper: '(function() {\n%output%\n})();'
     },
 
+    // Test compile settings
     test: {
-      only_closure_dependencies: false,
-      externs: [
-        
-      ]
+      debug: false,
+      compilation_level: 'SIMPLE_OPTIMIZATIONS'
     }
   },
 
@@ -203,55 +171,6 @@ config = {
   karma: require('./fatcatmap_tests/js/karma.conf.js')
 };
 
-// Compile less source to css
-task('less', [
-  'less:dark',
-  'less:light',
-  'less:scaffold'
-]);
-
-// Compile dark theme
-task('less:dark', function () {
-  var opts = merge(config.less.options, config.less.themes.dark),
-    cfg = config.sourcemaps;
-  cfg.sourceRoot = '/assets/less/site';
-  return src(inputs.themes)
-    .pipe(sourcemaps.init())
-    .pipe(less(opts))
-    .pipe(sourcemaps.write(
-      path.relative(ASSET_PREFIX + 'less/site/home.css', outputs.sourcemaps + ASSET_PREFIX + 'style/themes/dark/'),
-      cfg))
-    .pipe(dest(outputs.themes.dark));
-});
-
-// Compile light theme
-task('less:light', function () {
-  var opts = merge(config.less.options, config.less.themes.light),
-    cfg = config.sourcemaps;
-  cfg.sourceRoot = '/assets/less/site';
-  return src(inputs.themes)
-    .pipe(sourcemaps.init())
-    .pipe(less(opts))
-    .pipe(sourcemaps.write(
-      path.relative(ASSET_PREFIX + 'less/site/home.css', outputs.sourcemaps + ASSET_PREFIX + 'style/themes/light/'),
-      cfg))
-    .pipe(dest(outputs.themes.light));
-});
-
-// Compile scaffold theme
-task('less:scaffold', function () {
-  var opts = merge(config.less.options, config.less.themes.scaffold),
-    cfg = config.sourcemaps;
-  cfg.sourceRoot = '/assets/less/site';
-  return src(inputs.themes)
-    .pipe(sourcemaps.init())
-    .pipe(less(opts))
-    .pipe(sourcemaps.write(
-      path.relative(ASSET_PREFIX + 'less/site/home.css', outputs.sourcemaps + ASSET_PREFIX + 'style/themes/scaffold/'),
-      cfg))
-    .pipe(dest(outputs.themes.scaffold));
-});
-
 // Compile sass
 task('sass', function (cb) {
   src(inputs.sass)
@@ -260,7 +179,7 @@ task('sass', function (cb) {
 });
 
 // Overarching style task
-task('style', ['less', 'sass']);
+task('style', ['sass']);
 
 // Clean compiled css files
 task('style:clean', function () {
@@ -307,9 +226,50 @@ task('closure:pretty', function () {
     .pipe(dest(outputs.js.app));
 });
 
+// Compile JS source with tests via Closure Compiler in minified mode.
+task('closure:test', function (cb) {
+  var sources = [],
+    tests = [],
+    run = function () {
+      var cfg = merge(config.closure.common, config.closure.test);
+
+      delete cfg.closure_entry_point;
+      delete cfg.only_closure_dependencies;
+
+      cfg.module_output_path_prefix = ASSET_PREFIX + 'js/compiled/test/';
+      cfg.module = [
+        ['app:' + sources.length + ':'].concat(sources),
+        ['test:' + tests.length + ':app:'].concat(tests)
+      ];
+
+      src(inputs.js.app)
+        .pipe(closure(cfg))
+        .on('finish', function () {
+          setTimeout(function () {
+            cb()
+          }, 5000);
+        });
+    };
+
+  src(inputs.js.app + '/')
+    .pipe(tap(function (file) {
+      if (!(/js\/src\/[^\/]+\.js$/).test(file.path))
+        sources.push(file.path);
+    }));
+
+  src(inputs.js.test)
+    .pipe(tap(function (file) {
+      tests.push(file.path);
+    }));
+  
+  setTimeout(function () {
+    run();
+  }, 1000);
+});
+
 // Clean compiled JS files
 task('closure:clean', function () {
-  return src([outputs.js.app + '/*', ASSET_PREFIX + 'js/*.js'])
+  return src([outputs.js.app + '/*.js', ASSET_PREFIX + 'js/*.js'])
     .pipe(rmrf());
 });
 
@@ -353,30 +313,19 @@ task('serve', function (cb) {
 
 // Watch assets & recompile on change
 task('watch', function (cb) {
-  watch(inputs.less, ['less']);
   watch(inputs.sass, ['sass']);
   watch(inputs.templates, ['templates']);
   // watch(inputs.js.app, ['closure:pretty'])
   cb();
 });
 
-// Run JS tests based on environment
-task('test', ['test:debug']);
-
-// Run JS tests in dev mode
-task('test:debug', ['closure:pretty'], function (cb) {
-  var cfg = merge({}, config.karma);
-  cfg.files = cfg._debugFiles;
-  karma.start(cfg);
-  cb();
-});
+// Run JS tests
+task('test', ['test:release']);
 
 // Run JS tests in release mode
-task('test:release', ['closure:min'], function (cb) {
+task('test:release', ['closure:test'], function (cb) {
   setTimeout(function () {
-    var cfg = merge({}, config.karma);
-    cfg.files = cfg._releaseFiles;
-    karma.start(cfg);
+    karma.start(merge({}, config.karma));
   }, 1000);
   cb();
 });
@@ -389,7 +338,6 @@ task('test:clean', function () {
 
 // Default task - runs with bare 'gulp'.
 task('default', [
-  'less',
   'sass',
   'templates',
   'closure:all'
@@ -397,7 +345,6 @@ task('default', [
 
 // Develop task
 task('dev', [
-  'less',
   'sass',
   'templates',
   'closure:pretty',
@@ -407,7 +354,6 @@ task('dev', [
 
 // Release task
 task('release', [
-  'less',
   'sass',
   'closure:min',
   'test:release'

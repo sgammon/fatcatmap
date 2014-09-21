@@ -102,7 +102,7 @@ util.url = {
       parsed.hostname = parsed.port = '';
     } else {
       host = chunks.shift().split(':');
-      parsed.hostname = host[0];
+      parsed.hostname = host[0].split('?').shift();
       parsed.port = +host[1] ||
         (parsed.protocol === 'http' ? 80 : parsed.protocol === 'https' ? 443 : '');
     }

@@ -60,10 +60,19 @@ var MessageCallbackMap;
 /**
  * Represents a pipelined callback.
  * @typedef {function(*=, Error=)}
+ * @throws {Error} If uncaught.
  */
 var PipelinedCallback;
 
 /**
- * @type {boolean}
+ * @type {?boolean}
  */
 PipelinedCallback.__pipe__;
+
+/**
+ * Represents a chainable step in an execution flow.
+ * @typedef {Object.<{
+ *    then: (function(this: Continuation, PipelinedCallback): Continuation)
+ * }>}
+ */
+var Continuation;

@@ -157,7 +157,7 @@ RPCTransport = Transport.extend('rpc', /** @lends {RPCTransport.prototype} */{
     };
 
     if (serialized.headers)
-      meta.headers = serialized.headers;
+      message.meta.headers = serialized.headers;
 
     return message;
   },
@@ -183,14 +183,12 @@ RPCTransport = Transport.extend('rpc', /** @lends {RPCTransport.prototype} */{
       return;
     }
 
-    dispatcher(this.serialize(message), /** @type {CallbackMap} */{
-      success: function (resp) {
-        rpcTransport.receive(resp);
-      },
-
-      error: function (err) {
+    dispatcher(this.serialize(message), function (response, error) {
+      if (error)
         // @TODO david: handle propagating transport errors up to Channel listeners
-      }
+        return;
+
+      rpcTransport.receive(response);
     });
   },
 
