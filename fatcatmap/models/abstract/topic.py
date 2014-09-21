@@ -7,7 +7,8 @@
 '''
 
 # graph models
-from .. import (Model,
+from .. import (Key,
+                Model,
                 Vertex,
                 describe)
 
@@ -31,3 +32,4 @@ class Topic(Vertex):
       associated. '''
 
   name = TopicName, {'embedded': True, 'indexed': True}
+  super = Key, {'indexed': True}  # supertopic

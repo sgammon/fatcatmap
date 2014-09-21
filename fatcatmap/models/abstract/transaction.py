@@ -15,7 +15,7 @@ from .event import (Event,
                     describe)
 
 
-@describe(abstract=True)
+@describe(abstract=True, reindex=False)
 class Agreement(Event):
 
   ''' Describes the abstract concept of two parties coming to
@@ -23,7 +23,7 @@ class Agreement(Event):
       decision. '''
 
 
-@describe(parent=Edge)
+@describe(parent=Edge, reindex=False)
 class Contract(Agreement):
 
   ''' Describes the abstract concept of a legally binding
@@ -34,7 +34,7 @@ class Contract(Agreement):
   ends = datetime.date, {'indexed': True}
 
 
-@describe(parent=Edge, type=Event)
+@describe(parent=Edge, type=Agreement)
 class Transaction(Agreement):
 
   ''' Describes a monetary transaction between two parties,
