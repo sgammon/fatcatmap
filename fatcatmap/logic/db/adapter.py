@@ -36,7 +36,7 @@ from canteen.model.adapter import abstract
 from canteen.model.adapter import inmemory
 
 
-class WarehouseAdapter(abstract.GraphModelAdapter):
+class WarehouseAdapter(abstract.DirectedGraphAdapter):
 
   ''' Specifies an abstract adapter that is capable of supporting proprietary,
       ``fatcatmap``-related driver functionality. '''
