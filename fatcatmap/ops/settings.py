@@ -34,8 +34,7 @@ PROJECT, PROJECT_ID, KEY, PEM = (
 
 K9 = {
   'reload': '/base/ns/trigger/k9.reload',
-  'rotate': '/base/ns/trigger/k9.rotate'
-}
+  'rotate': '/base/ns/trigger/k9.rotate'}
 
 
 

@@ -20,19 +20,22 @@ from services.k9 import init_script as k9_init_script
 _SERVICE_NAMES = {
   'proxy': settings.Components.PROXY,
   'http': settings.Components.WEBSERVER,
-  'database': settings.Components.DATABASE
-}
+  'database': settings.Components.DATABASE}
 
 ## build ourselves a nice little index
 _SERVICES_BY_NAME = {
-  v: k for k, v in _SERVICE_NAMES.iteritems()
-}
+  v: k for k, v in _SERVICE_NAMES.iteritems()}
+
 
 @task
-def setup_k9():
+def k9():
+
+  ''' Setup K9. '''
+
   require.file('/etc/init.d/k9',contents=k9_init_script,use_sudo=True)
   require.directory('/var/log/k9/',use_sudo=True)
   sudo('chmod a+x /etc/init.d/k9 && /etc/init.d/k9 restart')
+
 
 def setup_for_group(group):
 

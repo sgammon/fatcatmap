@@ -24,9 +24,9 @@ from fabric.api import env
 from libcloud.common.google import ResourceNotFoundError
 
 # fabric integration
-#from dogapi.fab import setup
-#from dogapi.fab import notify
-#setup(settings.DATADOG_KEY)
+from dogapi.fab import setup
+from dogapi.fab import notify
+setup(settings.DATADOG_KEY)
 
 
 def get_node():
@@ -97,10 +97,14 @@ class GCENode(object):
     ''' Read metadata about a node, include its ``environment`` and
         ``group``. '''
 
-    items = self.node.extra['metadata']['items']
-    self.metadata = dict([(item['key'], item['value']) for item in items])
-    self.group = self.metadata.get('group')
-    self.environment = self.metadata.get('environment')
+    items = self.node.extra['metadata'].get('items')
+    if items:
+      self.metadata = dict([(item['key'], item['value']) for item in items])
+      self.group = self.metadata.get('group')
+      self.environment = self.metadata.get('environment')
+    else:
+      self.metadata = {}
+      self.group, self.environment = None, None
 
 
   @property
