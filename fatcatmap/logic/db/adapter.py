@@ -298,6 +298,8 @@ class WarehouseAdapter(abstract.DirectedGraphAdapter):
         else:
           if hasattr(supertype, prop) and supertype.__dict__[prop].indexed:
             # append supertype abstract index
+            if isinstance(value, float):
+              encoder = float if isinstance(value, float) else encoder
             prop_fcm.append((encoder, (prefix, supertype.kind(), prop, value)))
 
       # ask entity for extra indexes
@@ -306,7 +308,11 @@ class WarehouseAdapter(abstract.DirectedGraphAdapter):
                                               proprietary=(tuple(abstract_fcm), tuple(prop_fcm), tuple(graph_fcm)),
                                               external=external):
 
-          encoder = cls._index_basetypes.get(extra[-1].__class__, cls.serializer.dumps)
+          # @TODO(sgammon): floats/ints/longs/sorted types
+          if not isinstance(extra[-1], (long, int, float)):
+            encoder = cls._index_basetypes.get(extra[-1].__class__, cls.serializer.dumps)
+          else:
+            encoder = type(extra[-1])
 
           if extra[0] == cls._index_prefix:
             prop_fcm.append((encoder, extra))

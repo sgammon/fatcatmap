@@ -116,7 +116,7 @@ config = cfg.Config(app={
     'tools': {
       'enabled': True},
 
-    'dataset': 'legacy-v3'
+    'dataset': 'legacy-v4'
 
   },
 

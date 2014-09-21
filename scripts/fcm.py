@@ -382,7 +382,7 @@ class FCM(cli.Tool):
         logging.info('Applying fixtures to target...')
 
       _fixtures_c, _fixtures_by_kind = 0, collections.defaultdict(lambda: 0)
-      with target.channel('__meta__').pipeline() as pipeline:
+      with target.channel('__meta__').pipeline(transaction=False) as pipeline:
 
         for fixtureset in models.fixtures:
           if not arguments.quiet:
@@ -458,7 +458,7 @@ class FCM(cli.Tool):
           logging.info('Transferring %s objects...' % len(found_keys))
 
         _keys, _by_kind = 0, collections.defaultdict(lambda: 0)
-        with source.channel('__meta__').pipeline() as pipeline:
+        with source.channel('__meta__').pipeline(transaction=False) as pipeline:
 
           _filtered_keys = []
           for key in found_keys:
@@ -525,7 +525,7 @@ class FCM(cli.Tool):
         logging.info('Performing data migration...')
 
       ## enter pipelined mode
-      with target.channel('__meta__').pipeline() as pipeline:
+      with target.channel('__meta__').pipeline(transaction=False) as pipeline:
         _written, _by_kind = 0, collections.defaultdict(lambda: 0)
 
         if arguments.binding:
