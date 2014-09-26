@@ -7,10 +7,10 @@
 '''
 
 # graph models
-from .. import (Key,
-                date,
+from .. import (date,
                 Vertex,
-                describe)
+                describe,
+                VertexKey)
 
 # USA
 from ..place import usa
@@ -38,7 +38,7 @@ class PoliticalParty(Vertex):
     ''' Construct base ``PoliticalParty`` entities. '''
 
     # dems
-    yield cls(key=Key(cls, 'democrat', parent=usa), name=FactionName(
+    yield cls(key=democrats, name=FactionName(
                 primary='Democratic Party',
                 secondary='US Democratic Party',
                 formal='United States Democratic Party',
@@ -48,7 +48,7 @@ class PoliticalParty(Vertex):
               website=URI(location='https://democrats.org'))
 
     # reps
-    yield cls(key=Key(cls, 'republican', parent=usa), name=FactionName(
+    yield cls(key=republicans, name=FactionName(
                 primary='Republican Party',
                 secondary='US Republican Party',
                 formal='Grand Old Party',
@@ -58,7 +58,7 @@ class PoliticalParty(Vertex):
               website=URI(location='https://gop.com'))
 
     # libs
-    yield cls(key=Key(cls, 'libertarian', parent=usa), name=FactionName(
+    yield cls(key=libertarians, name=FactionName(
                 primary='Libertarian Party',
                 secondary='US Republican Party',
                 formal='Grand Old Party',
@@ -66,3 +66,8 @@ class PoliticalParty(Vertex):
                 singular='Republican',
                 plural='Republicans'),
               website=URI(location='https://gop.com'))
+
+
+democrats = VertexKey(PoliticalParty, 'democrat', parent=usa)
+republicans = VertexKey(PoliticalParty, 'republican', parent=usa)
+libertarians = VertexKey(PoliticalParty, 'libertarian', parent=usa)

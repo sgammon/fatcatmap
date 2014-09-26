@@ -18,7 +18,8 @@ from ..person import Person
 from ..address import Address
 
 # abstract models
-from ..abstract import (Place,
+from ..abstract import (Role,
+                        Place,
                         Organization,
                         OrganizationName)
 
@@ -72,7 +73,7 @@ class CorporateOfficer(Role):
 
 
 @describe
-class Ownership(Corporation << (Person, Corporation)):
+class Ownership(Vertex >> Corporation):
 
   ''' Describes a relationship where a ``Person`` or ``Corporation``
       owns some calculable piece of another ``Corporation``. '''
@@ -80,8 +81,8 @@ class Ownership(Corporation << (Person, Corporation)):
   effective = float, {'indexed': True}
 
 
-@describe(parent=Person, type=Role)
-class BoardMember(Corporation << (Person, Corporation)):
+@describe(type=Role)
+class BoardMember(Person >> Corporation):
 
   ''' Describes a ``Person``-based role where they personally sit
       on a ``Corporation``'s managing board. '''

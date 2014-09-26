@@ -9,3 +9,9 @@
 # graph models
 from .. import (Vertex,
                 describe)
+
+
+@describe(root=True)
+class PoliticalCommittee(Vertex):
+
+  '''  '''
