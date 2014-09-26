@@ -6,6 +6,10 @@
 
 '''
 
+# db
+from . import db
+from .db import *
+
 # views
 from . import views
 
@@ -14,10 +18,9 @@ from . import grapher
 from .grapher import *
 
 
-__all__ = (
-  'views',
-  'grapher',
-  'Graph',
-  'Grapher',
-  'GraphOptions'
-)
+__all__ = ('db',
+           'views',
+           'grapher',
+           'Graph',
+           'Grapher',
+           'GraphOptions')

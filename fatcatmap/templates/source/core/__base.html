@@ -30,7 +30,7 @@
     <link rel="stylesheet" href="//cloud.typography.com/6717292/775624/css/fonts.css" type="text/css">
     {% endblock %}
 
-    {%- if handler.agent.mobile %}
+    {%- if getattr(handler, 'agent', {}).mobile %}
     <!-- mobile -->
     {%- block mobile %}
     <meta name="MobileOptimized" content="640">

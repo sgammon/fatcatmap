@@ -109,9 +109,10 @@ config = {
   // Closure Compiler
   closure: {
 
-    common: {
-      jar: 'lib/closure/build/compiler.jar',
-      source_map_format: 'V3',
+    // Prod compile settings
+    app: {
+      js_output_file: outputs.js.app + 'app.min.js',
+      debug: false,
       summary_detail_level: 3,
       warning_level: 'VERBOSE',
       language_in: 'ECMASCRIPT5',

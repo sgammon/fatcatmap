@@ -14,13 +14,16 @@ from . import options
 
 # models
 from canteen import model
-from fatcatmap.models.graph.node import Node
-from fatcatmap.models.graph.edge import Edge
+from fatcatmap.models import Vertex, Edge
 
 
 class Graph(object):
 
-  '''  '''
+  ''' Object representing a single ``Graph``, composed of ``Vertex`` and
+      ``Edge`` records in the underlying storage layer.
+
+      Keeps track of structural keys encountered during the traversal process
+      and manages the retrieval of their native data records, if requested. '''
 
   # Options
   __options__ = None  # grapher options
@@ -34,7 +37,7 @@ class Graph(object):
   __natives__ = None  # native objects
 
   # Models
-  __node_model__ = Node  # node model to use
+  __node_model__ = Vertex  # node model to use
   __edge_model__ = Edge  # edge model to use
 
   # Indexes
@@ -55,62 +58,104 @@ class Graph(object):
 
   def __init__(self, origin, options=None):
 
-    '''  '''
+    ''' Initialize the local graph object.
+
+        :param origin: Originating ``Vertex`` to start the ``Graph`` building
+          process with.
+
+        :param options: ``GraphOptions`` instance describing parameters for the
+          desired graph operation. Defaults to ``None``, in which case a default
+          set of ``GraphOptions`` is spawned for the developer's convenience.
+
+        :raises TypeError: If the value passed at ``options`` (to be used as
+          ``GraphOptions``) is of an invalid or unknown type.  '''
 
     if options and not isinstance(options, self.__options_class__):
       raise TypeError('Must pass `options` object of expected `GraphOptions`'
                       ' class (set to "%s").' % self.__options_class__)
 
     # populate default storage and empty indexes
-    self.__keys__, self.__nodes__, self.__edges__, self.__natives__ = set(), {}, {}, {}
+    self.__keys__, self.__nodes__, self.__edges__, self.__natives__ = (
+      set(), {}, {}, {})
 
     # native kind indexes
-    self.__node_native_kinds__, self.__edge_native_kinds__ = set(), set()
+    self.__node_native_kinds__, self.__edge_native_kinds__ = (
+      set(), set())
 
     # native indexes
-    self.__natives_seen__, self.__natives_held__, self.__natives_pending__ = set(), set(), set()
+    self.__natives_seen__, self.__natives_held__, self.__natives_pending__ = (
+      set(), set(), set())
 
     # node and adjacency indexes
     self.__adjacency__, self.__node_edges__ = {}, {}
 
     # populate origin and options (or defaults if none were provide)
-    self.__origin__, self.__streaming__, self.__options__ = origin, False, options or self.__options_class__.default()
+    self.__origin__, self.__streaming__, self.__options__ = (
+      origin, False, options or self.__options_class__.default())
 
   ## == Internals == ##
   def _traverse(self, node, _current_depth=1):
 
-    '''  '''
+    ''' Traverse through ``node`` and keep track of current recursion depth.
 
-    yield self.add_node(node)  # consider node
+        :param node: Node to traverse through, optionally continuing to
+          recurse if the local ``GraphOptions`` so allow.
+
+        :yields: ``node`` key being traversed, then any resolved ``edge`` key
+          records, then the fetched ``node`` and ``edge`` objects, then linked
+          ``native`` data records for both types. '''
+
+    if node:
+      yield self.add_node(node)  # consider node
+
+      # resolve edges & add
+      for edge in self._retrieve_edges(node):
+        yield self.add_edge(edge)
+
+        for node_key in edge.node:
+          node = Vertex.get(node_key)  # retrieve node
+
+          if node:
+            for artifact in self._traverse(node, _current_depth + 1):
+              yield artifact
 
     # check depth
     if self.options.depth and _current_depth > self.options.depth:
       raise StopIteration()  # terminate recursion: depth reached
 
-    # resolve edges & add
-    for edge in self._retrieve_edges(node):
-      yield self.add_edge(edge)
-
-      for node_key in edge.node:
-        node = Node.get(node_key)  # retrieve node
-
-        if node:
-          for artifact in self._traverse(node, _current_depth+1):
-            yield artifact
-
     raise StopIteration()  # recursion has finished: return
 
   def _enter_context(self):
 
-    '''  '''
+    ''' Enter context handler, for use with Python's ``with`` statement.
+        Prevents recursive use of live state in any one ``Graph`` object
+        during concurrent use via realtime dispatch.
+
+        :returns: ``self``, for chainability and use with the ``as``-after-
+          ``with``-block. '''
 
     if self.__streaming__:
       raise RuntimeError('Cannot nest streaming contexts for Graph objects.')
-    return setattr(self, '__streaming__', True) or self  # we are now going _faster_
+
+    # we are now going _faster_
+    return setattr(self, '__streaming__', True) or self
 
   def _exit_context(self, exception_type, exception, traceback):
 
-    '''  '''
+    ''' Exit context handler, for use with Python's ``with`` statement.
+        Never suppresses exceptions... *for now!*
+
+        :param exception_type: Type (class) for the current ``exception``, or
+          ``None`` if no exception ocurred.
+
+        :param exception: Inner exception object from wrapped ``with`` block, or
+          ``None`` if no exception ocurred.
+
+        :param traceback: Matching traceback for ``exception`` object from
+          wrapped ``with`` block, or ``None`` if no exception ocurred.
+
+        :returns: In the event of an ``exception``, returns ``False`` to refuse
+          the option of supressing it. '''
 
     if exception:
       # @TODO(sgammon): is there anything internal to be suppressed?
@@ -119,15 +164,25 @@ class Graph(object):
 
   def _retrieve_edges(self, node):
 
-    '''  '''
+    ''' Generate a query to iterate over a target ``node``'s edges, then
+        immediately execute and iterate over those results.
+
+        :param node: Target ``Vertex`` for which ``Edge`` records should be
+          retrieved.
+
+        :yields: Discovered ``Edge`` records according to the subject ``node``,
+          one at a time, according to the currently-active ``GraphOptions``. '''
+
+    query = Edge.query().filter(Edge.node == node.key.urlsafe())
 
     # query and retrieve edges
-    for edge in Edge.query().filter(Edge.node == node.key.urlsafe()).fetch(limit=self.options.limit):
+    for edge in query.fetch(limit=self.options.limit):
       yield edge
 
   def _fulfill_natives(self):
 
-    '''  '''
+    ''' Internal method to trigger the retrieval of native data matching
+        structural keys encountered during graph traversal. '''
 
     from fatcatmap import models
 
@@ -149,7 +204,13 @@ class Graph(object):
 
   def _enqueue_native(self, parent, encoded_key):
 
-    '''  '''
+    ''' Enqueue a native data record to be retrieved when needed. Called
+        during the traversal process to keep track of native dependencies.
+
+        :param parent:
+        :param encoded_key:
+
+        :returns: '''
 
     # inflate native key
     native_key = model.Key(urlsafe=encoded_key)
@@ -169,7 +230,12 @@ class Graph(object):
 
   def _update_edge_indexes(self, edge_key, edge_nodes):
 
-    '''  '''
+    ''' Update local indexes for an encountered ``Edge`` ``key`` and pair of
+        ``nodes``.
+
+        :param edge_key: Target ``Edge`` key to update local indexes for.
+        :param edge_nodes: Peered ``Vertex`` keys to update local indexes
+          for. '''
 
     for node_key_left in edge_nodes:
       for node_key_right in edge_nodes:
@@ -180,8 +246,10 @@ class Graph(object):
         if node_key_right not in self.__adjacency__:
           self.__adjacency__[node_key_right] = set()
 
-        self.__adjacency__[node_key_left].add('::'.join((node_key_right, edge_key.urlsafe())))
-        self.__adjacency__[node_key_right].add('::'.join((node_key_left, edge_key.urlsafe())))
+        self.__adjacency__[node_key_left].add((
+          '::'.join((node_key_right, edge_key.urlsafe()))))
+        self.__adjacency__[node_key_right].add((
+          '::'.join((node_key_left, edge_key.urlsafe()))))
 
       node_key = node_key_left  # switch contexts: done with comparison
 
@@ -194,7 +262,14 @@ class Graph(object):
   ## == Nodes == ##
   def add_node(self, node):
 
-    '''  '''
+    ''' Add a node to the local graph.
+
+        :param node: ``Vertex`` to add to the local graph.
+
+        :raises TypeError: If the target ``Vertex`` is not an instance of this
+          ``Graph``'s bound ``__node_model__``.
+
+        :returns: The resulting ``node`` as it was added to the local graph. '''
 
     if not isinstance(node, self.__node_model__):
       raise TypeError('Must pass `node` of bound Node'
@@ -214,7 +289,15 @@ class Graph(object):
 
   def has_node(self, node):
 
-    '''  '''
+    ''' Check to see if the local graph contains ``node``.
+
+        :param node: ``Vertex`` to check against the local graph for ownership.
+
+        :raises TypeError: If the target ``Vertex`` is not an instance of this
+          ``Graph``'s bound ``__node_model__``.
+
+        :returns: ``bool`` value indicating whether ``node`` is contained by the
+          local graph object. '''
 
     if isinstance(node, self.__node_model__): node = node.key
     if not isinstance(node, model.Key):
@@ -225,7 +308,10 @@ class Graph(object):
   ## == Edges == ##
   def add_edge(self, edge):
 
-    '''  '''
+    ''' Add an edge to the local graph.
+
+        :param edge: ``Edge`` to add to the local graph.
+        :returns: The resulting ``edge`` as it was added to the graph. '''
 
     # check against key and add
     if edge.key not in self.__keys__:
@@ -243,15 +329,34 @@ class Graph(object):
 
   def has_edge(self, edge):
 
-    '''  '''
+    ''' Check to see if the local graph contains ``edge``.
+
+        :param edge: ``Edge`` to check for membership against the local graph.
+        :raises TypeError: If a ``edge`` key is passed which is not an instance
+          of ``model.Key`` or is of an invalid or unknown kind.
+
+        :returns: ``bool`` value indicating whether ``edge`` is contained by the
+          local graph object. '''
 
     if isinstance(edge, self.__edge_model__): edge = edge.key
-    if not isinstance(edge, model.Key): raise TypeError('')
+    if not isinstance(edge, model.Key): raise TypeError('`edge` must be an'
+                                                        '``Edge`` key')
+    return edge in self.__edges__
 
   ## == Output == ##
   def extract(self, flatten=False):
 
-    '''  '''
+    ''' Extract the local graph object into a compact and efficient structure,
+        suitable for encoding in a raw object and passing to a client.
+
+        :param flatten: Flatten models to ``dict`` values recursively, such that
+          the output object is ready for encoding from something like JSON.
+
+        :returns: 3-tuple of the items ``meta``, ``data``, and ``graph``, which
+          transmit *metadata*, *full object data/keys*, and *graph structure*,
+          respectively. Keys and objects are stored in an abstracted and
+          extremely space-efficient manner and subsequently referenced with
+          integer ``list`` indexes only. '''
 
     # create lookup sets
     _seen_nodes, _seen_edges, _seen_natives = set(), set(), set()
@@ -260,12 +365,16 @@ class Graph(object):
 
     # create empty local data containers and indexes
     _keys, _nodes, _edges, _natives, _origin_i = [], [], [], [], None
-    _edges_to_nodes, _nodes_to_edges, _nodes_to_nodes, _keys_to_indexes, _keys_to_objects, _objects_to_natives, _natives_to_objects = (
-      collections.defaultdict(lambda: set()) for x in xrange(0, 7)
-    )
+
+    _edges_to_nodes, _nodes_to_edges, _nodes_to_nodes, _keys_to_indexes = (
+      collections.defaultdict(lambda: set()) for x in xrange(0, 4))
+
+    _keys_to_objects, _objects_to_natives, _natives_to_objects = (
+      collections.defaultdict(lambda: set()) for x in xrange(0, 3))
 
     # utility routines
-    _flatten_index = lambda index: list((([k] + list(v)) if isinstance(v, set) else (k, v)) for k, v in index.iteritems())
+    _flatten_index = lambda index: list((([k] + list(v)) if (
+      isinstance(v, set)) else (k, v)) for k, v in index.iteritems())
 
     # populate data containers and indexes
     for iterator in (self.nodes, self.edges, self.natives):
@@ -280,10 +389,15 @@ class Graph(object):
           if encoded_key in _seen_nodes:
             continue
 
-          _key_i = _keys.append(encoded_key) or (len(_keys) - 1)  # provision key
+          # provision key
+          _key_i = _keys.append(encoded_key) or (len(_keys) - 1)
           _keys_to_indexes[encoded_key] = _key_i  # map encoded key to key index
-          _keys_to_objects[_key_i] = artifact.to_dict() if flatten else artifact  # map key index to serialized object
-          _node_i = (_nodes.append(_key_i) or len(_nodes) - 1)  # map to node index
+
+          # map key index to serialized object
+          _keys_to_objects[_key_i] = artifact.to_dict() if flatten else artifact
+
+          # map to node index
+          _node_i = (_nodes.append(_key_i) or len(_nodes) - 1)
 
           # lookin' for the origin
           if (not _origin_i) and self.origin.key.urlsafe() == encoded_key:
@@ -310,11 +424,17 @@ class Graph(object):
             _invalid_edges.add(encoded_key)
             continue  # cancel processing for this edge: it is invalid
 
-          # provision edge
-          _key_i = _keys.append(encoded_key) or (len(_keys) - 1)  # provision key
-          _keys_to_indexes[encoded_key] = _key_i  # map encoded key to key index
-          _keys_to_objects[_key_i] = artifact.to_dict() if flatten else artifact  # map key index to serialized object
-          _edge_i = (_edges.append(_key_i) or len(_edges) - 1)  # map to node index
+          # provision edge & key
+          _key_i = _keys.append(encoded_key) or (len(_keys) - 1)
+
+          # map encoded key to key index
+          _keys_to_indexes[encoded_key] = _key_i
+
+          # map key index to serialized object
+          _keys_to_objects[_key_i] = artifact.to_dict() if flatten else artifact
+
+          # map to node index
+          _edge_i = (_edges.append(_key_i) or len(_edges) - 1)
 
           # leave ourselves a hint about the native
           _natives_to_objects[artifact.native] = _key_i
@@ -343,7 +463,8 @@ class Graph(object):
               if (node, node_right) not in _node_to_node_map:
 
                 # resolve right node's index and map (node -> node)
-                _nodes_to_nodes[_node_i].add(_nodes.index(_keys_to_indexes[node_right]))
+                _nodes_to_nodes[_node_i].add((
+                  _nodes.index(_keys_to_indexes[node_right])))
                 _node_to_node_map.add((node, node_right))
 
         # handle natives...
@@ -354,14 +475,21 @@ class Graph(object):
 
           # perhaps we already bound this native?
           elif encoded_key in _bound_natives:
-            _objects_to_natives[_key_i] = _natives.index(_keys.index(encoded_key))  # artifact -> existing native
+            _objects_to_natives[_key_i] = (  # artifact -> existing native
+              _natives.index(_keys.index(encoded_key)))
             continue
 
-          # provision native
-          _key_i = _keys.append(encoded_key) or (len(_keys) - 1)  # provision key
-          _keys_to_indexes[encoded_key] = _key_i  # map encoded key to key index
-          _keys_to_objects[_key_i] = artifact.to_dict() if flatten else artifact  # map key index to serialized object
-          _native_i = (_natives.append(_key_i) or len(_natives) - 1)  # map to node index
+          # provision native & key
+          _key_i = _keys.append(encoded_key) or (len(_keys) - 1)
+
+          # map encoded key to key index
+          _keys_to_indexes[encoded_key] = _key_i
+
+          # map key index to serialized object
+          _keys_to_objects[_key_i] = artifact.to_dict() if flatten else artifact
+
+          # map to node index
+          _native_i = (_natives.append(_key_i) or len(_natives) - 1)
 
           _bound_natives.add(encoded_key)
           _objects_to_natives[_key_i] = _native_i  # artifact -> native
@@ -375,14 +503,19 @@ class Graph(object):
     return {
 
       ## == metadata == ##
-      'counts': [len(_nodes), len(_edges), len(_natives)],  # compact counts
-      'errors': [len(_missing_nodes), len(_invalid_edges), len(_missing_natives)],  # compact error stats
+
+      # compact counts
+      'counts': [len(_nodes), len(_edges), len(_natives)],
+
+      'errors': [  # compact error stats
+        len(_missing_nodes), len(_invalid_edges), len(_missing_natives)],
+
       'natives': self.fulfilled,  # bool: are natives included?
-      'options': self.options.to_struct(),  # dictionary: options for this graph query
-      'kinds': {
+      'options': self.options.to_struct(),  # dictionary: options for graph
+
+      'kinds': {  # list of mentioned node native kinds
         'node': tuple(self.node_native_kinds) or tuple(),
-        'edge': tuple(self.edge_native_kinds) or tuple()
-       }  # list of mentioned node native kinds
+        'edge': tuple(self.edge_native_kinds) or tuple()}
 
     }, {
 
@@ -398,17 +531,32 @@ class Graph(object):
     }, {
 
       ## == graph == ##
-      'nodes': max(_nodes),
-      'edges': max(_edges),
-      'natives': max(_natives),
-      'origin': _origin_i
+      'nodes': max(_nodes) if _nodes else 0,
+      'edges': max(_edges) if _edges else 0,
+      'natives': max(_natives) if _natives else 0,
+      'origin': _origin_i if _nodes else None
 
     }
 
   ## == Top-level == ##
   def build(self, fulfill=True, iter=False):
 
-    '''  '''
+    ''' Build the target graph as specified by local ``GraphOptions`` and the
+        caller's desire to ``fulfill`` (fill-out) structural key data.
+
+        :param fulfill: ``bool`` flag indicating that the caller would like full
+          object data returned as part of this request's response.
+
+        :param iter: ``bool`` flag indicating that we wish to enable a fully-
+          iterative flow, such as in a websocket/realtime dispatch-style
+          environment.
+
+        :returns: If ``iter`` mode is requested, a closured function is returned
+          that acts as a generator and provides access to all object types as
+          they are encountered in the traversal process, yielded one-at-a-time.
+          If ``iter`` mode is not active, the iterative process is exhausted
+          according to ``GraphOptions`` limits and returned as a synchronous
+          structure. '''
 
     # fulfill origin, if needed
     if isinstance(self.__origin__, model.Key):
@@ -417,7 +565,13 @@ class Graph(object):
     # build iterator
     def _iter_graph_builder():
 
-      '''  '''
+      ''' Iteratively traverse and provide graph ``Vertex``es, ``Edge``es, and
+          ``Native``es to the callee, starting from ``self.origin`` and working
+          outwards according to ``self.options``.
+
+          :yields: Artifacts encountered during traversal, one at a time.
+            Once those are exhausted for a single browse cycle, ``native``
+            records are also sent (assuming ``fulfill`` mode is active). '''
 
       for artifact in self._traverse(self.origin):
         yield artifact

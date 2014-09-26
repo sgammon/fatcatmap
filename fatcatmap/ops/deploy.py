@@ -7,96 +7,119 @@
 
 '''
 
+from __future__ import print_function
+
 # stdlib
 import os
+
+from time import sleep
 
 # local
 from . import support
 from . import helpers
+from . import settings
 from .helpers import notify
 from .support import service
 from .helpers import get_node
 
 # fabric
 from fabric import colors, api
-from fabric.api import env, task
+from fabric.api import env, task,hide
 from fabtools import require, deb
+from fabric.api import settings as f_settings
+
+def is_finished():
+
+  ''' @todo fix base image to not have ghost startup script run and figure out better error handling'''
+
+  command = 'grep -v "Aug 23 09:01:46 bullpen-sandbox startupscript: Finished" /var/log/startupscript.log | ' \
+            'grep "Finished running startup"'
+
+  for i in xrange(30):
+    with hide('warnings'), f_settings(warn_only=True,):
+      output = api.sudo(command)
+
+      if "Finished running startup" in output:
+        print(colors.green("node finished running startup script"))
+        print(colors.yellow(output))
+        return True
+
+      elif any((word in output.lower() for word in ["error","failed"])): #@todo this won't run currently
+        print(colors.red("oops sam fucked up"))
+        return False
+
+    print(colors.yellow("not ready yet....sleeping for 10 seconds"))
+    sleep(10)
 
 
 @notify
 @task
 def bootstrap():
 
-  ''' Prepare a newly-provisioned node with supporting software. '''
+  ''' Prepare a newly-provisioned node with supporting software. Install,
+      enable, and start services for any role-scoped services.'''
 
-  for ip, node in env.hosts_detail.iteritems():
+  if not is_finished():
+    print(colors.red("unable to bootstrap, startup script failed"))
+    return
 
-    ## ~~ app nodes ~~ ##
-    if node.group == 'app':
+  node = get_node()
 
-      ## ~~ install apps ~~ ##
-      fatcatmap(node.environment)
+  ## ~~ app nodes ~~ ##
+  if node.group == 'app':
 
-      ## ~~ start k9 ~~ ##
-      api.sudo("/base/software/k9/sbin/k9 --ini /base/software/k9/apphosting/master.ini")
+    ## ~~ install apps ~~ ##
+    fatcatmap(node.environment)
 
-    ## ~~ install services-n-stuff ~~ ##
-    services = support.setup_for_group(group=node.group)
+    ## ~~ start k9 ~~ ##
+    api.sudo("/base/software/k9/sbin/k9"
+             " --ini /base/software/k9/apphosting/master.ini")
 
-    ## ~~ start supporting services ~~ ##
-    support.start(*services)
+  ## ~~ install services-n-stuff ~~ ##
+  services = support.setup_for_group(group=node.group)
+
+  ## ~~ start supporting services ~~ ##
+  support.start(*services)
 
 
 @notify
 @task
 def fatcatmap(environment):
 
-  '''  '''
+  ''' Install the ``catnip`` Python application and JS frontend for
+      ``fatcatmap``, making use of the given Fabric ``environment``.
 
-  print colors.yellow('Deploying fatcatmap on host %s...' % get_node())
+      :param environment: Active Fabric environment with target nodes and
+        configuration. '''
+
+  print(colors.yellow('Deploying fatcatmap on host %s...' % get_node()))
   helpers.pause()
 
   install_fcm = """
-  cd /base/apps;
-  gsutil cp gs://fcm-dev/%s/%s/app/latest.tar.gz - | tar -xvz;
-  rm -fr /base/apps/fatcatmap/lib/python2.7 /base/apps/fatcatmap/bin;
-  virtualenv --python=/usr/bin/python /base/apps/fatcatmap;
+
+    cd /base/apps;
+    gsutil cp gs://fcm-dev/%s/%s/app/latest.tar.gz - | tar -xvz;
+    rm -fr /base/apps/fatcatmap/lib/python2.7 /base/apps/fatcatmap/bin;
+    virtualenv --python=/usr/bin/python /base/apps/fatcatmap;
+
   """ % (environment, 'builds' if environment == 'sandbox' else 'releases')
 
   api.run(install_fcm)
 
   # fix permissions & install deps
-  api.sudo("chown k9:runtime -R /base/apps/fatcatmap")
+  api.sudo("chown %s:%s -R /base/apps/fatcatmap" % (
+    settings.USER, settings.GROUP))
+
+  # correct permissions on binaries
   api.sudo("chmod +x /base/apps/fatcatmap/bin/*")
-  api.run("/base/apps/fatcatmap/bin/pip install -r /base/apps/fatcatmap/requirements.txt")
 
-  api.sudo("touch /base/ns/trigger/k9.reload /base/ns/trigger/apps/fatcatmap.reload")
+  # install pip requirements
+  api.run("/base/apps/fatcatmap/bin/pip"
+          " install -r /base/apps/fatcatmap/requirements.txt")
 
+  # reload apps if any are running
+  api.sudo("touch"
+           " /base/ns/trigger/k9.reload"
+           " /base/ns/trigger/apps/fatcatmap.reload")
 
-@notify
-@task
-def mariadb():
-
-  '''  '''
-
-  add_repo = """
-  sudo apt-get -y install python-software-properties &&
-  sudo apt-key adv --recv-keys --keyserver keyserver.ubuntu.com 0xcbcb082a1bb943db &&
-  sudo add-apt-repository 'deb http://ftp.osuosl.org/pub/mariadb/repo/10.1/debian wheezy main' &&
-  sudo apt-get update && sudo apt-get install mariadb-server
-  """
-  api.run(add_repo)
-
-
-@notify
-@task
-def rexter():
-
-  '''  '''
-
-  rex = """
-  apt-get install openjdk-7-jre maven git &&
-  cd /tmp && git clone https://github.com/tinkerpop/rexster.git &&
-  cd rexster && mvn clean install
-  """
-  api.sudo(rex)
+  print(colors.green('~~~ fcm installed ~~~'))  # we done tho

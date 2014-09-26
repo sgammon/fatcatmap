@@ -49,6 +49,8 @@ tools.setup(
         "fatcatmap",
         "fatcatmap.ops",
         "fatcatmap.logic",
+        "fatcatmap.logic.db",
+        "fatcatmap.logic.grapher",
         "fatcatmap.models",
         "fatcatmap.services",
         "fatcatmap.analyzer"

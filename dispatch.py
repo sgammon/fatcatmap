@@ -12,7 +12,13 @@ import os
 # initialize canteen
 from fatcatmap import *
 import fatcatmap, canteen
-from fatcatmap.config import config as __app_config__
+from fatcatmap.config import config as appconfig
+
+# sentry integration
+from raven import Client
+from raven.middleware import Sentry
+client = Client(appconfig.app['credentials']['sentry']['endpoint'])
 
 # spawn and run app
-application = canteen.spawn(fatcatmap, dev=False, config=__app_config__)
+application = Sentry(canteen.spawn(fatcatmap,
+  config=appconfig), client=client)

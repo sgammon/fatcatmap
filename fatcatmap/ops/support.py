@@ -13,18 +13,28 @@ from . import settings
 from fabtools import require
 from fabric.api import task, sudo
 
+from services.k9 import init_script as k9_init_script
+
 
 ## build lookup for process names
 _SERVICE_NAMES = {
   'proxy': settings.Components.PROXY,
   'http': settings.Components.WEBSERVER,
-  'database': settings.Components.DATABASE
-}
+  'database': settings.Components.DATABASE}
 
 ## build ourselves a nice little index
 _SERVICES_BY_NAME = {
-  v: k for k, v in _SERVICE_NAMES.iteritems()
-}
+  v: k for k, v in _SERVICE_NAMES.iteritems()}
+
+
+@task
+def k9():
+
+  ''' Setup K9. '''
+
+  require.file('/etc/init.d/k9',contents=k9_init_script,use_sudo=True)
+  require.directory('/var/log/k9/',use_sudo=True)
+  sudo('chmod a+x /etc/init.d/k9 && /etc/init.d/k9 restart')
 
 
 def setup_for_group(group):
@@ -51,8 +61,15 @@ def service(name, action="restart"):
   ''' Perform an action on a service by name. '''
 
   # corner case: redis is moody
+  if name in ('k9'):
+    sudo("touch ")
+
   if name == 'redis': name == 'redis:redis-server'
   sudo("supervisorctl {1} {0}".format(name, action))
+
+def k9(action="reload"):
+   file = settings.K9[action]
+   sudo('touch %s' % file)
 
 
 @task

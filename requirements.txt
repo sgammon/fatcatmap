@@ -3,4 +3,15 @@ nose
 uwsgi
 fabtools
 fabric
+mysql-python
+google-api-python-client
+pyopenssl
+msgpack-python
+python-snappy
+raven
+fakeredis
+eventlet
+gevent
+git+https://github.com/sgammon/libcloud.git#egg=libcloud
 dogapi
+hiredis

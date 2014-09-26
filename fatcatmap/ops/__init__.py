@@ -25,7 +25,7 @@ if __debug__:  # only let ops tools run in dev
     from . import provision  # tools to provision & manage infrastructure
     from .deploy import bootstrap  # setup a new box with proper software
     from .deploy import fatcatmap  # uploads and activates fatcatmap code
-    from .support import stop, start  # start and stop a service manually
+    from .support import stop, start, k9  # start and stop stuff manually
     from .support import reload, restart  # above, but graceful or forced
     from .provision import nodes, status  # list nodes & summarize status
     from .provision import create, destroy  # start or shutdown a machine
@@ -33,4 +33,4 @@ if __debug__:  # only let ops tools run in dev
 
 
     __all__ = ('bootstrap', 'fatcatmap', 'stop', 'start', 'reload', 'restart',
-               'nodes', 'status', 'create', 'destroy', 'activate', 'deactivate')
+               'nodes', 'status', 'create', 'destroy', 'activate', 'deactivate','k9')
