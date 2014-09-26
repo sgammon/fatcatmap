@@ -10,15 +10,18 @@
  * copyright (c) momentum labs, 2014
  */
 
+goog.require('util.array');
 goog.require('async.decorators');
 
 goog.provide('async.future');
+
+var Future, MultiFuture;
 
 /**
  * @constructor
  * @extends {Continuation}
  */
-var Future = function () {
+Future = function () {
   /**
    * @type {string}
    */
@@ -53,7 +56,7 @@ Future.prototype.fulfill = function (value, error) {
 
   if (this.status !== 'PENDING') {
     value = false;
-    error = new Error('Can\'t fulfill already-fulfilled future.');
+    error = new Error('Can\'t fulfill already-fulfilled Future.');
     error.source = this;
   }
 
@@ -111,6 +114,105 @@ Future.prototype.then = function (pending) {
   }
 
   return next;
+};
+
+/**
+ * @constructor
+ * @extends {Future}
+ * @param {...[*]} futures
+ */
+MultiFuture = function (futures) {
+  var mfuture = this;
+
+  futures = util.array.normalize(futures);
+
+  Future.call(this);
+
+  /**
+   * @protected
+   * @type {Array.<*>}
+   */
+  this._unresolved = [];
+
+  /**
+   * @protected
+   * @type {number}
+   */
+  this._resolving = 0;
+
+  this.all(futures);
+};
+
+MultiFuture.prototype = new Future();
+
+/**
+ * Adds an additional unresolved value to the MultiFuture.
+ * @param {*} unresolved
+ * @throws {Error} If current MultiFuture is already fulfilled.
+ */
+MultiFuture.prototype.add = function (unresolved) {
+  var mfuture = this,
+    i;
+
+  if (this.status !== 'PENDING')
+    throw new Error('Can\'t add to already-fulfilled MultiFuture.');
+
+  i = this._unresolved.push(unresolved) - 1;
+  this._resolving += 1;
+
+  if (unresolved instanceof Future)
+    unresolved.then(function (v, e) {
+      if (e && !mfuture.error)
+        return mfuture.fulfill(false, e);
+      
+      mfuture._unresolved[i] = v;
+
+      if (--mfuture._resolving === 0)
+        mfuture.fulfill(mfuture._unresolved);
+    });
+};
+
+/**
+ * Waits for all unresolved values to resolve before fulfilling.
+ * @param {Array.<*>} unresolved
+ * @return {Future}
+ */
+MultiFuture.prototype.all = function (unresolved) {
+  var mfuture = this;
+
+  unresolved.forEach(function (_unresolved) {
+    mfuture.add(_unresolved);
+  });
+
+  return this.then();
+};
+
+/**
+ * Waits for the first unresolved value to resolve before fulfilling.
+ * @param {Array.<*>} unresolved
+ * @return {Future}
+ */
+MultiFuture.prototype.any = function (unresolved) {
+  var result = this.all(unresolved);
+
+  this._resolving = 1;
+
+  return result;
+};
+
+/**
+ * Returns a new Future waiting for the result of the current MultiFuture.
+ * @override
+ * @param {(PipelinedCallback|Future)} waiting
+ * @return {Future}
+ */
+MultiFuture.prototype.then = function (waiting) {
+  var result = Future.prototype.then.call(this, waiting);
+
+  if (this._unresolved.length === 0)
+    this.fulfill(this._unresolved);
+
+  return result;
 };
 
 /**

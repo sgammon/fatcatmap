@@ -23,7 +23,7 @@ var _dataCache, _dataStore, watchers;
 _dataCache = {};
 
 if (supports.storage.local)
-  _dataStore = new Store(window.localStorage, 'data', 'storage.data');
+  _dataStore = new Store(window.localStorage, 'data', 'data');
 
 watchers = {};
 

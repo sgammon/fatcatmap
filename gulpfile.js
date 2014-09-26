@@ -323,7 +323,7 @@ task('watch', function (cb) {
 task('test', ['test:release']);
 
 // Run JS tests in release mode
-task('test:release', ['closure:test'], function (cb) {
+task('test:release', ['test:clean', 'closure:test'], function (cb) {
   karma.start(merge({}, config.karma));
   cb();
 });
@@ -332,7 +332,7 @@ task('test:release', ['closure:test'], function (cb) {
 task('test:clean', function () {
   return src([
     '.develop/coverage/js/**/*',
-    '.develop/test-reports/js/**/*',
+    '.develop/test-reports/js/**/*'
   ])
     .pipe(rmrf());
 });

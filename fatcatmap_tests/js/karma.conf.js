@@ -35,8 +35,7 @@ module.exports = {
   },
 
   coverageReporter: {
-    type: 'text',
-    // type: 'cobertura',
+    type: process.env.BUILD ? 'cobertura' : 'text',
     dir: REPORT_BASE + 'coverage/js/'
   },
 

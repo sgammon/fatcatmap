@@ -10,6 +10,7 @@
  * @todo implement with channel service
  */
 
+goog.require('util.url');
 goog.require('services');
 goog.require('services.http');
 

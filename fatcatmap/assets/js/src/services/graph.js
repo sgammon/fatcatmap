@@ -11,21 +11,47 @@
 
 goog.require('supports');
 goog.require('services');
+goog.require('services.rpc');
 goog.require('services.data');
+goog.require('services.search');
 
 goog.provide('services.graph');
 
-var _graphCache, _graphStore, _graphIndex, GRAPH;
+var _graphCache, _graphStore, _graphIndex, GRAPH, GraphQuery;
 
 _graphCache = {};
 
 if (supports.storage.local)
-  _graphStore = new Store(window.localStorage, 'graph', 'storage.graph');
+  _graphStore = new Store(window.localStorage, 'graph', 'graph');
 
 _graphIndex = {
   adjacency: {},
   nodesByKey: {},
   edgesByKey: {}
+};
+
+/**
+ * @constructor
+ * @extends {Query}
+ * @param {!QueryFilterSpec} spec
+ * @throws {Error} If spec is not defined.
+ */
+GraphQuery = function (spec) {
+  return Query.call(this, spec);
+};
+
+GraphQuery.prototype = new Query();
+
+/**
+ * @override
+ * @return {Future}
+ */
+GraphQuery.execute = function () {
+  var request = this.spec;
+
+  request.filters = this.filters;
+  
+  return services.rpc.graph.construct(request);
 };
 
 /**

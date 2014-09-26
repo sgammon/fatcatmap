@@ -9,17 +9,9 @@
  * copyright (c) momentum labs, 2014
  */
 
-goog.provide('$');
+goog.require('util.array');
 
-/**
- * @param {Object.<number,*>} list List of items to convert to array.
- * @return {Array.<*>}
- */
-var toArray = function (list) {
-  var arr = [], i;
-  for (i = 0; i < list.length; arr.push(list[i++])) {}
-  return arr;
-};
+goog.provide('$');
 
 /**
  * @param {string|Node} query CSS selector.
@@ -37,7 +29,7 @@ var $ = function (query, bound) {
     if (query.charAt(0) === '#')
       return document.getElementById(query.slice(1));
 
-    return toArray(bound.querySelectorAll(query));
+    return util.array.toArray(bound.querySelectorAll(query));
   }
   throw new TypeError('Invalid document query string.');
 };

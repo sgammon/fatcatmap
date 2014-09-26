@@ -32,7 +32,7 @@ var Store = function (backend, namespace, provideAs) {
   this._backend = backend;
 
   if (typeof provideAs === 'string')
-    ServiceContext.register(provideAs, this);
+    ServiceContext.register('storage.' + provideAs, this);
 };
 
 Store.prototype = {

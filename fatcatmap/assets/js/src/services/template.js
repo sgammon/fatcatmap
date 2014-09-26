@@ -48,8 +48,10 @@ services.template = /** @lends {ServiceContext.prototype.template} */ {
       template.fulfill(TEMPLATES[filename]);
     } else {
       this.rpc.content.template({
-        data: { path: filename }
-      }, function (tpl, err) {
+        data: {
+          path: filename
+        }
+      }).then(function (tpl, err) {
         if (err)
           return template.fulfill(false, err);
 

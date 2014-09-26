@@ -10,6 +10,7 @@
  * copyright (c) momentum labs, 2014
  */
 
+goog.require('util.array');
 goog.require('async.decorators');
 goog.require('async.future');
 
@@ -160,9 +161,7 @@ Task.prototype.first = function (fn) {
  * @param {...[*]} args
  */
 Task.prototype.args = function (args) {
-  this._args = args ? 
-    arguments[1] ? Array.prototype.slice.call(arguments) :
-    Array.isArray(args) ? args : [args] : this._args;
+  this._args = util.array.normalize(args);
 };
 
 /**

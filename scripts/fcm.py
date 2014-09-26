@@ -198,27 +198,29 @@ class FCM(cli.Tool):
 
       if arguments.templates:
 
-        logging.info('Compiling app templates...')
+        pass
 
-        from scripts import compile_templates
+        # logging.info('Compiling app templates...')
 
-        # delete existing templates first, if any
-        logging.info('Cleaning existing template path...')
-        module_root = os.path.join(project_root, "fatcatmap", "templates")
+        # from scripts import compile_templates
 
-        clean_command = "rm -fr %s" % os.path.join(module_root, "compiled", "*")
-        if config.get('debug', False):
-          logging.debug('Executing command: "%s".' % clean_command)
-        os.system(clean_command)
+        # # delete existing templates first, if any
+        # logging.info('Cleaning existing template path...')
+        # module_root = os.path.join(project_root, "fatcatmap", "templates")
 
-        # run the template compiler
-        try:
-          result = compile_templates.run()
-        except:
-          logging.error('An exception was encountered while compiling templates.')
-          raise
-        else:
-          logging.info('Templates compiled successfully.')
+        # clean_command = "rm -fr %s" % os.path.join(module_root, "compiled", "*")
+        # if config.get('debug', False):
+        #   logging.debug('Executing command: "%s".' % clean_command)
+        # os.system(clean_command)
+
+        # # run the template compiler
+        # try:
+        #   result = compile_templates.run()
+        # except:
+        #   logging.error('An exception was encountered while compiling templates.')
+        #   raise
+        # else:
+        #   logging.info('Templates compiled successfully.')
 
 
   class Shell(cli.Tool):
