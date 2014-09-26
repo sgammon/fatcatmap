@@ -301,8 +301,8 @@ class FCM(cli.Tool):
       ('--update', {'action': 'store_true', 'help': 'download latest dataset package (applies to source if any, else target)'}),
       ('--no-report', {'action': 'store_true', 'help': 'don\'t output reports about stuff'}))
 
-    @staticmethod
-    def build_cli_args(arguments, adapter):
+    @classmethod
+    def build_cli_args(cls, arguments, adapter):
 
       '''  '''
 
@@ -318,8 +318,8 @@ class FCM(cli.Tool):
           'database': lambda v: ('n', v)}[item](value))
       return " ".join(map(lambda arg: "-%s %s" % arg, args))
 
-    @staticmethod
-    def resolve_adapters(arguments):
+    @classmethod
+    def resolve_adapters(cls, arguments):
 
       '''  '''
 
@@ -335,8 +335,8 @@ class FCM(cli.Tool):
 
       return source() if source else None, target()  # construct adapters
 
-    @staticmethod
-    def clean_data(arguments, target):
+    @classmethod
+    def clean_data(cls, arguments, target):
 
       '''  '''
 
@@ -344,8 +344,8 @@ class FCM(cli.Tool):
       if not arguments.quiet: logging.info('Cleaning target "%s" storage...' % target)
       target.execute(target.Operations.FLUSH_ALL, '__meta__')
 
-    @staticmethod
-    def apply_update(arguments, target):
+    @classmethod
+    def apply_update(cls, arguments, target):
 
       '''  '''
 
@@ -371,8 +371,8 @@ class FCM(cli.Tool):
 
       if not arguments.quiet: logging.info('Dataset update complete.')
 
-    @staticmethod
-    def apply_fixtures(arguments, target):
+    @classmethod
+    def apply_fixtures(cls, arguments, target):
 
       '''  '''
 
@@ -409,8 +409,8 @@ class FCM(cli.Tool):
         pipeline.execute()
         if not arguments.quiet: logging.info('Fixtures applied with great success.')
 
-    @staticmethod
-    def read_sources(arguments, source):
+    @classmethod
+    def read_sources(cls, arguments, source):
 
       '''  '''
 
@@ -489,8 +489,8 @@ class FCM(cli.Tool):
         for type in _by_kind:
           logging.debug('-- "%s": %s entities' % (type, str(_by_kind[type])))
 
-    @staticmethod
-    def expand_entity(arguments, source, key, entity):
+    @classmethod
+    def expand_entity(cls, arguments, source, key, entity):
 
       '''  '''
 
@@ -507,8 +507,8 @@ class FCM(cli.Tool):
 
       return source.EngineConfig.serializer.loads(entity)
 
-    @staticmethod
-    def write_object(target, key, entity, pipeline=None):
+    @classmethod
+    def write_object(cls, target, key, entity, pipeline=None):
 
       '''  '''
 
@@ -516,8 +516,8 @@ class FCM(cli.Tool):
         return target.put(key.flatten(True), entity, key.kind, pipeline=pipeline)
       return target._put(entity, pipeline=pipeline)
 
-    @staticmethod
-    def apply_migration(arguments, source, target):
+    @classmethod
+    def apply_migration(cls, arguments, source, target):
 
       '''  '''
 
@@ -595,7 +595,8 @@ class FCM(cli.Tool):
       if not arguments.quiet:
         logging.info('Migration complete.')
 
-    def execute(arguments):
+    @classmethod
+    def execute(cls, arguments):
 
       ''' Execute the ``fcm migrate`` tool, given a set of arguments
           packaged as a :py:class:`argparse.Namespace`.
@@ -608,19 +609,19 @@ class FCM(cli.Tool):
           passed to :py:meth:`sys.exit` and converted into Unix-style
           return codes. '''
 
-      source, target = FCM.Migrate.resolve_adapters(arguments)
+      source, target = cls.resolve_adapters(arguments)
 
       ## perform clean against target (if so instructed) before anything else
-      if arguments.clean: FCM.Migrate.clean_data(arguments, target)
+      if arguments.clean: cls.clean_data(arguments, target)
 
       ## perform update of local data first, if needed
-      if arguments.update: FCM.Migrate.apply_update(arguments, target)
+      if arguments.update: cls.apply_update(arguments, target)
 
       ## run fixtures next, if so instructed
-      if arguments.fixtures: FCM.Migrate.apply_fixtures(arguments, target)
+      if arguments.fixtures: cls.apply_fixtures(arguments, target)
 
       ## finally, migrate data
-      if source and target: FCM.Migrate.apply_migration(arguments, source, target)
+      if source and target: cls.apply_migration(arguments, source, target)
 
       if not arguments.quiet: logging.info('~~~ Data operations finished. ~~~')
 

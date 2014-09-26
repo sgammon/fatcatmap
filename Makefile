@@ -33,7 +33,7 @@ CANTEEN?=0
 CANTEEN_BRANCH?=feature/FLY-8
 BOOTSTRAP_BRANCH?=master
 SANDBOX_GIT?=$(USER)@sandbox
-BREWDEPS=openssl python haproxy redis pypy snappy
+BREWDEPS=openssl python haproxy redis pypy snappy hiredis elixir scala
 TEST_FLAGS?=
 
 ## == optionals == ##
@@ -247,10 +247,10 @@ $(DEVROOT)/bin/fcm:
 $(DEVROOT)/lib/python2.7/site-packages/canteen.pth:
 	@echo "$(DEVROOT)/lib/canteen" > lib/python2.7/site-packages/canteen.pth
 
-.develop: brew bin lib $(DEVROOT)/.env $(DEVROOT)/bin/fcm bootstrap canteen closure $(DEVROOT)/lib/python2.7/site-packages/canteen.pth brew $(OPTIONALS)
+.develop: brew bin lib $(DEVROOT)/.env $(DEVROOT)/bin/fcm bootstrap canteen $(DEVROOT)/lib/python2.7/site-packages/canteen.pth brew $(OPTIONALS)
 	@touch ./.env
 
-$(DEVROOT)/.env: closure bootstrap canteen npm
+$(DEVROOT)/.env: bootstrap canteen npm
 	@echo "Using devroot $(DEVROOT)..."
 	$(call say,"Initializing virtualenv...")
 	@-pip install virtualenv
@@ -318,36 +318,6 @@ $(DEVROOT)/node_modules: bootstrap
 	@-npm install
 
 npm: $(DEVROOT)/node_modules
-
-ifeq ($(BUILDBOX),0)
-$(LIBROOT)/closure/compiler.jar:
-	$(call say,"Downloading Closure Compiler...")
-	@-curl --progress-bar http://dl.google.com/closure-compiler/compiler-latest.zip > ./compiler-latest.zip
-	@-mkdir -p $(LIBROOT)/closure
-
-	$(call say,"Extracting Closure Compiler...")
-	@-unzip compiler-latest.zip -d $(LIBROOT)/closure
-	@-mv compiler-latest.zip $(LIBROOT)/closure
-	@-rm -f compiler-latest.zip
-
-	@-mkdir -p $(LIBROOT)/closure/build;
-	@-mv $(LIBROOT)/closure/compiler.jar $(LIBROOT)/closure/build/compiler.jar;
-else
-$(LIBROOT)/closure/compiler.jar:
-	$(call say,"Downloading Closure Compiler...")
-	@-curl http://dl.google.com/closure-compiler/compiler-latest.zip > ./compiler-latest.zip 2> /dev/null
-	@-mkdir -p $(LIBROOT)/closure
-
-	$(call say,"Extracting Closure Compiler...")
-	@-unzip compiler-latest.zip -d $(LIBROOT)/closure
-	@-mv compiler-latest.zip $(LIBROOT)/closure
-	@-rm -f compiler-latest.zip
-
-	@-mkdir -p $(LIBROOT)/closure/build;
-	@-mv $(LIBROOT)/closure/compiler.jar $(LIBROOT)/closure/build/compiler.jar;
-endif
-
-closure: $(LIBROOT)/closure/compiler.jar
 
 cython:
 	$(call say,"Installing Cython...")
