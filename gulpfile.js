@@ -118,7 +118,6 @@ config = {
 
     // Prod compile settings
     app: {
-      jar: 'lib/closure/build/compiler.jar',
       js_output_file: outputs.js.app + 'app.min.js',
       debug: false,
       summary_detail_level: 3,
@@ -132,7 +131,6 @@ config = {
 
     // Debug compile settings
     debug: {
-      jar: 'lib/closure/build/compiler.jar',
       js_output_file: outputs.js.app + 'app.debug.js',
       debug: true,
       summary_detail_level: 3,
