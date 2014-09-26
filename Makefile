@@ -247,7 +247,7 @@ $(DEVROOT)/bin/fcm:
 $(DEVROOT)/lib/python2.7/site-packages/canteen.pth:
 	@echo "$(DEVROOT)/lib/canteen" > lib/python2.7/site-packages/canteen.pth
 
-.develop: brew bin lib $(DEVROOT)/.env $(DEVROOT)/bin/fcm bootstrap canteen $(DEVROOT)/lib/python2.7/site-packages/canteen.pth brew $(OPTIONALS)
+.develop: brew closure bin lib $(DEVROOT)/.env $(DEVROOT)/bin/fcm bootstrap canteen $(DEVROOT)/lib/python2.7/site-packages/canteen.pth brew $(OPTIONALS)
 	@touch ./.env
 
 $(DEVROOT)/.env: bootstrap canteen npm
@@ -357,3 +357,33 @@ ifeq ($(DEBUG),0)
 gulp: npm
 	@node_modules/gulp/bin/gulp.js release
 endif
+
+ifeq ($(BUILDBOX),0)
+$(LIBROOT)/closure/compiler.jar:
+	@echo "Downloading Closure Compiler..."
+	@-curl --progress-bar http://dl.google.com/closure-compiler/compiler-latest.zip > ./compiler-latest.zip
+	@-mkdir -p $(LIBROOT)/closure
+
+	@echo "Extracting Closure Compiler..."
+	@-unzip compiler-latest.zip -d $(LIBROOT)/closure
+	@-mv compiler-latest.zip $(LIBROOT)/closure
+	@-rm -f compiler-latest.zip
+
+	@-mkdir -p $(LIBROOT)/closure/build;
+	@-mv $(LIBROOT)/closure/compiler.jar $(LIBROOT)/closure/build/compiler.jar;
+else
+$(LIBROOT)/closure/compiler.jar:
+	@echo "Downloading Closure Compiler..."
+	@-curl http://dl.google.com/closure-compiler/compiler-latest.zip > ./compiler-latest.zip 2> /dev/null
+	@-mkdir -p $(LIBROOT)/closure
+
+	@echo "Extracting Closure Compiler..."
+	@-unzip compiler-latest.zip -d $(LIBROOT)/closure
+	@-mv compiler-latest.zip $(LIBROOT)/closure
+	@-rm -f compiler-latest.zip
+
+	@-mkdir -p $(LIBROOT)/closure/build;
+	@-mv $(LIBROOT)/closure/compiler.jar $(LIBROOT)/closure/build/compiler.jar;
+endif
+
+closure: $(LIBROOT)/closure/compiler.jar
