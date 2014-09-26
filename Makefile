@@ -237,6 +237,7 @@ lib: $(DEVROOT)/.env
 ### === resources === ###
 templates: $(DEVROOT)/.develop
 	$(call say,"Building fcm templates...")
+	@-mkdir -p fatcatmap/templates/compiled
 	@bin/python $(DEVROOT)/scripts/fcm.py build --templates
 
 ### === defs === ###
