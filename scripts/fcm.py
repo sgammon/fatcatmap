@@ -58,16 +58,22 @@ logging = debug.Logger(name='fcm')
 project_root = os.path.dirname(os.path.dirname(__file__))
 UWSGI_BASE_ARGS, UWSGI_PROD_ARGS = [
   "--pcre-jit",
+  "--thunder-lock",
   "--vacuum",
+  "--pyhome=%s" % project_root,
+  "--enable-threads",
   "--py-autoreload",
   "--pidfile=/tmp/fcm.pid",
   "--wsgi=dispatch:application",
   "--shared-import=fatcatmap",
   "--shared-import=werkzeug",
   "--shared-import=canteen",
-  "--shared-import=jinja2"], [
-  "--optimize",
-  "--uwsgi=127.0.0.1:3000"]
+  "--shared-import=jinja2",
+  "--threads=8",
+  "--socket=/tmp/fcm.sock"], [
+  "--optimize=2",
+  "--uwsgi=127.0.0.1:3000",
+  "--processes=2"]
 
 
 class FCM(cli.Tool):
@@ -93,7 +99,9 @@ class FCM(cli.Tool):
       ('--services_only', '-s', {'action': 'store_true', 'help': 'run services only'}),
       ('--nocache', '-nc', {'action': 'store_true', 'help': 'disable static caching (takes precedence)'}),
       ('--profile', '-pr', {'action': 'store_true', 'help': 'attach a python profiler for each request/response'}),
-      ('--callgraph', '-cg', {'action': 'store_true', 'help': 'generate a callgraph for each request/response'}))
+      ('--simple', '-s', {'action': 'store_true', 'help': 'run in simple mode with werkzeug and no sockets support'}),
+      ('--callgraph', '-cg', {'action': 'store_true', 'help': 'generate a callgraph for each request/response'}),
+      ('--production', '-pd', {'action': 'store_true', 'help': 'simulate production'}))
 
     def execute(arguments):
 
@@ -107,13 +115,39 @@ class FCM(cli.Tool):
           result of the call. ``Falsy`` return values will be passed to
           :py:meth:`sys.exit` and converted into Unix-style return codes. '''
 
-      import fatcatmap, canteen
-      from fatcatmap.config import config
+      if arguments.simple:
+        import fatcatmap, canteen
+        from fatcatmap.config import config
 
-      canteen.run(fatcatmap, **{
-        'port': arguments.port or 5000,
-        'interface': arguments.ip or '127.0.0.1',
-        'config': config or {}})
+        return canteen.run(fatcatmap, **{
+              'port': arguments.port or 5000,
+              'interface': arguments.ip or '127.0.0.1',
+              'config': config or {}})
+
+      # assemble uWSGI arguments
+      uwsgi_args = [
+
+        # uwsgi path
+        os.path.join(project_root, 'bin', 'uwsgi'),
+        "--wsgi=dispatch:application",
+        "--http-socket=%s:%s" % (
+          arguments.ip or '127.0.0.1', str(arguments.port or 5000))
+
+      ] + UWSGI_BASE_ARGS + (UWSGI_PROD_ARGS if arguments.production else [])
+
+      try:
+        # spawn uWSGI
+        server = subprocess.Popen(uwsgi_args,
+          stdin=sys.stdin,
+          stdout=sys.stdout,
+          stderr=sys.stderr)
+
+        returncode = server.wait()
+
+      except KeyboardInterrupt:
+        server.terminate()
+        time.sleep(1)  # sleep a second to let console shut up
+      sys.stdin, sys.stdout, sys.stderr = (StringIO.StringIO() for x in (0, 1, 2))
 
 
   class Test(cli.Tool):
@@ -234,7 +268,6 @@ class FCM(cli.Tool):
         os.path.join(project_root, 'bin', 'uwsgi'),
 
         # base interactive flags
-        "--socket=/tmp/fcm.sock",
         "--pyshell"
 
       ] + UWSGI_BASE_ARGS + (UWSGI_PROD_ARGS if arguments.production else [])
