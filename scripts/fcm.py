@@ -217,6 +217,12 @@ class FCM(cli.Tool):
           logging.debug('Executing command: "%s".' % clean_command)
         os.system(clean_command)
 
+        # try to replace with an empty dir structure
+        dir_command = "mkdir -p %s" % os.path.join(module_root, "compiled")
+        if config.get('debug', False) or arguments.debug:
+          logging.debug('Executing command: "%s".' % dir_command)
+        os.system(dir_command)
+
         try:
           # /scripts
           root = os.path.dirname(os.path.abspath(os.path.realpath(__file__)))
