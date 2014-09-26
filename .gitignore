@@ -27,7 +27,7 @@ build/
 fatcatmap.sublime-project
 doc/
 .gcloud/properties
-fatcatmap/assets/js/compiled/*.js
+fatcatmap/assets/js/compiled/**/*.js
 fatcatmap.ipr
 fatcatmap.iws
 .gcloud/*

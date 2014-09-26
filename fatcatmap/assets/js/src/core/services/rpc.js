@@ -46,7 +46,7 @@ RPCAPI = function (name, methods, config) {
         url: endpoint,
         data: request.data || {},
         params: request.params || {},
-        headers: request.headers || {},
+        headers: request.headers || {}
       };
 
       /**
