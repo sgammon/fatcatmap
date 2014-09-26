@@ -6,6 +6,9 @@ echo "=== !!! Bootstrapping K9 instance. !!! ===";
 echo "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~";
 echo "";
 
+K9_ENVIRONMENT=$1
+K9_GROUP=$2
+
 # make groups/users
 echo "Making users and groups...";
 (groupadd runtime > /dev/null && echo "Runtime group created.") || echo "Runtime group exists."
@@ -44,4 +47,4 @@ cd /;
 gsutil cp gs://fcm-dev/base/latest.tar.gz - | tar -xvz;
 
 # run K9 SDK init script
-bash -c /base/scripts/init;
+K9_ENVIRONMENT=$K9_ENVIRONMENT K9_GROUP=$K9_GROUP bash -c /base/scripts/init;
