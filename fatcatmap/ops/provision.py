@@ -35,7 +35,7 @@ env.created = False
 
 @notify
 @task
-def create(n=1, region=settings.DEFAULT_REGION, environment=environment, group=group):
+def create(n=None, region=settings.DEFAULT_REGION, environment=environment, group=group):
 
   ''' Create new nodes allows chaining of deployment commands.
 
@@ -43,6 +43,13 @@ def create(n=1, region=settings.DEFAULT_REGION, environment=environment, group=g
       :param region: GCE region to deploy to.
       :param environment: ``production``/``staging``/``sandbox``.
       :param group: Role (``group``) for these new instances. '''
+
+  if n is None:
+    n = {
+      'production': 3,
+      'staging': 2,
+      'sandbox': 1
+    }.get(environment, 1)  # choose # of default nodes
 
   print("Provisioning %s %s %s %s in %s..." % (
     n, environment, group, 'instances' if n > 1 else 'instance', region))
