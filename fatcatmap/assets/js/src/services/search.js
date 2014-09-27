@@ -105,7 +105,7 @@ QuerySpec = function (query) {
  */
 Query = function (spec) {
   if (this.constructor === Query)
-    return;
+    return this;
 
   if (!spec)
     throw new Error('Query() requires a query spec as the only param.');
@@ -126,6 +126,7 @@ Query = function (spec) {
 };
 
 Query.prototype = new Future();
+Query.prototype.constructor = Query;
 
 /**
  * @abstract

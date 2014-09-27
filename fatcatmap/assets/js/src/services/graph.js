@@ -41,6 +41,7 @@ GraphQuery = function (spec) {
 };
 
 GraphQuery.prototype = new Query();
+GraphQuery.prototype.constructor = GraphQuery;
 
 /**
  * @override

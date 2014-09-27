@@ -69,8 +69,14 @@ UWSGI_BASE_ARGS, UWSGI_PROD_ARGS = [
   "--shared-import=werkzeug",
   "--shared-import=canteen",
   "--shared-import=jinja2",
+  "--declare-option='app=route\$1.internal",
+  "--declare-option='host=route\$1 addheader:Original-Host: \$1'",
   "--threads=8",
-  "--socket=/tmp/fcm.sock"], [
+  "--pythonpath=%s" % os.path.join(project_root, 'lib'),
+  "--pythonpath=%s" % os.path.join(project_root, 'lib', 'canteen'),
+  "--socket=/tmp/fcm.sock",
+  "--yaml=%s" % os.path.join(project_root, 'conf', 'fatcatmap.yaml')
+  ], [
   "--optimize=2",
   "--uwsgi=127.0.0.1:3000",
   "--processes=2"]

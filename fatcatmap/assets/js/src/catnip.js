@@ -83,12 +83,15 @@ catnip = function (context, data, routes) {
     });
 
     fcm.view.init('app', /** @this {views.App} */function () {
-      this.$set('active', true);
-      this.$.stage.$set('active', true);
+      var app = this;
 
-      ServiceContext.register('app', this);
+      app.$set('active', true);
 
-      GO();
+      app.nextTick(function () {
+        app.$.stage.$set('active', true);
+        ServiceContext.register('app', app);
+        GO();
+      });
     });
 
     return this;

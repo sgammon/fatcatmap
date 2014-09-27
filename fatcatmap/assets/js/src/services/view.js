@@ -128,3 +128,6 @@ services.view = /** @lends {ServiceContext.prototype.view} */{
     });
   }
 }.service('view');
+
+/** @expose */
+window.VIEWS = VIEWS;

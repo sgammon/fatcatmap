@@ -17,5 +17,4 @@ from .content import *
 
 __all__ = (
   'content',
-  'graph'
-)
+  'graph')

@@ -82,13 +82,10 @@ _dispatchRequest = function (method, request, handler) {
 
   request = _prepareRequest(method, request, response, !!handler);
 
-  if (!handler) {
-    request.send(data);
-    response = request.responseJSON;
-  } else {
-    request.send.bind(request, data).async()
-    response = handler.pipe(response);
-  }
+  if (handler)
+    response = response.then(handler);
+
+  request.send(data);
 
   return response;
 };

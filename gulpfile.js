@@ -302,7 +302,7 @@ task('serve', function (cb) {
     if (sh)
       sh.kill();
   },
-  sh = spawn('bin/fcm', ['run'], {stdio: 'inherit'})
+  sh = spawn('fcm', ['run'], {stdio: 'inherit'})
     .on('error', killSh)
     .on('exit', function () {
       sh = null;
