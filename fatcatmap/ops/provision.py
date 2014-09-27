@@ -9,6 +9,7 @@
 from __future__ import print_function
 
 # stdlib
+import sys
 import time
 import settings
 
@@ -70,18 +71,26 @@ def nodes(environment=environment, group=group, name=None, region=settings.DEFAU
       :param name: Name (``str``) template to filter by.
       :param region: GCE region to scan. '''
 
+  print(colors.yellow('Discovering nodes...'))
+
   env.d = Deploy(environment, group, region)
   env.node = lambda: get_node()  # set env.node for easy access to node object
   if name:
     env.d.names = [name]
   env.hosts_detail = {}
   _nodes = env.d.get_nodes()
+
+  if not _nodes:
+    print(colors.red('Found zero nodes, failing.'))
+    sys.exit(1)
+
   for node in _nodes:
     if (not name) or (name and (node.name == name or name in node.name)):
       env.hosts.append(node.ip)
       env.hosts_detail[node.ip] = node
 
-  print(colors.green([node for ip, node in env.hosts_detail.iteritems()]))
+  for node in (node for (ip, node) in env.hosts_detail.iteritems()):
+    print(colors.green(node))
   return env
 
 @task
