@@ -31,7 +31,6 @@ BUILDBOX?=0
 USER?=`whoami`
 CANTEEN?=0
 CANTEEN_BRANCH?=master
-BOOTSTRAP_BRANCH?=master
 SANDBOX_GIT?=$(USER)@sandbox
 BREWDEPS=openssl python haproxy redis pypy snappy hiredis elixir scala
 TEST_FLAGS?=
@@ -127,7 +126,7 @@ develop: .develop js styles templates coverage
 
 canteen: lib/canteen
 
-js:
+js: npm
 	$(call say,"Minifying Javascript...")
 	@-JAVA_HOME=$$JAVA_HOME node_modules/gulp/bin/gulp.js closure
 
@@ -251,10 +250,10 @@ $(DEVROOT)/bin/fcm:
 $(DEVROOT)/lib/python2.7/site-packages/canteen.pth:
 	@echo "$(DEVROOT)/lib/canteen" > lib/python2.7/site-packages/canteen.pth
 
-.develop: brew bin lib $(DEVROOT)/.env $(DEVROOT)/bin/fcm bootstrap canteen $(DEVROOT)/lib/python2.7/site-packages/canteen.pth brew $(OPTIONALS)
+.develop: brew bin lib $(DEVROOT)/.env cython $(DEVROOT)/bin/fcm canteen $(DEVROOT)/lib/python2.7/site-packages/canteen.pth gulp $(OPTIONALS)
 	@touch ./.env
 
-$(DEVROOT)/.env: bootstrap canteen npm
+$(DEVROOT)/.env: canteen npm
 	@echo "Using devroot $(DEVROOT)..."
 	$(call say,"Initializing virtualenv...")
 	@-pip install virtualenv
@@ -314,7 +313,7 @@ logbook:
 	@echo "Installing Logbook..."
 	@-bin/pip install --upgrade "git+git://github.com/keenlabs/logbook.git#egg=logbook"
 
-$(DEVROOT)/node_modules: bootstrap
+$(DEVROOT)/node_modules:
 	$(call say,"Installing NPM dependencies...")
 	@-npm install
 
@@ -324,34 +323,8 @@ cython:
 	$(call say,"Installing Cython...")
 	@-bin/pip install cython
 
-ifeq ($(SANDBOX),1)
-ifeq ($(DEBUG),1)
-fatcatmap/assets/bootstrap/package.json:
-	$(call say,"Cloning Bootstrap sources...")
-	@git clone $(SANDBOX_GIT):sources/dependencies/bootstrap.git ./fatcatmap/assets/bootstrap -b $(BOOTSTRAP_BRANCH)
-
-	$(call say,"Building Bootstrap...")
-	@-cd fatcatmap/assets/bootstrap; \
-		npm install; \
-		grunt;
-else
-fatcatmap/assets/bootstrap/package.json:
-	$(call say,"Cloning Bootstrap sources...")
-	@git clone /base/sources/dependencies/bootstrap.git ./fatcatmap/assets/bootstrap -b $(BOOTSTRAP_BRANCH)
-endif
-else
-fatcatmap/assets/bootstrap/package.json:
-	$(call say,"Cloning Bootstrap sources from GitHub...")
-	@git clone https://github.com/momentum/bootstrap.git ./fatcatmap/assets/bootstrap -b $(BOOTSTRAP_BRANCH)
-endif
-
-bootstrap: fatcatmap/assets/bootstrap/package.json
-	$(call okay,"Bootstrap is ready.")
-
 ifeq ($(DEBUG),1)
 gulp: npm
-	@-mkdir -p .develop/maps/fatcatmap/assets/js/site
-	@-mkdir -p .develop/maps/fatcatmap/assets/coffee/site
 	@-gulp
 endif
 ifeq ($(DEBUG),0)
