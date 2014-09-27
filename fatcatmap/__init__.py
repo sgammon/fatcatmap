@@ -7,7 +7,7 @@
 '''
 
 # stdlib
-import os, sys, hashlib, random, threading
+import os, sys, hashlib, random
 
 # google appengine lib/ shim
 try:
