@@ -28,6 +28,7 @@ from fabric.api import env, task,hide
 from fabtools import require, deb
 from fabric.api import settings as f_settings
 
+
 def is_finished():
 
   ''' @todo fix base image to not have ghost startup script run and figure out better error handling'''
@@ -48,9 +49,8 @@ def is_finished():
         print(colors.red("oops sam fucked up"))
         return False
 
-    print(colors.yellow("not ready yet....sleeping for 10 seconds"))
+    print(colors.yellow("Instance booting..."))
     sleep(10)
-
 
 @notify
 @task
@@ -69,18 +69,19 @@ def bootstrap():
   if node.group == 'app':
 
     ## ~~ install apps ~~ ##
+    print(colors.yellow('Installing fatcatmap...'))
     fatcatmap(node.environment)
 
     ## ~~ start k9 ~~ ##
+    print(colors.yellow('Starting K9...'))
     api.sudo("/base/software/k9/sbin/k9"
              " --ini /base/software/k9/apphosting/master.ini")
 
   ## ~~ install services-n-stuff ~~ ##
-  services = support.setup_for_group(group=node.group)
+  print(colors.yellow('Installing services for group %s...' % node.group))
+  support.setup_for_group(group=node.group)
 
-  ## ~~ start supporting services ~~ ##
-  support.start(*services)
-
+  print(colors.green('Deploy succeeded.'))
 
 @notify
 @task
@@ -93,16 +94,23 @@ def fatcatmap(environment):
         configuration. '''
 
   print(colors.yellow('Deploying fatcatmap on host %s...' % get_node()))
-  helpers.pause()
+
+  tarball = "gs://fcm-dev/%s/%s/app/latest.tar.gz" % (
+    environment, 'builds' if environment == 'sandbox' else 'releases')
 
   install_fcm = """
 
     cd /base/apps;
-    gsutil cp gs://fcm-dev/%s/%s/app/latest.tar.gz - | tar -xvz;
-    rm -fr /base/apps/fatcatmap/lib/python2.7 /base/apps/fatcatmap/bin;
+    rm -fr /base/apps/fatcatmap/*;
+    gsutil cp %s - | tar -xvz;
+    rm -fr /base/apps/fatcatmap/lib/python2.7 /base/apps/fatcatmap/bin/{python,python2.7,pip};
     virtualenv --python=/usr/bin/python /base/apps/fatcatmap;
+    pushd /base/apps/fatcatmap;
 
-  """ % (environment, 'builds' if environment == 'sandbox' else 'releases')
+  """ % tarball
+
+  print(colors.yellow('Using tarball %s...' % tarball))
+  helpers.pause()
 
   api.run(install_fcm)
 
@@ -116,6 +124,30 @@ def fatcatmap(environment):
   # install pip requirements
   api.run("/base/apps/fatcatmap/bin/pip"
           " install -r /base/apps/fatcatmap/requirements.txt")
+  api.run("/base/apps/fatcatmap/bin/pip"
+          " install -r /base/apps/fatcatmap/lib/canteen/requirements.txt")
+
+  # rebuild templates
+  api.run("/base/apps/fatcatmap/bin/python -OO"
+          " /base/apps/fatcatmap/scripts/fcm.py build --templates")
+
+  # startup redis
+  print(colors.yellow('Starting ephemeral Redis instance...'))
+  api.sudo("rm -f /base/data/redis/*.aof /base/data/redis/*.rdb")
+  api.sudo("/usr/local/bin/redis-server"
+           " /etc/redis/db.conf")
+
+  # update data
+  api.run("/base/apps/fatcatmap/bin/python -OO"
+          " /base/apps/fatcatmap/scripts/fcm.py migrate --clean --update")
+
+  print(colors.yellow('Snapshotting Redis data...'))
+  api.run("/usr/local/bin/redis-cli -h localhost config set appendonly yes")
+  api.run("/usr/local/bin/redis-cli -h localhost bgaofrewrite")
+  helpers.pause()
+
+  print(colors.yellow('Shutting down ephemeral Redis instance...'))
+  api.run("/usr/local/bin/redis-cli -h localhost shutdown")
 
   # reload apps if any are running
   api.sudo("touch"

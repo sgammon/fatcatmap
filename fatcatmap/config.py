@@ -9,7 +9,7 @@
 __version__ = ((0, 0, 1), (20140803, 'alpha'))
 
 
-import os, sys
+import os, sys, logging
 
 import canteen
 from canteen.util import config as cfg
@@ -23,7 +23,7 @@ except ImportError:
 ## Globals
 _custom_jinja2_extensions = filter(lambda x: x is not None, [HamlishExtension if HAML else None])
 app = os.path.dirname(__file__)
-
+logging.basicConfig(level=logging.INFO)
 
 project = os.path.dirname(app)
 DEFAULT_BOOT_DISK = 'base-prerelease-v12-alpha-2'
@@ -325,14 +325,14 @@ config = cfg.Config(app={
       'services': [Components.PROXY, Components.WEBSERVER],
 
       'disk': {
-        'size': 10,
-        'type': DiskType.MAGNETIC,
+        'size': 15,
+        'type': DiskType.SSD,
         'snap': DEFAULT_BOOT_DISK}},
 
     'app': {  # app server role
 
       'size': 'n1-standard-2',
-      'image': 'debian-7-wheezy-v20140606',
+      'image': 'backports-debian-7-wheezy-v20140924',
       'ip_forwarding': False,
       'tags': {'app', 'db'},  # @TODO(sgammon): split out DB role
 
@@ -350,8 +350,8 @@ config = cfg.Config(app={
         Components.DATABASE],
 
       'disk': {
-        'size': 100,
-        'type': DiskType.MAGNETIC,
+        'size': 15,
+        'type': DiskType.SSD,
         'snap': DEFAULT_BOOT_DISK}},
 
     'db': {  # @TODO(weisberger): for future use :)
@@ -372,8 +372,8 @@ config = cfg.Config(app={
       'services': [Components.DATABASE],
 
       'disk': {
-        'size': 40,
-        'type': DiskType.MAGNETIC,
+        'size': 15,
+        'type': DiskType.SSD,
         'snap': DEFAULT_BOOT_DISK}},
 
     'es': {
@@ -392,8 +392,8 @@ config = cfg.Config(app={
                    Components.DATABASE],
 
       'disk': {
-        'size': 40,
-        'type': DiskType.MAGNETIC,
+        'size': 15,
+        'type': DiskType.SSD,
         'snap': DEFAULT_BOOT_DISK}
 
     }

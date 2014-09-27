@@ -9,6 +9,10 @@
 
 '''
 
+# fabric
+from fabric.state import output
+
+# fatcatmap
 from fatcatmap import config
 from fatcatmap.config import Components
 
@@ -36,6 +40,10 @@ K9 = {
   'reload': '/base/ns/trigger/k9.reload',
   'rotate': '/base/ns/trigger/k9.rotate'}
 
+# suppress dumb things
+output.running = False
+output.status = False
+output.debug = False
 
 
 #### Env/Group Settings

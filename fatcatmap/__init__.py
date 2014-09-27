@@ -7,7 +7,7 @@
 '''
 
 # stdlib
-import os, sys, hashlib, random
+import os, sys, hashlib, random, threading
 
 # google appengine lib/ shim
 try:
@@ -129,10 +129,10 @@ class Page(RawPage):
         'metadata': k9env,
         'instance': k9env['instance']
       },
+      'config': config,
       'nonce': {
         'script': _script_nonce
-      }
-    }) or supercontext)
+      }}) or supercontext)
 
   def staple_data(self, data):
 

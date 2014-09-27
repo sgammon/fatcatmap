@@ -43,17 +43,6 @@ def setup_for_group(group):
 
   sudo("supervisorctl reload")
 
-  # services_installed = []
-  # for service in (_SERVICES_BY_NAME[s] for s in
-  #         settings.GROUP_SETTINGS[group].get('services', [])):
-  #   services_installed.append({
-  #     'proxy': setup_proxy,
-  #     'http': setup_http,
-  #     'database': setup_db
-  #   }[service]() or service)  # dispatch proper setup routine
-  # return [_SERVICE_NAMES[x] for x in services_installed]
-  return []
-
 
 @task
 def service(name, action="restart"):
@@ -61,15 +50,22 @@ def service(name, action="restart"):
   ''' Perform an action on a service by name. '''
 
   # corner case: redis is moody
-  if name in ('k9'):
-    sudo("touch ")
+  if name in 'k9':
+    sudo("touch /base/ns/trigger/k9.reload")
+    return
 
-  if name == 'redis': name == 'redis:redis-server'
+  if name == 'redis':
+    name = 'redis:redis-server'
   sudo("supervisorctl {1} {0}".format(name, action))
 
+
+@task
 def k9(action="reload"):
-   file = settings.K9[action]
-   sudo('touch %s' % file)
+
+  '''  '''
+
+  file = settings.K9[action]
+  sudo('touch %s' % file)
 
 
 @task

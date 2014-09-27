@@ -29,13 +29,9 @@ apt-key adv --keyserver keyserver.ubuntu.com --recv-keys C7A7DA52
 # update/upgrade (kernel first)
 echo "Performing package update/upgrade...";
 DEBIAN_FRONTEND=noninteractive apt-get update > /var/log/k9-bootstrap.log
-DEBIAN_FRONTEND=noninteractive apt-get -y upgrade >> /var/log/k9-bootstrap.log
 
 echo "Installing virtualenv...";
 pip install --upgrade virtualenv >> /var/log/k9-bootstrap.log
-
-echo "Installing kernel updates...";
-DEBIAN_FRONTEND=noninteractive apt-get -y install linux-image-amd64 linux-image-3.2.0-4-rt-amd64 >> /var/log/k9-bootstrap.log
 
 # install base software
 echo "Installing runtime dependencies...";
@@ -43,6 +39,7 @@ DEBIAN_FRONTEND=noninteractive apt-get -y install irqbalance binutils build-esse
 
 # install latest /base SDK tarball
 echo "Unpacking K9 SDK image...";
+echo "Using package $DEV$BASE...";
 cd /;
 gsutil cp gs://fcm-dev/base/latest.tar.gz - | tar -xvz;
 

@@ -69,17 +69,20 @@ UWSGI_BASE_ARGS, UWSGI_PROD_ARGS = [
   "--shared-import=werkzeug",
   "--shared-import=canteen",
   "--shared-import=jinja2",
-  "--declare-option='app=route\$1.internal",
-  "--declare-option='host=route\$1 addheader:Original-Host: \$1'",
+  "--static-check=%s" % os.path.join(project_root, 'fatcatmap'),
+  "--static-map=/assets/js=%s/fatcatmap/assets/js" % project_root,
+  "--static-map=/assets/img=%s/fatcatmap/assets/img" % project_root,
+  "--static-map=/assets/ext=%s/fatcatmap/assets/ext" % project_root,
+  "--static-map=/assets/style=%s/fatcatmap/assets/style" % project_root,
   "--threads=8",
   "--pythonpath=%s" % os.path.join(project_root, 'lib'),
   "--pythonpath=%s" % os.path.join(project_root, 'lib', 'canteen'),
   "--socket=/tmp/fcm.sock",
-  "--yaml=%s" % os.path.join(project_root, 'conf', 'fatcatmap.yaml')
+  "--processes=1",
+  "--http-websockets"
   ], [
   "--optimize=2",
-  "--uwsgi=127.0.0.1:3000",
-  "--processes=2"]
+  "--uwsgi=127.0.0.1:3000"]
 
 
 class FCM(cli.Tool):
@@ -140,6 +143,10 @@ class FCM(cli.Tool):
           arguments.ip or '127.0.0.1', str(arguments.port or 5000))
 
       ] + UWSGI_BASE_ARGS + (UWSGI_PROD_ARGS if arguments.production else [])
+
+      print('Running uWSGI with args...')
+      for i in uwsgi_args:
+        print(i)
 
       try:
         # spawn uWSGI
