@@ -85,6 +85,31 @@ def bootstrap():
 
 @notify
 @task
+def update():
+
+  ''' Update existing servers with a new version of fatcatmap. '''
+
+  from .provision import activate, deactivate
+
+  node = get_node()
+
+  if node.group == 'app':
+
+    deactivate()
+
+    print(colors.yellow('Performing update...'))
+    helpers.pause()
+    fatcatmap(node.environment)
+
+    print(colors.yellow('Activating...'))
+    helpers.pause()
+    activate()
+
+  print(colors.green('Update complete.'))
+
+
+@notify
+@task
 def fatcatmap(environment):
 
   ''' Install the ``catnip`` Python application and JS frontend for

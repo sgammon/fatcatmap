@@ -23,6 +23,7 @@ if __debug__:  # only let ops tools run in dev
     from . import deploy  # tools to put code into operation in real life
     from . import support  # tools to manage processes that supports code
     from . import provision  # tools to provision & manage infrastructure
+    from .deploy import update  # perform graceful updates of the fcm app
     from .deploy import bootstrap  # setup a new box with proper software
     from .deploy import fatcatmap  # uploads and activates fatcatmap code
     from .support import stop, start, k9  # start and stop stuff manually
@@ -33,4 +34,5 @@ if __debug__:  # only let ops tools run in dev
 
 
     __all__ = ('bootstrap', 'fatcatmap', 'stop', 'start', 'reload', 'restart',
-               'nodes', 'status', 'create', 'destroy', 'activate', 'deactivate','k9')
+               'nodes', 'status', 'create', 'destroy', 'activate', 'deactivate',
+               'k9', 'update')
