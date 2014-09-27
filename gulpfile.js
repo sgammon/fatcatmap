@@ -274,7 +274,7 @@ task('closure:clean', function () {
     .pipe(rmrf());
 });
 
-task('closure', ['closure:min']);
+task('closure', ['closure:pretty']);
 task('closure:all', ['closure:min', 'closure:debug', 'closure:pretty', 'closure:test']);
 
 // Build templates
