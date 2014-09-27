@@ -132,7 +132,7 @@ js: npm
 
 styles:
 	$(call say,"Compiling Sass...")
-	@-node_modules/gulp/bin/gulp.js sass
+	@-JAVA_HOME=$$JAVA_HOME node_modules/gulp/bin/gulp.js sass
 
 ifeq ($(BREW),1)
 brew:
@@ -172,7 +172,7 @@ test:
 	@-bin/nosetests canteen_tests fatcatmap_tests $(TEST_FLAGS)
 
 	$(call say,"Running javascript testsuite...")
-	@-ENV=$(ENVIRONMENT) gulp test
+	@-JAVA_HOME=$$JAVA_HOME ENV=$(ENVIRONMENT) gulp test
 	$(call okay,"~~~ tests ran successfully. ~~~")
 
 coverage:
@@ -325,9 +325,9 @@ cython:
 
 ifeq ($(DEBUG),1)
 gulp: npm
-	@-gulp
+	@-JAVA_HOME=$$JAVA_HOME gulp
 endif
 ifeq ($(DEBUG),0)
 gulp: npm
-	@node_modules/gulp/bin/gulp.js release
+	@-JAVA_HOME=$$JAVA_HOME node_modules/gulp/bin/gulp.js release
 endif
