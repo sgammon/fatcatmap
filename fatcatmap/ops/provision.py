@@ -82,7 +82,7 @@ def nodes(environment=environment, group=group, name=None, region=settings.DEFAU
 
   if not _nodes:
     print(colors.red('Found zero nodes, failing.'))
-    sys.exit(1)
+    sys.exit(100)
 
   for node in _nodes:
     if (not name) or (name and (node.name == name or name in node.name)):
