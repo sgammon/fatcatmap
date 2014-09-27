@@ -62,16 +62,18 @@ def create(n=1, region=settings.DEFAULT_REGION, environment=environment, group=g
     nodes(environment, group)
 
 @task
-def nodes(environment=environment, group=group, name=None, region=settings.DEFAULT_REGION):
+def nodes(environment=environment, group=group, name=None, region=settings.DEFAULT_REGION, strict=False):
 
   ''' Lists and selects nodes based on specified group, name, or region.
 
       :param environment: Fabric environment.
       :param group: Group (or instance role) to select.
       :param name: Name (``str``) template to filter by.
-      :param region: GCE region to scan. '''
+      :param region: GCE region to scan.
+      :param strict: ``bool`` flag, whether to hard-fail with code ``100`` if no
+        matching nodes could be found. Used for CI deployment. '''
 
-  print(colors.yellow('Discovering nodes...'))
+  print(colors.yellow('Discovering nodes in environment "%s" and group "%s"...' % (environment, group)))
 
   env.d = Deploy(environment, group, region)
   env.node = lambda: get_node()  # set env.node for easy access to node object
@@ -80,14 +82,16 @@ def nodes(environment=environment, group=group, name=None, region=settings.DEFAU
   env.hosts_detail = {}
   _nodes = env.d.get_nodes()
 
-  if not _nodes:
-    print(colors.red('Found zero nodes, failing.'))
-    sys.exit(100)
-
   for node in _nodes:
     if (not name) or (name and (node.name == name or name in node.name)):
-      env.hosts.append(node.ip)
-      env.hosts_detail[node.ip] = node
+      if (environment in node.name or node.name in environment) and (
+          group in node.name or node.name in group):
+        env.hosts.append(node.ip)
+        env.hosts_detail[node.ip] = node
+
+  if not env.hosts_detail and strict:
+    print(colors.red('Found zero nodes, failing.'))
+    sys.exit(100)
 
   for node in (node for (ip, node) in env.hosts_detail.iteritems()):
     print(colors.green(node))
