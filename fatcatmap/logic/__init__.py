@@ -23,4 +23,4 @@ __all__ = ('db',
            'graph',
            'Graph',
            'Grapher',
-           'GraphOptions')
+           'Options')
