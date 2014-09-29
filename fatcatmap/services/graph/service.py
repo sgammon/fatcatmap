@@ -19,7 +19,7 @@ class GraphService(Service):
 
   ''' '''
 
-  @remote.method(messages.GraphRequest, messages.CompiledGraph)
+  @remote.method(messages.GraphRequest, messages.GraphResponse)
   def construct(self, request):
 
     ''' '''
@@ -35,7 +35,6 @@ class GraphService(Service):
 
     # then optionally fulfill, then extract
     return messages.CompiledGraph(**{
-      'meta': messages.Metadata(**meta).to_message(),
-      'data': messages.RawData(**data).to_message(),
-      'graph': messages.GraphData(**graph).to_message()
-    }).to_message()
+      'meta': messages.Metadata(**meta),
+      'data': messages.RawData(**data),
+      'graph': messages.GraphData(**graph)})

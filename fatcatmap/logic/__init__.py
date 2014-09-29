@@ -13,14 +13,14 @@ from .db import *
 # views
 from . import views
 
-# grapher
-from . import grapher
-from .grapher import *
+# graph
+from . import graph
+from .graph import *
 
 
 __all__ = ('db',
            'views',
-           'grapher',
+           'graph',
            'Graph',
            'Grapher',
            'GraphOptions')

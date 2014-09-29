@@ -8,6 +8,35 @@
 
 # model API
 from canteen import model
+from canteen import struct
+
+
+class Filter(model.Model):
+
+  '''  '''
+
+  class FilterType(struct.BidirectionalEnum):
+
+    '''  '''
+
+    KIND = 0x0
+    GRAPH = 0x1
+    PROPERTY = 0x2
+    ANCESTOR = 0x3
+
+  # specs are unschema'd
+  # 1) for a `kind` filter, a `spec` should contain a `kind` and `operator`
+  # 2) `graph` filters are not yet implemented (@TODO sgammon)
+  # 3) `property` filters should contain an `property`, `operator` and potentially a `value`
+  # 4) `ancestor` filters should contain an `operator` and a `value`
+
+  type = FilterType, {'default': FilterType.KIND}
+  spec = dict, {'repeated': True}
+
+
+class Scorer(model.Model):
+
+  '''  '''
 
 
 class GraphRequest(model.Model):
@@ -20,48 +49,54 @@ class GraphRequest(model.Model):
 
     depth = int, {'default': 1}
     limit = int, {'default': 5}
+    cached = bool, {'default': True}
+    objects = bool, {'default': True}
     indexes = bool, {'default': True}
-    natives = bool, {'default': True}
 
-  origin = basestring
-  options = Options
+  # -- base -- #
+  origin = str, {'default': None}
+  session = str, {'default': None}
+
+  # -- options -- #
+  filters = Filter, {'repeated': True}
+  scoring = Scorer, {'repeated': True}
+  options = Options, {'required': False}
 
 
-class Metadata(model.Model):
+class Meta(model.Model):
 
   '''  '''
 
-  kinds = dict
+  kinds = dict, {'required': True}
   counts = int, {'repeated': True}
   errors = int, {'repeated': True}
-  natives = bool, {'default': True}
-  options = dict
+  cached = bool, {'default': False}
+  options = dict, {'required': True}
+  fragment = str, {'required': True}
 
 
-class RawData(model.Model):
-
-  '''  '''
-
-  keys = basestring, {'repeated': True}
-  objects = dict
-  index = dict
-
-
-class GraphData(model.Model):
+class Data(model.Model):
 
   '''  '''
 
-  nodes = int
-  edges = int
-  origin = int
-  natives = int
-  origin = int
+  keys = str, {'repeated': True}
+  objects = dict, {'required': False}
+  indexes = dict, {'required': False}
 
 
-class CompiledGraph(model.Model):
+class Graph(model.Model):
 
   '''  '''
 
-  data = RawData, {'required': False}
-  meta = Metadata, {'required': True}
-  graph = GraphData, {'required': False}
+  origin = int, {'required': True}
+  edges = int, {'required': True}
+  vertices = int, {'required': True}
+
+
+class GraphResponse(model.Model):
+
+  '''  '''
+
+  data = Data, {'required': False}
+  meta = Meta, {'required': True}
+  graph = Graph, {'required': False}
