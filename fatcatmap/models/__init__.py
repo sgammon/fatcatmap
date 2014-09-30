@@ -42,6 +42,24 @@ class BaseModel(model.Model):
   created = datetime, {'indexed': True, 'default': lambda _: datetime.now()}
   modified = datetime, {'indexed': True, 'validate': lambda _: datetime.now()}
 
+  @classmethod
+  def query(cls, *args, **kwargs):
+
+    ''' Forced passthrough to parent method, such that the model's kind
+        remains intact.
+
+        :param args: Positional arguments to pass to the ``Query``
+          constructor.
+
+        :param kwargs: Keyword arguments to pass to the ``Query``
+          constructor.
+
+        :returns: :py:class:`canteen.model.query.Query` instance. '''
+
+    kwargs['adapter'] = kwargs.get('adapter', cls.__adapter__)
+    return model.Model.query(*args, **kwargs) if cls is BaseModel else (
+      super(BaseModel, cls).query(*args, **kwargs))
+
 
 class BaseVertex(BaseModel, model.Vertex):
 
@@ -136,6 +154,24 @@ class BaseVertex(BaseModel, model.Vertex):
 
     return cls(**kwargs)
 
+  @classmethod
+  def query(cls, *args, **kwargs):
+
+    ''' Forced passthrough to parent method, such that the model's kind
+        remains intact.
+
+        :param args: Positional arguments to pass to the ``Query``
+          constructor.
+
+        :param kwargs: Keyword arguments to pass to the ``Query``
+          constructor.
+
+        :returns: :py:class:`canteen.model.query.Query` instance. '''
+
+    kwargs['adapter'] = kwargs.get('adapter', cls.__adapter__)
+    return model.Vertex.query(*args, **kwargs) if cls is BaseVertex else (
+      super(BaseVertex, cls).query(*args, **kwargs))
+
 
 class BaseEdge(BaseModel, model.Edge):
 
@@ -143,6 +179,24 @@ class BaseEdge(BaseModel, model.Edge):
       functionality and driver support. '''
 
   native = Key, {'embedded': True, 'indexed': True, 'required': True}
+
+  @classmethod
+  def query(cls, *args, **kwargs):
+
+    ''' Forced passthrough to parent method, such that the model's kind
+        remains intact.
+
+        :param args: Positional arguments to pass to the ``Query``
+          constructor.
+
+        :param kwargs: Keyword arguments to pass to the ``Query``
+          constructor.
+
+        :returns: :py:class:`canteen.model.query.Query` instance. '''
+
+    kwargs['adapter'] = kwargs.get('adapter', cls.__adapter__)
+    return model.Edge.query(*args, **kwargs) if cls is BaseEdge else (
+      super(BaseVertex, cls).query(*args, **kwargs))
 
 
 class Spec(object):

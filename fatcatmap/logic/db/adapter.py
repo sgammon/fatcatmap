@@ -154,16 +154,18 @@ class WarehouseAdapter(abstract.DirectedGraphAdapter):
     from fatcatmap import models
     model = entity.__class__
 
-    with entity:
-      updates = {}  # updates to apply
-      for prop, val in ((model.__dict__[name], val) for name, val in entity):
+    if issubclass(model, models.BaseModel):
+      with entity:
+        updates = {}  # updates to apply
 
-        # enforce property-level validators
-        if 'validate' in prop._options:
-          value = updates[prop.name] = prop._options['validate'](val)
+        # only process `BaseModel` subclasses
+        for prop, val in ((model.__dict__[name], val) for name, val in entity):
+          # enforce property-level validators
+          if 'validate' in prop._options:
+            value = updates[prop.name] = prop._options['validate'](val)
 
-      # apply updates
-      if updates: entity.update(updates)
+        # apply updates
+        if updates: entity.update(updates)
 
     return super(WarehouseAdapter, self)._put(entity, **kwargs)
 
@@ -287,8 +289,7 @@ class WarehouseAdapter(abstract.DirectedGraphAdapter):
             issubclass(subprop._basetype, model_api.Model)) and subprop.options.get('embedded'):
 
             # don't need created/modified for sub-entities
-            if deep_prop in frozenset(('modified', 'created')):
-              continue
+            if deep_prop in frozenset(('modified', 'created')): continue
 
             encoded, _subabs, _subprop, _subgraph = cls.generate_indexes(key, getattr(entity, subprop.name), {
               deep_prop: (subprop, value)})
