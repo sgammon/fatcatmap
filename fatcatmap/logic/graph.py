@@ -17,8 +17,9 @@ from canteen import decorators, struct
 
 
 ## Globals
-_DEFAULT_DEPTH, _DEFAULT_LIMIT = 1, 5
-zeros = collections.defaultdict(lambda: 0)
+_DEFAULT_DEPTH, _DEFAULT_LIMIT = 2, 5
+zeros = lambda: collections.defaultdict(lambda: 0)
+peers = lambda e: e.peers if getattr(e, 'peers') else (e.source, e.target)
 
 
 class Options(object):
@@ -49,7 +50,7 @@ class Options(object):
           enumerated in ``options.params``. '''
 
     for key, value in ((k, options.get(k, struct.EMPTY)) for k in self.params):
-      if value is struct.EMPTY: continue
+      if value is struct.EMPTY: value = self.__defaults__[key]
       setattr(self, '__%s__' % key, value)
 
   def __hash__(self):
@@ -153,10 +154,7 @@ class Graph(object):
   __slots__, __defaults__ = zip(*((('__%s__' % b[0], b) for b in (
 
      # ~~ basic parameters ~~ #
-     ('bound', False),  # describes current session binding state
      ('origin', None),  # perspective node anchoring this graph structure
-     ('history', None),  # linked list of graphs that led to this graph, etc
-     ('session', None),  # attached session that should be considered when packing
      ('options', None),  # holds query options describing the parameters of this graph
 
      # ~~ traversal state ~~ #
@@ -166,7 +164,7 @@ class Graph(object):
      # ~~ object storage ~~ #
      ('keys', lambda: set()),  # keeps track of keys contained in this graph
      ('objects', lambda: dict()),  # keeps track of objects contained in this graph
-     ('matrix', lambda: collections.defaultdict(zeros)),  # keeps lookup track of edges
+     ('matrix', lambda: collections.defaultdict(zeros)),  # keeps lookup track of neighbors
      ('neighbors', lambda: collections.defaultdict(set))))))  # keeps track of neighborship
 
   __defaults__ = dict(__defaults__)  # re-map into dictionary
@@ -180,10 +178,13 @@ class Graph(object):
           otherwise all are passed along to the constructor for the local
           ``options_class``, which defaults to :py:class:`Options`. '''
 
+    for entry, value in self.__defaults__.iteritems():  # fill out options with defaults
+      setattr(self, '__%s__' % entry, value() if callable(value) else value)
+
     # consider options
     self.set_options(options.get('options') or self.__options_class__(**options))
 
-  def _set_options(self, options):
+  def set_options(self, options):
 
     ''' Set local ``Graph`` query and traversal options.
 
@@ -193,56 +194,72 @@ class Graph(object):
     assert options, "graph options must not be nullsy"
     return setattr(self, '__options__', options) or self
 
-  ## ~~ session management ~~ ##
-  def __enter__(self):
+  ## ~~ low-level ~~ ##
+  def encounter(self, key):
 
-    ''' 'Enter' a bound graph session, where the grapher knows who is
-        traversing data and can tune traversal/querying/packing
-        accordingly.
+    ''' encounter a key '''
 
-        :returns: ``self``, once the ``bound`` flag is set. '''
+    target = key if not isinstance(key, model.Model) else key.key
+    map(self.__queued__.add, target.ancestry)
+    return key  # encounter key
 
-    assert not self.__bound__, (
-      "cannot re-bind open `Graph` to different session")
-    return setattr(self, '__bound__', True) or self
+  def traverse(self, key, perspective=None, _depth=0):
 
-  def __exit__(self, exc_type, exc_value, traceback):
+    ''' traverse through a key to its neighbors '''
 
-    ''' 'Exit' a bound graph session, detaching the current session/
-        history and releasing the ``Graph`` object.
+    from fatcatmap import models
 
-        :param exc_type: Exception class if an exception was encountered
-          during bound graph traversal.
+    assert (perspective is None and _depth == 0) or (
+            perspective is not None and _depth > 0), (
+            "origin traversal must have no perspective and vice versa")
 
-        :param exc_value: Actual exception object if an exception was
-          encountered during bound graph traversal.
+    # file origin if not attached
+    if not self.origin: self.__origin__ = key
 
-        :param traceback: Corresponding traceback if an exception is
-          passed at ``exc_value``.
+    yield self.encounter(key)  # encounter node keys at leaf
 
-        :returns: ``False`` if an exception was encountered (as this
-          context manager doesn't suppress exceptions) or ``True``. '''
+    # break if we've hit our depth limit for this branch
+    if self.options.depth <= _depth: raise StopIteration()
 
-    if exc_value: return False  # don't suppress exceptions
-    self.__session__, self.__history__, self.__bound__ = (
-      self.defaults['session'], self.defaults['history'], self.defaults['bound'])
-    return True
+    # otherwise, proceed
+    for edge in map(self.encounter,  # encounter edge keys as we go
+                    models.Vertex(key=key).edges().fetch(limit=self.options.limit)):
 
-  def __call__(self, session):
+      # extract edge peers
+      left, right = peers(edge)
 
-    '''  '''
+      # file away in matrix and adjacency
+      self.matrix[left][right], self.matrix[right][left] = 1, 1
+      self.neighbors[left].add(right), self.neighbors[right].add(left)
 
-    pass
+      # spawn next branch of querying
+      for origin in (left, right):
+        if origin not in (key, perspective):  # don't traverse backwards
+          for artifact in self.traverse(origin, perspective=key, _depth=_depth + 1):
+            yield artifact
+
+  ## ~~ high-level ~~ ##
+  def fulfill(self):
+
+    ''' fulfill queued keys, if requested '''
+
+    from fatcatmap import models
+
+    # build key generator
+    for entity in models.BaseModel.get_multi([i for i in self.__queued__]):
+      self.keys.add(entity.key)
+      self.fulfilled.add(entity.key)
+      self.objects[entity.key] = entity
+    return self
 
   ## ~~ accessors ~~ ##
-  (origin, history, session, options, queued, fulfilled,
-    objects, matrix, neighbors, defaults) = (
+  (origin, options, queued, fulfilled,
+    keys, objects, matrix, neighbors, defaults) = (
       property(lambda self: self.__origin__),
-      property(lambda self: self.__history__),
-      property(lambda self: self.__session__),
       property(lambda self: self.__options__),
       property(lambda self: self.__queued__),
       property(lambda self: self.__fulfilled__),
+      property(lambda self: self.__keys__),
       property(lambda self: self.__objects__),
       property(lambda self: self.__matrix__),
       property(lambda self: self.__neighbors__),
@@ -254,13 +271,7 @@ class Grapher(logic.Logic):
 
   '''  '''
 
-  def open(self, session, origin=None, **options):
-
-    '''  '''
-
-    pass
-
-  def traverse(self, target):
+  def open(self, session, *args, **options):
 
     '''  '''
 
