@@ -23,16 +23,13 @@ from fatcatmap.models import BaseVertex
 from elasticsearch.helpers import streaming_bulk, bulk
 #import pdb; pdb.set_trace()
 
-@bind('search')
+@bind('indexer')
 class Indexer(logic.Logic,EsClient):
 
   '''  '''
 
   queue = None
   batch_size = 1000
-
-
-
 
   def __init__(self, *args, **kwargs):
 
@@ -55,13 +52,17 @@ class Indexer(logic.Logic,EsClient):
     return _models
 
   @staticmethod
-  def model_key(entity):
-    if entity.key.parent:
-      parent_key = entity.key.parent.flatten(True)[0]
-      key = "%s:%s" % (parent_key,entity.key.id)
+  def model_key(entity,full_key=True):
+
+    if full_key:
+      return entity.key.flatten(True)[0]
     else:
-      key = ":%s" % entity.key.id
-    return key
+      if entity.key.parent:
+        parent_key = entity.key.parent.flatten(True)[0]
+        key = "%s:%s" % (parent_key,entity.key.id)
+      else:
+        key = ":%s" % entity.key.id
+      return key
 
 
   def register_models(self,):
