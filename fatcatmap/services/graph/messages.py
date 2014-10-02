@@ -39,7 +39,7 @@ class GraphObject(model.Model):
   '''  '''
 
   data = dict
-  cached = bool, {'default': False}
+  cached = bool
 
 
 class Scorer(model.Model):
