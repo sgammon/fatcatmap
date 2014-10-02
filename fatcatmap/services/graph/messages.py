@@ -34,6 +34,14 @@ class Filter(model.Model):
   spec = dict, {'repeated': True}
 
 
+class GraphObject(model.Model):
+
+  '''  '''
+
+  data = dict
+  cached = bool, {'default': False}
+
+
 class Scorer(model.Model):
 
   '''  '''
@@ -47,10 +55,12 @@ class GraphRequest(model.Model):
 
     '''  '''
 
-    depth = int, {'default': 1}
+    depth = int, {'default': 2}
     limit = int, {'default': 5}
     cached = bool, {'default': True}
-    objects = bool, {'default': True}
+    keys_only = bool, {'default': True}
+    descriptors = bool, {'default': False}
+    collections = bool, {'default': False}
     indexes = bool, {'default': True}
 
   # -- base -- #
@@ -58,18 +68,17 @@ class GraphRequest(model.Model):
   session = str, {'default': None}
 
   # -- options -- #
-  filters = Filter, {'repeated': True}
-  scoring = Scorer, {'repeated': True}
-  options = Options, {'required': False}
+  filters = Filter, {'repeated': True, 'embedded': True}
+  scoring = Scorer, {'repeated': True, 'embedded': True}
+  options = Options, {'required': False, 'embedded': True}
 
 
 class Meta(model.Model):
 
   '''  '''
 
-  kinds = dict, {'required': True}
+  kinds = str, {'repeated': True}
   counts = int, {'repeated': True}
-  errors = int, {'repeated': True}
   cached = bool, {'default': False}
   options = dict, {'required': True}
   fragment = str, {'required': True}
@@ -80,8 +89,8 @@ class Data(model.Model):
   '''  '''
 
   keys = str, {'repeated': True}
-  objects = dict, {'required': False}
   indexes = dict, {'required': False}
+  objects = GraphObject, {'repeated': True, 'embedded': True}
 
 
 class Graph(model.Model):
@@ -89,6 +98,7 @@ class Graph(model.Model):
   '''  '''
 
   origin = int, {'required': True}
+  structure = str, {'required': True}
   edges = int, {'required': True}
   vertices = int, {'required': True}
 
@@ -97,6 +107,7 @@ class GraphResponse(model.Model):
 
   '''  '''
 
-  data = Data, {'required': False}
-  meta = Meta, {'required': True}
-  graph = Graph, {'required': False}
+  session = str
+  data = Data, {'required': False, 'embedded': True}
+  meta = Meta, {'required': True, 'embedded': True}
+  graph = Graph, {'required': False, 'embedded': True}

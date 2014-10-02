@@ -7,8 +7,9 @@
 '''
 
 # stdlib
-import base64
-import collections
+import base64, uuid
+from functools import partial
+from collections import defaultdict
 
 # canteen
 from canteen import logic, bind
@@ -18,8 +19,9 @@ from canteen import decorators, struct
 
 ## Globals
 _DEFAULT_DEPTH, _DEFAULT_LIMIT = 2, 5
-zeros = lambda: collections.defaultdict(lambda: 0)
-peers = lambda e: e.peers if getattr(e, 'peers') else (e.source, e.target)
+zeros = lambda: defaultdict(lambda: 0)
+keyify = lambda t: t if isinstance(t, model.Key) else t.key
+get_peers = lambda e: e.peers if getattr(e, 'peers') else (e.source, e.target)
 
 
 class Options(object):
@@ -32,9 +34,9 @@ class Options(object):
      ('limit', _DEFAULT_LIMIT),  # limit of edges per pull at each step
      ('depth', _DEFAULT_DEPTH),  # limit of steps to go out from origin
      ('query', None),  # query object to apply during graph traversal
-     ('keys_only', False),  # plz return only keys, no objects
-     ('descriptor', False),  # fetch descriptors (can be set to query as well)
-     ('collections', False)))))  # fetch complete collections of parents and children
+     ('keys_only', True),  # plz return only keys, no objects
+     ('descriptors', False),  # fetch descriptors (can be set to query as well)
+     ('collections', True)))))  # fetch complete collections of parents and children
 
   # seal slots, defaults and params
   __slots__, __defaults__, params = (
@@ -133,12 +135,12 @@ class Options(object):
     return base64.b64encode(':'.join(map(unicode, self.collapse())))
 
   ## ~~ accessors ~~ ##
-  limit, depth, query, keys_only, descriptor, collections, defaults = (
+  limit, depth, query, keys_only, descriptors, collections, defaults = (
     property(lambda self: self.__limit__),
     property(lambda self: self.__depth__),
     property(lambda self: self.__query__),
-    property(lambda self: self.__keysonly__),
-    property(lambda self: self.__descriptor__),
+    property(lambda self: self.__keys_only__),
+    property(lambda self: self.__descriptors__),
     property(lambda self: self.__collections__),
     decorators.classproperty(lambda cls: cls.__defaults__))
 
@@ -161,11 +163,19 @@ class Graph(object):
      ('queued', lambda: set()),  # holds keys queued for fetch before fulfillment
      ('fulfilled', lambda: set()),  # holds keys fulfilled, moved over from queued
 
+     # ~~ graph storage ~~ #
+     ('edges', lambda: set()),  # holds edges encountered during traversal
+     ('vertices', lambda: defaultdict(set)),  # holds vertices encountered during traversal
+
      # ~~ object storage ~~ #
      ('keys', lambda: set()),  # keeps track of keys contained in this graph
+     ('kinds', lambda: set()),  # keeps track of entity kinds as they are found
      ('objects', lambda: dict()),  # keeps track of objects contained in this graph
-     ('matrix', lambda: collections.defaultdict(zeros)),  # keeps lookup track of neighbors
-     ('neighbors', lambda: collections.defaultdict(set))))))  # keeps track of neighborship
+
+     # ~~ indexing ~~ #
+     ('peers', lambda: defaultdict(set)),  # keeps track of vertices in each edge
+     ('matrix', lambda: defaultdict(zeros)),  # keeps lookup track of neighbors
+     ('neighbors', lambda: defaultdict(set))))))  # keeps track of neighborship
 
   __defaults__ = dict(__defaults__)  # re-map into dictionary
 
@@ -200,7 +210,11 @@ class Graph(object):
     ''' encounter a key '''
 
     target = key if not isinstance(key, model.Model) else key.key
-    map(self.__queued__.add, target.ancestry)
+    map(self.__kinds__.add, (key.kind for key in target.ancestry))
+
+    # apply collections
+    map(self.__queued__.add, (
+      (key for key in target.ancestry) if self.options.collections else (key,)))
     return key  # encounter key
 
   def traverse(self, key, perspective=None, _depth=0):
@@ -213,30 +227,40 @@ class Graph(object):
             perspective is not None and _depth > 0), (
             "origin traversal must have no perspective and vice versa")
 
+    (origin, edges, vertices,
+      matrix, neighbors, peers, options) = (
+      self.__origin__, self.__edges__, self.__vertices__,
+      self.__matrix__, self.__neighbors__, self.__peers__,
+      self.__options__)
+
     # file origin if not attached
-    if not self.origin: self.__origin__ = key
+    if not origin: origin = self.__origin__ = key
 
     yield self.encounter(key)  # encounter node keys at leaf
 
     # break if we've hit our depth limit for this branch
-    if self.options.depth <= _depth: raise StopIteration()
+    if options.depth <= _depth: raise StopIteration()
 
     # otherwise, proceed
     for edge in map(self.encounter,  # encounter edge keys as we go
-                    models.Vertex(key=key).edges().fetch(limit=self.options.limit)):
+                    models.Vertex(key=key).edges().fetch(limit=options.limit)):
 
-      # extract edge peers
-      left, right = peers(edge)
+      left, right = get_peers(edge)  # extract edge peers
+
+      # add edge peers
+      peers[edge].add(left), peers[edge].add(right)
+
+      # add as edge and map to vertex
+      edges.add(edge), vertices[left].add(edge), vertices[right].add(edge)
 
       # file away in matrix and adjacency
-      self.matrix[left][right], self.matrix[right][left] = 1, 1
-      self.neighbors[left].add(right), self.neighbors[right].add(left)
+      matrix[left][right], matrix[right][left] = 1, 1
+      neighbors[left].add(right), neighbors[right].add(left)
 
-      # spawn next branch of querying
-      for origin in (left, right):
-        if origin not in (key, perspective):  # don't traverse backwards
-          for artifact in self.traverse(origin, perspective=key, _depth=_depth + 1):
-            yield artifact
+      # spawn next branch of querying, but don't traverse backwards
+      for origin in (n for n in (left, right) if n not in (key, perspective)):
+        for artifact in self.traverse(origin, perspective=key, _depth=_depth + 1):
+          yield artifact
 
   ## ~~ high-level ~~ ##
   def fulfill(self):
@@ -245,21 +269,107 @@ class Graph(object):
 
     from fatcatmap import models
 
+    bundle = [i for i in self.__queued__]
+
     # build key generator
-    for entity in models.BaseModel.get_multi([i for i in self.__queued__]):
-      self.keys.add(entity.key)
-      self.fulfilled.add(entity.key)
-      self.objects[entity.key] = entity
+    for key, entity in zip(bundle, models.BaseModel.get_multi(bundle)):
+      self.__keys__.add(entity.key)
+      self.__fulfilled__.add(entity.key)
+      self.__queued__.remove(key)
+      self.__objects__[entity.key] = entity
     return self
+
+  def export(self, target):
+
+    ''' prepare serialized structure and fill target for response '''
+
+    from fatcatmap import models
+    from fatcatmap.services.graph import messages
+
+    # grab options
+    options = self.__options__
+
+    # unpack objects
+    kinds, keys, objects = (
+      self.__kinds__, self.__keys__, self.__objects__)
+
+    # unpack graph
+    origin, edges, vertices = (
+      self.__origin__, self.__edges__, self.__vertices__)
+
+    # generate fragment
+    fragment = base64.b64encode('::'.join((
+                origin.flatten(True)[0],
+                str(options.depth),
+                str(options.limit))))
+
+    # make packed graph
+    packed, packed_i, lookup = [], set(), {}
+    for group in (vertices, keys, edges):
+      if not options.keys_only:
+        for key, entity in zip((keyify(k) for k in group),
+                               (objects[keyify(k)] for k in group)):
+          if key not in packed_i:
+            packed_i.add(key)
+
+            # add to packed objects
+            packed.append((key, entity))
+            lookup[key] = len(packed) - 1
+      else:
+        for key in (keyify(k) for k in group):
+
+          if key not in packed_i:
+            packed_i.add(key)
+
+            packed.append((key, None))
+            lookup[key] = len(packed) - 1
+
+    # generate final mappings
+    mappings = []
+    for vertex in vertices:
+      _window = []
+      for edge in vertices[vertex]:
+        _window.append(lookup[edge.key])
+      mappings.append(tuple(_window))
+
+    return target(
+
+      session=unicode(uuid.uuid4()),
+
+      # ~~ metadata ~~ #
+      meta=messages.Meta(
+        kinds=[k for k in sorted(kinds)],
+        counts=[len(vertices), len(edges), len(keys)],
+        cached=False,  # always fresh, for now
+        options=self.options.serialize(),
+        fragment=fragment),
+
+      # ~~ raw data ~~ #
+      data=messages.Data(
+        keys=[k.urlsafe() for k, o in packed],
+        objects=(
+          ([messages.GraphObject(data=o.to_dict(), cached=False) for k, o in packed]
+          )  if not options.keys_only else [])),
+
+      # ~~ graph structure ~~ #
+      graph=messages.Graph(
+        origin=lookup[origin],
+        edges=len(edges),
+        vertices=len(vertices),
+        structure=':'.join((','.join(map(unicode, group)) for group in mappings))))
 
   ## ~~ accessors ~~ ##
   (origin, options, queued, fulfilled,
-    keys, objects, matrix, neighbors, defaults) = (
+    edges, vertices, keys, kinds, objects,
+    matrix, neighbors, defaults) = (
       property(lambda self: self.__origin__),
       property(lambda self: self.__options__),
       property(lambda self: self.__queued__),
       property(lambda self: self.__fulfilled__),
+      property(lambda self: self.__edges__),
+      property(lambda self: self.__vertices__),
       property(lambda self: self.__keys__),
+      property(lambda self: self.__kinds__),
       property(lambda self: self.__objects__),
       property(lambda self: self.__matrix__),
       property(lambda self: self.__neighbors__),
@@ -271,8 +381,25 @@ class Grapher(logic.Logic):
 
   '''  '''
 
-  def open(self, session, *args, **options):
+  options = Options  # attach graph options
+
+  def construct(self, session, origin, emitter=None, **options):
 
     '''  '''
 
-    pass
+    origin = (
+      origin or model.Key.from_urlsafe("OlBlcnNvbjoyMzQ0OkxlZ2lzbGF0b3I6NDAwMjYz"))
+
+    # build graph
+    graph = Graph(**options)
+
+    if not emitter: mapper = lambda x: x
+    else: mapper = partial(emitter, graph)
+
+    # perform traversal
+    map(mapper, graph.traverse(origin))
+
+    # optionally, fulfill
+    if not options.get('keys_only'): graph.fulfill()
+    return graph
+  

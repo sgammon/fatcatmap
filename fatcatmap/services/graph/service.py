@@ -24,17 +24,10 @@ class GraphService(Service):
 
     ''' '''
 
-    origin = (request.origin and Vertex.get(model.Key(urlsafe=request.origin))) or None
-
     # construct graph
-    meta, data, graph = self.graph.construct(origin, **{
-      'fulfill': (request.options.natives or True) if request.options else True,
-      'depth': (request.options.depth or 1) if request.options else 1,
-      'limit': (request.options.limit or 5) if request.options else 5
-    }).extract(flatten=True)
-
-    # then optionally fulfill, then extract
-    return messages.CompiledGraph(**{
-      'meta': messages.Metadata(**meta),
-      'data': messages.RawData(**data),
-      'graph': messages.GraphData(**graph)})
+    return (self.graph.construct(None, request.origin, **{
+      'depth': (request.options and request.options.depth) or self.graph.options.defaults['depth'],
+      'limit': (request.options and request.options.limit) or self.graph.options.defaults['limit'],
+      'keys_only': (request.options.keys_only if request.options is not None else self.graph.options.defaults['keys_only']),
+      'collections': (request.options.collections if request.options is not None else self.graph.options.defaults['collections'])})
+        ).export(messages.GraphResponse)
