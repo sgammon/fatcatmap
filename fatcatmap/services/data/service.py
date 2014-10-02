@@ -6,6 +6,9 @@
 
 '''
 
+# stdlib
+import hashlib, uuid
+
 # local
 from . import exceptions
 from .messages import (FetchRequest,
@@ -35,4 +38,23 @@ class DataService(Service):
 
         :returns: Instance of :py:class:`messages.FetchResponse`.  '''
 
-    pass
+    results, errors, count = [], [], 0
+    for key, result in self.data.fetch(request.keys, request.held, **{
+      'cached': (request.options.cached if request.options else True),
+      'collections': (request.options.collections if request.options else False)}):
+
+      # if we found it...
+      if result:
+        count += 1
+        results.append(result)
+
+      # if we didn't find it...
+      else:
+        errors.append(key)
+        results.append(None)
+
+    return FetchResponse(
+      session=uuid.uuid4(),
+      count=count,
+      errors=len(errors),
+      content=results)
