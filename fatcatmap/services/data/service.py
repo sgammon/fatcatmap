@@ -53,8 +53,6 @@ class DataService(Service):
         errors.append(key)
         results.append(None)
 
-    return FetchResponse(
-      session=uuid.uuid4(),
-      count=count,
-      errors=len(errors),
-      content=results)
+    return self.data.serialize(FetchResponse, results,
+      session=request.session or uuid.uuid4(),
+      errors=len(errors))
