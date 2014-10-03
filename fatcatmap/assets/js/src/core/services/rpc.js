@@ -5,12 +5,13 @@
  *          Sam Gammon <sam@momentum.io>,
  *          Alex Rosner <alex@momentum.io>,
  *          Ian Weisberger <ian@momentum.io>
- * 
+ *
  * copyright (c) momentum labs, 2014
  */
 
 goog.require('util.url');
-goog.require('services');
+goog.require('async.future');
+goog.require('service');
 goog.require('services.http');
 
 goog.provide('services.rpc');
@@ -42,6 +43,8 @@ RPCAPI = function (name, methods, config) {
      * @this {ServiceContext}
      */
     api[method] = function (request, handler) {
+      var response = new Future();
+
       request = {
         url: endpoint,
         data: request.data || {},
@@ -53,10 +56,16 @@ RPCAPI = function (name, methods, config) {
        * @expose
        */
       request.headers.Accept = 'application/json';
-
       request.headers['Content-Type'] = 'application/json';
 
-      return this.http.post(request, handler);
+      this.http.post(request, function (value, error) {
+        if (error)
+          return response.fulfill(false, error);
+
+        response.fulfill(value);
+      });
+
+      return handler ? response.then(handler) : response;
     }.inject('http');
 
   });

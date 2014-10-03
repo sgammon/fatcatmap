@@ -10,9 +10,9 @@
  */
 
 goog.require('util.url');
-goog.require('util.structs');
-goog.require('supports');
-goog.require('services');
+goog.require('util.struct');
+goog.require('support');
+goog.require('service');
 
 goog.provide('services.router');
 
@@ -39,8 +39,8 @@ var ROUTES = {
   },
 
   ROUTE_HISTORY = {
-    back: new util.structs.BiLinkedList(null, 10),
-    forward: new util.structs.BiLinkedList(null, 10),
+    back: new util.struct.BiLinkedList(null, 10),
+    forward: new util.struct.BiLinkedList(null, 10),
     current: null
   },
 

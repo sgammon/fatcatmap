@@ -239,8 +239,8 @@ task('closure:test', function (cb) {
 
       cfg.module_output_path_prefix = ASSET_PREFIX + 'js/compiled/test/';
       cfg.module = [
-        ['app:' + sources.length + ':'].concat(sources),
-        ['test:' + tests.length + ':app:'].concat(tests)
+        ['app:' + sources.length].concat(sources),
+        ['test:' + tests.length + ':app'].concat(tests)
       ];
 
       src(inputs.js.app)
@@ -341,7 +341,6 @@ task('test:clean', function () {
 // Default task - runs with bare 'gulp'.
 task('default', [
   'sass',
-  'templates',
   'test'
 ]);
 

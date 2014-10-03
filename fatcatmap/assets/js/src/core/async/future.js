@@ -6,11 +6,12 @@
  *          Sam Gammon <sam@momentum.io>,
  *          Alex Rosner <alex@momentum.io>,
  *          Ian Weisberger <ian@momentum.io>
- * 
+ *
  * copyright (c) momentum labs, 2014
  */
 
 goog.require('util.array');
+goog.require('util.object');
 goog.require('async.decorators');
 
 goog.provide('async.future');
@@ -143,7 +144,7 @@ MultiFuture = function (futures) {
   this.all(futures);
 };
 
-MultiFuture.prototype = new Future();
+util.object.inherit(MultiFuture, Future);
 
 /**
  * Adds an additional unresolved value to the MultiFuture.

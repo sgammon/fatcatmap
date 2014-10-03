@@ -12,8 +12,8 @@
 goog.require('util.object');
 goog.require('async.task');
 goog.require('async.future');
-goog.require('supports');
-goog.require('services');
+goog.require('support');
+goog.require('service');
 goog.require('services.storage');
 
 goog.provide('services.data');
@@ -22,7 +22,7 @@ var _dataCache, _dataStore, watchers;
 
 _dataCache = {};
 
-if (supports.storage.local)
+if (support.storage.local)
   _dataStore = new Store(window.localStorage, 'data', 'data');
 
 watchers = {};

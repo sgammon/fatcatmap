@@ -9,8 +9,8 @@
  * copyright (c) momentum labs, 2014
  */
 
-goog.require('supports');
-goog.require('services');
+goog.require('support');
+goog.require('service');
 goog.require('services.router');
 
 goog.provide('services.history');
@@ -25,7 +25,7 @@ services.history = /** @lends {ServiceContext.prototype.history} */ {
    * @param {Object} state
    */
   push: function (url, state) {
-    if (supports.history.html5)
+    if (support.history.html5)
       window.history.pushState(state, '', url);
   },
 
@@ -41,7 +41,7 @@ services.history = /** @lends {ServiceContext.prototype.history} */ {
         services.history.push(url, response);
     });
 
-    if (supports.history.html5) {
+    if (support.history.html5) {
       window.onpopstate = function (event) {
         var request = {
           source: 'history',

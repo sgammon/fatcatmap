@@ -9,8 +9,8 @@
  * copyright (c) momentum labs, 2014
  */
 
-goog.require('supports');
-goog.require('services');
+goog.require('support');
+goog.require('service');
 
 goog.provide('services.storage');
 
@@ -32,7 +32,7 @@ var Store = function (backend, namespace, provideAs) {
   this._backend = backend;
 
   if (typeof provideAs === 'string')
-    ServiceContext.register('storage.' + provideAs, this);
+    ServiceContext.inject('storage.' + provideAs, this);
 };
 
 Store.prototype = {
@@ -111,7 +111,7 @@ Store.storeCount = 0;
  */
 services.storage = /** @lends {ServiceContext.prototype.storage} */{};
 
-if (supports.storage.local) {
+if (support.storage.local) {
   /**
    * @expose
    * @type {?Store}
@@ -119,7 +119,7 @@ if (supports.storage.local) {
   services.storage.local = new Store(window.localStorage, 'service', 'storage.local');
 }
 
-if (supports.storage.session) {
+if (support.storage.session) {
   /**
    * @expose
    * @type {?Store}

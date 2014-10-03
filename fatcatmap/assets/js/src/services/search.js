@@ -10,7 +10,7 @@
  */
 
 goog.require('async.future');
-goog.require('services');
+goog.require('service');
 
 goog.provide('services.search');
 
@@ -46,9 +46,10 @@ QuerySpec = function (query) {
    * @return {QuerySpec}
    */
   this.limit = function (limit) {
-    if (limit)
+    /*jshint eqnull:true */
+    if (limit != null)
       /** @expose */
-      query.spec.limit = limit;
+      query.limit = limit;
 
     return this;
   };
@@ -100,33 +101,26 @@ QuerySpec = function (query) {
 /**
  * @constructor
  * @extends {Future}
- * @param {!QueryFilterSpec} spec
+ * @param {number=} limit
  * @throws {Error} If spec is not defined.
  */
-Query = function (spec) {
-  if (this.constructor === Query)
-    return this;
-
-  if (!spec)
-    throw new Error('Query() requires a query spec as the only param.');
-
+Query = function (limit) {
   Future.call(this);
-
-  /**
-   * @type {!QueryFilterSpec}
-   */
-  this.spec = spec;
 
   /**
    * @type {Array.<QueryFilterSpec>}
    */
   this.filters = [];
 
+  /**
+   * @type {?number}
+   */
+  this.limit = limit || null;
+
   return new QuerySpec(this);
 };
 
-Query.prototype = new Future();
-Query.prototype.constructor = Query;
+util.object.inherit(Query, Future);
 
 /**
  * @abstract

@@ -17,10 +17,10 @@ var config = {
   /**
    * @type {JSContext}
    */
-  context: JSON.parse($('#js-context').textContent || '{}'),
+  context: $('#js-context') ? JSON.parse($('#js-context').textContent) : null,
 
   /**
-   * @type {PageData}
+   * @type {GraphData}
    */
-  data: JSON.parse($('#js-data').textContent || '{}')
+  data: $('#js-data') ? JSON.parse($('#js-data').textContent) : null
 };

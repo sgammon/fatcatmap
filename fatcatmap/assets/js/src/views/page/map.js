@@ -387,15 +387,16 @@ views.Map = View.extend({
         edge = root.selectAll(selectors.edge);
 
         tick = function () {
-
-          if (view.config.origin.snap) {
-            graph.nodes[graph.origin].x = view.config.origin.position.x;
-            graph.nodes[graph.origin].y = view.config.origin.position.y;
-          } else {
-            view.config.origin.position = {
-              x: graph.nodes[graph.origin].x,
-              y: graph.nodes[graph.origin].y
-            };
+          if (graph.origin) {
+            if (view.config.origin.snap) {
+              graph.nodes[graph.origin].x = view.config.origin.position.x;
+              graph.nodes[graph.origin].y = view.config.origin.position.y;
+            } else {
+              view.config.origin.position = {
+                x: graph.nodes[graph.origin].x,
+                y: graph.nodes[graph.origin].y
+              };
+            }
           }
 
           edge.attr('x1', function (e) { return e.source.x - view.config.node.radius; })

@@ -12,7 +12,7 @@
 
 goog.require('util.object');
 
-goog.provide('services');
+goog.provide('service');
 
 var ServiceContext, Service;
 
@@ -22,7 +22,17 @@ var ServiceContext, Service;
  */
 ServiceContext = function () {};
 
-ServiceContext.prototype = {};
+ServiceContext.prototype = {
+  /**
+   * @param {string} name
+   * @param {(Service|function(this: ServiceContext, ...[*]))} service
+   * @return {(Service|function(this: ServiceContext, ...[*]))}
+   */
+  inject: function (name, service) {
+    util.object.resolveAndSet(ServiceContext.prototype, name, service);
+    return service;
+  }
+};
 
 /**
  * @static
@@ -30,10 +40,7 @@ ServiceContext.prototype = {};
  * @param {(Service|function(this: ServiceContext, ...[*]))} service
  * @return {(Service|function(this: ServiceContext, ...[*]))}
  */
-ServiceContext.register = function (name, service) {
-  util.object.resolveAndSet(ServiceContext.prototype, name, service);
-  return service;
-};
+ServiceContext.inject = ServiceContext.prototype.inject;
 
 /**
  * ServiceContext-injected class.
@@ -44,7 +51,7 @@ ServiceContext.register = function (name, service) {
  */
 Service = function (name, methods) {
   if (typeof name !== 'string')
-    throw new TypeError('Service() requires a service name to register.');
+    throw new TypeError('Service() requires a service name to inject at.');
 
   if (methods) {
     for (var k in methods) {
@@ -53,7 +60,7 @@ Service = function (name, methods) {
     }
   }
 
-  ServiceContext.register(name, this);
+  ServiceContext.inject(name, this);
 };
 
 Service.prototype = new ServiceContext();
@@ -127,7 +134,7 @@ Object.defineProperty(Function.prototype, 'service', {
    * @this {Function}
    */
    value: function (name) {
-    return ServiceContext.register(name, this.inject());
+    return ServiceContext.inject(name, this.inject());
   }
 });
 

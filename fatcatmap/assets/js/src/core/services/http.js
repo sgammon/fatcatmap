@@ -11,7 +11,7 @@
 
 goog.require('util.url');
 goog.require('async.future');
-goog.require('services');
+goog.require('service');
 
 goog.provide('services.http');
 
@@ -34,7 +34,7 @@ _prepareRequest = function (method, request, response, async) {
     url = request.url;
   }
 
-  xhr.open(method.toUpperCase(), url, async);
+  xhr.open(method.toUpperCase(), url, !!async);
 
   if (request.headers) {
     headers = request.headers;
@@ -82,10 +82,13 @@ _dispatchRequest = function (method, request, handler) {
 
   request = _prepareRequest(method, request, response, !!handler);
 
-  if (handler)
-    response = response.then(handler);
-
   request.send(data);
+
+  if (handler) {
+    response = response.then(handler);
+  } else {
+    response = request.responseJSON;
+  }
 
   return response;
 };

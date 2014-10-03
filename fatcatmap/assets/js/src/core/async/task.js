@@ -6,11 +6,12 @@
  *          Sam Gammon <sam@momentum.io>,
  *          Alex Rosner <alex@momentum.io>,
  *          Ian Weisberger <ian@momentum.io>
- * 
+ *
  * copyright (c) momentum labs, 2014
  */
 
 goog.require('util.array');
+goog.require('util.object');
 goog.require('async.decorators');
 goog.require('async.future');
 
@@ -113,7 +114,7 @@ Task = function (first) {
     return this.first(first);
 };
 
-Task.prototype = new Future();
+util.object.inherit(Task, Future);
 
 /**
  * Make <code>Task.fulfill</code> a no-op.

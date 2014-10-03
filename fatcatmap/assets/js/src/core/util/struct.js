@@ -9,27 +9,27 @@
  * copyright (c) momentum labs, 2014
  */
 
-goog.provide('util.structs');
+goog.provide('util.struct');
 
 /**
  * @constructor
  * @param {*} data
- * @param {util.structs.ListItem=} previous
- * @param {util.structs.ListItem=} next
+ * @param {util.struct.ListItem=} previous
+ * @param {util.struct.ListItem=} next
  */
-util.structs.ListItem = function (data, previous, next) {
+util.struct.ListItem = function (data, previous, next) {
   /**
    * @type {*}
    */
   this.data = data;
 
   /**
-   * @type {?util.structs.ListItem}
+   * @type {?util.struct.ListItem}
    */
   this.previous = previous || null;
 
   /**
-   * @type {?util.structs.ListItem}
+   * @type {?util.struct.ListItem}
    */
   this.next = next || null;
 
@@ -47,12 +47,12 @@ util.structs.ListItem = function (data, previous, next) {
  */
 var BiLinkedList = function (items, limit) {
   /**
-   * @type {?util.structs.ListItem}
+   * @type {?util.struct.ListItem}
    */
   this.head = null;
 
   /**
-   * @type {?util.structs.ListItem}
+   * @type {?util.struct.ListItem}
    */
   this.tail = null;
 
@@ -85,7 +85,7 @@ BiLinkedList.prototype._increment = function () {
  * @param {*} item
  */
 BiLinkedList.prototype.lpush = function (item) {
-  this.head = new util.structs.ListItem(item, null, this.head);
+  this.head = new util.struct.ListItem(item, null, this.head);
 
   if (!this.tail)
     this.tail = this.head;
@@ -97,7 +97,7 @@ BiLinkedList.prototype.lpush = function (item) {
  * @param {*} item
  */
 BiLinkedList.prototype.rpush = function (item) {
-  this.tail = new util.structs.ListItem(item, this.tail);
+  this.tail = new util.struct.ListItem(item, this.tail);
 
   if (!this.head)
     this.head = this.tail;
@@ -165,4 +165,4 @@ BiLinkedList.prototype.rpop = function () {
   return tail.data;
 };
 
-util.structs.BiLinkedList = BiLinkedList;
+util.struct.BiLinkedList = BiLinkedList;

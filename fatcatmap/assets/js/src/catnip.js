@@ -9,8 +9,8 @@
  * copyright (c) momentum labs, 2014
  */
 
-goog.require('supports');
-goog.require('services');
+goog.require('support');
+goog.require('service');
 goog.require('services.router');
 goog.require('services.history');
 goog.require('services.template');
@@ -39,7 +39,7 @@ GO = function () {
 /**
  * @expose
  * @param {JSContext} context
- * @param {PageData} data
+ * @param {GraphData} data
  * @param {Object.<string, function(this:ServiceContext)>} routes
  * @this {ServiceContext}
  * @return {ServiceContext}
@@ -69,30 +69,35 @@ catnip = function (context, data, routes) {
     if (context.template.manifest)
       fcm.template.init(context.template.manifest);
 
-    fcm.data.init(data, function (_data) {
-      fcm.graph.init(_data);
-    });
-
-    fcm.router.init(routes, function (initialRoute) {
-      catnip.ready(function () {
-        fcm.history.init();
-
-        if (initialRoute)
-          return fcm.router.route(initialRoute);
+    if (data)
+      fcm.graph.init(data, function (data) {
+        fcm.data.init(data);
       });
-    });
 
-    fcm.view.init('app', /** @this {views.App} */function () {
-      var app = this;
+    if (routes) {
 
-      app.$set('active', true);
+      fcm.router.init(routes, function (initialRoute) {
+        catnip.ready(function () {
+          fcm.history.init();
 
-      app.nextTick(function () {
-        app.$.stage.$set('active', true);
-        ServiceContext.register('app', app);
-        GO();
+          if (initialRoute)
+            return fcm.router.route(initialRoute);
+        });
       });
-    });
+
+      fcm.view.init('app', /** @this {views.App} */function () {
+        var app = this;
+
+        app.$set('active', true);
+
+        app.nextTick(function () {
+          app.$.stage.$set('active', true);
+          fcm.inject('app', app);
+          GO();
+        });
+      });
+
+    }
 
     return this;
 
