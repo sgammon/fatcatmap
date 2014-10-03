@@ -7,6 +7,7 @@
 '''
 
 # model API
+from canteen import rpc
 from canteen import model
 from canteen import struct
 
@@ -67,9 +68,9 @@ class GraphRequest(model.Model):
     depth = int, {'default': 2}
     limit = int, {'default': 5}
     cached = bool, {'default': True}
-    keys_only = bool, {'default': True}
-    descriptors = bool, {'default': False}
-    collections = bool, {'default': False}
+    keys_only = bool, {'default': False}
+    descriptors = bool, {'default': True}
+    collections = bool, {'default': True}
 
   # -- base -- #
   origin = str, {'default': None}
@@ -110,8 +111,6 @@ class Graph(model.Model):
 
   origin = int, {'required': True}
   structure = str, {'required': True}
-  edges = int, {'required': True}
-  vertices = int, {'required': True}
 
 
 class GraphResponse(model.Model):
@@ -119,7 +118,7 @@ class GraphResponse(model.Model):
   ''' Specifies a response to a ``GraphRequest``, including
       metadata, raw data, and graph structure. '''
 
-  session = str
-  data = Data, {'required': False, 'embedded': True}
-  meta = Meta, {'required': True, 'embedded': True}
-  graph = Graph, {'required': False, 'embedded': True}
+  session = str, {'indexed': False}
+  data = Data, {'required': False, 'embedded': True, 'indexed': False}
+  meta = Meta, {'required': True, 'embedded': True, 'indexed': False}
+  graph = Graph, {'required': False, 'embedded': True, 'indexed': False}

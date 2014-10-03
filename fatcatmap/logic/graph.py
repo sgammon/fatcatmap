@@ -132,7 +132,7 @@ class Options(object):
         :returns: Encoded string representation of this :py:class:`Options`
           instance. '''
 
-    return base64.b64encode(':'.join(map(unicode, self.collapse())))
+    return base64.b64encode(':'.join(map(unicode, self.collapse()))).replace('=', '')
 
   ## ~~ accessors ~~ ##
   limit, depth, query, keys_only, descriptors, collections, defaults = (
@@ -155,27 +155,29 @@ class Graph(object):
 
   __slots__, __defaults__ = zip(*((('__%s__' % b[0], b) for b in (
 
+     ('weakref', struct.EMPTY), ('serialized', dict),
+
      # ~~ basic parameters ~~ #
      ('origin', None),  # perspective node anchoring this graph structure
      ('options', None),  # holds query options describing the parameters of this graph
 
      # ~~ traversal state ~~ #
-     ('queued', lambda: set()),  # holds keys queued for fetch before fulfillment
-     ('fulfilled', lambda: set()),  # holds keys fulfilled, moved over from queued
+     ('queued', set),  # holds keys queued for fetch before fulfillment
+     ('fulfilled', set),  # holds keys fulfilled, moved over from queued
 
      # ~~ graph storage ~~ #
-     ('edges', lambda: set()),  # holds edges encountered during traversal
-     ('vertices', lambda: defaultdict(set)),  # holds vertices encountered during traversal
+     ('edges', set),  # holds edges encountered during traversal
+     ('vertices', defaultdict(set)),  # holds vertices encountered during traversal
 
      # ~~ object storage ~~ #
-     ('keys', lambda: set()),  # keeps track of keys contained in this graph
-     ('kinds', lambda: set()),  # keeps track of entity kinds as they are found
-     ('objects', lambda: dict()),  # keeps track of objects contained in this graph
+     ('keys', set),  # keeps track of keys contained in this graph
+     ('kinds', set),  # keeps track of entity kinds as they are found
+     ('objects', dict),  # keeps track of objects contained in this graph
 
      # ~~ indexing ~~ #
-     ('peers', lambda: defaultdict(set)),  # keeps track of vertices in each edge
-     ('matrix', lambda: defaultdict(zeros)),  # keeps lookup track of neighbors
-     ('neighbors', lambda: defaultdict(set))))))  # keeps track of neighborship
+     ('peers', defaultdict(set)),  # keeps track of vertices in each edge
+     ('matrix', defaultdict(zeros)),  # keeps lookup track of neighbors
+     ('neighbors', defaultdict(set))))))  # keeps track of neighborship
 
   __defaults__ = dict(__defaults__)  # re-map into dictionary
 
@@ -189,7 +191,8 @@ class Graph(object):
           ``options_class``, which defaults to :py:class:`Options`. '''
 
     for entry, value in self.__defaults__.iteritems():  # fill out options with defaults
-      setattr(self, '__%s__' % entry, value() if callable(value) else value)
+      if value is not struct.EMPTY:
+        setattr(self, '__%s__' % entry, value() if callable(value) else value)
 
     # consider options
     self.set_options(options.get('options') or self.__options_class__(**options))
@@ -279,6 +282,17 @@ class Graph(object):
       self.__objects__[entity.key] = entity
     return self
 
+  @staticmethod
+  def fragment(origin, options):
+
+    '''  '''
+
+    # generate fragment
+    return base64.b64encode('::'.join((
+                origin.flatten(True)[0],
+                str(options.depth),
+                str(options.limit)))).replace('=', '')
+
   def export(self, target):
 
     ''' prepare serialized structure and fill target for response '''
@@ -286,26 +300,24 @@ class Graph(object):
     from fatcatmap import models
     from fatcatmap.services.graph import messages
 
+    if target in self.__serialized__:
+      return self.__serialized__[target]
+
     # grab options
     options = self.__options__
 
     # unpack objects
     kinds, keys, objects = (
-      self.__kinds__, self.__keys__, self.__objects__)
+      [i for i in sorted(self.__kinds__)],
+      self.__keys__, self.__objects__)
 
     # unpack graph
     origin, edges, vertices = (
       self.__origin__, self.__edges__, self.__vertices__)
 
-    # generate fragment
-    fragment = base64.b64encode('::'.join((
-                origin.flatten(True)[0],
-                str(options.depth),
-                str(options.limit))))
-
     # make packed graph
     packed, packed_i, lookup = [], set(), {}
-    for group in (vertices, keys, edges):
+    for group in ((origin,), vertices, keys, edges):
       if not options.keys_only:
         for key, entity in zip((keyify(k) for k in group),
                                (objects[keyify(k)] for k in group)):
@@ -324,39 +336,66 @@ class Graph(object):
             packed.append((key, None))
             lookup[key] = len(packed) - 1
 
-    # generate final mappings
-    mappings = []
-    for vertex in vertices:
-      _window = []
-      for edge in vertices[vertex]:
-        _window.append(lookup[edge.key])
-      mappings.append(tuple(_window))
+    # reference node peers with integers instead of strings
+    if not options.keys_only:
+      for k, o in packed:
+        if hasattr(o, 'peers'):
+          symbols = []
+          for inner_peer in o.peers:
+            symbols.append(lookup[inner_peer])
+          o.peers = symbols
 
-    return target(
+    # generate final mappings
+    mappings, mapped = [], set()
+    for key, item in packed:
+      if isinstance(item, models.Vertex):
+        _window = []
+        for edge in vertices[key]:
+          if edge.key not in mapped:
+            _window.append(lookup[edge.key])
+            mapped.add(edge.key)
+
+        if _window:
+          mappings.append(','.join(map(unicode, _window)))
+        else:
+          mappings.append('')
+      else:
+        break
+
+    def pack(key):
+
+      ''' Produce a small structure representing a ``Key``
+          instance in a graph response. '''
+
+      structure = [kinds.index(key.kind), key.id]
+      if key.parent: structure.append(lookup[key.parent])
+      return structure
+
+    result = self.__serialized__[target] = target(
 
       session=unicode(uuid.uuid4()),
 
       # ~~ metadata ~~ #
       meta=messages.Meta(
-        kinds=[k for k in sorted(kinds)],
+        kinds=kinds,
         counts=[len(vertices), len(edges), len(keys)],
         cached=False,  # always fresh, for now
         options=self.options.serialize(),
-        fragment=fragment),
+        fragment=self.fragment(origin, options)),
 
       # ~~ raw data ~~ #
       data=messages.Data(
-        keys=[k.urlsafe() for k, o in packed],
+        keys=[pack(k) for k, o in packed],
         objects=(
           ([messages.GraphObject(data=o.to_dict(), cached=False) for k, o in packed]
-          )  if not options.keys_only else [])),
+            )  if not options.keys_only else [])),
 
       # ~~ graph structure ~~ #
       graph=messages.Graph(
         origin=lookup[origin],
-        edges=len(edges),
-        vertices=len(vertices),
-        structure=':'.join((','.join(map(unicode, group)) for group in mappings))))
+        structure=':'.join(mappings)))
+
+    return result
 
   ## ~~ accessors ~~ ##
   (origin, options, queued, fulfilled,
@@ -387,19 +426,37 @@ class Grapher(logic.Logic):
 
     '''  '''
 
-    origin = (
+    from fatcatmap import models
+    from fatcatmap.services.graph import messages as gstruct
+
+    # get options and origin
+    options, origin = Options(**options), (
       origin or model.Key.from_urlsafe("OlBlcnNvbjoyMzQ0OkxlZ2lzbGF0b3I6NDAwMjYz"))
 
+    # generate fragment
+    fragment = Graph.fragment(origin, options)
+
+    graph = gstruct.Graph.get(model.Key(gstruct.GraphResponse, fragment),
+                              adapter=models.BaseModel.__adapter__)
+    if graph:
+      if not emitter: mapper = lambda x: x
+      else: mapper = partial(emitter, graph)
+      mapper(graph)  # hand graph in all-at-once if cached
+      return graph
+
     # build graph
-    graph = Graph(**options)
+    graph = Graph(options=options)
 
     if not emitter: mapper = lambda x: x
     else: mapper = partial(emitter, graph)
 
     # perform traversal
     map(mapper, graph.traverse(origin))
+    if not options.keys_only: graph.fulfill()
 
-    # optionally, fulfill
-    if not options.get('keys_only'): graph.fulfill()
-    return graph
+    # optionally, fulfill, then set cache and return
+    response = graph.export(gstruct.GraphResponse)
+    response.key = model.Key(gstruct.GraphResponse, fragment)
+    response.put(adapter=models.BaseModel.__adapter__)
+    return response
   
