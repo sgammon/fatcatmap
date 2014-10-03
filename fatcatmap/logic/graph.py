@@ -373,7 +373,7 @@ class Graph(object):
 
     result = self.__serialized__[target] = target(
 
-      session=unicode(uuid.uuid4()),
+      session=request.session or unicode(uuid.uuid4()),
 
       # ~~ metadata ~~ #
       meta=messages.Meta(
