@@ -16,12 +16,12 @@ goog.provide('type');
  * @return {string}
  */
 var type = (function () {
-  var OBJ = {},
+  var OBJSTR = Object.prototype.toString,
     str = function (x) {
-      return OBJ.toString.call(x);
+      return OBJSTR.call(x);
     };
 
   return function (obj) {
-    return str(obj).split(' ').slice(0, -1).toLowerCase();
+    return str(obj).split(' ').pop().slice(0, -1).toLowerCase();
   };
 })();

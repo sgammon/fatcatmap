@@ -109,7 +109,16 @@ Store.storeCount = 0;
 /**
  * @expose
  */
-services.storage = /** @lends {ServiceContext.prototype.storage} */{};
+services.storage = /** @lends {ServiceContext.prototype.storage} */{
+  /**
+   * @expose
+   * @constructor
+   * @param {Storage} backend
+   * @param {string=} namespace
+   * @param {string=} provideAs
+   */
+  Store: Store
+};
 
 if (support.storage.local) {
   /**
