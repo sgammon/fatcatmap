@@ -306,6 +306,7 @@ class LegacyLegislator(ModelBinding):
                         parent=legislator),
                      size=size or (449, 558),
                      default=not size,
+                     subject=person.key,
                      location=[IMAGE_BASE + filename],
                      formats=(
                        Portrait.ImageFormat.JPEG,

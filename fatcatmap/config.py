@@ -127,7 +127,8 @@ config = cfg.Config(app={
   'http': {
 
     # Default headers to add
-    'headers': {}
+    'headers': {} if not __debug__ else ({
+      'Catnip-Version': '-'.join(('.'.join(map(unicode, __version__[0])), __version__[1][1]))})
 
   },
 
@@ -163,7 +164,7 @@ config = cfg.Config(app={
 
     'servers': {
 
-      'default': 'sandbox',
+      'default': 'local',
 
       # Redis Instances
       'local': {'host': '127.0.0.1', 'port': 6379},
