@@ -15,8 +15,9 @@ from . import ModelBinding, bind
 # canteen
 from canteen import model
 
-# govtrack bindings
+# bindings
 from .govtrack import GovtrackPerson
+from .sunlight import SunlightContributor
 
 # person model
 from fatcatmap.models.person import Person
@@ -203,6 +204,14 @@ class LegacyContributor(ModelBinding):
 
         :param data: ``dict`` of data to convert.
         :returns: Instance of local target to inflate. '''
+
+    try:
+      # grab contributor, if any
+      contributor = self.get_by_ext(data['open_secrets_id'], provider='opensecrets')
+
+    except RuntimeError:
+      # create contributor
+      contributor = yield SunlightContributor(self)
 
     self.logging.info('----> Converting `Contributor`...')
     self.logging.info(str(data))
