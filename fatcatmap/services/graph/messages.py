@@ -110,6 +110,7 @@ class Graph(model.Model):
       vertices, connected by edges, via a datamodel. '''
 
   origin = int, {'required': True}
+  boundary = int, {'required': True}
   structure = str, {'required': True}
 
 

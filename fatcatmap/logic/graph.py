@@ -9,6 +9,7 @@
 # stdlib
 import base64, uuid
 from functools import partial
+from collections import deque
 from collections import defaultdict
 
 # canteen
@@ -55,16 +56,6 @@ class Options(object):
       if value is struct.EMPTY: value = self.__defaults__[key]
       setattr(self, '__%s__' % key, value)
 
-  def __hash__(self):
-
-    ''' Return a unique and immutable structure describing this
-        ``Options`` instance.
-
-        :returns: ``tuple`` describing this ``Options`` object's
-          structure via ``self.collapse``. '''
-
-    return tuple(self.collapse())
-
   def __iter__(self):
 
     ''' Provide tuples of ``(k, v)``, where ``k`` is the option name
@@ -110,10 +101,10 @@ class Options(object):
 
       if isinstance(item, bool): return (item and 1) or 0
       if isinstance(item, (int, float)): return item
-      if isinstance(item, query.Query): return item.__hash__()
+      if isinstance(item, query.Query): return item.pack()
       return item  # that should be all the types
 
-    return ((convert(v) if not keys else (k, convert(v))) for (k, v) in self)
+    return ((convert(v) if not keys else (k, convert(v))) for (k, v) in self if v is not None)
 
   def serialize(self):
 
@@ -162,7 +153,7 @@ class Graph(object):
      ('options', None),  # holds query options describing the parameters of this graph
 
      # ~~ traversal state ~~ #
-     ('queued', set),  # holds keys queued for fetch before fulfillment
+     ('queued', deque),  # holds keys queued for fetch before fulfillment
      ('fulfilled', set),  # holds keys fulfilled, moved over from queued
 
      # ~~ graph storage ~~ #
@@ -170,7 +161,7 @@ class Graph(object):
      ('vertices', defaultdict(set)),  # holds vertices encountered during traversal
 
      # ~~ object storage ~~ #
-     ('keys', set),  # keeps track of keys contained in this graph
+     ('keys', deque),  # keeps track of keys contained in this graph
      ('kinds', set),  # keeps track of entity kinds as they are found
      ('objects', dict),  # keeps track of objects contained in this graph
 
@@ -216,7 +207,7 @@ class Graph(object):
     map(self.__kinds__.add, (key.kind for key in target.ancestry))
 
     # apply collections
-    map(self.__queued__.add, (
+    map(self.__queued__.append, (
       (key for key in target.ancestry) if self.options.collections else (key,)))
     return key  # encounter key
 
@@ -272,14 +263,12 @@ class Graph(object):
 
     from fatcatmap import models
 
-    bundle = [i for i in self.__queued__]
-
     # build key generator
-    for key, entity in zip(bundle, models.BaseModel.get_multi(bundle)):
-      self.__keys__.add(entity.key)
-      self.__fulfilled__.add(entity.key)
-      self.__queued__.remove(key)
+    for key, entity in zip(self.__queued__, models.BaseModel.get_multi(self.__queued__)):
+      self.__keys__.append(entity.key)
       self.__objects__[entity.key] = entity
+
+    self.__queued__.clear()
     return self
 
   @staticmethod
@@ -290,8 +279,7 @@ class Graph(object):
     # generate fragment
     return base64.b64encode('::'.join((
                 origin.flatten(True)[0],
-                str(options.depth),
-                str(options.limit)))).replace('=', '')
+                options.token()))).replace('=', '')
 
   def export(self, target):
 
@@ -317,24 +305,15 @@ class Graph(object):
 
     # make packed graph
     packed, packed_i, lookup = [], set(), {}
-    for group in ((origin,), vertices, keys, edges):
-      if not options.keys_only:
-        for key, entity in zip((keyify(k) for k in group),
-                               (objects[keyify(k)] for k in group)):
-          if key not in packed_i:
-            packed_i.add(key)
+    for group in (keys, (origin,), vertices, edges):
+      for key, entity in zip((keyify(k) for k in group),
+                             (objects[keyify(k)] for k in group)):
+        if key not in packed_i:
+          packed_i.add(key)
 
-            # add to packed objects
-            packed.append((key, entity))
-            lookup[key] = len(packed) - 1
-      else:
-        for key in (keyify(k) for k in group):
-
-          if key not in packed_i:
-            packed_i.add(key)
-
-            packed.append((key, None))
-            lookup[key] = len(packed) - 1
+          # add to packed objects
+          packed.append((key, entity))
+          lookup[key] = len(packed) - 1
 
     # reference node peers with integers instead of strings
     if not options.keys_only:
@@ -346,9 +325,13 @@ class Graph(object):
           o.peers = symbols
 
     # generate final mappings
-    mappings, mapped = [], set()
-    for key, item in packed:
-      if isinstance(item, models.Vertex):
+    mappings, mapped, vstart = [], set(), None
+    for i, (key, item) in enumerate(packed):
+
+      # set boundary for vertices
+      if not vstart and (key == origin):
+        vstart = i + 1
+      if isinstance(item, models.Vertex) and vstart:
         _window = []
         for edge in vertices[key]:
           if edge.key not in mapped:
@@ -359,8 +342,8 @@ class Graph(object):
           mappings.append(','.join(map(unicode, _window)))
         else:
           mappings.append('')
-      else:
-        break
+      elif vstart:
+        mappings.append('')
 
     def pack(key):
 
@@ -369,11 +352,18 @@ class Graph(object):
 
       structure = [kinds.index(key.kind), key.id]
       if key.parent: structure.append(lookup[key.parent])
-      return structure
+      return ':'.join(map(unicode, structure))
+
+    # pack first round of keys
+    final = []
+    for i, e in packed:
+      _p = pack(i)
+      if _p is not struct.EMPTY:
+        final.append(_p)
 
     result = self.__serialized__[target] = target(
 
-      session=request.session or unicode(uuid.uuid4()),
+      session=unicode(uuid.uuid4()),
 
       # ~~ metadata ~~ #
       meta=messages.Meta(
@@ -385,7 +375,7 @@ class Graph(object):
 
       # ~~ raw data ~~ #
       data=messages.Data(
-        keys=[pack(k) for k, o in packed],
+        keys=final,
         objects=(
           ([messages.GraphObject(data=o.to_dict(), cached=False) for k, o in packed]
             )  if not options.keys_only else [])),
@@ -393,6 +383,7 @@ class Graph(object):
       # ~~ graph structure ~~ #
       graph=messages.Graph(
         origin=lookup[origin],
+        boundary=vstart,
         structure=':'.join(mappings)))
 
     return result
@@ -420,6 +411,7 @@ class Grapher(logic.Logic):
 
   '''  '''
 
+  caching = True  # graph caching killswitch
   options = Options  # attach graph options
 
   def construct(self, session, origin, emitter=None, **options):
@@ -439,10 +431,14 @@ class Grapher(logic.Logic):
     graph = gstruct.Graph.get(model.Key(gstruct.GraphResponse, fragment),
                               adapter=models.BaseModel.__adapter__)
     if graph:
-      if not emitter: mapper = lambda x: x
-      else: mapper = partial(emitter, graph)
-      mapper(graph)  # hand graph in all-at-once if cached
-      return graph
+      # trim cache
+      if not self.caching:
+        graph.delete()
+      else:
+        if not emitter: mapper = lambda x: x
+        else: mapper = partial(emitter, graph)
+        mapper(graph)  # hand graph in all-at-once if cached
+        return graph
 
     # build graph
     graph = Graph(options=options)
@@ -452,11 +448,12 @@ class Grapher(logic.Logic):
 
     # perform traversal
     map(mapper, graph.traverse(origin))
-    if not options.keys_only: graph.fulfill()
+    graph.fulfill()
 
     # optionally, fulfill, then set cache and return
     response = graph.export(gstruct.GraphResponse)
     response.key = model.Key(gstruct.GraphResponse, fragment)
-    response.put(adapter=models.BaseModel.__adapter__)
+    if self.caching:
+      response.put(adapter=models.BaseModel.__adapter__)
     return response
   
