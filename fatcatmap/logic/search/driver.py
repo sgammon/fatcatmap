@@ -6,80 +6,79 @@
 
 '''
 
-# elasticsearch
-from elasticsearch import Elasticsearch
+# canteen
+from canteen import core
 
 
-class EsClient(object):
+with core.Library('elasticsearch') as (library, elasticsearch):
 
-  '''  '''
-
-  host = {'host': '146.148.67.170', 'port': 9200}
+    Elasticsearch = library.load('Elasticsearch')
 
 
+    class EsClient(object):
 
-  def __init__(self, index='fcm'):
+      '''  '''
 
-    '''  '''
+      host = {'host': '146.148.67.170', 'port': 9200}
 
-    self.index = index
-    if not self.index:
-      raise
+      def __init__(self, index='fcm'):
 
-    self.index = index
-    self.es = Elasticsearch([self.host])
+        '''  '''
 
-    try:
-      self.create_index(self.index)
+        self.index = index
+        if not self.index:
+          raise
 
-    except Exception:
-      pass
+        self.index = index
+        self.es = Elasticsearch([self.host])
 
-  def create_index(self, name):
+        try:
+          self.create_index(self.index)
 
-    ''' '''
+        except Exception:
+          pass
 
-    self.es.indices.create(index=name)
+      def create_index(self, name):
 
-  def search(self,doc_type,fields=[],query_string=None,fuzzy=True):
-    '''
-    searches using either the lucene query string syntax
-    or a text query with fuzzy matching
+        ''' '''
 
-    '''
+        self.es.indices.create(index=name)
 
-    if query_string:
-      if fuzzy:
+      def search(self, doc_type, fields=[], query_string=None, fuzzy=True):
+        '''
+        searches using either the lucene query string syntax
+        or a text query with fuzzy matching
+
+        '''
+
+        if query_string:
+          if fuzzy:
+            body = {
+            'query':{
+              "fuzzy_like_this" : {
+                  "fields" : fields,
+                  "like_text" : query_string,
+                  "ignore_tf": True,
+                  "max_query_terms" : 12}}}
+          else:
+            body = {
+            'query': {
+                'query_string': {
+                  'default_field': fields[0],  #search all fields under name
+                  'default_operator': 'AND', # set to AND for names to work correctly
+                  'query': query_string}}}
+
+        res = self.es.search(index=self.index, doc_type=doc_type,
+                           body=body)
+        return res
+
+      def create_type(self, name, props={}, parent=None):
+
+        '''  '''
+
         body = {
-        'query':{
-          "fuzzy_like_this" : {
-              "fields" : fields,
-              "like_text" : query_string,
-              "ignore_tf": True,
-              "max_query_terms" : 12}}}
-      else:
-        body = {
-        'query': {
-            'query_string': {
-              'default_field': fields[0],  #search all fields under name
-              'default_operator': 'AND', # set to AND for names to work correctly
-              'query': query_string}}}
+          name: {
+            'properties': props}}
 
-    res = self.es.search(index=self.index, doc_type=doc_type,
-                       body=body)
-    return res
-
-
-
-
-
-  def create_type(self, name, props={}, parent=None):
-
-    '''  '''
-
-    body = {
-      name: {
-        'properties': props}}
-
-    if parent: body[name]['_parent'] = {'type': parent}
-    self.es.indices.put_mapping(index=self.index, doc_type=name, body=body)
+        if parent: body[name]['_parent'] = {'type': parent}
+        self.es.indices.put_mapping(index=self.index, doc_type=name, body=body)
