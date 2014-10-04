@@ -10,7 +10,8 @@
 from canteen import struct
 
 # models
-from .. import (Model,
+from .. import (Key,
+                Model,
                 describe)
 
 # descriptor models
@@ -41,21 +42,13 @@ class Image(URI):
 
   ## -- content -- ##
   size = int, {'indexed': False, 'repeated': True}  # w,h tuple
-  format = ImageFormat, {'indexed': False}
   default = bool, {'indexed': False, 'default': False}
+  formats = ImageFormat, {'indexed': False, 'repeated': True}
 
 
-@describe
+@describe(type=Image)
 class Portrait(Image):
 
   ''' Describes an ``Image`` of a ``Person``. '''
 
-
-@describe(descriptor=True, type=Media)
-class ImageSet(Model):
-
-  ''' Describes a set of ``Image`` records tied
-      together by a common subject, potentially
-      with multiple formats and sizes. '''
-
-  images = Image, {'embedded': True, 'repeated': True}
+  subject = Key, {'indexed': True}

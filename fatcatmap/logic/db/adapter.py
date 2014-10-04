@@ -165,7 +165,8 @@ class WarehouseAdapter(abstract.DirectedGraphAdapter):
             value = updates[prop.name] = prop._options['validate'](val)
 
         # apply updates
-        if updates: entity.update(updates)
+        if updates and len(entity):  # entity must have some properties
+          entity.update(updates)
 
     return super(WarehouseAdapter, self)._put(entity, **kwargs)
 

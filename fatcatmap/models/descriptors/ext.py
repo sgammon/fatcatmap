@@ -66,6 +66,17 @@ class ExternalID(Model):
                 isinstance(content, (list, tuple))) else str(content))
 
 
+class Protocols(struct.BidirectionalEnum):
+
+  ''' Enumerates protocols that a URI may be marked as being
+      accessible over. '''
+
+  GS = 0x0  # Google Cloud Storage
+  FTP = 0x1  # File Transfer Protocol
+  HTTP = 0x2  # Hypertext Transfer Protocol
+  HTTPS = 0x3  # HTTP, wrapped by TLS/SSL
+
+
 @describe(descriptor=True, type=Token)
 class URI(Model):
 
@@ -74,19 +85,9 @@ class URI(Model):
       entity as an owned web presence or referenced as a foreign
       representation of the same thing. '''
 
-  class Protocols(struct.BidirectionalEnum):
-
-    ''' Enumerates protocols that a URI may be marked as being
-        accessible over. '''
-
-    GS = 0x0  # Google Cloud Storage
-    FTP = 0x1  # File Transfer Protocol
-    HTTP = 0x2  # Hypertext Transfer Protocol
-    HTTPS = 0x3  # HTTP, wrapped by TLS/SSL
-
   ## -- content -- ##
-  protocol = Protocols, {'indexed': True, 'repeated': True}
-  location = str, {'indexed': True, 'repeated': True}
+  protocol = Protocols, {'indexed': False, 'repeated': True}
+  location = str, {'indexed': False, 'repeated': True}
   content = str, {'indexed': False, 'compressed': True}
 
   # @TODO(sgammon): break out web content into its own structure

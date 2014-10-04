@@ -38,9 +38,9 @@ class BaseModel(model.Model):
 
   __adapter__, __description__ = "RedisWarehouse", None
 
-  # created/modified
-  created = datetime, {'indexed': True, 'default': lambda _: datetime.now()}
-  modified = datetime, {'indexed': True, 'validate': lambda _: datetime.now()}
+  # created/modified  # @TODO(sgammon): created/modified stuff
+  #created = datetime, {'indexed': True, 'default': lambda _: datetime.now()}
+  #modified = datetime, {'indexed': True, 'validate': lambda _: datetime.now()}
 
   @classmethod
   def query(cls, *args, **kwargs):

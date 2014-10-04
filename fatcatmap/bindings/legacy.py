@@ -18,17 +18,33 @@ from canteen import model
 # govtrack bindings
 from .govtrack import GovtrackPerson
 
-# models
+# person model
 from fatcatmap.models.person import Person
+
+# descriptor models
+from fatcatmap.models.descriptors.ext import Protocols
+
+# content models
+from fatcatmap.models.content.images import Portrait
+
+# political models
 from fatcatmap.models.politics.campaign import CandidateCampaign
+
+# finance models
 from fatcatmap.models.campaign.finance import (Contributor,
                                                CampaignContribution)
+
+# legislative models
 from fatcatmap.models.government.legislative import (us_house,
                                                      us_senate,
                                                      Committee,
                                                      Legislator,
                                                      us_congress,
                                                      CommitteeMember)
+
+
+## Globals
+IMAGE_BASE = '//fatcatmap.org/image-proxy/providence-clarity/warehouse/raw/govtrack/photos/'
 
 
 @bind('legacy', 'Node')
@@ -277,4 +293,23 @@ class LegacyLegislator(ModelBinding):
 
         ext_id = self.ext_id(legislator, provider, prop, data[value])
         if ext_id:
-          result = yield ext_id
+          yield ext_id
+
+    images = []
+    for size in ((50, 61), (100, 122), (200, 244), None):
+      filename = ('%s%s' % (str(data['govtrack_id']),
+                              '-%spx' % str(size[0]) if size else ''))
+
+      yield Portrait(key=Portrait.__keyclass__(
+                        Portrait,
+                        hashlib.sha1(filename).hexdigest(),
+                        parent=legislator),
+                     size=size or (449, 558),
+                     default=not size,
+                     location=[IMAGE_BASE + filename],
+                     formats=(
+                       Portrait.ImageFormat.JPEG,
+                       Portrait.ImageFormat.WEBP),
+                     protocol=(
+                      Protocols.HTTP,
+                      Protocols.HTTPS))
