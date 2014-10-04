@@ -61,8 +61,8 @@ class CampaignContribution(Contributor >> Campaign):
   transaction_type = str, {'indexed': True}
 
   ## -- original data -- ##
-  filing = URI, {'indexed': True, 'embedded': True}
-  document = URI, {'indexed': True, 'embedded': True}
+  filing = URI, {'indexed': False, 'embedded': True}
+  document = URI, {'indexed': False, 'embedded': True}
 
   ## -- time -- ##
   filed = date, {'indexed': True}
