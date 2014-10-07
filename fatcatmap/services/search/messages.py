@@ -22,6 +22,7 @@ class Result(model.Model):
   '''  '''
 
   result = model.Key
+  label = basestring
   score = float
 
 

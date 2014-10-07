@@ -6,17 +6,18 @@
 
 '''
 import gzip
-from . import BindingReader
+#from . import BindingReader
 
 
-class CSVReader(BindingReader):
+class CSVReader(object):
 
   '''  '''
 
   __config__ = {
     'has_header': True, # is the first line field names?
     'header': None,
-    'buffer': 1000
+    'buffer': 1000,
+    'file': '/Users/weisberger/Downloads/1.csv'
   }
 
   def open(self):
@@ -34,10 +35,23 @@ class CSVReader(BindingReader):
   def buffer_lines(self):
     ''' used to buffer lines when reading the file'''
 
-    num = self.__config__.get('buffer') or 1000
-    lines = self.file.readlines(num)
+    while True:
+      num = self.__config__.get('buffer') or 1000
+      lines = self.file.readlines(num)
+      if not lines:
+        break
+      for line in lines:
+        yield line
+
+
+  def get_lines(self):
+
+    lines = self.buffer_lines()
     for line in lines:
-      yield line
+      row = tuple(line.split(','))
+      yield row
+
+
 
   def read(self):
 
@@ -53,8 +67,8 @@ class CSVReader(BindingReader):
     lines = self.buffer_lines()
     for line in lines:
       row = line.split(',')
-      yield (filename,{header[idx]:value for idx,value in enumerate(row)})
-
+      #yield (filename,{header[idx]:value for idx,value in enumerate(row)})
+      yield {header[idx]:value for idx,value in enumerate(row)}
 
   def close(self):
 

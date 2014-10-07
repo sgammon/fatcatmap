@@ -10,16 +10,20 @@
 from canteen import core
 
 
-with core.Library('elasticsearch') as (library, elasticsearch):
+with core.Library('elasticsearch', strict=__debug__) as (library, elasticsearch):
 
-    Elasticsearch = library.load('Elasticsearch')
+    client, connection = library.load('client'), library.load('connection')
+    Elasticsearch, ThriftConnection = (
+        client.Elasticsearch, connection.ThriftConnection)
 
 
     class EsClient(object):
 
       '''  '''
 
-      host = {'host': '146.148.67.170', 'port': 9200}
+      host = (
+        {'host': '146.148.67.170', 'port': 9500} if __debug__ else (
+          {}))
 
       def __init__(self, index='fcm'):
 
@@ -30,7 +34,7 @@ with core.Library('elasticsearch') as (library, elasticsearch):
           raise
 
         self.index = index
-        self.es = Elasticsearch([self.host])
+        self.es = Elasticsearch([self.host],connection_class=ThriftConnection)
 
         try:
           self.create_index(self.index)

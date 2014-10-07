@@ -20,7 +20,7 @@ from fatcatmap import models
 from fatcatmap.models import BaseVertex
 
 
-with core.Library('elasticsearch') as (library, elasticsearch):
+with core.Library('elasticsearch', strict=__debug__) as (library, elasticsearch):
 
     # load helpers
     from .driver import EsClient

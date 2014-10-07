@@ -36,13 +36,16 @@ class SearchAPI(Service):
 
     try:
       res = self.search.name(request.term)
-      print res
-
       hits = res['hits'].get('hits', [])
+      msgs = []
 
-      msgs = [
-        messages.Result(result=model.Key.from_raw(hit['_id']),
-                        score=hit['_score']).to_message() for hit in hits]
+      for hit in hits:
+        msg = {'result': model.Key.from_raw(hit['_id']),
+                  'score': hit['_score']}
+        name = hit['_source'].get('name')
+        if name:
+          msg['label'] = name.get('primary')
+        msgs.append(messages.Result(**msg).to_message())
 
       return messages.Results(count=res['hits']['total'], results=msgs)
 

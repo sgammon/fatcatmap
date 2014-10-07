@@ -13,7 +13,7 @@ import urllib
 from canteen import logic, bind, core
 
 
-with core.Library('elasticsearch') as (library, elasticsearch):
+with core.Library('elasticsearch', strict=__debug__) as (library, elasticsearch):
 
     # grab ES client
     from .driver import EsClient
