@@ -69,7 +69,7 @@ GraphData.meta.fragment;
 /** @type {Object} */
 GraphData.data;
 
-/** @type {Array.<string>} */
+/** @type {Array.<(string|Object)>} */
 GraphData.data.keys;
 
 /** @type {Object} */
@@ -85,10 +85,7 @@ GraphData.graph;
 GraphData.graph.origin;
 
 /** @type {number} */
-GraphData.graph.vertices;
-
-/** @type {number} */
-GraphData.graph.edges;
+GraphData.graph.boundary;
 
 /** @type {string} */
 GraphData.graph.structure;

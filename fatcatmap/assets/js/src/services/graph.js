@@ -9,68 +9,166 @@
  * copyright (c) momentum labs, 2014
  */
 
+goog.require('util.object');
 goog.require('support');
 goog.require('service');
+goog.require('models.data');
+goog.require('models.graph');
 goog.require('services.rpc');
 goog.require('services.data');
 goog.require('services.search');
 
 goog.provide('services.graph');
 
-var Graph, GraphQuery;
+var GRAPH, Graph, GraphQuery;
 
 /**
  * @constructor
  * @param {GraphData=} graph
- * @param {string=} session
  */
-Graph = function (graph, session) {
+Graph = function (graph) {
   /**
-   * @type {Array.<models.graph.Node>}
+   * @expose
+   * @type {models.data.KeyIndexedList.<models.graph.GraphNode>}
    */
-  this.nodes = [];
+  this.nodes = new models.data.KeyIndexedList();
 
   /**
-   * @type {Array.<models.graph.Edge>}
+   * @expose
+   * @type {models.data.KeyIndexedList.<models.graph.GraphEdge>}
    */
-  this.edges = [];
+  this.edges = new models.data.KeyIndexedList();
 
   /**
-   * @type {?Node}
+   * @expose
+   * @type {?Object.<{index: number, key: models.data.Key}>}
    */
   this.origin = null;
 
   /**
+   * @expose
    * @type {?string}
    */
-  this.session = session || null;
+  this.session = null;
+
+  /**
+   * @private
+   * @type {?string}
+   */
+  this._id = null;
+
+  /**
+   * @private
+   * @type {models.data.KeyIndexedList.<string>}
+   */
+  this._fragments = new models.data.KeyIndexedList().key(function (frag) {
+    return frag;
+  });
 
   if (graph)
-    this.add(graph);
+    this.unpack(graph);
 };
 
 /**
- * @static
  * @param {GraphData} packed
- * @return {Object}
+ * @return {Graph}
  */
-Graph.unpack = function (packed) {
-  return {};
+Graph.prototype.unpack = function (packed) {
+  var graph = this,
+    keys = packed.data.keys,
+    objects = packed.data.objects,
+    structure = packed.graph.structure.split(':'),
+    offset = packed.graph.boundary - 1,
+    edges = {},
+    edge, i, key;
+
+  for (i = 0; i < structure.length; i++) {
+    key = keys.get(i + offset);
+
+    if (!key) {
+      console.warn('Graph.unpack() received ' + (structure.length - i + offset) +
+        'extra structures.');
+      break;
+    }
+
+    if (edges[key]) {
+      graph.edges.push(new GraphEdge(key));
+    } else {
+      if (structure[i])
+        structure[i].split(',').forEach(function (edgeI) {
+          var edgeKey;
+          edgeI = +edgeI;
+          edgeKey = keys.get(edgeI);
+
+          if (edgeKey && !edges[edgeKey])
+            edges[edgeKey] = objects[edgeI].data.peers.map(function (i) { return keys.get(i); });
+        });
+
+      if (key.parent)
+        graph.nodes.push(new GraphNode(key).enrich(objects[i].data));
+    }
+  }
+
+  for (key in edges) {
+    if (edges.hasOwnProperty(key)) {
+      edge = graph.edges.get(key);
+
+      edges[key].forEach(function (nodeKey) {
+        var node = graph.nodes.get(nodeKey);
+
+        if (node)
+          edge.link(node);
+      });
+    }
+  }
+
+  graph.session = packed.session;
+  graph.origin = {
+    key: keys[packed.graph.origin],
+    index: graph.nodes.index[keys[packed.graph.origin]]
+  };
+
+  graph._fragments.push(packed.meta.fragment);
+
+  return graph;
 };
 
 /**
- * Adds graph data to the current instance.
- * @param {GraphData} graph
+ * @expose
+ * @return {string}
  */
-Graph.prototype.add = function (graph) {
-  graph = Graph.unpack(graph);
-};
+Graph.prototype.id;
+
+Object.defineProperty(Graph.prototype, 'id', {
+  /**
+   * @expose
+   * @type {boolean}
+   */
+  enumerable: true,
+
+  /**
+   * @expose
+   * @this {Graph}
+   * @return {string}
+   */
+  get: function () {
+    if (!this._id || this._id.length !== (
+        (4 * this._fragments.length) + (2 * (this._fragments.length - 1))))
+      this._id = this._fragments.map(function (fragment) {
+        return fragment.slice(-4);
+      })
+        .sort().join('::');
+
+    return this._id;
+  }
+});
+
 
 /**
  * @constructor
  * @extends {Query}
  * @param {!Graph} graph
- * @param {string=} origin
+ * @param {(string|models.key.Key)=} origin
  * @param {GraphQueryOptions=} options
  * @throws {TypeError} If graph is not defined.
  */
@@ -81,9 +179,9 @@ GraphQuery = function (graph, origin, options) {
   options = options || {};
 
   /**
-   * @type {?string}
+   * @type {?(string|models.key.Key)}
    */
-  this.origin = origin || graph.origin;
+  this.origin = origin || (graph.origin ? graph.origin.key : null);
 
   /**
    * @type {?string}
@@ -130,7 +228,9 @@ GraphQuery.prototype.execute = function (options) {
   request.session = this.session;
   request.filters = this.filters;
   
-  return services.rpc.graph.construct(request);
+  return services.rpc.graph.construct({
+    data: request
+  });
 };
 
 /**
@@ -160,6 +260,69 @@ services.graph = /** @lends {ServiceContext.prototype.graph} */ {
 
   /**
    * @expose
+   * @param {GraphData} graph
+   * @this {ServiceContext}
+   */
+  load: function (graph) {
+    if (this.graph.active)
+      return this.graph.active.unpack(graph);
+  },
+
+  /**
+   * @expose
+   * @param {(string|models.key.Key)=} origin
+   * @param {GraphQueryOptions=} options
+   * @param {boolean=} replace
+   * @return {Future}
+   * @this {ServiceContext}
+   */
+  construct: function (origin, options, replace) {
+    var graph = this.graph,
+      response = new Future();
+
+    replace = !!replace;
+
+    if (!this.graph.active) {
+      response.fulfill(false,
+        new Error('No active graph to query. Call services.graph.init() first.'));
+    } else {
+      new GraphQuery(graph.active, origin, options)
+        .execute()
+        .then(function (v, e) {
+          if (!v && e) {
+            graph.emit('error', e);
+            return response.fulfill(false, e);
+          }
+
+          if (v.data && v.data['error_message'])
+            return response.fulfill(false, v.data);
+
+          graph.emit('response', v);
+
+          /**
+           * @type {GraphData}
+           */
+          v = v.data;
+
+          v.data.keys = models.data.Key.unpack(v.data.keys, v.meta.kinds);
+
+          if (replace)
+            graph.inject('graph.active', new Graph());
+
+          try {
+            response.fulfill(graph.active.unpack(v));
+          } catch (e) {
+            debugger;
+            response.fulfill(false, e);
+          }
+        });
+    }
+
+    return response;
+  },
+
+  /**
+   * @expose
    * @param {GraphData=} graph
    * @param {string=} session
    * @param {function()=} cb
@@ -168,33 +331,14 @@ services.graph = /** @lends {ServiceContext.prototype.graph} */ {
   init: function (graph, session, cb) {
     this.inject('graph.active', new Graph(graph, session));
 
+    window['GRAPH'] = this.graph.active;
+
+    this.graph.on('response', function (response) {
+      console.log('GraphQuery response:');
+      console.log(response);
+    });
+
     if (cb)
       cb(graph);
-  },
-
-  /**
-   * @expose
-   * @param {GraphData} graph
-   * @this {ServiceContext}
-   */
-  load: function (graph) {
-    if (this.graph.active)
-      return this.graph.active.add(graph);
-
-    this.init(graph);
-  },
-
-  /**
-   * @expose
-   * @param {string=} origin
-   * @param {GraphQueryOptions=} options
-   * @return {Future}
-   * @this {ServiceContext}
-   */
-  construct: function (origin, options) {
-    if (!this.graph.active)
-      this.init();
-
-    return new GraphQuery(this.graph.active, origin).execute(options);
   }
 }.service('graph');

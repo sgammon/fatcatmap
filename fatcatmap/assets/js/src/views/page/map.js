@@ -13,6 +13,7 @@ goog.require('$');
 goog.require('View');
 goog.require('views.Detail');
 goog.require('views.detail.Legislator');
+goog.require('services.graph');
 
 goog.provide('views.Map');
 
@@ -263,6 +264,24 @@ views.Map = View.extend({
 
     /**
      * @expose
+     * @type {Object}
+     */
+    clicked: {
+      /**
+       * @expose
+       * @type {string}
+       */
+      key: '',
+
+      /**
+       * @expose
+       * @type {number}
+       */
+      timestamp: Date.now()
+    },
+
+    /**
+     * @expose
      * @type {boolean}
      */
     dragging: false,
@@ -315,6 +334,12 @@ views.Map = View.extend({
           key = target.getAttribute('id').split('-').pop();
           selected = this.$.detail.keys();
 
+          if (this.clicked.key === key && Date.now() - this.clicked.timestamp < 400)
+            return this.browseTo(key);
+
+          this.clicked.key = key;
+          this.clicked.timestamp = Date.now();
+
           if (target.classList.contains(this.$options.selectors.selected.slice(1))) {
             selectedI = selected.indexOf(key);
             
@@ -340,11 +365,20 @@ views.Map = View.extend({
 
     /**
      * @expose
-     * @param {MouseEvent} e
+     * @param {string} key
      * @this {views.Map}
      */
-    browseTo: function (e) {
-      console.log('map.browseTo()');
+    browseTo: function (key) {
+      var map = this;
+
+      services.graph.construct(key, {
+        depth: 1,
+        keys_only: false
+      }).then(function (v, e) {
+        debugger;
+        if (v)
+          map.draw(v);
+      });
     },
 
     /**
@@ -367,7 +401,7 @@ views.Map = View.extend({
 
     /**
      * @expose
-     * @param {Object=} graph
+     * @param {Graph=} graph
      * @this {views.Map}
      */
     draw: function (graph) {
@@ -389,12 +423,12 @@ views.Map = View.extend({
         tick = function () {
           if (graph.origin) {
             if (view.config.origin.snap) {
-              graph.nodes[graph.origin].x = view.config.origin.position.x;
-              graph.nodes[graph.origin].y = view.config.origin.position.y;
+              graph.nodes.get(graph.origin.index).x = view.config.origin.position.x;
+              graph.nodes.get(graph.origin.index).y = view.config.origin.position.y;
             } else {
               view.config.origin.position = {
-                x: graph.nodes[graph.origin].x,
-                y: graph.nodes[graph.origin].y
+                x: graph.nodes.get(graph.origin.index).x,
+                y: graph.nodes.get(graph.origin.index).y
               };
             }
           }
@@ -446,7 +480,7 @@ views.Map = View.extend({
           .on('tick', tick);
 
         update = function () {
-          var nodes = graph.nodes,
+          var nodes = graph.nodes.filter(function (n) { return n.edges.length; }),
             edges = graph.edges;
 
           force
@@ -454,7 +488,7 @@ views.Map = View.extend({
             .links(edges)
             .start();
 
-          edge = edge.data(edges, function (e) { return e.key; });
+          edge = edge.data(edges, edges.key);
 
           edge.exit().remove();
 
@@ -469,7 +503,7 @@ views.Map = View.extend({
               .attr('stroke', config.edge.stroke)
               .attr('class', config.edge.classes);
 
-          node = node.data(nodes, function (n) { return n.key; });
+          node = node.data(nodes, edges.key);
 
           node.exit().remove();
 
@@ -490,7 +524,7 @@ views.Map = View.extend({
               .call(force.drag);
 
           origin = node.filter(function (n, i) {
-            return n.key === graph.origin_key;
+            return n.key.toString() === graph.origin.key.toString();
           });
 
           if (view.map.changed)
@@ -566,7 +600,7 @@ views.Map = View.extend({
 
   /**
    * @expose
-   * @param {Object=} graph
+   * @param {Graph=} graph
    * @this {views.Map}
    */
   handler: function (graph) {
@@ -587,7 +621,7 @@ views.Map = View.extend({
     if (graph) {
       this.active = true;
       this.draw(graph);
-    } else {
+    } else if (this.active) {
       this.map.changed = true;
 
       if (this.map.force)

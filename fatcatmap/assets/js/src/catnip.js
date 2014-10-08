@@ -70,8 +70,8 @@ catnip = function (context, data, routes) {
       fcm.template.init(context.template.manifest);
 
     if (data)
-      fcm.graph.init(data, function (data) {
-        fcm.data.init(data);
+      fcm.data.init(data, function (graph) {
+        fcm.graph.init(graph);
       });
 
     if (routes) {

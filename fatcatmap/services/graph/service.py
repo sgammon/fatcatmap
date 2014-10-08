@@ -38,8 +38,12 @@ class GraphService(Service):
         :returns: Always an instance of
           :py:class:`messages.GraphResponse`. '''
 
+    # convert origin to key
+    origin = (
+      request.origin and model.Key.from_urlsafe(request.origin)) or request.origin
+
     # construct graph
-    return self.graph.construct(None, request.origin, **{
+    return self.graph.construct(None, origin, **{
       'depth': (request.options and request.options.depth) or self.graph.options.defaults['depth'],
       'limit': (request.options and request.options.limit) or self.graph.options.defaults['limit'],
       'keys_only': (request.options.keys_only if request.options is not None else self.graph.options.defaults['keys_only']),

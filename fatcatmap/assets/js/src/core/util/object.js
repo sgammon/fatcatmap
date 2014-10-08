@@ -117,14 +117,58 @@ util.object = {
   },
 
   /**
-   * Prototypal inheritance.
+   * Merges two passed arrays of equal length into an object.
+   * @param {!Array.<string>} keys
+   * @param {!Array.<*>} values
+   * @param {(function(*, string): *)=} transform
+   * @throws {Error} If keys and values are different lengths.
+   */
+  zip: function (keys, values, transform) {
+    var zipped = {};
+
+    if (typeof transform !== 'function')
+      transform = function (x) { return x; }
+
+    if (keys.length !== values.length)
+      throw new Error('util.object.zip() expects two lists of equal length.');
+
+    keys.forEach(function (key, i) {
+      zipped[key] = transform(values[i], key);
+    });
+
+    return zipped;
+  },
+
+  /**
+   * Prototypal inheritance. Passes <code>instanceof</code> checks.
    * @param {function(...[*])} child
    * @param {function(...[*])} parent
+   * @return {function(...[*])}
    */
   inherit: function (child, parent) {
     child.prototype = Object.create(parent.prototype);
     child.prototype.constructor = child;
 
     return child;
+  },
+
+  /**
+   * Prototypal mixins. Faster, use if you don't need <code>instanceof</code>.
+   * @param {function(...[*])} constructor
+   * @param {(Object.<string, function>|function(...[*])} methods
+   * @return {function(...[*])}
+   */
+  mixin: function (constructor, methods) {
+    var k;
+
+    if (typeof methods === 'function')
+      methods = methods.prototype;
+
+    for (k in methods) {
+      if (methods.hasOwnProperty(k) && typeof methods[k] === 'function')
+        constructor.prototype[k] = methods[k];
+    }
+
+    return constructor;
   }
 };

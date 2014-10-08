@@ -7,7 +7,7 @@
 '''
 
 # stdlib
-import base64, uuid
+import base64, uuid, hashlib
 from functools import partial
 from collections import deque
 from collections import defaultdict
@@ -245,7 +245,7 @@ class Graph(object):
       peers[edge].add(left), peers[edge].add(right)
 
       # add as edge and map to vertex
-      edges.add(edge), vertices[left].add(edge), vertices[right].add(edge)
+      edges.add(edge.key), vertices[left].add(edge.key), vertices[right].add(edge.key)
 
       # file away in matrix and adjacency
       matrix[left][right], matrix[right][left] = 1, 1
@@ -277,9 +277,9 @@ class Graph(object):
     '''  '''
 
     # generate fragment
-    return base64.b64encode('::'.join((
+    return hashlib.sha1('.'.join((
                 origin.flatten(True)[0],
-                options.token()))).replace('=', '')
+                options.token()))).hexdigest()
 
   def export(self, target):
 
@@ -306,6 +306,10 @@ class Graph(object):
     # make packed graph
     packed, packed_i, lookup = [], set(), {}
     for group in (keys, (origin,), vertices, edges):
+
+      if any((keyify(k) for k in group if k not in objects)):
+        import pdb; pdb.set_trace()
+
       for key, entity in zip((keyify(k) for k in group),
                              (objects[keyify(k)] for k in group)):
         if key not in packed_i:
@@ -334,9 +338,9 @@ class Graph(object):
       if isinstance(item, models.Vertex) and vstart:
         _window = []
         for edge in vertices[key]:
-          if edge.key not in mapped:
-            _window.append(lookup[edge.key])
-            mapped.add(edge.key)
+          if edge not in mapped:
+            _window.append(lookup[edge])
+            mapped.add(edge)
 
         if _window:
           mappings.append(','.join(map(unicode, _window)))

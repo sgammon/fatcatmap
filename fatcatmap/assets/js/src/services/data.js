@@ -15,17 +15,28 @@ goog.require('async.future');
 goog.require('support');
 goog.require('service');
 goog.require('services.storage');
+goog.require('models.data');
 
 goog.provide('services.data');
 
-var _dataCache, _dataStore, watchers;
+var _dataCache, _dataBuffer, _dataStore, _watchers, _dataInit;
 
 _dataCache = {};
+
+_dataBuffer = {
+  index: {},
+  buffer: [],
+  id: null
+};
 
 if (support.storage.local)
   _dataStore = new Store(window.localStorage, 'data', 'data');
 
-watchers = {};
+_watchers = {};
+
+models.data.Key.prototype.get = function () {
+  return _dataStore.get(this._safe);
+};
 
 /**
  * @expose
@@ -33,49 +44,20 @@ watchers = {};
 services.data = /** @lends {ServiceContext.prototype.data} */ {
   /**
    * @expose
-   * @param {string|Object} raw Raw input.
-   * @param {function((string|Object))} cb
+   * @param {GraphData} data Raw input.
+   * @param {function(GraphData)=} cb
    * @this {ServiceContext}
    */
-  init: function (raw, cb) {
-    var data = this.data.normalize(raw),
-      keys = data.data.keys,
-      objects = data.data.objects,
-      key, object, i;
+  init: function (data, cb) {
+    data.data.keys = models.data.Key.unpack(data.data.keys, data.meta.kinds);
 
-    for (i = 0; keys && i < keys.length; i++) {
-      key = keys[i];
-      object = objects[i];
+    _dataCache = util.object.zip(data.data.keys, data.data.objects);
 
-      if (!object.key)
-        object.key = key;
+    window['DATA'] = data;
+    window['DATACACHE'] = _dataCache;
 
-      if (!object.native) {
-        object.kind = object.govtrack_id ? 'legislator' : 'contributor';
-      }
-
-      _dataCache[key] = object;
-    }
-
-    cb(data);
-  },
-
-  /**
-   * @expose
-   * @param {string|Object|*} raw Raw input.
-   * @return {Object|*} Normalized data.
-   */
-  normalize: function (raw) {
-    if (typeof raw === 'string') {
-      try {
-        raw = JSON.parse(raw);
-      } catch (e) {
-        console.warn('[service.data] Couldn\'t parse raw data: ');
-        console.warn(raw);
-        raw = {};
-      }
-    }
-    return raw;
+    if (cb)
+      cb(data);
   },
 
   /**
@@ -140,12 +122,12 @@ services.data = /** @lends {ServiceContext.prototype.data} */ {
    * @this {ServiceContext}
    */
   set: function (key, data) {
-    var _watchers = watchers[key];
+    var __watchers = _watchers[key];
 
     util.object.resolveAndSet(_dataCache, key, data);
 
-    if (_watchers && _watchers.length) {
-      _watchers.forEach(function (watcher) {
+    if (__watchers && __watchers.length) {
+      __watchers.forEach(function (watcher) {
         watcher(data);
       });
     }
@@ -158,10 +140,10 @@ services.data = /** @lends {ServiceContext.prototype.data} */ {
    * @this {ServiceContext}
    */
   watch: function (key, watcher) {
-    if (!watchers[key])
-      watchers[key] = [];
+    if (!_watchers[key])
+      _watchers[key] = [];
 
-    watchers[key].push(watcher);
+    _watchers[key].push(watcher);
   },
 
   /**
@@ -172,15 +154,15 @@ services.data = /** @lends {ServiceContext.prototype.data} */ {
    * @this {ServiceContext}
    */
   unwatch: function (key, watcher) {
-    var _watchers = watcher;
+    var __watchers = watcher;
     if (watcher && typeof watcher === 'function') {
-      watchers[key] = watchers[key].filter(function (w) {
+      _watchers[key] = _watchers[key].filter(function (w) {
         return w === watcher;
       });
     } else {
-      _watchers = watchers[key];
-      watchers[key] = [];
+      __watchers = _watchers[key];
+      _watchers[key] = [];
     }
-    return _watchers;
+    return __watchers;
   }
 }.service('data');

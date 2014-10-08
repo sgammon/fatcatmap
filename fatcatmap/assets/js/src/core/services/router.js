@@ -21,23 +21,6 @@ var ROUTES = {
     dynamic: []
   },
 
-  ROUTE_EVENTS = {
-    /**
-     * @expose
-     */
-    route: [],
-
-    /**
-     * @expose
-     */
-    routed: [],
-
-    /**
-     * @expose
-     */
-    error: []
-  },
-
   ROUTE_HISTORY = {
     back: new util.struct.BiLinkedList(null, 10),
     forward: new util.struct.BiLinkedList(null, 10),
@@ -150,7 +133,6 @@ services.router = /** @lends {ServiceContext.prototype.router} */ {
     var matched = false,
       params, param, findRoute, response;
 
-
     request = request || {};
     request.args = {};
     request.params = request.params || {};
@@ -163,9 +145,7 @@ services.router = /** @lends {ServiceContext.prototype.router} */ {
       }
     }
 
-    ROUTE_EVENTS.route.forEach(function (fn) {
-      fn(path, request);
-    });
+    this.emit('route', path, request);
 
     response = _dispatchRoute(path, request, ROUTES.resolved);
 
@@ -176,17 +156,9 @@ services.router = /** @lends {ServiceContext.prototype.router} */ {
       response = response.response;
 
       if (!(ROUTE_HISTORY.current && ROUTE_HISTORY.current.path === path))
-        ROUTE_EVENTS.routed.forEach(function (fn) {
-          fn(path, request, response);
-        });
+        this.emit('routed', path, request, response);
     } else {
-      response = {
-        status: 404
-      };
-
-      ROUTE_EVENTS.error.forEach(function (fn) {
-        fn(path, request, response);
-      });
+      this.emit('error', path, request, { status: 404 });
     }
 
     return response;
@@ -222,34 +194,6 @@ services.router = /** @lends {ServiceContext.prototype.router} */ {
       this.router.route(target.path, target.request);
     } else {
       this.router.route('/');
-    }
-  },
-
-  /**
-   * @expose
-   * @param {string} event
-   * @param {function(string, Object=, Object=)} callback
-   */
-  on: function (event, callback) {
-    if (!ROUTE_EVENTS[event])
-      ROUTE_EVENTS[event] = [];
-
-    ROUTE_EVENTS[event].push(callback);
-  },
-
-  /**
-   * @expose
-   * @param {string} event
-   * @param {function (string, Object=, Object=)=} callback
-   */
-  off: function (event, callback) {
-    var i;
-    if (!callback) {
-      ROUTE_EVENTS[event] = [];
-    } else {
-      i = ROUTE_EVENTS[event].indexOf(callback);
-      if (i > -1)
-        ROUTE_EVENTS[event].splice(i, 1);
     }
   },
 

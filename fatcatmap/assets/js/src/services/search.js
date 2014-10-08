@@ -56,35 +56,34 @@ QuerySpec = function (query) {
 
   /**
    * @expose
-   * @param {(Query|QueryFilterSpec)} query
+   * @param {Query=} query
    * @return {QuerySpec}
    */
-  this.join = function (query) {
-    if (!(query instanceof QuerySpec))
-      query = new Query(query);
-
-    joined.push(query);
+  this.join = function (_query) {
+    if (_query instanceof QuerySpec)
+      joined.push(_query);
 
     return this;
   };
 
   /**
    * @expose
+   * @param {Object} options
    * @return {Future}
    */
-  this.execute = function () {
+  this.execute = function (options) {
     var results;
 
     if (joined.length === 0)
-      return query.execute();
+      return query.execute(options);
 
-    results = new MultiFuture(joined.map(function (query) {
-      return query.execute();
+    results = new MultiFuture(joined.map(function (_query) {
+      return _query.execute();
     })).then(function (joined, error) {
       if (error)
         return results.fulfill(false, error);
 
-      query.execute().then(function (_results, error) {
+      query.execute(options).then(function (_results, error) {
         if (error)
           return results.fulfill(false, error);
 

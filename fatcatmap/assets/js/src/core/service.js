@@ -11,6 +11,7 @@
  */
 
 goog.require('util.object');
+goog.require('event');
 
 goog.provide('service');
 
@@ -45,6 +46,7 @@ ServiceContext.inject = ServiceContext.prototype.inject;
 /**
  * ServiceContext-injected class.
  * @constructor
+ * @extends {event.Emitter}
  * @param {string} name
  * @param {Object.<string, function(...)>=} methods
  * @throws {TypeError} If name is not a string.
@@ -52,6 +54,8 @@ ServiceContext.inject = ServiceContext.prototype.inject;
 Service = function (name, methods) {
   if (typeof name !== 'string')
     throw new TypeError('Service() requires a service name to inject at.');
+
+  event.Emitter.call(this);
 
   if (methods) {
     for (var k in methods) {
@@ -65,6 +69,7 @@ Service = function (name, methods) {
 
 Service.prototype = new ServiceContext();
 
+util.object.mixin(Service, event.Emitter);
 
 Object.defineProperty(Function.prototype, 'inject', {
   /**

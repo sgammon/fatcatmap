@@ -20,8 +20,7 @@ var routes = {
   '/': function (request) {
     var state = request.state || {},
       app = this.app,
-      graph = (!app.$.stage || !app.$.stage.$.map.active) ?
-        this.graph.construct() : null;
+      graph = this.graph;
 
     state.page = state.page || { active: true };
     state.modal = state.modal || null;
@@ -30,7 +29,16 @@ var routes = {
     app.$set('modal', state.modal);
 
     app.nextTick(function () {
-      app.$broadcast('page.map', graph);
+      if (!app.$.stage || !app.$.stage.$.map.active) {
+        if (graph.active) {
+          app.$broadcast('page.map', graph.active);
+        } else {
+          graph.construct().then(function (v, e) {
+            if (!e && v)
+              app.$broadcast('page.map', v);
+          });
+        }
+      }
       app.$broadcast('detail');
     });
 
