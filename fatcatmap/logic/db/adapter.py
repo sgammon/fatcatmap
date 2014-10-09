@@ -10,6 +10,7 @@
 import abc
 import json
 import base64
+import datetime
 import itertools
 
 # redis
@@ -31,6 +32,7 @@ except:
   snappy = False
 
 # canteen
+from canteen import model
 from canteen import decorators
 from canteen.model import adapter
 from canteen.model.adapter import redis
@@ -43,10 +45,18 @@ class WarehouseAdapter(abstract.DirectedGraphAdapter):
   ''' Specifies an abstract adapter that is capable of supporting proprietary,
       ``fatcatmap``-related driver functionality. '''
 
+  # magic prefixes
+  _key_prefix = '__key__'
+  _kind_prefix = '__kind__'
+  _group_prefix = '__group__'
+  _index_prefix = '__index__'
+  _reverse_prefix = '__reverse__'
+
   # extra prefixes
   _topic_prefix = '__topic__'
   _topics_prefix = '__topics__'
   _abstract_prefix = '__abstract__'
+  _descriptor_postfix = '__descriptor__'
 
   # extra tokens
   _type_token = 'type'
@@ -155,6 +165,9 @@ class WarehouseAdapter(abstract.DirectedGraphAdapter):
     model = entity.__class__
 
     if issubclass(model, models.BaseModel):
+      desc = model.__description__
+
+      # perform proprietary validation
       with entity:
         updates = {}  # updates to apply
 
@@ -168,7 +181,106 @@ class WarehouseAdapter(abstract.DirectedGraphAdapter):
         if updates and len(entity):  # entity must have some properties
           entity.update(updates)
 
+    # customize storage for descriptors
+    if isinstance(entity, models.BaseDescriptor):
+      return self.put_descriptor(entity, **kwargs)
+
     return super(WarehouseAdapter, self)._put(entity, **kwargs)
+
+  @classmethod
+  def get(cls, key, pipeline=None, _entity=None):
+
+    ''' Override low-level storage logic for regular entities to
+        retrieve certain FCM structures via specialized means.
+
+        :param key: Target :py:class:`model.Key` to retrieve from storage.
+
+        :param pipeline: Redis pipeline to enqueue the resulting commands
+          in, rather than directly executing them. Defaults to ``None``. If a
+          pipeline is passed, it will be returned in lieu of the pending
+          result.
+
+        :param _entity: Entity to inflate, if we already have one.
+
+        :returns: The deserialized and decompressed entity associated with the
+          target ``key``. '''
+
+    if not _entity:  # go directly to deserialization
+
+      encoded, flattened = key
+      fullkey = model.Key.from_urlsafe(encoded)
+      _model = cls.registry[fullkey.kind]
+
+      if hasattr(_model, '__description__') and (
+        _model.__description__.descriptor):
+
+        # it's a descriptor, retrieve it
+        subject, keypath = fullkey.parent, fullkey.id
+
+        result = cls.execute(*(
+          cls.Operations.HASH_GET,
+          _model.kind(),
+          '::'.join((subject.urlsafe(), cls._descriptor_postfix)),
+          keypath))
+
+        if result:
+          # leverage supermethod for deserialization
+          return super(WarehouseAdapter, cls).get(None, None, result)
+        return result
+    return super(WarehouseAdapter, cls).get(key, pipeline, _entity)
+
+  def put_descriptor(self, entity, **kwargs):
+
+    ''' Add extra functionality to adapter ``put`` calls for FCM descriptor
+        structures, which are stored parallel to their subjects in their
+        own hash, where keys are dotted-path keys that represent their
+        value.
+
+        :param entity: Target :py:class:`fatcatmap.models.BaseModel` instance
+          (marked as a descriptor) to be stored.
+
+        :returns: Same value as if the target ``entity`` was stored via
+          regular circumstances, i.e. a ``Key`` instance that has been marked
+          as ``persisted``. '''
+
+    assert entity.key.parent, (
+      "descriptors must have parent keys")
+
+    # calculate key path and slicing
+    subject, keypath = entity.key.parent, entity.key.id
+
+    # clean types @TODO(sgammon): this is gross
+    serialized = entity if isinstance(entity, dict) else (
+      entity.to_dict(convert_datetime=False,
+                     convert_keys=True,
+                     convert_models=True))
+
+    _cleaned = {}
+    for k, v in serialized.iteritems():
+      prop = getattr(entity.__class__, k)
+      if isinstance(v, (datetime.date, datetime.time, datetime.datetime)):
+        _cleaned[k] = v.isoformat()  # pragma: no cover
+      else:
+        _cleaned[k] = v
+
+    # serialize, also descriptors are never compressed
+    serialized = self.serializer.dumps(_cleaned)
+
+    # allocate a channel and store descriptor
+    with (kwargs.get('pipeline') or (
+      self.channel('__meta__').pipeline(transaction=False))) as pipe:
+
+      self.execute(*(
+        self.Operations.HASH_SET,
+        entity.__class__,
+        '::'.join((subject.urlsafe(), self._descriptor_postfix)),
+        keypath,
+        serialized), target=pipe)
+
+      pipe.execute()
+
+    entity._set_persisted(True)
+    return entity.key
 
   @classmethod
   def generate_indexes(cls, key, entity=None, properties=None):

@@ -25,8 +25,8 @@ from canteen.model import (Key,
 ## Globals
 fixtures = set()
 _spawn = lambda _t: defaultdict(_t)
-_ptree, _ttree, _models, _graph = (
-  _spawn(set), _spawn(set), {}, _spawn(lambda: _spawn(set)))
+_ptree, _ttree, _models, _graph, _descriptors = (
+  _spawn(set), _spawn(set), {}, _spawn(lambda: _spawn(set)), _spawn(set))
 tupleify = lambda subj, _def=None: (((subj,) if subj and not (
                                     isinstance(subj, tuple)) else subj) if (
                                     subj is not _def) else _def)
@@ -59,6 +59,12 @@ class BaseModel(model.Model):
     kwargs['adapter'] = kwargs.get('adapter', cls.__adapter__)
     return model.Model.query(*args, **kwargs) if cls is BaseModel else (
       super(BaseModel, cls).query(*args, **kwargs))
+
+
+class BaseDescriptor(BaseModel):
+
+  ''' Base model for objects that describe other objects in some way
+      or another. '''
 
 
 class BaseVertex(BaseModel, model.Vertex):
@@ -372,12 +378,23 @@ class Spec(object):
           :returns: Spawned :py:class:`Model` instance with positional and
             keyword arguments ``args``/``kwargs``. '''
 
+
+      desc = cls.__description__
+
+      if desc.descriptor:
+        assert len(args) > 2, (
+          "descriptors must have at least a parent and keypath")
+
+        # make a descriptor-style key and construct
+        # @TODO(sgammon): full descriptor keys with classes and shit
+        parent, keypath = args[:2]
+        kwargs.update({'key': model.Key(cls, keypath, parent=parent)})
+        return cls(*args[2:], **kwargs)
+
       return cls(*args, **kwargs)
 
-    if not hasattr(target, 'new'):
-      target.new = classmethod(injected_new)
-
-    # unconditionally apply basemodel's adapter
+    # set constructor and unconditionally apply basemodel's adapter
+    setattr(target, 'new', getattr(target, 'new', classmethod(injected_new)))
     target.__adapter__ = BaseModel.__adapter__
     return target
 
@@ -554,9 +571,10 @@ all = struct.WritableObjectProxy()  # shortcut to all models
 
 # map aliases
 describe = Spec.describe
-Model, Vertex, Edge = (BaseModel,
-                       BaseVertex,
-                       BaseEdge)
+Model, Vertex, Edge, Descriptor = (BaseModel,
+                                   BaseVertex,
+                                   BaseEdge,
+                                   BaseDescriptor)
 
 
 __all__ = ('abstract',
@@ -573,4 +591,8 @@ __all__ = ('abstract',
            'graph',
            'person',
            'place',
-           'session')
+           'session',
+           'Model',
+           'Vertex',
+           'Edge',
+           'Descriptor')

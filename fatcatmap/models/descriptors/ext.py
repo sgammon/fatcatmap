@@ -10,8 +10,8 @@
 import hashlib
 
 # graph models
-from .. import (Model,
-                describe)
+from .. import (describe,
+                Descriptor)
 
 # abstract models
 from ..abstract import Token
@@ -22,13 +22,16 @@ from canteen.util import struct
 
 
 @describe(descriptor=True, type=Token)
-class ExternalID(Model):
+class ExternalID(Descriptor):
 
   ''' Describes a token from an external system that references
       an object held by catnip, such that it can be considered
       a foreign representation of the same thing. '''
 
+  __hashfunc__ = hashlib.sha1
+
   ## -- ID content -- ##
+  hash = str, {'indexed': True}
   content = str, {'indexed': True, 'repeated': True}
 
   ## -- ID structure -- ##
@@ -57,11 +60,12 @@ class ExternalID(Model):
     # @TODO(sgammon): descriptors are broken
     # @TODO(sgammon): trade MD5 for enum
 
-    keyname = hashlib.md5('::'.join(map(str, (provider, content)))).hexdigest()
+    fingerprint = cls.__hashfunc__('::'.join(map(str, (provider, content)))).hexdigest()
     parent = parent.key if isinstance(parent, model.Model) else parent
 
-    return cls(key=model.Key(cls, keyname, parent=parent),
+    return cls(key=model.Key(cls, '.'.join(('ext', provider, name)), parent=parent),
                name=name, provider=provider,
+               hash=fingerprint,
                content=(str(content),) if not (
                 isinstance(content, (list, tuple))) else str(content))
 
@@ -78,7 +82,7 @@ class Protocols(struct.BidirectionalEnum):
 
 
 @describe(descriptor=True, type=Token)
-class URI(Model):
+class URI(Descriptor):
 
   ''' Describes a token consisting of a URI that represents an
       object held by catnip, such that it is claimed by that

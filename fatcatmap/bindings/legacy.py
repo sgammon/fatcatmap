@@ -44,10 +44,6 @@ from fatcatmap.models.government.legislative import (us_house,
                                                      CommitteeMember)
 
 
-## Globals
-IMAGE_BASE = '//fatcatmap.org/image-proxy/providence-clarity/warehouse/raw/govtrack/photos/'
-
-
 @bind('legacy', 'Node')
 class LegacyNode(ModelBinding):
 
@@ -311,12 +307,13 @@ class LegacyLegislator(ModelBinding):
 
       yield Portrait(key=Portrait.__keyclass__(
                         Portrait,
-                        hashlib.sha1(filename).hexdigest(),
+                        'govtrack.congress.official',
                         parent=legislator),
                      size=size or (449, 558),
                      default=not size,
                      subject=person.key,
-                     location=[IMAGE_BASE + filename],
+                     location='raw/govtrack/photos/' + filename,
+                     storage=Portrait.ImageStorage.PROXY,
                      formats=(
                        Portrait.ImageFormat.JPEG,
                        Portrait.ImageFormat.WEBP),
