@@ -91,6 +91,22 @@ util.object.mixin(Key, /** @lends {Key.prototype} */{
    */
   urlsafe: function () {
     return this._safe;
+  },
+
+  /**
+   * Checks whether a passed Key or string is equivalent to the current Key.
+   * @expose
+   * @param {(string|Key)} key
+   * @return {boolean}
+   */
+  equals: function (key) {
+    if (typeof key === 'string')
+      return key === this._flat || key === this._safe;
+
+    if (!(key instanceof Key))
+      return false;
+
+    return key._safe === this._safe;
   }
 });
 
@@ -209,7 +225,9 @@ util.object.extend(Key, /** @lends {Key} */{
    * @return {string}
    * @throws {TypeError} If <code>safe</code> is not a string.
    */
-  decode: atob,
+  decode: function (flat) {
+    return atob(flat);
+  },
 
   /**
    * @static
@@ -367,8 +385,9 @@ util.object.mixin(KeyIndexedList, /** @lends {KeyIndexedList.prototype} */{
    * @return {?number}
    */
   push: function (item) {
+    /*jshint eqnull: true */
     var key = this.key(item),
-      i;
+      i, _i, _item;
 
     if (!key) {
       console.warn('KeyIndexedList.push() only accepts KeyedItems.');
@@ -378,9 +397,11 @@ util.object.mixin(KeyIndexedList, /** @lends {KeyIndexedList.prototype} */{
     for (i = 0; i < arguments.length; i++) {
       item = arguments[i];
       key = this.key(item);
+      _i = this.index[key];
 
-      if (this.index[key]) {
-        this[this.index[key]] = item;
+      if (_i != null) {
+        _item = this[_i];
+        this[_i] = _item.merge ? _item.merge(item) : item;
       } else {
         this.index[key] = Array.prototype.push.call(this, item) - 1;
       }
@@ -395,10 +416,11 @@ util.object.mixin(KeyIndexedList, /** @lends {KeyIndexedList.prototype} */{
    * @return {?number}
    */
   unshift: function (item) {
+    /*jshint eqnull:true */
     var key = this.key(item),
       len = arguments.length,
       newItems = [],
-      i;
+      i, _item, _i;
 
     if (!key) {
       console.warn('KeyIndexedList.unshift() only accepts KeyedItems.');
@@ -408,9 +430,11 @@ util.object.mixin(KeyIndexedList, /** @lends {KeyIndexedList.prototype} */{
     for (i = 0; i < len; i++) {
       item = arguments[i];
       key = this.key(item);
+      _i = this.index[key];
 
-      if (this.index[key]) {
-        this[this.index[key]] = item;
+      if (_i != null) {
+        _item = this[_i];
+        this[_i] = _item.merge ? _item.merge(item) : item;
       } else {
         newItems.push(item);
       }
@@ -467,11 +491,12 @@ util.object.mixin(KeyIndexedList, /** @lends {KeyIndexedList.prototype} */{
   },
 
   /**
-   * @param {Array.<models.data.KeyedItem>} list
+   * @param {(KeyIndexedList|Array.<models.data.KeyedItem>)} list
    * @return {KeyIndexedList}
    */
   merge: function (list) {
-    this.push.apply(this, list);
+    if (list.length)
+      this.push.apply(this, list);
     return this;
   }
 });

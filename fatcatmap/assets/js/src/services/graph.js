@@ -82,6 +82,9 @@ Graph.prototype.unpack = function (packed) {
     edges = {},
     edge, i, key;
 
+  graph.nodes = new models.data.KeyIndexedList().merge(graph.nodes);
+  graph.edges = new models.data.KeyIndexedList().merge(graph.edges);
+
   for (i = 0; i < structure.length; i++) {
     key = keys.get(i + offset);
 
@@ -91,9 +94,7 @@ Graph.prototype.unpack = function (packed) {
       break;
     }
 
-    if (edges[key]) {
-      graph.edges.push(new GraphEdge(key));
-    } else {
+    if (!edges[key]) {
       if (structure[i])
         structure[i].split(',').forEach(function (edgeI) {
           var edgeKey;
@@ -105,20 +106,22 @@ Graph.prototype.unpack = function (packed) {
         });
 
       if (key.parent)
-        graph.nodes.push(new GraphNode(key).enrich(objects[i].data));
+        graph.nodes.push(new models.graph.GraphNode(key).enrich(objects[i].data));
     }
   }
 
   for (key in edges) {
     if (edges.hasOwnProperty(key)) {
-      edge = graph.edges.get(key);
+      edge = new models.graph.GraphEdge(key);
+      edge.link(graph.nodes.get(edges[key][0]))
+      edge.link(graph.nodes.get(edges[key][1]));
 
-      edges[key].forEach(function (nodeKey) {
-        var node = graph.nodes.get(nodeKey);
-
-        if (node)
-          edge.link(node);
-      });
+      if (!edge.satisfied()) {
+        console.log('built incomplete edge: ');
+        console.log(edge)
+      } else {
+        graph.edges.push(edge);
+      }
     }
   }
 
@@ -299,10 +302,7 @@ services.graph = /** @lends {ServiceContext.prototype.graph} */ {
 
           graph.emit('response', v);
 
-          /**
-           * @type {GraphData}
-           */
-          v = v.data;
+          v = /** @type {GraphData} */ (v.data);
 
           v.data.keys = models.data.Key.unpack(v.data.keys, v.meta.kinds);
 

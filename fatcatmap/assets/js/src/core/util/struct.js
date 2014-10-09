@@ -109,11 +109,11 @@ BiLinkedList.prototype.rpush = function (item) {
  * @param {Array.<*>} items
  */
 BiLinkedList.prototype.lpushAll = function (items) {
-  var i = 0;
+  var i;
 
   items = items || [];
 
-  for (i ; i < items.length; i++) {
+  for (i = 0; i < items.length; i++) {
     this.lpush(items[i]);
   }
 };
@@ -122,11 +122,11 @@ BiLinkedList.prototype.lpushAll = function (items) {
  * @param {Array.<*>} items
  */
 BiLinkedList.prototype.rpushAll = function (items) {
-  var i = 0;
+  var i;
 
   items = items || [];
 
-  for (i ; i < items.length; i++) {
+  for (i = 0; i < items.length; i++) {
     this.rpush(items[i]);
   }
 };

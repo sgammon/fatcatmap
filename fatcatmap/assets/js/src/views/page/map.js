@@ -375,7 +375,6 @@ views.Map = View.extend({
         depth: 1,
         keys_only: false
       }).then(function (v, e) {
-        debugger;
         if (v)
           map.draw(v);
       });
@@ -421,6 +420,8 @@ views.Map = View.extend({
         edge = root.selectAll(selectors.edge);
 
         tick = function () {
+          view.map.force.start();
+
           if (graph.origin) {
             if (view.config.origin.snap) {
               graph.nodes.get(graph.origin.index).x = view.config.origin.position.x;
@@ -433,7 +434,9 @@ views.Map = View.extend({
             }
           }
 
-          edge.attr('x1', function (e) { return e.source.x - view.config.node.radius; })
+          edge.attr('x1', function (e) {
+            if (isNaN(e.source.y - view.config.node.radius)) { debugger }
+            return e.source.x - view.config.node.radius; })
               .attr('y1', function (e) { return e.source.y - view.config.node.radius; })
               .attr('x2', function (e) { return e.target.x - view.config.node.radius; })
               .attr('y2', function (e) { return e.target.y - view.config.node.radius; });
@@ -458,7 +461,6 @@ views.Map = View.extend({
                 .attr('r', config.node.radius * config.node.scaleFactor);
 
             view.map.changed = false;
-            view.map.force.start();
           }
         };
 
@@ -495,7 +497,9 @@ views.Map = View.extend({
           edge.enter()
               .insert('line', '.node')
               .attr('id', function (e) { return 'edge-' + e.key; })
-              .attr('x1', function (e) { return e.source.x; })
+              .attr('x1', function (e) {
+                if (typeof e.source.x !== 'number') { debugger }
+                return e.source.x; })
               .attr('y1', function (e) { return e.source.y; })
               .attr('x2', function (e) { return e.target.x; })
               .attr('y2', function (e) { return e.target.y; })
