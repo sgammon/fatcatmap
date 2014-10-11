@@ -131,8 +131,9 @@ class WarehouseAdapter(abstract.DirectedGraphAdapter):
           entity.update(updates)
 
     # customize storage for descriptors
-    if isinstance(entity, models.BaseDescriptor):
-      return self.put_descriptor(entity, **kwargs)
+    if hasattr(entity, '__description__') and entity.__description__.descriptor:
+      if entity.key and entity.key.parent:  # it's a descriptor
+        return self.put_descriptor(entity, **kwargs)
 
     return super(WarehouseAdapter, self)._put(entity, **kwargs)
 
