@@ -31,11 +31,11 @@ class ExternalID(Descriptor):
   __hashfunc__ = hashlib.sha1
 
   ## -- ID content -- ##
-  hash = str, {'indexed': True}
+  hash = str, {'indexed': False}
   content = str, {'indexed': True, 'repeated': True}
 
   ## -- ID structure -- ##
-  name = str, {'indexed': True, 'required': True}
+  name = str, {'indexed': False, 'required': True}
   provider = str, {'indexed': True, 'required': True}
 
   @classmethod
@@ -81,7 +81,7 @@ class Protocols(struct.BidirectionalEnum):
   HTTPS = 0x3  # HTTP, wrapped by TLS/SSL
 
 
-@describe(descriptor=True, type=Token)
+@describe(type=Token, descriptor=True, embedded=True)
 class URI(Descriptor):
 
   ''' Describes a token consisting of a URI that represents an

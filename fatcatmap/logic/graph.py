@@ -19,10 +19,10 @@ from canteen import decorators, struct
 
 
 ## Globals
-_DEFAULT_DEPTH, _DEFAULT_LIMIT = 2, 5
+_DEFAULT_DEPTH, _DEFAULT_LIMIT = 2, 8
 zeros = lambda: defaultdict(lambda: 0)
 keyify = lambda t: t if isinstance(t, model.Key) else t.key
-get_peers = lambda e: e.peers if getattr(e, 'peers') else (e.source, e.target)
+get_peers = lambda e: e.peers if getattr(e, 'peers') else (e.source, e.target[0])
 
 
 class Options(object):
@@ -154,6 +154,7 @@ class Graph(object):
 
      # ~~ traversal state ~~ #
      ('queued', deque),  # holds keys queued for fetch before fulfillment
+     ('enqueued', set),  # keeps track of items as they are enqueued
      ('fulfilled', set),  # holds keys fulfilled, moved over from queued
 
      # ~~ graph storage ~~ #
@@ -204,11 +205,14 @@ class Graph(object):
     ''' encounter a key '''
 
     target = key if not isinstance(key, model.Model) else key.key
-    map(self.__kinds__.add, (key.kind for key in target.ancestry))
 
-    # apply collections
-    map(self.__queued__.append, (
-      (key for key in target.ancestry) if self.options.collections else (key,)))
+    for item in target.ancestry:
+      self.kinds.add(item.kind)
+
+      if item not in self.enqueued:
+        self.queued.append(item)
+        self.enqueued.add(item)
+
     return key  # encounter key
 
   def traverse(self, key, perspective=None, _depth=0):
@@ -221,35 +225,29 @@ class Graph(object):
             perspective is not None and _depth > 0), (
             "origin traversal must have no perspective and vice versa")
 
-    (origin, edges, vertices,
-      matrix, neighbors, peers, options) = (
-      self.__origin__, self.__edges__, self.__vertices__,
-      self.__matrix__, self.__neighbors__, self.__peers__,
-      self.__options__)
-
     # file origin if not attached
-    if not origin: origin = self.__origin__ = key
+    if not self.origin: self.__origin__ = key
 
     yield self.encounter(key)  # encounter node keys at leaf
 
     # break if we've hit our depth limit for this branch
-    if options.depth <= _depth: raise StopIteration()
+    if self.options.depth <= _depth: raise StopIteration()
 
     # otherwise, proceed
-    for edge in map(self.encounter,  # encounter edge keys as we go
-                    models.Vertex(key=key).edges().fetch(limit=options.limit)):
+    for edge in models.Vertex(key=key).edges().fetch(limit=self.options.limit):
+      yield self.encounter(edge)
 
       left, right = get_peers(edge)  # extract edge peers
 
       # add edge peers
-      peers[edge].add(left), peers[edge].add(right)
+      self.peers[edge].add(left), self.peers[edge].add(right)
 
       # add as edge and map to vertex
-      edges.add(edge.key), vertices[left].add(edge.key), vertices[right].add(edge.key)
+      self.edges.add(edge.key), self.vertices[left].add(edge.key), self.vertices[right].add(edge.key)
 
       # file away in matrix and adjacency
-      matrix[left][right], matrix[right][left] = 1, 1
-      neighbors[left].add(right), neighbors[right].add(left)
+      self.matrix[left][right], self.matrix[right][left] = 1, 1
+      self.neighbors[left].add(right), self.neighbors[right].add(left)
 
       # spawn next branch of querying, but don't traverse backwards
       for origin in (n for n in (left, right) if n not in (key, perspective)):
@@ -264,11 +262,19 @@ class Graph(object):
     from fatcatmap import models
 
     # build key generator
-    for key, entity in zip(self.__queued__, models.BaseModel.get_multi(self.__queued__)):
-      self.__keys__.append(entity.key)
-      self.__objects__[entity.key] = entity
+    for entity in models.BaseModel.get_multi(self.queued):
+      self.keys.append(entity.key)
+      self.objects[entity.key] = entity
 
-    self.__queued__.clear()
+    #self.queued.clear()
+    #return self
+
+    #for key in self.queued:
+    #  if key not in self.fulfilled:
+    #    self.keys.append(key)
+    #    self.fulfilled.add(key)
+    #    self.objects[key] = models.BaseModel.get(key)
+
     return self
 
   @staticmethod
@@ -291,28 +297,32 @@ class Graph(object):
     if target in self.__serialized__:
       return self.__serialized__[target]
 
-    # grab options
-    options = self.__options__
-
     # unpack objects
-    kinds, keys, objects = (
-      [i for i in sorted(self.__kinds__)],
-      self.__keys__, self.__objects__)
+    kinds, keys, objects, options = (
+      [i for i in sorted(self.kinds)],
+      self.keys, self.objects, self.options)
 
     # unpack graph
     origin, edges, vertices = (
-      self.__origin__, self.__edges__, self.__vertices__)
+      self.origin, self.edges, self.vertices)
+
+    prereqs = (i for i in keys if i not in vertices and i not in edges)
 
     # make packed graph
     packed, packed_i, lookup = [], set(), {}
-    for group in (keys, (origin,), vertices, edges):
+    for group in (prereqs, (origin,), vertices, edges):
 
-      if any((keyify(k) for k in group if k not in objects)):
-        import pdb; pdb.set_trace()
-
-      for key, entity in zip((keyify(k) for k in group),
-                             (objects[keyify(k)] for k in group)):
+      for key in group:
         if key not in packed_i:
+          if isinstance(key, model.Model):
+            key, entity = key.key, key
+          else:
+            if key not in objects:
+              print "FAILED TO FIND NODE IN RESPONSE: %s" % key
+              entity = models.Model.__adapter__.registry[key.kind].get(key)
+            else:
+              entity = objects[key]
+
           packed_i.add(key)
 
           # add to packed objects
@@ -393,13 +403,15 @@ class Graph(object):
     return result
 
   ## ~~ accessors ~~ ##
-  (origin, options, queued, fulfilled,
-    edges, vertices, keys, kinds, objects,
+  (origin, options, queued, fulfilled, peers,
+    enqueued, edges, vertices, keys, kinds, objects,
     matrix, neighbors, defaults) = (
       property(lambda self: self.__origin__),
       property(lambda self: self.__options__),
       property(lambda self: self.__queued__),
       property(lambda self: self.__fulfilled__),
+      property(lambda self: self.__peers__),
+      property(lambda self: self.__enqueued__),
       property(lambda self: self.__edges__),
       property(lambda self: self.__vertices__),
       property(lambda self: self.__keys__),
@@ -415,7 +427,7 @@ class Grapher(logic.Logic):
 
   '''  '''
 
-  caching = True  # graph caching killswitch
+  caching = False  # graph caching killswitch
   options = Options  # attach graph options
 
   def construct(self, session, origin, emitter=None, **options):

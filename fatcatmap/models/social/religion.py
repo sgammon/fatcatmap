@@ -88,8 +88,8 @@ class Religion(Vertex):
       yield religion
 
       # external freebase + wikipedia IDs
-      yield ExternalID.new(religion, 'freebase', 'mid', freebase)
-      yield ExternalID.new(religion, 'wikipedia', 'en', wikiprefix + wikipedia)
+      yield ExternalID.new(key, 'freebase', 'mid', freebase)
+      yield ExternalID.new(key, 'wikipedia', 'en', wikiprefix + wikipedia)
 
 
 @describe(parent=Religion, type=Faction)
@@ -151,9 +151,10 @@ class ReligiousSect(Religion):
       ('Anabaptists', christianity, ('Anabaptist Church',), 'Anabaptist', 'Anabaptists', '/m/01274', 'Anabaptists'),
       ('Adventist', christianity, ('Adventist Church',), 'Adventist', 'Adventists', '/m/025s83j', 'Adventism')):
 
-      sect = yield make_sect(parent, label, singular, plural, freebase, wikipedia, additional=additional)
-      yield ExternalID.new(sect, 'freebase', 'mid', freebase)
-      yield ExternalID.new(sect, 'wikipedia', 'en', wikiprefix + wikipedia)
+      sect = make_sect(parent, label, singular, plural, freebase, wikipedia, additional=additional)
+      yield sect
+      yield ExternalID.new(sect.key, 'freebase', 'mid', freebase)
+      yield ExternalID.new(sect.key, 'wikipedia', 'en', wikiprefix + wikipedia)
 
     ## -- judaism -- ##
     for label, additional, singular, plural, parent, freebase, wikipedia in (

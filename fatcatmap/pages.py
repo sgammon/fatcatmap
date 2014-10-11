@@ -51,7 +51,7 @@ class Landing(Page):
 
   default_graph = {
     'depth': 2,
-    'limit': 5,
+    'limit': 8,
     'keys_only': False}
 
   def GET(self, route='/'):

@@ -218,7 +218,8 @@ class Spec(object):
                                   ('__keyname__', False),
                                   ('__graph_spec__', None),
                                   ('__topic__', None),
-                                  ('__reindex__', None)))
+                                  ('__reindex__', None),
+                                  ('__embedded__', None)))
 
   def __init__(self,
                root=False,
@@ -228,7 +229,8 @@ class Spec(object):
                descriptor=False,
                keyname=False,
                topic=None,
-               reindex=None):
+               reindex=None,
+               embedded=False):
 
     ''' Describe a catnip model class with extra, model-level schema. This
         includes any of the following:
@@ -275,11 +277,15 @@ class Spec(object):
 
         :param reindex: Flag indicating that this type should be indexed against
           when saving indexes for child types. Defaults to ``False``, unless this
-          type is ``abstract``, in which case it defaults to ``True``. '''
+          type is ``abstract``, in which case it defaults to ``True``.
+
+        :param embedded: Flag indicating that this model may be used as an embedded
+          entity, meaning it is allowed for storage beyond descriptor or abstract
+          requirements. '''
 
     # initialize
-    self.__root__, self.__parent__, self.__type__, self.__keyname__ = (
-      root, tupleify(parent, None), tupleify(type, None), keyname)
+    self.__root__, self.__parent__, self.__type__, self.__keyname__, self.__embedded__ = (
+      root, tupleify(parent, None), tupleify(type, None), keyname, embedded)
 
     # extended flags
     self.__abstract__, self.__descriptor__, self.__graph_spec__, self.__topic__ = (
@@ -364,7 +370,7 @@ class Spec(object):
 
         :returns: Original :py:class:`Model` subclass, post-inejction. '''
 
-    def injected_new(cls, *args, **kwargs):
+    def injected_new(klass, *args, **kwargs):
 
       ''' Default instance spawn method, overridden in subclasses to enforce
           schema. Just passes args and kwargs along to the model constructor.
@@ -378,23 +384,32 @@ class Spec(object):
           :returns: Spawned :py:class:`Model` instance with positional and
             keyword arguments ``args``/``kwargs``. '''
 
-
-      desc = cls.__description__
+      desc = klass.__description__
 
       if desc.descriptor:
-        assert len(args) > 2, (
-          "descriptors must have at least a parent and keypath")
 
-        # make a descriptor-style key and construct
-        # @TODO(sgammon): full descriptor keys with classes and shit
-        parent, keypath = args[:2]
-        kwargs.update({'key': model.Key(cls, keypath, parent=parent)})
-        return cls(*args[2:], **kwargs)
+        if len(args) > 2 or not desc.embedded:
+          assert len(args) > 2, (
+            "descriptors must have at least a parent and keypath")
 
-      return cls(*args, **kwargs)
+          # make a descriptor-style key and construct
+          # @TODO(sgammon): full descriptor keys with classes and shit
+          parent, keypath = args[:2]
+          kwargs.update({'key': model.Key(klass, keypath, parent=parent)})
+          return klass(*args[2:], **kwargs)
+      return klass(*args, **kwargs)
+
+    injected_new.__default__ = True  # flag as default
 
     # set constructor and unconditionally apply basemodel's adapter
-    setattr(target, 'new', getattr(target, 'new', classmethod(injected_new)))
+    if hasattr(target, 'new') and getattr(target.new, '__func__') and (
+          getattr(target.new.__func__, '__default__', False)) or not (
+          hasattr(target, 'new')):
+      setattr(target, 'new', classmethod(injected_new))
+
+    else:
+      setattr(target, 'new', getattr(target, 'new', classmethod(injected_new)))
+
     target.__adapter__ = BaseModel.__adapter__
     return target
 
@@ -511,7 +526,7 @@ class Spec(object):
     return _apply(target) if target else _apply
 
   # -- property accessors -- #
-  root, type, parent, keyname, descriptor, abstract, graph, topic, reindex = (
+  root, type, parent, keyname, descriptor, abstract, graph, topic, reindex, embedded = (
     property(lambda self: self.__root__),
     property(lambda self: self.__type__),
     property(lambda self: self.__parent__),
@@ -520,7 +535,8 @@ class Spec(object):
     property(lambda self: self.__abstract__),
     property(lambda self: self.__graph_spec__),
     property(lambda self: self.__topic__),
-    property(lambda self: self.__reindex__))
+    property(lambda self: self.__reindex__),
+    property(lambda self: self.__embedded__))
 
 
 def report_structure():  # pragma: no cover

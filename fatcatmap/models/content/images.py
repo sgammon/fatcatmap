@@ -101,8 +101,6 @@ class Portrait(Image):
 
   ''' Describes an ``Image`` of a ``Person``. '''
 
-  subject = Key, {'indexed': True}
-
 
 IMAGE_PREFIXES = {
   Image.ImageStorage.CONTENT: GSTORAGE + 'fcm-content/',

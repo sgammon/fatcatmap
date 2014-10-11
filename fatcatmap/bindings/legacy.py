@@ -23,6 +23,7 @@ from .sunlight import SunlightContributor
 from fatcatmap.models.person import Person
 
 # descriptor models
+from fatcatmap.models.descriptors.ext import URI
 from fatcatmap.models.descriptors.ext import Protocols
 
 # content models
@@ -311,7 +312,6 @@ class LegacyLegislator(ModelBinding):
                         parent=legislator),
                      size=size or (449, 558),
                      default=not size,
-                     subject=person.key,
                      location='raw/govtrack/photos/' + filename,
                      storage=Portrait.ImageStorage.PROXY,
                      formats=(

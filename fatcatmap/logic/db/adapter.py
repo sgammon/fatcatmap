@@ -11,6 +11,7 @@ import abc
 import json
 import base64
 import datetime
+import operator
 import itertools
 
 # redis
@@ -52,86 +53,34 @@ class WarehouseAdapter(abstract.DirectedGraphAdapter):
   _index_prefix = '__index__'
   _reverse_prefix = '__reverse__'
 
+  # graph/vertex/edge prefixes
+  _edge_prefix = '__edge__'
+  _graph_prefix = '__graph__'
+  _vertex_prefix = '__vertex__'
+
   # extra prefixes
   _topic_prefix = '__topic__'
   _topics_prefix = '__topics__'
   _abstract_prefix = '__abstract__'
   _descriptor_postfix = '__descriptor__'
 
+  # universal tokens
+  _neighbors_token = 'neighbors'
+
+  # directed tokens
+  _in_token = 'in'
+  _out_token = 'out'
+  _directed_token = 'directed'
+
+  # undirected tokens
+  _peers_token = 'peers'
+  _undirected_token = 'undirected'
+
   # extra tokens
   _type_token = 'type'
   _types_token = 'types'
+  _relationship_token = 'relationship'
 
-
-  class KeyTranslator(object):
-
-    ''' Specifies an attached object to a ``WarehouseAdapter`` that knows how to
-        translate various keys to various other kinds of keys. '''
-
-    class node(object):
-
-      ''' Specifies key transformations from a ``Node``-centric point of
-          view. '''
-
-      @staticmethod
-      def to_hint(key, **spec):
-
-        ''' Converts a ``Node`` key to a ``Hint`` key, given a ``spec`` where
-            the ``Node``'s ``key`` is taken as the origin. '''
-
-      @staticmethod
-      def to_native(key, type):
-
-        ''' Converts a ``Node`` key to a ``Native`` key, given the target
-            ``Native`` ``type``. '''
-
-      @staticmethod
-      def to_descriptor(key, type, name=None):
-
-        ''' Converts a ``Node`` key to a ``Descriptor`` key, given the target
-            ``Descriptor`` ``type`` and an optional ``name`` specification. '''
-
-      @staticmethod
-      def from_native(key):
-
-        ''' Converts a ``Native`` key to a ``Node`` key. '''
-
-
-    class hint(object):
-
-      ''' Specifies key transformations from a ``Hint``-centric point of
-          view. '''
-
-      @staticmethod
-      def to_node(key):
-
-        ''' Converts a ``Hint`` key to a ``Node`` key, using the
-            ``Hint``'s specified origin. '''
-
-
-    class edge(object):
-
-      ''' Specifies key transformations from a ``Edge``-centric point of
-          view. '''
-
-      @staticmethod
-      def to_nodes(key):
-
-        ''' Extracts member ``Node`` keys for a given ``Edge``. '''
-
-      @staticmethod
-      def to_native(key, type):
-
-        ''' Converts an ``Edge`` key to a ``Native`` key, given the target
-            ``Native`` type. '''
-
-      @staticmethod
-      def to_descriptor(key, type, name=None):
-
-        ''' Converts an ``Edge`` key to a ``Descriptor`` key, given the target
-            ``Descriptor`` ``type`` and an optional ``name`` specification. '''
-
-  translate = KeyTranslator()
 
   ## +=+=+ Internal Methods +=+=+ ##
   @classmethod
@@ -209,24 +158,26 @@ class WarehouseAdapter(abstract.DirectedGraphAdapter):
 
       encoded, flattened = key
       fullkey = model.Key.from_urlsafe(encoded)
-      _model = cls.registry[fullkey.kind]
 
-      if hasattr(_model, '__description__') and (
-        _model.__description__.descriptor):
+      if fullkey.kind in cls.registry:
+        _model = cls.registry[fullkey.kind]
 
-        # it's a descriptor, retrieve it
-        subject, keypath = fullkey.parent, fullkey.id
+        if hasattr(_model, '__description__') and (
+          _model.__description__.descriptor):
 
-        result = cls.execute(*(
-          cls.Operations.HASH_GET,
-          _model.kind(),
-          '::'.join((subject.urlsafe(), cls._descriptor_postfix)),
-          keypath))
+          # it's a descriptor, retrieve it
+          subject, keypath = fullkey.parent, fullkey.id
 
-        if result:
-          # leverage supermethod for deserialization
-          return super(WarehouseAdapter, cls).get(None, None, result)
-        return result
+          result = cls.execute(*(
+            cls.Operations.HASH_GET,
+            _model.kind(),
+            '::'.join((subject.urlsafe(), cls._descriptor_postfix)),
+            keypath))
+
+          if result:
+            # leverage supermethod for deserialization
+            return super(WarehouseAdapter, cls).get(None, None, result)
+          return result
     return super(WarehouseAdapter, cls).get(key, pipeline, _entity)
 
   def put_descriptor(self, entity, **kwargs):
@@ -266,6 +217,10 @@ class WarehouseAdapter(abstract.DirectedGraphAdapter):
     # serialize, also descriptors are never compressed
     serialized = self.serializer.dumps(_cleaned)
 
+    # generate indexes because descriptors always have predictable paths
+    d_encoded, d_meta, d_prop, d_graph = self.generate_indexes(*(
+      entity.key, entity, self._pluck_indexed(entity)))
+
     # allocate a channel and store descriptor
     with (kwargs.get('pipeline') or (
       self.channel('__meta__').pipeline(transaction=False))) as pipe:
@@ -276,6 +231,8 @@ class WarehouseAdapter(abstract.DirectedGraphAdapter):
         '::'.join((subject.urlsafe(), self._descriptor_postfix)),
         keypath,
         serialized), target=pipe)
+
+      self.write_indexes((d_encoded, d_meta, d_prop), d_graph, pipeline=pipe, execute=True)
 
       pipe.execute()
 
@@ -319,30 +276,79 @@ class WarehouseAdapter(abstract.DirectedGraphAdapter):
 
       # fcm-based extensions
       if hasattr(entity, '__description__'):
-        model, description = cls.registry[entity.kind()], entity.__description__
+
+        _model, description = cls.registry[entity.kind()], entity.__description__
 
         ## 1) yield upwards to generate meta/graph/property indexes
         encoded, meta, properties, graph = supergen(key, entity, properties)
-
-        ## 2) abstract type indexes
-        meta_fcm, prop_fcm, graph_fcm = (
-          cls.generate_abstract_indexes(key, entity, meta, properties, graph))
+        graph = list(graph)
 
         # @TODO(sgammon): double-level edge/neighbor indexes
+
+        ## 2) generate graph indexes
+        if hasattr(_model, '__graph__') or (
+          issubclass(_model, model.Vertex) or (
+          issubclass(_model, model.Edge))):
+
+          cls.generate_graph_indexes(*(
+            key, entity, meta, properties, graph))
+
+        ## 3) generate abstract indexes
+        cls.generate_abstract_indexes(*(
+            key, entity, meta, properties, graph))
+
+        ## 4) flatten property indexes
+        #_cleaned = []
+        #for packer, bundle in properties:
+        #  _prefix, _kind, _path = bundle[:3]
+        #  if '.' in _path:
+        #    prop, subprop = _path.split('.')
+        #    _kind = getattr(_model, prop).basetype.kind()
+        #    _cleaned.append((packer, tuple([_prefix, _kind, subprop] + list(bundle[3:]))))
+
+        #  else:
+        #    _cleaned.append((packer, bundle))
+        #properties = _cleaned
 
         # apply freebase topic indexes
         if description.topic:
 
           # topics + topic indexes
-          meta_fcm.append((cls._topics_prefix, description.topic))
-          meta_fcm.append((cls._topic_prefix, base64.b64encode(description.topic)))
+          meta.append((cls._topics_prefix, description.topic))
+          meta.append((cls._topic_prefix, base64.b64encode(description.topic)))
 
         return (encoded,
-                set(itertools.chain(meta, meta_fcm)),
-                set(prop_fcm),
-                set(itertools.chain(graph, graph_fcm)))
+                set(meta),
+                set(properties),
+                set(graph))
 
     return supergen(key, entity, properties)
+
+  @classmethod
+  def generate_graph_indexes(cls, key, entity, meta, properties, graph):
+
+    '''  '''
+
+    from fatcatmap.logic.graph import get_peers
+
+    if hasattr(entity, '__graph__'):
+
+      # add edge indexes
+      if hasattr(entity, '__edge__'):
+
+        # add relationship index
+        relationship = reduce(operator.add, sorted((k.urlsafe().replace('=', '') for k in get_peers(entity))))
+        graph.append((
+          cls._graph_prefix,
+          "::".join((reduce(operator.add, relationship), cls._relationship_token))))
+
+      # add vertex indexes
+      elif hasattr(entity, '__vertex__'):
+        pass  # no extra vertex indexes yet
+
+      else:
+        raise RuntimeError('Invalid entity dispatched for graph'
+                           ' index generation: "%s".' % repr(entity))
 
   @classmethod
   def generate_abstract_indexes(cls, key, entity, meta, properties, graph):
@@ -368,12 +374,13 @@ class WarehouseAdapter(abstract.DirectedGraphAdapter):
         yield target
 
     ## prepare typestack for later, along with key root
-    typestack = (_t for _t in types(model))
+    typestack = [_t for _t in types(model)]
     keyroot = (_k for _k in key.ancestry).next()
 
     considered, abstract_fcm, prop_fcm, graph_fcm, external = set(), [], [], [], []
+
     for supertype in typestack:
-      
+
       # skip conditions
       if supertype in considered: continue
       considered.add(supertype)
@@ -388,33 +395,22 @@ class WarehouseAdapter(abstract.DirectedGraphAdapter):
           # `__abstract__::Type::<root>` => target
           abstract_fcm.append((cls._abstract_prefix, (cls._type_token, supertype.kind(),), keyroot.urlsafe()))
 
-      for encoder, bundle in properties:
-        prefix, kind, prop, value = bundle
+      for name, prop in ((i, getattr(model, i)) for i in model.__lookup__):
+        if prop.indexed and prop.options.get('embedded'):
+          subindexes = cls._pluck_indexed(getattr(entity, prop.name))
 
-        psplit = prop.split('.')
-        if len(psplit) > 1:
-          # look for embedded model indexes
-          subprop_name, deep_path = psplit[0], psplit[1:]
-          subprop = entity.__class__[subprop_name]
-          deep_prop = '.'.join(deep_path)
+          if subindexes:
 
-          if isinstance(subprop._basetype, type) and (
-            issubclass(subprop._basetype, model_api.Model)) and subprop.options.get('embedded'):
+            # @TODO(sgammon): WHAT THE FUCK IS THIS SHIT, FUTURE SAM???
 
-            # don't need created/modified for sub-entities
-            if deep_prop in frozenset(('modified', 'created')): continue
+            # build kinded key to index against temporarily
+            subkey = prop.basetype.__keyclass__(prop.basetype.kind())
+            _, __, subprop, subgraph = cls.generate_indexes(subkey, getattr(entity, prop.name), subindexes)
+            _, submeta, __, subgraph = cls.generate_indexes(key, getattr(entity, prop.name), subindexes)
 
-            encoded, _subabs, _subprop, _subgraph = cls.generate_indexes(key, getattr(entity, subprop.name), {
-              deep_prop: (subprop, value)})
-            abstract_fcm += _subabs
-            prop_fcm += _subprop
-
-        else:
-          if hasattr(supertype, prop) and supertype.__dict__[prop].indexed:
-            # append supertype abstract index
-            if isinstance(value, float):
-              encoder = float if isinstance(value, float) else encoder
-            prop_fcm.append((encoder, (prefix, supertype.kind(), prop, value)))
+            meta += submeta
+            prop_fcm += subprop
+            graph_fcm += subgraph
 
       # ask entity for extra indexes
       if hasattr(supertype, 'on_index'):
@@ -433,12 +429,13 @@ class WarehouseAdapter(abstract.DirectedGraphAdapter):
           elif extra[0] == cls._graph_prefix:
             graph_fcm.append((encoder, extra))
           elif extra[0] in frozenset((cls._key_prefix, cls._kind_prefix, cls._group_prefix)):
-            meta_fcm.append((encoder, extra))
+            meta.append((encoder, extra))
           else:
             raise RuntimeError('Model `on_index` event provided invalid index bundle: "%s".' % extra)
 
-    return abstract_fcm, prop_fcm, graph_fcm
-
+      if prop_fcm: properties += prop_fcm
+      if graph_fcm: graph += graph_fcm
+      if abstract_fcm: meta += abstract_fcm
 
   @classmethod
   def write_indexes(cls, writes, graph, **kwargs):
