@@ -298,19 +298,6 @@ class WarehouseAdapter(abstract.DirectedGraphAdapter):
         cls.generate_abstract_indexes(*(
             key, entity, meta, properties, graph))
 
-        ## 4) flatten property indexes
-        #_cleaned = []
-        #for packer, bundle in properties:
-        #  _prefix, _kind, _path = bundle[:3]
-        #  if '.' in _path:
-        #    prop, subprop = _path.split('.')
-        #    _kind = getattr(_model, prop).basetype.kind()
-        #    _cleaned.append((packer, tuple([_prefix, _kind, subprop] + list(bundle[3:]))))
-
-        #  else:
-        #    _cleaned.append((packer, bundle))
-        #properties = _cleaned
-
         # apply freebase topic indexes
         if description.topic:
 
@@ -464,24 +451,6 @@ class WarehouseAdapter(abstract.DirectedGraphAdapter):
         fragments. '''
 
     raise NotImplemented('`hint` is abstract.')
-
-  @abc.abstractmethod
-  def attach(self, subject, descriptor, **kwargs):  # pragma: no cover
-
-    ''' Specifies an abstract interface for writing descriptors, which are tiny
-        decorator objects attached to parent objects. '''
-
-    raise NotImplemented('`attach` is abstract.')
-
-  @abc.abstractmethod
-  def native(self, subject, version=None, **kwargs):  # pragma: no cover
-
-    ''' Specifies an abstract interface for retrieving an object's ``Native``,
-        which contains implementation-specific data.
-
-        Optionally, a specific ``Native`` ``version`` can be requested. '''
-
-    raise NotImplemented('`native` is abstract.')
 
   @abc.abstractmethod
   def descriptors(self, subject, type=None, **kwargs):  # pragma: no cover
@@ -660,31 +629,17 @@ class RedisWarehouse(WarehouseAdapter, redis.RedisAdapter):
     raise NotImplemented('`Redis` graph support'
                          ' not yet implemented.')  # pragma: no cover
 
-  def neighbors(self, key, type=None, **kwargs):
+  def neighbors(self, key, execute=True, **kwargs):
 
     ''' Retrieve neighbor nodes, which are peers across ``edges``, for ``key``,
-        optionally filtered by ``type``, from Redis. '''
+        from Redis. '''
 
-    raise NotImplemented('`Redis` graph support'
-                         ' not yet implemented.')  # pragma: no cover
+    from fatcatmap import models
+
+    _q = models.Vertex(key=key).neighbors(**kwargs)
+    return _q.fetch() if execute else _q
 
   ## +=+=+ Proprietary Methods +=+=+ ##
-  def native(self, subject, version=None, **kwargs):
-
-    ''' Retrieve an object's ``Native``, which contains implmentation data for a
-        given ``subject`` key, optionally by ``version``, from Redis. '''
-
-    raise NotImplemented('`Redis` graph support'
-                         ' not yet implemented.')  # pragma: no cover
-
-  def attach(self, subject, descriptor, **kwargs):
-
-    ''' Attach a new ``descriptor`` object to a ``subject`` key, which contains
-        extra ancillary data, in Redis. '''
-
-    raise NotImplemented('`Redis` graph support'
-                         ' is not yet implemented.')  # pragma: no cover
-
   def descriptors(self, subject, type=None, **kwargs):
 
     ''' Retrieve attached ``Descriptor`` objects for a given ``subject`` key,
