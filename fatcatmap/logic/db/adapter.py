@@ -7,30 +7,33 @@
 '''
 
 # stdlib
+import os
+import sys
 import abc
+import time
 import json
 import base64
+import hashlib
 import datetime
 import operator
 import itertools
+import threading
 
-# redis
-try:
-  import redis
-except:
-  redis = False
+# catnip dependencies
+import redis
+import msgpack
 
-# msgpack
-try:
-  import msgpack
-except:
-  msgpack = False
+# redis exceptions
+from redis import exceptions as wire_errors
 
 # snappy
 try:
   import snappy
 except:
   snappy = False
+
+# fcm config
+from fatcatmap import config
 
 # canteen
 from canteen import model
@@ -39,6 +42,35 @@ from canteen.model import adapter
 from canteen.model.adapter import redis
 from canteen.model.adapter import abstract
 from canteen.model.adapter import inmemory
+
+
+def load_script(script):
+
+  ''' Read a Lua script file so that it can be loaded into
+      Redis for later use. '''
+
+  buf = []
+  with open(script, 'r') as scriptfile:
+    ignore = False
+
+    for line in scriptfile:
+
+      # handle ignore flag for multiline comments
+      if '[[' in line or ']]' in line:
+        ignore = True
+        if ']]' in line: ignore = False
+        buf.append(r' ')
+        continue
+
+      # respect ignored lines
+      if ignore:
+        buf.append(r' ')
+        continue
+
+      buf.append(line.strip() + '\n')
+
+  content = ' '.join(buf)
+  return (script.split('/')[-1].split('.')[0], (hashlib.sha1(content).hexdigest(), content))
 
 
 class WarehouseAdapter(abstract.DirectedGraphAdapter):
@@ -462,127 +494,13 @@ class WarehouseAdapter(abstract.DirectedGraphAdapter):
     raise NotImplemented('`descriptors` is abstract.')
 
 
-class InMemoryWarehouse(WarehouseAdapter, inmemory.InMemoryAdapter):
-
-  ''' In-memory implementation of the fcm-proprietary abstract
-      ``WarehouseAdapter``. Mostly used for testing against a simple,
-      known-good API. '''
-
-  is_supported = classmethod(lambda cls: True)  # always supported
-
-  ## +=+=+ Graph Methods +=+=+ ##
-  def edges(self, key1, key2=None, type=None, **kwargs):
-
-    ''' Retrieve edges for ``key1``, or between ``key1`` and ``key2``,
-        optionally filtered by ``type``, from memory. '''
-
-    raise NotImplemented('`memory` graph support not yet implemented.')
-
-  def neighbors(self, key, type=None, **kwargs):
-
-    ''' Retrieve neighbor nodes, which are peers across ``edges``, for ``key``,
-        optionally filtered by ``type``, from memory. '''
-
-    raise NotImplemented('`memory` graph support not yet implemented.')
-
-  ## +=+=+ Proprietary Methods +=+=+ ##
-  def native(self, subject, version=None, **kwargs):
-
-    ''' Retrieve an object's ``Native``, which contains implmentation data for a
-        given ``subject`` key, optionally by ``version``, from memory. '''
-
-    raise NotImplemented('`memory` graph support not yet implemented.')
-
-  def attach(self, subject, descriptor, **kwargs):
-
-    ''' Attach a new ``descriptor`` object to a ``subject`` key, which contains
-        extra ancillary data, in memory. '''
-
-    raise NotImplemented('`memory` graph support is not yet implemented.')
-
-  def descriptors(self, subject, type=None, **kwargs):
-
-    ''' Retrieve attached ``Descriptor`` objects for a given ``subject`` key,
-        optionally filtered by ``type``, from memory. '''
-
-    raise NotImplemented('`memory` graph support not yet implemented.')
-
-  def hint(self, subject, data=None, **kwargs):
-
-    ''' Retrieve graph ``Hint`` objects for a given ``subject`` key, or store a
-        ``Hint`` if ``data`` is provided, in memory. '''
-
-    raise NotImplemented('`memory` graph support not yet implemented.')
-
-
-class DatastoreWarehouse(WarehouseAdapter):
-
-  ''' Google Cloud Datastore-based implementation of the abstract
-      ``WarehouseAdapter``. '''
-
-  # disabled, for now (@TODO(sgammon))
-  is_supported = classmethod(lambda cls: False)
-
-  ## +=+=+ Graph Methods +=+=+ ##
-  def edges(self, key1, key2=None, type=None, **kwargs):
-
-    ''' Retrieve edges for ``key1``, or between ``key1`` and ``key2``,
-        optionally filtered by ``type``, from the Datastore. '''
-
-    raise NotImplemented('`Datastore` graph support not yet implemented.')
-
-  def neighbors(self, key, type=None, **kwargs):
-
-    ''' Retrieve neighbor nodes, which are peers across ``edges``, for ``key``,
-        optionally filtered by ``type``, from the Datastore. '''
-
-    raise NotImplemented('`Datastore` graph support not yet implemented.')
-
-  ## +=+=+ Proprietary Methods +=+=+ ##
-  def native(self, subject, version=None, **kwargs):
-
-    ''' Retrieve an object's ``Native``, which contains implmentation data for a
-        given ``subject`` key, optionally by ``version``, from the
-        Datastore. '''
-
-    raise NotImplemented('`Datastore` graph support not yet implemented.')
-
-  def attach(self, subject, descriptor, **kwargs):
-
-    ''' Attach a new ``descriptor`` object to a ``subject`` key, which contains
-        extra ancillary data, in the Datastore. '''
-
-    raise NotImplemented('`Datastore` graph support is not yet implemented.')
-
-  def descriptors(self, subject, type=None, **kwargs):
-
-    ''' Retrieve attached ``Descriptor`` objects for a given ``subject`` key,
-        optionally filtered by ``type``, from the Datastore. '''
-
-    raise NotImplemented('`Datastore` graph support not yet implemented.')
-
-  def hint(self, subject, data=None, **kwargs):
-
-    ''' Retrieve graph ``Hint`` objects for a given ``subject`` key, or store a
-        ``Hint`` if ``data`` is provided, in the Datastore. '''
-
-    raise NotImplemented('`Datastore` graph support not yet implemented.')
-
-  def connect(cls, key1, key2, edge, **kwargs):
-
-    ''' Connect two objects (expressed as ``key1`` and ``key2``) as ``Vertexes``
-        by an ``Edge`` in the Datastore. '''
-
-    raise NotImplemented('`Datastore` graph support not yet implemented.')
-
-
 class RedisWarehouse(WarehouseAdapter, redis.RedisAdapter):
 
   ''' Redis-backed implementation of the fcm-proprietary abstract
       ``WarehouseAdapter``. Powered by Canteen's builtin Redis driver. '''
 
-  is_supported = classmethod(lambda cls: redis)
 
+  # engine configuration
   class EngineConfig(redis.RedisAdapter.EngineConfig):
 
     ''' Configuration for the `RedisWarehouse` engine. '''
@@ -591,6 +509,21 @@ class RedisWarehouse(WarehouseAdapter, redis.RedisAdapter):
     compression = snappy
     mode = redis.RedisMode.hashkey_blob
 
+
+  class Operations(redis.RedisAdapter.Operations):
+
+    ''' Configuration for custom catnip engine operations. '''
+
+    MSSCAN = ('CATNIP', 'MSSCAN')  # multi-set-scan
+    MZSCAN = ('CATNIP', 'MZSCAN')  # multi-sorted-set-scan
+    TRAVERSE = ('CATNIP', 'TRAVERSE')  # n-depth graph traversal
+
+
+  # script loader
+  scripts = {n: i for n, i in (
+    load_script(os.path.join(dp, f)) for dp, dn, fn in (
+      os.walk(config.app['paths']['scripts']['db'])) for f in fn)}
+
   @decorators.classproperty
   def config(self):
 
@@ -598,6 +531,56 @@ class RedisWarehouse(WarehouseAdapter, redis.RedisAdapter):
 
     from fatcatmap import config
     return config.config['RedisWarehouse']
+
+  ## +=+=+ Low-level Methods +=+=+ ##
+  @classmethod
+  def execute(cls, operation, kind, *args, **kwargs):
+
+    """ Acquire a channel and execute an operation, optionally buffering the
+        command.
+
+        :param operation: Operation name to execute (from
+          :py:attr:`RedisAdapter.Operations`).
+
+        :param kind: String :py:class:`model.Model` kind to acquire the channel
+          for.
+
+        :param args: Positional arguments to pass to the low-level operation
+          selected.
+
+        :param kwargs: Keyword arguments to pass to the low-level operation
+          selected.
+
+        :returns: Result of the selected low-level operation. """
+
+    if isinstance(operation, tuple) and operation[0] == 'CATNIP':
+
+      if operation[1] not in cls.scripts:
+        raise RuntimeError('Invalid script requested: "%s".' % operation[1])
+
+      # it's a script - check to see if it's loaded
+      try:
+        return cls.execute(*tuple([
+          cls.Operations.EVALUATE_STORED,             # operation
+          '__meta__',                                 # kind
+          cls.scripts[operation[1]][0],               # script hash
+          len(kwargs.get('keys', []))] + (            # of key arguments
+            kwargs.get('keys', [])) + (     # key arguments
+            [i for i in args])))                      # positional arguments
+
+      except wire_errors.NoScriptError:
+
+        # load it and try again
+        r_hash = cls.execute(*(
+          cls.Operations.SCRIPT_LOAD,
+          '__meta__', cls.scripts[operation[1]][1]))
+
+        assert r_hash == script_hash, (
+          "script hashes must stay consistent (for db script '%s')" % operation[1])
+
+        return cls.execute(operation, kind, *args, **kwargs)
+
+    return super(RedisWarehouse, cls).execute(operation, kind, *args, **kwargs)
 
   ## +=+=+ Basic Methods +=+=+ ##
   @classmethod
@@ -657,7 +640,4 @@ class RedisWarehouse(WarehouseAdapter, redis.RedisAdapter):
                          ' not yet implemented.')  # pragma: no cover
 
 
-# install adapters
-adapter.concrete += [InMemoryWarehouse,
-                     DatastoreWarehouse,
-                     RedisWarehouse]
+adapter.concrete += [RedisWarehouse]  # install adapters
