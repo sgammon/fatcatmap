@@ -10,6 +10,10 @@
 from . import db
 from .db import *
 
+# data
+from . import data
+from .data import *
+
 # views
 from . import views
 
