@@ -13,9 +13,48 @@ goog.require('$');
 goog.require('View');
 goog.require('views.Detail');
 goog.require('views.detail.Legislator');
+goog.require('models.graph');
 goog.require('services.graph');
 
 goog.provide('views.Map');
+
+var PI, _distributeNodeInsertion;
+
+PI = Math.PI;
+
+/**
+ * Given a bounding size, origin, radius & number of nodes, calculates graceful insertion positions.
+ * @param {Array.<number>} size Width & height of the viewable area.
+ * @param {Array.<number>} origin X and Y coordinates of the origin.
+ * @param {number} radius Radius of the enclosing circle, in pixels.
+ * @param {Array.<models.graph.GraphNode>} nodes Nodes to calculate.
+ * @param {boolean} full If true, calculates circle rather than arc.
+ */
+_distributeNodeInsertion = function (size, origin, radius, nodes, full) {
+  var midX = size[0] / 2,
+    midY = size[1] / 2,
+    cx = origin[0],
+    cy = origin[1],
+    theta = 0,
+    offset = (full !== true ? PI / 2 : 2 * PI) / (nodes.length - 1),
+    node,
+    i;
+
+  if (cx < midX) {
+    theta = cy < midY ? PI : PI / 2;
+  } else if (cy < midY) {
+    theta = 1.5 * PI;
+  }
+
+  for (i = 0; i < nodes.length; i++) {
+    node = nodes[i];
+
+    node.x = Math.round(cx + radius * Math.cos(theta));
+    node.y = Math.round(cy + radius * Math.sin(theta));
+
+    theta += offset;
+  }
+};
 
 /**
  * @constructor
@@ -114,7 +153,7 @@ views.Map = View.extend({
          * @expose
          * @type {number}
          */
-        alpha: 0.75,
+        alpha: 0.15,
 
         /**
          * @expose
@@ -126,7 +165,7 @@ views.Map = View.extend({
          * @expose
          * @type {number}
          */
-        friction: 0.9,
+        friction: 0.4,
 
         /**
          * @expose
@@ -138,19 +177,25 @@ views.Map = View.extend({
          * @expose
          * @type {number}
          */
-        gravity: 0.1,
+        gravity: 0.08,
 
         /**
          * @expose
          * @type {number}
          */
-        charge: -600,
+        charge: -3000,
 
         /**
          * @expose
          * @type {number}
          */
-        distance: 180
+        chargeDistance: 620,
+
+        /**
+         * @expose
+         * @type {number}
+         */
+        distance: 100
       },
 
       /**
@@ -374,9 +419,23 @@ views.Map = View.extend({
       services.graph.construct(key, {
         depth: 1,
         keys_only: false
-      }).then(function (v, e) {
-        if (v)
-          map.draw(v);
+      }).then(function (graph, error) {
+        var node, newPeers;
+
+        if (graph) {
+          node = graph.nodes.get(key);
+          newPeers = node.peers().filter(function (n) {
+            return n.edges.length === 1;
+          });
+
+          _distributeNodeInsertion(
+            [map.config.width, map.config.height],
+            [node.x, node.y],
+            map.config.force.distance / 2,
+            newPeers);
+
+          map.draw(graph);
+        }
       });
     },
 
@@ -434,9 +493,7 @@ views.Map = View.extend({
             }
           }
 
-          edge.attr('x1', function (e) {
-            if (isNaN(e.source.y - view.config.node.radius)) { debugger }
-            return e.source.x - view.config.node.radius; })
+          edge.attr('x1', function (e) { return e.source.x - view.config.node.radius; })
               .attr('y1', function (e) { return e.source.y - view.config.node.radius; })
               .attr('x2', function (e) { return e.target.x - view.config.node.radius; })
               .attr('y2', function (e) { return e.target.y - view.config.node.radius; });
@@ -473,6 +530,7 @@ views.Map = View.extend({
           .theta(config.force.theta)
           .gravity(config.force.gravity)
           .alpha(config.force.alpha)
+          .chargeDistance(config.force.chargeDistance)
           .charge(function (n) {
             if (view.map.selected.indexOf(n.key) > -1)
               return config.force.charge * Math.pow(config.node.scaleFactor, 2);
@@ -497,9 +555,7 @@ views.Map = View.extend({
           edge.enter()
               .insert('line', '.node')
               .attr('id', function (e) { return 'edge-' + e.key; })
-              .attr('x1', function (e) {
-                if (typeof e.source.x !== 'number') { debugger }
-                return e.source.x; })
+              .attr('x1', function (e) { return e.source.x; })
               .attr('y1', function (e) { return e.source.y; })
               .attr('x2', function (e) { return e.target.x; })
               .attr('y2', function (e) { return e.target.y; })
@@ -526,6 +582,9 @@ views.Map = View.extend({
                 return n.classes.join(' ');
               })
               .call(force.drag);
+              // .call(force.drag().on('dragstart', function (n) {
+              //   n.fixed = true;
+              // }));
 
           origin = node.filter(function (n, i) {
             return n.key.toString() === graph.origin.key.toString();
@@ -553,8 +612,8 @@ views.Map = View.extend({
      * @param {UIEvent} e
      */
     resize: function (e) {
-      var width = this.$el.clientWidth,
-        height = this.$el.clientHeight;
+      var width = $('#catnip').clientWidth,
+      height = $('#catnip').clientHeight;
 
       this.config.width = width;
       this.config.height = height;
@@ -608,8 +667,12 @@ views.Map = View.extend({
    * @this {views.Map}
    */
   handler: function (graph) {
-    var width = this.$el.clientWidth,
-      height = this.$el.clientHeight;
+    var width = $('#catnip').clientWidth,
+      height = $('#catnip').clientHeight,
+      midX = width / 2,
+      midY = height / 2,
+      origin,
+      newNodes;
 
     this.config.width = width;
     this.config.height = height;
@@ -617,13 +680,30 @@ views.Map = View.extend({
     if (this.config.origin.snap) {
       this.config.origin.position = this.config.origin.position || {};
       this.config.origin.position = {
-          x: width / 2,
-          y: height / 2
-        };
+        x: midX,
+        y: midY
+      };
     }
 
     if (graph) {
       this.active = true;
+
+      origin = graph.nodes.get(graph.origin.index);
+
+      origin.x = midX;
+      origin.y = midY;
+
+      newNodes = graph.nodes.filter(function (node) {
+        return !(node.x && node.y)
+      });
+
+      _distributeNodeInsertion(
+        [width, height],
+        [midX / 2, midY / 2],
+        midY / 2,
+        newNodes,
+        true);
+
       this.draw(graph);
     } else if (this.active) {
       this.map.changed = true;

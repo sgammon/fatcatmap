@@ -55,6 +55,16 @@ def _read_template(filename):
     return u''.join((unicode(x, 'latin-1') for x in lines))
 
 
+def _get_filename(path):
+
+  ''' Extract the filename portion from a full path to a template file.
+
+      :param path: Full path to the template file to extract from.
+      :returns: Extracted filename from full template path. '''
+
+  return path.replace(template_path + '/', '')
+
+
 @decorators.bind('views')
 class ClientTemplate(Logic):
 
@@ -62,17 +72,7 @@ class ClientTemplate(Logic):
       string-paths based on their filenames. '''
 
   known_templates = {
-    path: _read_template(path) for path in _templates}
-
-  @staticmethod
-  def _get_filename(self, path):
-
-    ''' Extract the filename portion from a full path to a template file.
-
-        :param path: Full path to the template file to extract from.
-        :returns: Extracted filename from full template path. '''
-
-    return path.replace(template_path, '')
+    _get_filename(path): _read_template(path) for path in _templates}
 
   def load_template(self, filename):
 

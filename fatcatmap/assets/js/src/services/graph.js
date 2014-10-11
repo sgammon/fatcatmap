@@ -12,7 +12,7 @@
 goog.require('util.object');
 goog.require('support');
 goog.require('service');
-goog.require('models.data');
+goog.require('models');
 goog.require('models.graph');
 goog.require('services.rpc');
 goog.require('services.data');
@@ -29,19 +29,19 @@ var GRAPH, Graph, GraphQuery;
 Graph = function (graph) {
   /**
    * @expose
-   * @type {models.data.KeyIndexedList.<models.graph.GraphNode>}
+   * @type {models.KeyIndexedList.<models.graph.GraphNode>}
    */
-  this.nodes = new models.data.KeyIndexedList();
+  this.nodes = new models.KeyIndexedList();
 
   /**
    * @expose
-   * @type {models.data.KeyIndexedList.<models.graph.GraphEdge>}
+   * @type {models.KeyIndexedList.<models.graph.GraphEdge>}
    */
-  this.edges = new models.data.KeyIndexedList();
+  this.edges = new models.KeyIndexedList();
 
   /**
    * @expose
-   * @type {?Object.<{index: number, key: models.data.Key}>}
+   * @type {?Object.<{index: number, key: models.Key}>}
    */
   this.origin = null;
 
@@ -59,9 +59,9 @@ Graph = function (graph) {
 
   /**
    * @private
-   * @type {models.data.KeyIndexedList.<string>}
+   * @type {models.KeyIndexedList.<string>}
    */
-  this._fragments = new models.data.KeyIndexedList().key(function (frag) {
+  this._fragments = new models.KeyIndexedList().key(function (frag) {
     return frag;
   });
 
@@ -82,8 +82,8 @@ Graph.prototype.unpack = function (packed) {
     edges = {},
     edge, i, key;
 
-  graph.nodes = new models.data.KeyIndexedList().merge(graph.nodes);
-  graph.edges = new models.data.KeyIndexedList().merge(graph.edges);
+  graph.nodes = new models.KeyIndexedList().merge(graph.nodes);
+  graph.edges = new models.KeyIndexedList().merge(graph.edges);
 
   for (i = 0; i < structure.length; i++) {
     key = keys.get(i + offset);
@@ -117,8 +117,8 @@ Graph.prototype.unpack = function (packed) {
       edge.link(graph.nodes.get(edges[key][1]));
 
       if (!edge.satisfied()) {
-        console.log('built incomplete edge: ');
-        console.log(edge)
+        console.warn('Graph.unpack() built incomplete edge: ');
+        console.warn(edge)
       } else {
         graph.edges.push(edge);
       }
@@ -304,7 +304,7 @@ services.graph = /** @lends {ServiceContext.prototype.graph} */ {
 
           v = /** @type {GraphData} */ (v.data);
 
-          v.data.keys = models.data.Key.unpack(v.data.keys, v.meta.kinds);
+          v.data.keys = models.Key.unpack(v.data.keys, v.meta.kinds);
 
           if (replace)
             graph.inject('graph.active', new Graph());

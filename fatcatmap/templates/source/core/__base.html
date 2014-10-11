@@ -44,26 +44,8 @@
   </head>
   <body class="{{ theme|default('fcm-dark') }} alpha">
 
-    <!-- resources -->
-    <div id="resources" class="hidden">
-
-      <!-- app templates -->
-      <div id="templates">{% block templates -%}{%- endblock templates %}</div><!-- end #templates -->
-
-    </div><!-- end #resources -->
-
-    <!-- appframe -->
-    <div id="appframe">
-        {% block appframe %}<h1>appframe</h1>{%- endblock %}
-    </div><!-- end #appframe -->
-
-    <!-- appstage -->
-    <div id="appstage" class="container-fluid">
-      {% block appstage %}<h2>appstage</h2>{% endblock %}
-    </div><!-- end #appstage -->
-
     {% if k9.tools %}
-    <section class="debug tools">
+    <section class="debug tools hidden">
       <h2>debug tools</h2>
       <ul> <!-- buncha metadata -->
           <li><h5>env</h5><span>{{ k9.metadata.environment }}</span></li>
@@ -84,7 +66,7 @@
 
       {% block south -%}
       <!-- bundle/page JS -->
-      <script type="text/javascript" nonce="{{ nonce.script }}" src="{{ asset.script("lib/d3/d3-v3.js") }}"></script>
+      <script type="text/javascript" nonce="{{ nonce.script }}" src="{{ asset.script("lib/d3/d3.js") }}"></script>
       <script type="text/javascript" nonce="{{ nonce.script }}" src="{{ asset.script("lib/vue/vue.js") }}"></script>
       <script id="js-page" type="text/javascript" nonce="{{ nonce.script }}" src="{%- block page_js -%}{%- endblock -%}"></script>
 

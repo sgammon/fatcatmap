@@ -15,7 +15,26 @@ $node-scale-factor: 1.6
 
 #map
   z-index: 500
+  +fillbox
   +transition(opacity 0.5s ease)
+
+#map_physics
+  position: fixed
+  left: 5%
+  right: 5%
+  bottom: 5%
+  text-align: center
+  background-color: $grey
+
+  label
+    margin: 0.5em auto
+
+  input
+    width: 80%
+    margin: 0 auto
+
+  & > div > div
+    padding-top: 20px
 
 // Nodes/edges
 circle

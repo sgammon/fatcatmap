@@ -1,5 +1,5 @@
 /**
- * @fileoverview Server-injected application data.
+ * @fileoverview Graph types.
  *
  * @author  David Rekow <david@momentum.io>,
  *          Sam Gammon <sam@momentum.io>,
@@ -9,16 +9,6 @@
  * copyright (c) momentum labs, 2014
  * @externs
  */
-
-/** @typedef {Object} */
-var GraphObject = {};
-
-/** @type {Object} */
-GraphObject.data;
-
-/** @type {boolean} */
-GraphObject.cached;
-
 
 /** @typedef {Object} */
 var GraphQueryOptions = {};
@@ -75,7 +65,7 @@ GraphData.data.keys;
 /** @type {Object} */
 GraphData.data.indexes;
 
-/** @type {Array.<GraphObject>} */
+/** @type {Array.<DataObject>} */
 GraphData.data.objects;
 
 /** @type {Object} */

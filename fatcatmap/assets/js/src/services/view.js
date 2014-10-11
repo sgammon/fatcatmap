@@ -26,12 +26,12 @@ var VIEWS = {},
       if (error)
         return cb(false, error);
 
-      if (response.data == null)
-        return cb(false, response);
+      if (response.data)
+        response = response.data;
 
       children = [];
 
-      source = response.data.source.replace(/v-component=("|')([\w\.\-]+)\1/g, function (_, __, childname) {
+      source = response.source.replace(/v-component=("|')([\w\.\-]+)\1/g, function (_, __, childname) {
         children.push(childname);
         return _;
       });

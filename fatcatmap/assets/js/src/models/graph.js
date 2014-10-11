@@ -9,50 +9,69 @@
  * copyright (c) momentum labs, 2014
  */
 goog.require('util.object');
+goog.require('support');
+goog.require('services.storage');
+goog.require('models');
 goog.require('models.data');
 
 goog.provide('models.graph');
 
-var Enrichable, GraphNode, GraphEdge;
+var GraphItem, GraphNode, GraphEdge;
+
+if (support.storage.local)
+  new services.storage.Store(window.localStorage, 'graph', 'graph');
 
 /**
  * @constructor
- * @extends {models.data.KeyedItem}
- * @param {!(string|models.data.Key)} key
+ * @extends {models.data.Entity}
+ * @param {!(string|models.Key)} key
  * @throws {TypeError} If key is not a string or Key.
  */
-Enrichable = function (key) {
-  KeyedItem.call(this, key);
+GraphItem = function (key) {
+  models.data.Entity.call(this, key);
 
   /**
    * @expose
-   * @type {models.data.KeyIndexedList.<string>}
+   * @type {models.KeyIndexedList.<string>}
    */
-  this.classes = new models.data.KeyIndexedList().key(function (x) { return x; });
+  this.classes = new models.KeyIndexedList().key(function (x) { return x; });
 };
 
-util.object.inherit(Enrichable, models.data.KeyedItem);
+util.object.inherit(GraphItem, models.data.Entity);
 
-util.object.mixin(Enrichable, /** @lends {Enrichable.prototype} */{
+util.object.mixin(GraphItem, /** @lends {GraphItem.prototype} */{
   /**
-   * Enriches the current node with passed context.
+   * Enriches the current graph item with passed context.
    * @param {Object} context
-   * @return {Enrichable}
+   * @return {GraphItem}
    */
   enrich: function (context) {
     this.classes.push(this.key.kind.toLowerCase());
+    return this;
+  },
+
+  /**
+   * Persists the current graph item into the graph Store.
+   * @return {GraphItem}
+   */
+  put: function () {
+    if (services.storage.graph)
+      services.storage.graph.set(this.key, this);
+
+    Entity.prototype.put.call(this);
+
     return this;
   }
 });
 
 /**
  * @constructor
- * @extends {Enrichable}
- * @param {!(string|models.data.Key)} key
+ * @extends {GraphItem}
+ * @param {!(string|models.Key)} key
  * @throws {TypeError} If key is not a string or Key.
  */
 GraphNode = function (key) {
-  Enrichable.call(this, key);
+  GraphItem.call(this, key);
 
   /**
    * @expose
@@ -80,14 +99,14 @@ GraphNode = function (key) {
 
   /**
    * @expose
-   * @type {models.data.KeyIndexedList.<GraphEdge>}
+   * @type {models.KeyIndexedList.<GraphEdge>}
    */
-  this.edges = new models.data.KeyIndexedList();
+  this.edges = new models.KeyIndexedList();
 
   this.classes.push('node');
 };
 
-util.object.inherit(GraphNode, Enrichable);
+util.object.inherit(GraphNode, GraphItem);
 
 util.object.mixin(GraphNode, /** @lends {GraphNode.prototype} */{
   /**
@@ -102,20 +121,30 @@ util.object.mixin(GraphNode, /** @lends {GraphNode.prototype} */{
 
     this.edges.merge(node.edges);
     this.classes.merge(node.classes);
-    console.log('merged node');
-    console.log(this);
     return this;
+  },
+
+  /**
+   * Returns both source and target as a list.
+   * @expose
+   * @return {Array.<GraphNode>}
+   */
+  peers: function () {
+    var node = this;
+    return this.edges.map(function (edge) {
+      return edge.peer(node);
+    });
   }
 });
 
 /**
  * @constructor
- * @extends {Enrichable}
- * @param {!(string|models.data.Key)} key
+ * @extends {GraphItem}
+ * @param {!(string|models.Key)} key
  * @throws {TypeError} If key is not a string or Key.
  */
 GraphEdge = function (key) {
-  Enrichable.call(this, key);
+  GraphItem.call(this, key);
 
   /**
    * @expose
@@ -130,7 +159,7 @@ GraphEdge = function (key) {
   this.target = null;
 };
 
-util.object.inherit(GraphEdge, Enrichable);
+util.object.inherit(GraphEdge, GraphItem);
 
 util.object.mixin(GraphEdge, /** @lends {GraphEdge.prototype} */{
   /**
@@ -238,16 +267,16 @@ util.object.mixin(GraphEdge, /** @lends {GraphEdge.prototype} */{
 models.graph = {
   /**
    * @constructor
-   * @extends {models.data.KeyedItem}
-   * @param {(string|models.data.Key)} key
+   * @extends {models.KeyedItem}
+   * @param {(string|models.Key)} key
    * @throws {TypeError} If key is not a string or Key.
    */
   GraphNode: GraphNode,
 
   /**
    * @constructor
-   * @extends {models.data.KeyedItem}
-   * @param {(string|models.data.Key)} key
+   * @extends {models.KeyedItem}
+   * @param {(string|models.Key)} key
    * @throws {TypeError} If key is not a string or Key.
    */
   GraphEdge: GraphEdge

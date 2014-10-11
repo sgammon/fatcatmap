@@ -14,29 +14,13 @@ goog.require('async.task');
 goog.require('async.future');
 goog.require('support');
 goog.require('service');
+goog.require('services.rpc');
 goog.require('services.storage');
-goog.require('models.data');
+goog.require('models');
 
 goog.provide('services.data');
 
-var _dataCache, _dataBuffer, _dataStore, _watchers, _dataInit;
-
-_dataCache = {};
-
-_dataBuffer = {
-  index: {},
-  buffer: [],
-  id: null
-};
-
-if (support.storage.local)
-  _dataStore = new Store(window.localStorage, 'data', 'data');
-
-_watchers = {};
-
-models.data.Key.prototype.get = function () {
-  return _dataStore.get(this._safe);
-};
+var _dataCache = {};
 
 /**
  * @expose
@@ -44,125 +28,146 @@ models.data.Key.prototype.get = function () {
 services.data = /** @lends {ServiceContext.prototype.data} */ {
   /**
    * @expose
-   * @param {GraphData} data Raw input.
+   * @type {?services.storage.Store}
+   */
+  storage: (
+    support.storage.local ?
+    new services.storage.Store(window.localStorage, 'data', 'data') :
+    null),
+
+  /**
+   * @expose
+   * @param {GraphData} raw Raw input.
    * @param {function(GraphData)=} cb
    * @this {ServiceContext}
    */
-  init: function (data, cb) {
-    data.data.keys = models.data.Key.unpack(data.data.keys, data.meta.kinds);
+  init: function (raw, cb) {
+    var data = this.data;
 
-    _dataCache = util.object.zip(data.data.keys, data.data.objects);
-
-    window['DATA'] = data;
-    window['DATACACHE'] = _dataCache;
+    raw.data.keys = models.Key.unpack(raw.data.keys, raw.meta.kinds);
+    raw.data.keys.forEach(function (key, i) {
+      data.receive(key, raw.data.objects[i]);
+    });
 
     if (cb)
-      cb(data);
+      cb(raw);
   },
 
   /**
    * @expose
-   * @param {(string|Array.<string>)} key
+   * @param {(string|models.Key)} key
+   * @param {DataObject} data
+   * @this {ServiceContext}
+   * @throws {TypeError} If key is not a string or instance of Key.
+   */
+  receive: function (key, data) {
+    if (typeof key === 'string')
+      key = models.Key.unpack(key);
+
+    if (!(key instanceof models.Key))
+      throw new TypeError('services.data.receive() expects a string or Key as the first param.');
+
+    _dataCache[key] = data;
+
+    key.bind(data.data);
+    key.put();
+  },
+
+
+  /**
+   * @expose
+   * @param {(string|models.Key)} key
    * @return {Future}
    * @this {ServiceContext}
+   * @throws {TypeError} If key is not a string or Key.
    */
   get: function (key) {
-    var result, item;
+    var result = new Future();
 
-    if (Array.isArray(key)) {
-      return this.data.getAll(key);
-    } else {
-      item = _dataCache[key];
-      result = new Future();
+    if (typeof key === 'string')
+      key = models.Key.unpack(key);
 
-      if (item) {
-        result.fulfill(item);
-      } else {
-        // Retrieve from localStorage & server.
+    if (!(key instanceof models.Key))
+      throw new TypeError('services.data.get() expects a string key or Key instance.');
+
+    this.rpc.data.fetch({
+      /** @type {DataQuery} */
+      data: {
+        keys: [key.urlsafe()]
       }
-      return result;
-    }
-  },
+    }).then(
+      /**
+       * @param {(Data|boolean)} data
+       * @param {Error=} error
+       */
+      function (data, error) {
+        if (!data && error)
+          return result.fulfill(false, error);
 
-  /**
-   * @expose
-   * @param {Array.<string>} keys
-   * @return {Future}
-   * @this {ServiceContext}
-   */
-  getAll: function (keys) {
-    var result = new Future(),
-      items = [],
-      shouldErr;
-
-    keys.forEach(function (key, i) {
-      services.data.get(key).then(function (data, err) {
-        if (err) {
-          if (shouldErr) {
-            shouldErr = false;
-            result.fulfill(false, err);
-          }
-          return;
-        }
-
-        items[i] = data;
-
-        if (items.length === keys.length)
-          result.fulfill(items);
+        key.bind(data.data);
+        result.fulfill(key.data());
       });
-    });
 
     return result;
   },
 
   /**
    * @expose
-   * @param {string} key
-   * @param {*} data
+   * @param {(Array.<(string|models.Key)>|models.KeyIndexedList)} keys
+   * @return {Future}
    * @this {ServiceContext}
    */
-  set: function (key, data) {
-    var __watchers = _watchers[key];
+  getAll: function (keys) {
+    var result = new Future();
 
-    util.object.resolveAndSet(_dataCache, key, data);
+    this.rpc.data.fetch({
+      /** @type {DataQuery} */
+      data: {
+        keys: keys
+      }
+    }).then(
+      /**
+       * @param {(Data|boolean)} data
+       * @param {Error=} error
+       */
+      function (data, error) {
+        if (!data && error)
+          return result.fulfill(false, error);
 
-    if (__watchers && __watchers.length) {
-      __watchers.forEach(function (watcher) {
-        watcher(data);
+        result.fulfill(data.data);
       });
-    }
-  },
 
-  /**
-   * @expose
-   * @param {string} key
-   * @param {function(*)} watcher
-   * @this {ServiceContext}
-   */
-  watch: function (key, watcher) {
-    if (!_watchers[key])
-      _watchers[key] = [];
-
-    _watchers[key].push(watcher);
-  },
-
-  /**
-   * @expose
-   * @param {string} key
-   * @param {function(*)=} watcher
-   * @return {(function(*)|Array.<function(*)>)}
-   * @this {ServiceContext}
-   */
-  unwatch: function (key, watcher) {
-    var __watchers = watcher;
-    if (watcher && typeof watcher === 'function') {
-      _watchers[key] = _watchers[key].filter(function (w) {
-        return w === watcher;
-      });
-    } else {
-      __watchers = _watchers[key];
-      _watchers[key] = [];
-    }
-    return __watchers;
+    return result;
   }
 }.service('data');
+
+/**
+ * @expose
+ * @return {*}
+ */
+models.Key.prototype.get = function () {
+  return this.bind(services.storage.data.get(this)).data();
+};
+
+/**
+ * @expose
+ */
+models.Key.prototype.put = function () {
+  services.storage.data.put(this, this.data());
+};
+
+/**
+ * @expose
+ * @return {Future}
+ */
+models.Key.prototype.fetch = function () {
+  return services.data.get(this);
+};
+
+/**
+ * @expose
+ * @return {Future}
+ */
+models.KeyIndexedList.prototype.fetch = function () {
+  return services.data.getAll(this);
+};

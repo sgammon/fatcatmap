@@ -62,10 +62,16 @@ RPCAPI = function (name, methods, config) {
         if (error)
           return response.fulfill(false, error);
 
+        if (value.data && value.data.error_message)
+          return response.fulfill(false, new Error(value.data.error_message));
+
         response.fulfill(value);
       });
 
-      return handler ? response.then(handler) : response;
+      if (handler)
+        response.then(handler);
+
+      return response;
     }.inject('http');
 
   });
