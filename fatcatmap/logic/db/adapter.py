@@ -67,8 +67,17 @@ def load_script(script):
         if __debug__: buf.append(r' ')
         continue
 
+      lineval = line.strip()
+
       # skip comments in prod
-      if __debug__ and line.strip().startswith('--'):
+      if __debug__ and lineval.startswith('--'): continue
+
+      # handle loading dependencies manually
+      if 'require' in lineval:
+        statement = lineval.split(' ')[1].replace('"', '').replace("'", '').replace(';', '')
+        name, (sha1, block) = load_script(os.path.join(os.path.dirname(script), statement))
+
+        buf.append(block)
         continue
 
       buf.append(line.strip() + '\n')
