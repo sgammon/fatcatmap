@@ -1,0 +1,74 @@
+@import "var/font"
+@import "var/color"
+@import "core/form"
+@import "mixin/transition"
+
+#login
+  input
+    width: 90%
+    margin: 0 auto 10px
+
+  button
+    display: block
+    margin: 5px 0 0 10px
+    padding: 0 8px
+    border: none
+    background-color: $grey
+    color: $grey-light
+
+    &:hover
+      background-color: lighten($grey-dark, 10%)
+
+    &:active
+      background-color: $grey-dark
+
+  button#signup_submit
+    background-color: darken($brand-primary, 20%)
+
+    &:hover
+      background-color: darken($brand-primary, 10%)
+
+    &:active
+      background-color: $brand-primary
+
+#service_signin
+  background-color: lighten($grey, 15%)
+
+  h4, ul
+    display: inline-block
+
+  h4
+    margin-right: 20px
+    text-align: right
+    text-size: $font-size-h4
+
+  ul
+    list-style-type: none
+    padding: 0
+
+  li
+    flex-grow: 1
+    line-height: 50px
+    margin-bottom: 10px
+
+    &:last-child
+      margin-bottom: 0
+
+    div
+      display: inline-block
+      margin: 0 auto
+      text-align: center
+
+  .icon-facebook, .icon-google
+    width: 50px
+    height: 50px
+    margin-right: 20px
+    font-size: 30px
+    line-height: 50px
+    background-color: $grey-light
+    border-radius: 25px
+
+
+#signup > div
+  margin-top: 15px
+  text-align: center

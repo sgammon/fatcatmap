@@ -20,7 +20,7 @@ from .abstract import Name
 @describe(type=Name)
 class PersonName(Name):
 
-  '''  '''
+  ''' Describes the structural particulars of a human being's name. '''
 
   ## -- basic naming -- ##
   given = str, {'indexed': True}
@@ -35,7 +35,7 @@ class PersonName(Name):
 @describe(root=True)
 class Person(Vertex):
 
-  '''  '''
+  ''' Describes an individual and distinct human being. '''
 
   ## -- personal details -- ##
   name = PersonName, {'indexed': True, 'required': True, 'embedded': True}

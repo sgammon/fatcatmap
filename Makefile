@@ -30,10 +30,9 @@ SANDBOX?=0
 BUILDBOX?=0
 USER?=`whoami`
 CANTEEN?=0
-CANTEEN_BRANCH?=feature/FLY-8
-BOOTSTRAP_BRANCH?=master
+CANTEEN_BRANCH?=master
 SANDBOX_GIT?=$(USER)@sandbox
-BREWDEPS=openssl python haproxy redis pypy snappy
+BREWDEPS=openssl python haproxy redis pypy snappy hiredis elixir scala
 TEST_FLAGS?=
 
 ## == optionals == ##
@@ -127,13 +126,13 @@ develop: .develop js styles templates coverage
 
 canteen: lib/canteen
 
-js:
+js: npm
 	$(call say,"Minifying Javascript...")
 	@-JAVA_HOME=$$JAVA_HOME node_modules/gulp/bin/gulp.js closure
 
 styles:
-	$(call say,"Compiling Less...")
-	@-node_modules/gulp/bin/gulp.js less
+	$(call say,"Compiling Sass...")
+	@-JAVA_HOME=$$JAVA_HOME node_modules/gulp/bin/gulp.js sass
 
 ifeq ($(BREW),1)
 brew:
@@ -173,7 +172,7 @@ test:
 	@-bin/nosetests canteen_tests fatcatmap_tests $(TEST_FLAGS)
 
 	$(call say,"Running javascript testsuite...")
-	@-ENV=$(ENVIRONMENT) gulp test
+	@-JAVA_HOME=$$JAVA_HOME ENV=$(ENVIRONMENT) gulp test
 	$(call okay,"~~~ tests ran successfully. ~~~")
 
 coverage:
@@ -218,6 +217,9 @@ distclean: clean
 	@echo "Cleaning bootstrap..."
 	@rm -fr fatcatmap/assets/bootstrap;
 
+	@echo "Cleaning NPM dependencies..."
+	@rm -fr node_modules
+
 forceclean: distclean
 	$(call say,"Resetting codebase...")
 	@git reset --hard
@@ -237,6 +239,7 @@ lib: $(DEVROOT)/.env
 ### === resources === ###
 templates: $(DEVROOT)/.develop
 	$(call say,"Building fcm templates...")
+	@-mkdir -p fatcatmap/templates/compiled
 	@bin/python $(DEVROOT)/scripts/fcm.py build --templates
 
 ### === defs === ###
@@ -247,10 +250,10 @@ $(DEVROOT)/bin/fcm:
 $(DEVROOT)/lib/python2.7/site-packages/canteen.pth:
 	@echo "$(DEVROOT)/lib/canteen" > lib/python2.7/site-packages/canteen.pth
 
-.develop: brew bin lib $(DEVROOT)/.env $(DEVROOT)/bin/fcm bootstrap canteen closure $(DEVROOT)/lib/python2.7/site-packages/canteen.pth brew $(OPTIONALS)
+.develop: brew bin lib $(DEVROOT)/.env cython $(DEVROOT)/bin/fcm canteen $(DEVROOT)/lib/python2.7/site-packages/canteen.pth gulp $(OPTIONALS)
 	@touch ./.env
 
-$(DEVROOT)/.env: closure bootstrap canteen npm
+$(DEVROOT)/.env: canteen npm
 	@echo "Using devroot $(DEVROOT)..."
 	$(call say,"Initializing virtualenv...")
 	@-pip install virtualenv
@@ -258,9 +261,6 @@ $(DEVROOT)/.env: closure bootstrap canteen npm
 	@-sed -e 's/printf "%s%s%s" "(fcm)" (set_color normal) (_old_fish_prompt)/printf " %s ^.^ %s %s(fcm)%s  %s " (set_color -b green black) (set_color normal) (set_color -b white black) (set_color normal) (_old_fish_prompt)/g' bin/activate.fish > bin/activate_color.fish
 	@-mv bin/activate.fish bin/activate_lame.fish
 	@-mv bin/activate_color.fish bin/activate.fish
-
-	@echo "Installing GCloud Git remote..."
-	@-grep gcloud .git/config > /dev/null || (echo "[remote \"gcloud\"] >> $(DEVROOT)/.git/config ; echo "	url = https://source.developers.google.com/p/fcm-catnip/r/default" >> $(DEVROOT)/.git/config ; echo "	fetch = +refs/heads/*:refs/remotes/gcloud/*" >> $(DEVROOT)/.git/config)
 
 	@echo "Overriding standard Google paths..."
 	@-echo "" > lib/python2.7/site-packages/protobuf-2.5.0-py2.7-nspkg.pth
@@ -313,77 +313,21 @@ logbook:
 	@echo "Installing Logbook..."
 	@-bin/pip install --upgrade "git+git://github.com/keenlabs/logbook.git#egg=logbook"
 
-$(DEVROOT)/node_modules: bootstrap
+$(DEVROOT)/node_modules:
 	$(call say,"Installing NPM dependencies...")
 	@-npm install
 
 npm: $(DEVROOT)/node_modules
 
-ifeq ($(BUILDBOX),0)
-$(LIBROOT)/closure/compiler.jar:
-	$(call say,"Downloading Closure Compiler...")
-	@-curl --progress-bar http://dl.google.com/closure-compiler/compiler-latest.zip > ./compiler-latest.zip
-	@-mkdir -p $(LIBROOT)/closure
-
-	$(call say,"Extracting Closure Compiler...")
-	@-unzip compiler-latest.zip -d $(LIBROOT)/closure
-	@-mv compiler-latest.zip $(LIBROOT)/closure
-	@-rm -f compiler-latest.zip
-
-	@-mkdir -p $(LIBROOT)/closure/build;
-	@-mv $(LIBROOT)/closure/compiler.jar $(LIBROOT)/closure/build/compiler.jar;
-else
-$(LIBROOT)/closure/compiler.jar:
-	$(call say,"Downloading Closure Compiler...")
-	@-curl http://dl.google.com/closure-compiler/compiler-latest.zip > ./compiler-latest.zip 2> /dev/null
-	@-mkdir -p $(LIBROOT)/closure
-
-	$(call say,"Extracting Closure Compiler...")
-	@-unzip compiler-latest.zip -d $(LIBROOT)/closure
-	@-mv compiler-latest.zip $(LIBROOT)/closure
-	@-rm -f compiler-latest.zip
-
-	@-mkdir -p $(LIBROOT)/closure/build;
-	@-mv $(LIBROOT)/closure/compiler.jar $(LIBROOT)/closure/build/compiler.jar;
-endif
-
-closure: $(LIBROOT)/closure/compiler.jar
-
 cython:
 	$(call say,"Installing Cython...")
 	@-bin/pip install cython
 
-ifeq ($(SANDBOX),1)
-ifeq ($(DEBUG),1)
-fatcatmap/assets/bootstrap/package.json:
-	$(call say,"Cloning Bootstrap sources...")
-	@git clone $(SANDBOX_GIT):sources/dependencies/bootstrap.git ./fatcatmap/assets/bootstrap -b $(BOOTSTRAP_BRANCH)
-
-	$(call say,"Building Bootstrap...")
-	@-cd fatcatmap/assets/bootstrap; \
-		npm install; \
-		grunt;
-else
-fatcatmap/assets/bootstrap/package.json:
-	$(call say,"Cloning Bootstrap sources...")
-	@git clone /base/sources/dependencies/bootstrap.git ./fatcatmap/assets/bootstrap -b $(BOOTSTRAP_BRANCH)
-endif
-else
-fatcatmap/assets/bootstrap/package.json:
-	$(call say,"Cloning Bootstrap sources from GitHub...")
-	@git clone https://github.com/momentum/bootstrap.git ./fatcatmap/assets/bootstrap -b $(BOOTSTRAP_BRANCH)
-endif
-
-bootstrap: fatcatmap/assets/bootstrap/package.json
-	$(call okay,"Bootstrap is ready.")
-
 ifeq ($(DEBUG),1)
 gulp: npm
-	@-mkdir -p .develop/maps/fatcatmap/assets/js/site
-	@-mkdir -p .develop/maps/fatcatmap/assets/coffee/site
-	@-gulp
+	@-JAVA_HOME=$$JAVA_HOME gulp
 endif
 ifeq ($(DEBUG),0)
 gulp: npm
-	@node_modules/gulp/bin/gulp.js release
+	@-JAVA_HOME=$$JAVA_HOME node_modules/gulp/bin/gulp.js release
 endif

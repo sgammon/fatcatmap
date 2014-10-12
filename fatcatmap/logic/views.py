@@ -48,7 +48,11 @@ def _read_template(filename):
     raise ValueError('Not a file: %s' % full_path)
 
   with open(full_path, 'r') as template:
-    return ''.join(template.read())
+    lines = []
+    for line in template.read():
+      lines.append(line)
+
+    return u''.join((unicode(x, 'latin-1') for x in lines))
 
 
 @decorators.bind('views')
@@ -58,8 +62,7 @@ class ClientTemplate(Logic):
       string-paths based on their filenames. '''
 
   known_templates = {
-    path: _read_template(path) for path in _templates
-  }
+    path: _read_template(path) for path in _templates}
 
   @staticmethod
   def _get_filename(self, path):

@@ -1,0 +1,40 @@
+@import "var/layout"
+@import "mixin/grid"
+
+[class*="gridrow"], [class*="gridcol"]
+  display: flex
+  align-content: stretch
+
+[class*="gridrow"]
+  flex-direction: row
+  justify-content: space-around
+
+  @for $i from 1 through $columns
+    & > .col#{$i}
+      +column-span($i)
+
+.gridrow
+  align-items: center
+
+.gridrow-stretch
+  align-items: stretch
+
+.gridrow-start
+  align-items: flex-start
+
+[class*="gridcol"]
+  flex-direction: column
+  justify-content: center
+
+  @for $i from 1 through $rows
+    & > .row#{$i}
+      +row-span($i)
+
+.gridcol
+  align-items: center
+
+.gridcol-stretch
+  align-items: stretch
+
+.gridcol-start
+  align-items: flex-start

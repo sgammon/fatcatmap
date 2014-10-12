@@ -11,8 +11,6 @@ import json
 
 # canteen
 from fatcatmap import url, Page
-
-
 from canteen.base import handler
 
 
@@ -29,19 +27,29 @@ class RealtimePage(handler.RealtimeHandler):
       yield 'hey there'
       yield 'this is cool'
 
+    if message == 'goodbye':
+      yield 'okbye'
+      yield self.terminate(True)
+
+    if message == 'fuckyou':
+      yield 'fine then'
+      yield self.terminate(False)
+
+    if message == 'hibinary':
+      yield bytearray('butts')
 
 
 @url('landing', '/')
+@url('catchall', r'/<path:route>')
 class Landing(Page):
 
   '''  '''
 
   default_graph = {
     'depth': 1,
-    'limit': 15
-  }
+    'limit': 15}
 
-  def GET(self):
+  def GET(self, route='/'):
 
     '''  '''
 

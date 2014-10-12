@@ -1,0 +1,58 @@
+@import "mixin/layout"
+@import "core/transition"
+@import "var/color"
+@import "var/struct"
+
+
+$node-stroke-width: 5px
+$node-scale-factor: 1.6
+
+#mapper
+  +fillbox
+
+#catnip
+  +stretchbox
+
+#map
+  z-index: 500
+  +transition(opacity 0.5s ease)
+
+// Nodes/edges
+circle
+  stroke-linecap: butt
+  stroke-rendering: crispEdges
+
+svg svg, .node,
+  cursor: pointer
+
+.node
+  fill: $node-fill-color
+  stroke: $node-stroke-color
+  stroke-opacity: 1
+  stroke-width: $node-stroke-width
+  +transition-property(stroke, stroke-width)
+  +transition-duration(0.15s)
+  +transition-ease(ease)
+
+  &.selected
+    stroke-width: $node-stroke-width * $node-scale-factor
+
+circle
+  @each $type in $nodetypes
+    &.#{nth($type, 1)}
+      stroke: nth($type, 2)
+      &.selected
+        stroke: lighten(nth($type, 2), 15%)
+
+  &.senate,
+  &.corporate
+    stroke-width: $node-stroke-width * $node-scale-factor
+    &.selected
+      stroke-width: $node-stroke-width * $node-scale-factor * $node-scale-factor
+
+.link
+  cursor: pointer
+  stroke-opacity: .6
+
+
+@import "component/detail"

@@ -14,11 +14,21 @@ class ContentRequest(model.Model):
 
   '''  '''
 
-  pass
-
 
 class GeneratedContent(model.Model):
 
   '''  '''
 
-  pass
+
+class TemplateRequest(model.Model):
+
+  ''' Request for a client-side template. '''
+
+  path = basestring
+
+
+class ClientTemplate(TemplateRequest):
+
+  ''' Represents a client-side template on the wire. '''
+
+  source = basestring

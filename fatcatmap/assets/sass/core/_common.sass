@@ -1,0 +1,78 @@
+@import "var/font"
+@import "var/color"
+@import "mixin/transition"
+@import "mixin/animation"
+
+.relative
+  position: relative
+
+.close-right, .close-left
+  position: absolute
+  top: 0
+  line-height: 1
+  color: $grey
+  cursor: pointer
+  font-family: $sans-serif
+  z-index: 9999
+
+  &:hover
+    color: $grey-dark
+
+  &:active
+    color: $grey-darker
+
+  & > span
+    font-weight: $font-weight-lighter
+    font-size: 2.5em
+
+.close-right
+  right: 12px
+
+.close-left
+  left: 12px
+
+  & + div
+    margin-left: 2.5em
+
+.hidden
+  display: none
+
+.transparent
+  opacity: 0
+
+.text-left
+  text-align: left
+
+.text-right
+  text-align: right
+
+.text-center
+  text-align: center
+
+.vertical-middle
+  vertical-align: middle
+
+.left
+  float: left
+
+.right
+  float: right
+
+.center
+  margin: 0 auto
+
+.fcm-pre
+  font-family: "fcm"
+  speak: none
+  text-transform: none
+  text-rendering: geometricPrecision
+  -webkit-font-smoothing: antialiased
+  +transition-property(color, opacity)
+  +transition-duration(0.3s)
+
+  &.loading.spinner
+    display: inline-block
+    +animation(rotate, 0.5s linear infinite)
+    font-size: 2.2em
+    text-align: center
+    opacity: 0.75

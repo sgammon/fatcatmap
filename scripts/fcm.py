@@ -53,20 +53,35 @@ except ImportError:
 
 
 ## Globals
-dataset = 'legacy-v2'
+dataset = config.config['fcm']['dataset']
 logging = debug.Logger(name='fcm')
 project_root = os.path.dirname(os.path.dirname(__file__))
 UWSGI_BASE_ARGS, UWSGI_PROD_ARGS = [
   "--pcre-jit",
+  "--thunder-lock",
   "--vacuum",
+  "--pyhome=%s" % project_root,
+  "--enable-threads",
   "--py-autoreload",
   "--pidfile=/tmp/fcm.pid",
   "--wsgi=dispatch:application",
   "--shared-import=fatcatmap",
   "--shared-import=werkzeug",
   "--shared-import=canteen",
-  "--shared-import=jinja2"], [
-  "--optimize",
+  "--shared-import=jinja2",
+  "--static-check=%s" % os.path.join(project_root, 'fatcatmap'),
+  "--static-map=/assets/js=%s/fatcatmap/assets/js" % project_root,
+  "--static-map=/assets/img=%s/fatcatmap/assets/img" % project_root,
+  "--static-map=/assets/ext=%s/fatcatmap/assets/ext" % project_root,
+  "--static-map=/assets/style=%s/fatcatmap/assets/style" % project_root,
+  "--threads=8",
+  "--pythonpath=%s" % os.path.join(project_root, 'lib'),
+  "--pythonpath=%s" % os.path.join(project_root, 'lib', 'canteen'),
+  "--socket=/tmp/fcm.sock",
+  "--processes=1",
+  "--http-websockets"
+  ], [
+  "--optimize=2",
   "--uwsgi=127.0.0.1:3000"]
 
 
@@ -93,7 +108,9 @@ class FCM(cli.Tool):
       ('--services_only', '-s', {'action': 'store_true', 'help': 'run services only'}),
       ('--nocache', '-nc', {'action': 'store_true', 'help': 'disable static caching (takes precedence)'}),
       ('--profile', '-pr', {'action': 'store_true', 'help': 'attach a python profiler for each request/response'}),
-      ('--callgraph', '-cg', {'action': 'store_true', 'help': 'generate a callgraph for each request/response'}))
+      ('--simple', '-s', {'action': 'store_true', 'help': 'run in simple mode with werkzeug and no sockets support'}),
+      ('--callgraph', '-cg', {'action': 'store_true', 'help': 'generate a callgraph for each request/response'}),
+      ('--production', '-pd', {'action': 'store_true', 'help': 'simulate production'}))
 
     def execute(arguments):
 
@@ -107,13 +124,43 @@ class FCM(cli.Tool):
           result of the call. ``Falsy`` return values will be passed to
           :py:meth:`sys.exit` and converted into Unix-style return codes. '''
 
-      import fatcatmap, canteen
-      from fatcatmap.config import config
+      if arguments.simple:
+        import fatcatmap, canteen
+        from fatcatmap.config import config
 
-      canteen.run(fatcatmap, **{
-        'port': arguments.port or 5000,
-        'interface': arguments.ip or '127.0.0.1',
-        'config': config or {}})
+        return canteen.run(fatcatmap, **{
+              'port': arguments.port or 5000,
+              'interface': arguments.ip or '127.0.0.1',
+              'config': config or {}})
+
+      # assemble uWSGI arguments
+      uwsgi_args = [
+
+        # uwsgi path
+        os.path.join(project_root, 'bin', 'uwsgi'),
+        "--wsgi=dispatch:application",
+        "--http-socket=%s:%s" % (
+          arguments.ip or '127.0.0.1', str(arguments.port or 5000))
+
+      ] + UWSGI_BASE_ARGS + (UWSGI_PROD_ARGS if arguments.production else [])
+
+      print('Running uWSGI with args...')
+      for i in uwsgi_args:
+        print(i)
+
+      try:
+        # spawn uWSGI
+        server = subprocess.Popen(uwsgi_args,
+          stdin=sys.stdin,
+          stdout=sys.stdout,
+          stderr=sys.stderr)
+
+        returncode = server.wait()
+
+      except KeyboardInterrupt:
+        server.terminate()
+        time.sleep(1)  # sleep a second to let console shut up
+      sys.stdin, sys.stdout, sys.stderr = (StringIO.StringIO() for x in (0, 1, 2))
 
 
   class Test(cli.Tool):
@@ -183,6 +230,12 @@ class FCM(cli.Tool):
           logging.debug('Executing command: "%s".' % clean_command)
         os.system(clean_command)
 
+        # try to replace with an empty dir structure
+        dir_command = "mkdir -p %s" % os.path.join(module_root, "compiled")
+        if config.get('debug', False) or arguments.debug:
+          logging.debug('Executing command: "%s".' % dir_command)
+        os.system(dir_command)
+
         try:
           # /scripts
           root = os.path.dirname(os.path.abspath(os.path.realpath(__file__)))
@@ -234,7 +287,6 @@ class FCM(cli.Tool):
         os.path.join(project_root, 'bin', 'uwsgi'),
 
         # base interactive flags
-        "--socket=/tmp/fcm.sock",
         "--pyshell"
 
       ] + UWSGI_BASE_ARGS + (UWSGI_PROD_ARGS if arguments.production else [])
@@ -301,8 +353,8 @@ class FCM(cli.Tool):
       ('--update', {'action': 'store_true', 'help': 'download latest dataset package (applies to source if any, else target)'}),
       ('--no-report', {'action': 'store_true', 'help': 'don\'t output reports about stuff'}))
 
-    @staticmethod
-    def build_cli_args(arguments, adapter):
+    @classmethod
+    def build_cli_args(cls, arguments, adapter):
 
       '''  '''
 
@@ -318,8 +370,8 @@ class FCM(cli.Tool):
           'database': lambda v: ('n', v)}[item](value))
       return " ".join(map(lambda arg: "-%s %s" % arg, args))
 
-    @staticmethod
-    def resolve_adapters(arguments):
+    @classmethod
+    def resolve_adapters(cls, arguments):
 
       '''  '''
 
@@ -335,8 +387,8 @@ class FCM(cli.Tool):
 
       return source() if source else None, target()  # construct adapters
 
-    @staticmethod
-    def clean_data(arguments, target):
+    @classmethod
+    def clean_data(cls, arguments, target):
 
       '''  '''
 
@@ -344,8 +396,8 @@ class FCM(cli.Tool):
       if not arguments.quiet: logging.info('Cleaning target "%s" storage...' % target)
       target.execute(target.Operations.FLUSH_ALL, '__meta__')
 
-    @staticmethod
-    def apply_update(arguments, target):
+    @classmethod
+    def apply_update(cls, arguments, target):
 
       '''  '''
 
@@ -371,8 +423,8 @@ class FCM(cli.Tool):
 
       if not arguments.quiet: logging.info('Dataset update complete.')
 
-    @staticmethod
-    def apply_fixtures(arguments, target):
+    @classmethod
+    def apply_fixtures(cls, arguments, target):
 
       '''  '''
 
@@ -382,7 +434,7 @@ class FCM(cli.Tool):
         logging.info('Applying fixtures to target...')
 
       _fixtures_c, _fixtures_by_kind = 0, collections.defaultdict(lambda: 0)
-      with target.channel('__meta__').pipeline() as pipeline:
+      with target.channel('__meta__').pipeline(transaction=False) as pipeline:
 
         for fixtureset in models.fixtures:
           if not arguments.quiet:
@@ -409,8 +461,8 @@ class FCM(cli.Tool):
         pipeline.execute()
         if not arguments.quiet: logging.info('Fixtures applied with great success.')
 
-    @staticmethod
-    def read_sources(arguments, source):
+    @classmethod
+    def read_sources(cls, arguments, source):
 
       '''  '''
 
@@ -446,7 +498,7 @@ class FCM(cli.Tool):
           try:
             unicode(key)
             base64.b64decode(key)
-            model.Key(urlsafe=key)
+            model.Key.from_urlsafe(key)
           except: continue
 
           if arguments.limit and len(found_keys) >= arguments.limit:
@@ -458,16 +510,17 @@ class FCM(cli.Tool):
           logging.info('Transferring %s objects...' % len(found_keys))
 
         _keys, _by_kind = 0, collections.defaultdict(lambda: 0)
-        with source.channel('__meta__').pipeline() as pipeline:
+        with source.channel('__meta__').pipeline(transaction=False) as pipeline:
 
           _filtered_keys = []
           for key in found_keys:
 
-            k = model.Key(urlsafe=key).kind
+            k = model.Key.from_urlsafe(key).kind
             if (arguments.kinds and k in arguments.kinds.split(',')) or not arguments.kinds:
               _keys += 1
-              _by_kind[model.Key(urlsafe=key).kind] += 1
-              source.get(model.Key(urlsafe=key).flatten(True), pipeline=pipeline)
+              _by_kind[model.Key.from_urlsafe(key).kind] += 1
+              _joined, _flattened = model.Key.from_urlsafe(key).flatten(True)
+              source.get((source.encode_key(_joined, _flattened), _flattened), pipeline=pipeline)
               _filtered_keys.append(key)
 
           _objects, _by_kind = {}, collections.defaultdict(lambda: 0)
@@ -479,8 +532,8 @@ class FCM(cli.Tool):
 
             if arguments.verbose and not arguments.quiet:
               logging.info('-- Fetched object at key "%s" of type "%s"...' % (
-                key, model.Key(urlsafe=key).kind))
-            _by_kind[model.Key(urlsafe=key).kind] += 1
+                key, model.Key.from_urlsafe(key).kind))
+            _by_kind[model.Key.from_urlsafe(key).kind] += 1
             yield key, result
 
       if not arguments.no_report and not arguments.quiet:
@@ -488,12 +541,12 @@ class FCM(cli.Tool):
         for type in _by_kind:
           logging.debug('-- "%s": %s entities' % (type, str(_by_kind[type])))
 
-    @staticmethod
-    def expand_entity(arguments, source, key, entity):
+    @classmethod
+    def expand_entity(cls, arguments, source, key, entity):
 
       '''  '''
 
-      kind = model.Key(urlsafe=key).kind
+      kind = model.Key.from_urlsafe(key).kind
 
       if arguments.verbose and not arguments.quiet:
         logging.info('----- Transforming object at key "%s" of type "%s"...' % (
@@ -506,8 +559,8 @@ class FCM(cli.Tool):
 
       return source.EngineConfig.serializer.loads(entity)
 
-    @staticmethod
-    def write_object(target, key, entity, pipeline=None):
+    @classmethod
+    def write_object(cls, target, key, entity, pipeline=None):
 
       '''  '''
 
@@ -515,8 +568,8 @@ class FCM(cli.Tool):
         return target.put(key.flatten(True), entity, key.kind, pipeline=pipeline)
       return target._put(entity, pipeline=pipeline)
 
-    @staticmethod
-    def apply_migration(arguments, source, target):
+    @classmethod
+    def apply_migration(cls, arguments, source, target):
 
       '''  '''
 
@@ -524,7 +577,7 @@ class FCM(cli.Tool):
         logging.info('Performing data migration...')
 
       ## enter pipelined mode
-      with target.channel('__meta__').pipeline() as pipeline:
+      with target.channel('__meta__').pipeline(transaction=False) as pipeline:
         _written, _by_kind = 0, collections.defaultdict(lambda: 0)
 
         if arguments.binding:
@@ -550,7 +603,7 @@ class FCM(cli.Tool):
 
         ## 1) read sources
         for key, entity in FCM.Migrate.read_sources(arguments, source):
-          kind = model.Key(urlsafe=key).kind
+          kind = model.Key.from_urlsafe(key).kind
 
           ## 2) apply bindings
           binding = None
@@ -594,7 +647,8 @@ class FCM(cli.Tool):
       if not arguments.quiet:
         logging.info('Migration complete.')
 
-    def execute(arguments):
+    @classmethod
+    def execute(cls, arguments):
 
       ''' Execute the ``fcm migrate`` tool, given a set of arguments
           packaged as a :py:class:`argparse.Namespace`.
@@ -607,19 +661,19 @@ class FCM(cli.Tool):
           passed to :py:meth:`sys.exit` and converted into Unix-style
           return codes. '''
 
-      source, target = FCM.Migrate.resolve_adapters(arguments)
+      source, target = cls.resolve_adapters(arguments)
 
       ## perform clean against target (if so instructed) before anything else
-      if arguments.clean: FCM.Migrate.clean_data(arguments, target)
+      if arguments.clean: cls.clean_data(arguments, target)
 
       ## perform update of local data first, if needed
-      if arguments.update: FCM.Migrate.apply_update(arguments, target)
+      if arguments.update: cls.apply_update(arguments, target)
 
       ## run fixtures next, if so instructed
-      if arguments.fixtures: FCM.Migrate.apply_fixtures(arguments, target)
+      if arguments.fixtures: cls.apply_fixtures(arguments, target)
 
       ## finally, migrate data
-      if source and target: FCM.Migrate.apply_migration(arguments, source, target)
+      if source and target: cls.apply_migration(arguments, source, target)
 
       if not arguments.quiet: logging.info('~~~ Data operations finished. ~~~')
 

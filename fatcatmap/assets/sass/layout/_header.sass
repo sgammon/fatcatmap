@@ -1,0 +1,61 @@
+@import "var/font"
+@import "var/color"
+@import "var/layout"
+
+#header
+  height: $header-height
+  position: absolute
+  top: 0
+  left:0
+  right: 0
+
+  div
+    line-height: $header-height
+
+  h1, h2
+    display: inline-block
+    vertical-align: middle
+    cursor: pointer
+    z-index: 1000
+
+#header_action
+  h2
+    margin: 0 1.5em 0 0
+    width: 9em
+    height: 1.75em
+    text-align: center
+    line-height: 1.75em
+    border: 1px solid $link-color
+    border-radius: 2px
+    color: $link-color
+    font:
+      size: $font-size-h4
+      weight: $font-weight-heading
+
+    &.signup:hover, &.signup:active
+      background-color: $link-color-hover
+      border-color: $link-color-hover
+      color: $grey-dark
+
+
+#logo_main
+  h1
+    margin: 0 0 0 0.3em
+    color: transparent
+    background: linear-gradient($logo-slant, $logo-gradient-start, $logo-gradient-end)
+    text-rendering: geometricPrecision
+    -webkit:
+      background-clip: text
+      text-fill-color: transparent
+      font-smoothing: subpixel-antialiased
+
+  .logo
+    font:
+      family: $fcm
+      size: $header-logo-size
+
+  .brand-title
+    font:
+      family: $font-family-heading
+      weight: $font-weight-heading
+      size: $header-size

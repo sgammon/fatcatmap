@@ -28,3 +28,4 @@ class RedisWarehouseTests(WarehouseTests, test_redis.RedisSetupTeardown):
   __abstract__ = False
   subject = adapter.RedisWarehouse
   mode = adapter.RedisWarehouse.EngineConfig.mode
+  

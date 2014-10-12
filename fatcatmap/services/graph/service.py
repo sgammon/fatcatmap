@@ -38,4 +38,4 @@ class GraphService(Service):
       'meta': messages.Metadata(**meta).to_message(),
       'data': messages.RawData(**data).to_message(),
       'graph': messages.GraphData(**graph).to_message()
-    })
+    }).to_message()

@@ -1,0 +1,38 @@
+@import "var/font"
+@import "var/color"
+@import "core/icon"
+@import "core/common"
+@import "core/transition"
+@import "component/map"
+@import "component/modal"
+@import "component/login"
+@import "layout/grid"
+@import "layout/header"
+
+body
+  background-color: $grey-dark
+  line-height: $line-height
+  font:
+    family: $font-family
+    weight: $font-weight-base
+    size: $font-size-base
+
+a
+  &:link, &:visited
+    color: $link-color
+
+  &:hover, &:active
+    color: $link-color-hover
+
+.main
+  margin: 0 auto
+
+.content
+  padding: 10px
+
+#header
+  position: fixed
+  top: 0
+  left: 0
+  width: 100%
+  z-index: 9999

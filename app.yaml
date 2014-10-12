@@ -83,6 +83,7 @@ handlers:
 
 - url: /assets/js
   static_dir: fatcatmap/assets/js
+  application_readable: true
 
 - url: /assets/ext
   static_dir: fatcatmap/assets/ext

@@ -1,0 +1,38 @@
+<div id="login" class="row8 gridcol-stretch">
+
+  <div id="service_signin" class="row3 gridcol">
+
+    <div class="row8 gridrow">
+      <h3>sign in via</h3>
+      <ul class="gridcol">
+        <li class="row4">
+          <div class="icon-facebook"></div>
+          <div>facebook</div>
+        </li>
+        <li class="row4">
+          <div class="icon-google"></div>
+          <div>google</div>
+        </li>
+      </ul>
+    </div>
+
+  </div> <!-- end #service_signin -->
+
+  <div id="signup" class="row5 gridrow-start">
+
+    <div class="col8 gridcol-stretch">
+      <div class="row8">
+        <h3>or enter your info below:</h3>
+        <input type="email" id="email" placeholder="you@youmail.com" v-model="email" v-validate="email">
+        <input type="password" id="password" placeholder="password" v-model="password">
+      </div>
+    </div>
+
+    <div class="col4 gridcol">
+      <button id="signup_submit" v-on="click: signup">sign up</button>
+      <button id="login_submit" v-on="click: login">log in</button>
+    </div>
+
+  </div> <!-- end #signup -->
+
+</div>

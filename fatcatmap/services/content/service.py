@@ -19,6 +19,11 @@ class ContentService(rpc.Service):
 
   '''  '''
 
+  exceptions = rpc.Exceptions({
+    'bad_request': rpc.ClientException,
+    'template_not_found': exceptions.TemplateNotFound})
+
+  @rpc.remote.method(messages.ContentRequest, messages.GeneratedContent)
   def generate(self, request):
 
     '''  '''
@@ -39,8 +44,7 @@ class ContentService(rpc.Service):
     try:
       return messages.ClientTemplate(**{
         'source': self.views.load_template(request.path),
-        'path': request.path
-      }).to_message()
+        'path': request.path}).to_message()
     except ValueError:
       # template was invalid
       raise self.exceptions.template_not_found('Couldn\'t find template ' + request.path)

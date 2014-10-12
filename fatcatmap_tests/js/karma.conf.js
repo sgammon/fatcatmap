@@ -1,11 +1,10 @@
-var JS_BASE = '../../fatcatmap/assets/js/',
-  REPORT_BASE = '../../.develop/';
+var REPORT_BASE = '../../../.develop/';
 
 module.exports = {
 
   port: 9876,
   colors: true,
-  basePath: 'fatcatmap_tests/js/',
+  basePath: 'fatcatmap/assets/js',
   singleRun: true,
   runnerPort: 9100,
   autoWatch: false,
@@ -15,24 +14,14 @@ module.exports = {
 
   frameworks: ['jasmine'],
 
-  _releaseFiles: [
-    JS_BASE + 'lib/closure/base.js',
-    JS_BASE + 'compiled/*.min.js',
-    'simulate/mocks.js',
-    'spec/unit/*.js'
+  files: [
+    'lib/vue/vue.js',
+    'compiled/test/app.js',
+    'compiled/test/test.js',
   ],
-
-  _debugFiles: [
-    JS_BASE + 'lib/closure/base.js',
-    JS_BASE + 'compiled/*.debug.js',
-    'simulate/mocks.js',
-    'spec/unit/*.js'
-  ],
-
-  files: [],
 
   reporters: [
-    'progress',
+    'mocha',
     'coverage',
     'junit'
   ],
@@ -42,11 +31,11 @@ module.exports = {
   ],
 
   preprocessors: {
-    '../../fatcatmap/assets/js/compiled/*.debug.js': ['coverage']
+    'compiled/test/app.js': ['coverage']
   },
 
   coverageReporter: {
-    type: 'cobertura',
+    type: process.env.BUILD ? 'cobertura' : 'text',
     dir: REPORT_BASE + 'coverage/js/'
   },
 

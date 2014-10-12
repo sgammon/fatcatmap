@@ -20,7 +20,9 @@ from ..abstract import (Organization,
 @describe(root=True, type=Organization)
 class Nonprofit(Corporation):
 
-  '''  '''
+  ''' An organization (much like a commercial entity) that has
+      a declared intent to put a mission over other typical
+      business objectives. '''
 
   ## -- nonprofit details -- ##
   name = OrganizationName, {'embedded': True, 'indexed': True, 'required': True}

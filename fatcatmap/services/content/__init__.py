@@ -8,4 +8,5 @@
 
 __all__ = (
   'messages',
-  'service')
+  'service',
+  'exceptions')

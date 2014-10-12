@@ -1,0 +1,25 @@
+@import "mixin/transition"
+@import "var/color"
+
+#modal
+  z-index: 9000
+  position: fixed
+  width: 60%
+  height: 60%
+  left: 20%
+  top: 20%
+  display: flex
+  align-items: stretch
+  align-content: stretch
+  flex-direction: column
+  justify-content: center
+  background-color: $grey-light
+  opacity: 1
+  +transition(top 0.15s ease, opacity 0.15s ease)
+
+  & > div
+    flex-grow: 10
+  
+  &.v-enter, &.v-leave
+    top: 0%
+    opacity: 0

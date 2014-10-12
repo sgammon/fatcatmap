@@ -34,14 +34,14 @@ class Organization(Group):
   name = OrganizationName, {'indexed': True, 'embedded': True}
 
 
-@describe(type=Organization)
+@describe(abstract=True, type=Organization)
 class Institution(Organization):
 
   ''' Describes an abstract concept of a group made official by statute
       in a body of laws. '''
 
 
-@describe(type=Jurisdiction)
+@describe(abstract=True, type=Jurisdiction)
 class Government(Institution):
 
   ''' Describes an institution charged with overseeing a jurisdiction
