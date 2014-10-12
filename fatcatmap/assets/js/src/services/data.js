@@ -12,6 +12,7 @@
 goog.require('util.object');
 goog.require('async.task');
 goog.require('async.future');
+goog.require('cache');
 goog.require('support');
 goog.require('service');
 goog.require('services.rpc');
@@ -19,8 +20,6 @@ goog.require('services.storage');
 goog.require('models');
 
 goog.provide('services.data');
-
-var _dataCache = {};
 
 /**
  * @expose
@@ -37,12 +36,20 @@ services.data = /** @lends {ServiceContext.prototype.data} */ {
 
   /**
    * @expose
+   * @type {?Object}
+   */
+  cache: null,
+
+  /**
+   * @expose
    * @param {GraphData} raw Raw input.
    * @param {function(GraphData)=} cb
    * @this {ServiceContext}
    */
   init: function (raw, cb) {
     var data = this.data;
+
+    data.cache = {};
 
     raw.data.keys = models.Key.unpack(raw.data.keys, raw.meta.kinds);
     raw.data.keys.forEach(function (key, i) {
@@ -67,7 +74,7 @@ services.data = /** @lends {ServiceContext.prototype.data} */ {
     if (!(key instanceof models.Key))
       throw new TypeError('services.data.receive() expects a string or Key as the first param.');
 
-    _dataCache[key] = data;
+    this.data.cache[key] = data;
 
     key.bind(data.data);
     key.put();

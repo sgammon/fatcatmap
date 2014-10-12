@@ -257,12 +257,6 @@ services.graph = /** @lends {ServiceContext.prototype.graph} */ {
 
   /**
    * @expose
-   * @type {cache.LRUCache}
-   */
-  cache: new cache.LRUCache(100),
-
-  /**
-   * @expose
    * @param {GraphData} graph
    * @this {ServiceContext}
    */
@@ -307,7 +301,7 @@ services.graph = /** @lends {ServiceContext.prototype.graph} */ {
           v.data.keys = models.Key.unpack(v.data.keys, v.meta.kinds);
 
           if (replace)
-            graph.inject('graph.active', new Graph());
+            graph.active = new Graph();
 
           try {
             response.fulfill(graph.active.unpack(v));
@@ -329,16 +323,9 @@ services.graph = /** @lends {ServiceContext.prototype.graph} */ {
    * @this {ServiceContext}
    */
   init: function (graph, session, cb) {
-    this.inject('graph.active', new Graph(graph, session));
-
-    window['GRAPH'] = this.graph.active;
-
-    this.graph.on('response', function (response) {
-      console.log('GraphQuery response:');
-      console.log(response);
-    });
+    this.graph.active = new Graph(graph, session);
 
     if (cb)
-      cb(graph);
+      cb(this.graph.active);
   }
 }.service('graph');

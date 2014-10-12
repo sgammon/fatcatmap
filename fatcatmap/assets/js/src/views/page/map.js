@@ -402,7 +402,7 @@ views.Map = View.extend({
           this.map.selected = selected;
           this.map.changed = true;
 
-          this.$root.$emit('route', '/' +
+          this.$root.$emit('route', '/detail/' +
             (selected.length > 1 ? selected.join('/and/') : selected[0] || ''));
         }
       }
@@ -418,7 +418,7 @@ views.Map = View.extend({
 
       services.graph.construct(key, {
         depth: 1,
-        keys_only: false
+        keys_only: true
       }).then(function (graph, error) {
         var node, newPeers;
 
@@ -464,10 +464,9 @@ views.Map = View.extend({
      */
     draw: function (graph) {
       var view = this,
-        config, selectors, root, node, origin, edge, tick, force, update;
+        selectors, root, node, origin, edge, tick, force, update;
 
       if (graph && !view.map.root) {
-        config = view.config;
         selectors = view.$options.selectors;
 
         root = d3
@@ -479,12 +478,17 @@ views.Map = View.extend({
         edge = root.selectAll(selectors.edge);
 
         tick = function () {
+          var config = view.config,
+            radius = config.node.radius;
+
+          // Start force first to ensure nodes have x/y values.
           view.map.force.start();
 
           if (graph.origin) {
-            if (view.config.origin.snap) {
-              graph.nodes.get(graph.origin.index).x = view.config.origin.position.x;
-              graph.nodes.get(graph.origin.index).y = view.config.origin.position.y;
+            // Sync origin position, handling snap if enabled.
+            if (config.origin.snap) {
+              graph.nodes.get(graph.origin.index).x = config.origin.position.x;
+              graph.nodes.get(graph.origin.index).y = config.origin.position.y;
             } else {
               view.config.origin.position = {
                 x: graph.nodes.get(graph.origin.index).x,
@@ -493,15 +497,17 @@ views.Map = View.extend({
             }
           }
 
-          edge.attr('x1', function (e) { return e.source.x - view.config.node.radius; })
-              .attr('y1', function (e) { return e.source.y - view.config.node.radius; })
-              .attr('x2', function (e) { return e.target.x - view.config.node.radius; })
-              .attr('y2', function (e) { return e.target.y - view.config.node.radius; });
+          // Set edge & node positions for this tick.
+          edge.attr('x1', function (e) { return e.source.x - radius; })
+              .attr('y1', function (e) { return e.source.y - radius; })
+              .attr('x2', function (e) { return e.target.x - radius; })
+              .attr('y2', function (e) { return e.target.y - radius; });
 
-          node.attr('cx', function (n) { return n.x - view.config.node.radius; })
-              .attr('cy', function (n) { return n.y - view.config.node.radius; });
+          node.attr('cx', function (n) { return n.x - radius; })
+              .attr('cy', function (n) { return n.y - radius; });
 
           if (view.map.changed) {
+            // Apply transitions & update classes if node selection is changed.
             node.filter(selectors.selected)
                 .filter(function (n) { return view.map.selected.indexOf(n.key) === -1; })
                 .classed({'selected': false})
@@ -540,7 +546,8 @@ views.Map = View.extend({
           .on('tick', tick);
 
         update = function () {
-          var nodes = graph.nodes.filter(function (n) { return n.edges.length; }),
+          var config = view.config,
+            nodes = graph.nodes.filter(function (n) { return n.edges.length; }),
             edges = graph.edges;
 
           force
@@ -582,12 +589,9 @@ views.Map = View.extend({
                 return n.classes.join(' ');
               })
               .call(force.drag);
-              // .call(force.drag().on('dragstart', function (n) {
-              //   n.fixed = true;
-              // }));
 
           origin = node.filter(function (n, i) {
-            return n.key.toString() === graph.origin.key.toString();
+            return n.key.equals(graph.origin.key);
           });
 
           if (view.map.changed)
@@ -667,19 +671,20 @@ views.Map = View.extend({
    * @this {views.Map}
    */
   handler: function (graph) {
-    var width = $('#catnip').clientWidth,
+    var config = this.config,
+      width = $('#catnip').clientWidth,
       height = $('#catnip').clientHeight,
       midX = width / 2,
       midY = height / 2,
       origin,
       newNodes;
 
-    this.config.width = width;
-    this.config.height = height;
+    config.width = width;
+    config.height = height;
 
-    if (this.config.origin.snap) {
-      this.config.origin.position = this.config.origin.position || {};
-      this.config.origin.position = {
+    if (config.origin.snap) {
+      config.origin.position = config.origin.position || {};
+      config.origin.position = {
         x: midX,
         y: midY
       };

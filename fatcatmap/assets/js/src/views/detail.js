@@ -92,7 +92,7 @@ views.Detail = View.extend({
 
         parent.classList.add('transparent');
 
-        this.$root.$emit('route', '/' +
+        this.$root.$emit('route', '/detail/' +
           (keys.length > 1 ? keys.join('/and/') : keys[0] || ''));
       }
     },
@@ -145,12 +145,12 @@ views.Detail = View.extend({
       keys = [];
 
       if (left) {
-        detail.$set('leftview', 'detail.' + left.native.kind.toLowerCase());
+        detail.$set('leftview', 'detail.' + left.kind.toLowerCase());
         keys.push(left.key);
       }
 
       if (right) {
-        detail.$set('rightview', 'detail.' + right.native.kind.toLowerCase());
+        detail.$set('rightview', 'detail.' + right.kind.toLowerCase());
         keys.push(right.key);
       }
 

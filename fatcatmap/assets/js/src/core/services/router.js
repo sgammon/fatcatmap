@@ -128,6 +128,7 @@ services.router = /** @lends {ServiceContext.prototype.router} */ {
   /**
    * @param {string} path
    * @param {Object=} request
+   * @this {ServiceContext}
    */
   route: function (path, request) {
     var matched = false,

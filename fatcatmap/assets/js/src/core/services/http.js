@@ -139,7 +139,7 @@ services.http = /** @lends {ServiceContext.prototype.http} */{
    * @param {PipelinedCallback=} handler If not passed, executes synchronously.
    * @return {Future|Response} Future response, or response if no handler was passed. 
    */
-  delete: function (request, handler) {
+  'delete': function (request, handler) {
     return _dispatchRequest('DELETE', request, handler);
   },
 

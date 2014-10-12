@@ -40,7 +40,7 @@ LRUCache = function (limit) {
    * @protected
    * @type {util.struct.BiLinkedList}
    */
-  this._order = new util.struct.BiLinkedList();
+  this._order = new util.struct.BiLinkedList(null, limit);
 };
 
 util.object.mixin(LRUCache, /** @lends {LRUCache.prototype} */{
@@ -48,12 +48,8 @@ util.object.mixin(LRUCache, /** @lends {LRUCache.prototype} */{
    * Puts an item in the cache at a string key.
    * @param {string} key
    * @param {*} item
-   * @throws {TypeError} If key is not a string.
    */
   set: function (key, item) {
-    if (typeof key !== 'string')
-      throw new TypeError('LRUCache.set() expects a string key and item.');
-
     if (this._items[key])
       this._items[key].remove();
 
