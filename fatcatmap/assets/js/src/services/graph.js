@@ -9,11 +9,14 @@
  * copyright (c) momentum labs, 2014
  */
 
-goog.require('supports');
-goog.require('services');
+goog.require('util.object');
+goog.require('support');
+goog.require('service');
+goog.require('models');
+goog.require('models.graph');
+goog.require('models.search');
 goog.require('services.rpc');
 goog.require('services.data');
-goog.require('services.search');
 
 goog.provide('services.graph');
 
@@ -32,16 +35,47 @@ _graphIndex = {
 
 /**
  * @constructor
- * @extends {Query}
- * @param {!QueryFilterSpec} spec
- * @throws {Error} If spec is not defined.
+ * @extends {models.search.Query}
+ * @param {!Graph} graph
+ * @param {(string|models.key.Key)=} origin
+ * @param {GraphQueryOptions=} options
+ * @throws {TypeError} If graph is not defined.
  */
-GraphQuery = function (spec) {
-  return Query.call(this, spec);
+GraphQuery = function (graph, origin, options) {
+  if (!(graph instanceof Graph))
+    throw new TypeError('GraphQuery() expects a graph as the first parameter.');
+
+  options = options || {};
+
+  /**
+   * @type {?(string|models.key.Key)}
+   */
+  this.origin = origin || (graph.origin ? graph.origin.key : null);
+
+  /**
+   * @type {?string}
+   */
+  this.session = graph.session;
+
+  /**
+   * @type {number}
+   */
+  this.depth = options.depth || 2;
+
+  /**
+   * @type {boolean}
+   */
+  this.cached = typeof options.cached === 'boolean' ? options.cached : true;
+
+  /**
+   * @type {boolean}
+   */
+  this.keys_only = typeof options.keys_only === 'boolean' ? options.keys_only : true;
+
+  return models.search.Query.call(this, options.limit || 10);
 };
 
-GraphQuery.prototype = new Query();
-GraphQuery.prototype.constructor = GraphQuery;
+util.object.inherit(GraphQuery, models.search.Query);
 
 /**
  * @override

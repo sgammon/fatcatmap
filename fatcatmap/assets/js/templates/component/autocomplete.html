@@ -1,0 +1,13 @@
+<div class="autocomplete-wrap">
+
+  <input type="text" class="input search autocomplete" v-model="query" placeholder="search the graph">
+
+  <div class="autocomplete-result-list" v-if="results" v-on="click: select">
+
+    <div class="autocomplete-result" v-repeat="results" data-result-key="{{key}}">
+      {{label}}
+    </div>
+
+  </div>
+
+</div>
