@@ -5,19 +5,13 @@
 ]]
 
 
--- command config
-local infolevel = redis.LOG_VERBOSE
-local debuglevel = redis.LOG_DEBUG
-
--- extract arguments
-local origin = KEYS[1]
-local depth = tonumber(ARGV[1])
-local limit = tonumber(ARGV[2])
+-- configure, extract arguments
+local infolevel, debuglevel = redis.LOG_NOTICE, redis.LOG_NOTICE
+local origin, depth, limit = KEYS[1], tonumber(ARGV[1]), tonumber(ARGV[2])
 
 -- prepare state
-local calls_made, perspective, stack = {}, {{origin, 0}}, 1;
-local vertices, edges, relationships, unions = {}, {}, {}, 0;
-
+local stack, perspectives, traversed, rel = 1, {{origin, 0}}, {}, 0;
+local neighbors, edges, relationships, packed, seen, relationships = {}, {}, {}, {}, {}, {};
 
 -- `trim`: remove equals signs from keys
 local trim = function (key)
@@ -26,60 +20,89 @@ local trim = function (key)
   end
 end
 
--- operate on perspective stack until complete
-while (stack > 0) do
-  local source, steps_out = unpack(table.remove(perspective, stack))
-
-  -- provision one task
+-- `grab`: grab next vertex to process from the stack
+local grab = function ()
   stack = stack - 1
-  redis.log(infolevel, string.rep(" ", steps_out * 2) .. "Traversing " .. source .. "...")
+  return table.remove(perspectives, stack + 1)
+end
 
-  -- track vertex
-  table.insert(vertices, source)
+-- `encounter`: add a vertex to the stack waiting to be processed
+local encounter = function (source, target, steps_out)
 
-  -- if we're supposed to keep traversing, perform a neighbors scan and add each to stack
-  if (steps_out < depth) then
-    local ok, response, cursor, neighbors
-    response, ok = redis.call("SSCAN", "__graph__::" .. source .. "::neighbors", 0, "COUNT", limit)
-    cursor, neighbors = unpack(response)
+  -- allocate storage for this source & target
+  if (neighbors[source] == nil) then neighbors[source] = {} end
+  if (neighbors[target] == nil) then neighbors[target] = {} end
 
-    for i, target in ipairs(neighbors) do
-      redis.log(infolevel, "  " .. string.rep(" ", steps_out * 2) .. " -> " .. target)
+  -- store relationship key for later
+  if source < target then
+    rel = rel + 1
+    relationships[trim(source) .. trim(target)] = 1
+    neighbors[source][target], neighbors[target][source] = 1, 1
+  else
+    rel = rel + 1
+    relationships[trim(target) .. trim(source)] = 1
+    neighbors[source][target], neighbors[target][source] = 1, 1
+  end
 
-      -- build relationship keys as we go
-      local left, right
-      if (source > target) then
-        right = source
-        left = target
-      else
-        left = source
-        right = target
-      end
+  -- push onto stack
+  if (steps_out < depth and traversed[target] == nil) then
+    stack = stack + 1
+    traversed[target] = 1
+    table.insert(perspectives, {target, steps_out})
+  end
+end
 
-      unions = unions + 1
-      table.insert(relationships, "__graph__::" .. trim(left) .. trim(right) .. "::relationship")
+-- `fetch`: retrieve bulk response from redis and unwrap it
+local fetch = function (command, ...)
+  local cursor, payload, response, ok;
+  response, ok = redis.call(command, unpack(arg))
 
-      -- add to perspective stack
-      stack = stack + 1
-      table.insert(perspective, {target, steps_out + 1})
+  if (string.find(command, "SCAN")) then
+    cursor, payload = unpack(response)
+    return payload
+  end
+  return response
+end
+
+-- main graph loop
+while (stack > 0) do
+  local source, steps_out = unpack(grab());
+  redis.log(infolevel, string.rep(" ", (steps_out * 2)) .. "Traversing " .. source .. "...")
+
+  -- ... issue query for neighbors
+  for i, target in ipairs(fetch("SSCAN", "__graph__::" .. source .. "::neighbors", 0, "COUNT", limit)) do
+    redis.log(infolevel, "  " .. string.rep(" ", steps_out * 2) .. "-> " .. target)
+    encounter(source, target, steps_out + 1)
+  end
+end
+
+-- resolve relationships
+if (rel > 0) then
+  local request, _ = {}, nil;
+
+  -- unique-ify relationship merges
+  for relkey, _ in pairs(relationships) do
+    table.insert(request, "__graph__::" .. relkey .. "::relationship")
+  end
+
+  if (rel == 1) then
+    edges = fetch("SMEMBERS", request[1])
+  else
+    edges = fetch("SUNION", unpack(request))
+  end
+end
+
+-- pack response
+for vertex, e in pairs(neighbors) do
+  local bundle = {};
+
+  for neighbor, relationship in pairs(e) do
+    if (seen[relationship] == nil) then
+      seen[relationship] = 1
+      table.insert(bundle, neighbor)
     end
   end
+  table.insert(packed, {vertex, bundle})
 end
 
--- resolve any relationships
-if (unions > 0) then
-  local cursor, response, ok, payload;
-
-  -- graph edge keys in one-go
-  if (unions == 1) then
-    response, ok = redis.call("SMEMBERS", relationships[1])
-  elseif (unions > 1) then
-    response, ok = redis.call("SUNION", unpack(relationships))
-  end
-
-  for i, edge in ipairs(response) do
-    table.insert(edges, edge)
-  end
-end
-
-return {vertices, edges};
+return {packed, edges};

@@ -59,12 +59,16 @@ def load_script(script):
       if '[[' in line or ']]' in line:
         ignore = True
         if ']]' in line: ignore = False
-        buf.append(r' ')
+        if __debug__: buf.append(r' ')
         continue
 
       # respect ignored lines
       if ignore:
-        buf.append(r' ')
+        if __debug__: buf.append(r' ')
+        continue
+
+      # skip comments in prod
+      if __debug__ and line.strip().startswith('--'):
         continue
 
       buf.append(line.strip() + '\n')
@@ -575,7 +579,7 @@ class RedisWarehouse(WarehouseAdapter, redis.RedisAdapter):
           cls.Operations.SCRIPT_LOAD,
           '__meta__', cls.scripts[operation[1]][1]))
 
-        assert r_hash == script_hash, (
+        assert r_hash == cls.scripts[operation[1]][0], (
           "script hashes must stay consistent (for db script '%s')" % operation[1])
 
         return cls.execute(operation, kind, *args, **kwargs)

@@ -85,6 +85,10 @@ config = cfg.Config(app={
     'assets': os.path.join(app, 'assets'),
     'favicon': os.path.join(app, 'assets', 'img', 'favicon.ico'),
 
+    'scripts': {
+      'db': os.path.join(project, 'scripts', 'db'),
+      'instance': os.path.join(project, 'scripts', 'instance')},
+
     'templates': {
       'source': os.path.join(app, 'templates/source'),
       'compiled': 'fatcatmap.templates.compiled'}
