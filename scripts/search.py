@@ -40,5 +40,5 @@ class Search(cli.Tool):
 if __name__ == '__main__':
   from canteen.core.meta import Proxy
   indexer = Proxy.Component.singleton_map['Indexer']
-  #indexer.delete_index()
+  indexer.delete_index()
   indexer.index_all()

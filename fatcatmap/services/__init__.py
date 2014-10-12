@@ -14,7 +14,11 @@ from . import content
 from .graph import *
 from .content import *
 
+from . import search
+from .search import *
+
 
 __all__ = (
   'content',
-  'graph')
+  'graph',
+  'search')

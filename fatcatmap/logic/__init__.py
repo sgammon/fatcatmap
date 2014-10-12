@@ -15,8 +15,8 @@ from . import views
 from .views import *
 
 # search
-#from . import search
-#from .search import *
+from . import search
+from .search import *
 
 # grapher
 from . import grapher
