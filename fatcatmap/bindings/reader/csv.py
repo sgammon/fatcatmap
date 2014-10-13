@@ -5,24 +5,22 @@
   fcm: CSV binding reader
 
 '''
+
 import gzip
-#from . import BindingReader
+from .base import BindingReader, reader
 
 
-class CSVReader(object):
+@reader('csv', 'csv.gz')
+class CSV(BindingReader):
 
-  '''  '''
+  ''' Manages reading of CSV-formatted files. '''
 
-  __config__ = {
-    'has_header': True, # is the first line field names?
-    'header': None,
-    'buffer': 1000,
-    'file': '/Users/weisberger/Downloads/1.csv'
-  }
+  params = {'buffer': 1000}  # how many lines should we buffer?
 
   def open(self):
 
-    '''  '''
+    ''' Open the target file and prepare it for use. '''
+
     self.filename = self.__config__.get('file')
     filename = self.filename.split('.')
     if filename[-1] == "gz":
@@ -30,10 +28,9 @@ class CSVReader(object):
     else:
       self.file = open(self.filename)
 
-
-
   def buffer_lines(self):
-    ''' used to buffer lines when reading the file'''
+
+    ''' Used to buffer lines when reading the file. '''
 
     while True:
       num = self.__config__.get('buffer') or 1000
@@ -43,7 +40,6 @@ class CSVReader(object):
       for line in lines:
         yield line
 
-
   def get_lines(self):
 
     lines = self.buffer_lines()
@@ -51,11 +47,9 @@ class CSVReader(object):
       row = tuple(line.split(','))
       yield row
 
-
-
   def read(self):
 
-    '''  '''
+    ''' Read the target source file and process it. '''
 
     filename = self.filename.split('.')[0]
 
@@ -72,6 +66,6 @@ class CSVReader(object):
 
   def close(self):
 
-    '''  '''
+    ''' Close the target source file once we're done. '''
 
     self.file.close()

@@ -678,4 +678,42 @@ class FCM(cli.Tool):
       if not arguments.quiet: logging.info('~~~ Data operations finished. ~~~')
 
 
+  class Load(cli.Tool):
+
+    '''  '''
+
+    arguments = (
+      ('--dry', '-no', {'action': 'store_true', 'help': 'never actually store anything'}),)
+
+    class CSV(cli.Tool):
+
+      '''  '''
+
+      arguments = (
+        ('--files', {'type': str, 'help': 'glob of CSV files to load'}),
+        ('--buffer', {'type': int, 'help': 'number of lines to buffer'}),)
+
+    @classmethod
+    def load_reader(cls, subcommand):
+
+      '''  '''
+
+      from fatcatmap.bindings.reader.base import BindingReader
+      return BindingReader.registry[subcommand.lower()]
+
+    @classmethod
+    def execute(cls, arguments):
+
+      '''  '''
+
+      import pdb; pdb.set_trace()
+      tool = cls.load_reader(arguments.subcommand)
+      config = dict(((k, v) for k, v in arguments._get_kwargs() if k in tool.params))
+
+      with tool(**config) as reader:
+        pass
+
+      return
+
+
 if __name__ == '__main__': FCM(autorun=True)  # initialize and run :)
