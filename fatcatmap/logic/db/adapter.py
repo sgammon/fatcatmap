@@ -489,15 +489,6 @@ class WarehouseAdapter(abstract.DirectedGraphAdapter):
 
   ## +=+=+ Abstract Methods +=+=+ ##
   @abc.abstractmethod
-  def hint(self, subject, data=None, **kwargs):  # pragma: no cover
-
-    ''' Specifies an abstract interface for retrieving or writing graph ``Hint``
-        objects, which accelerate queries by summarizing various traversed Graph
-        fragments. '''
-
-    raise NotImplemented('`hint` is abstract.')
-
-  @abc.abstractmethod
   def descriptors(self, subject, type=None, **kwargs):  # pragma: no cover
 
     ''' Specifies an abstract interface for retrieving an object's
@@ -505,6 +496,15 @@ class WarehouseAdapter(abstract.DirectedGraphAdapter):
         objects to specify extra data or metadata. '''
 
     raise NotImplemented('`descriptors` is abstract.')
+
+  @abc.abstractmethod
+  def traverse(self, subject, limit, depth):  # pragma: no cover
+
+    ''' Build a graph structure, originating from ``subject``, stepping out by
+        a maximum of ``depth`` steps and limiting branches to the top ``limit``
+        results. '''
+
+    raise NotImplemented('`traverse` is abstract.')
 
 
 class RedisWarehouse(WarehouseAdapter, redis.RedisAdapter):
@@ -592,7 +592,6 @@ class RedisWarehouse(WarehouseAdapter, redis.RedisAdapter):
           "script hashes must stay consistent (for db script '%s')" % operation[1])
 
         return cls.execute(operation, kind, *args, **kwargs)
-
     return super(RedisWarehouse, cls).execute(operation, kind, *args, **kwargs)
 
   ## +=+=+ Basic Methods +=+=+ ##
@@ -631,7 +630,6 @@ class RedisWarehouse(WarehouseAdapter, redis.RedisAdapter):
         from Redis. '''
 
     from fatcatmap import models
-
     _q = models.Vertex(key=key).neighbors(**kwargs)
     return _q.fetch() if execute else _q
 
@@ -644,13 +642,14 @@ class RedisWarehouse(WarehouseAdapter, redis.RedisAdapter):
     raise NotImplemented('`Redis` graph support'
                          ' not yet implemented.')  # pragma: no cover
 
-  def hint(self, subject, data=None, **kwargs):
+  def traverse(self, subject, limit, depth):
 
-    ''' Retrieve graph ``Hint`` objects for a given ``subject`` key, or store a
-        ``Hint`` if ``data`` is provided, in Redis. '''
+    ''' Build a graph structure, originating from ``subject``, stepping out by
+        a maximum of ``depth`` steps and limiting branches to the top ``limit``
+        results. '''
 
-    raise NotImplemented('`Redis` graph support'
-                         ' not yet implemented.')  # pragma: no cover
+    return self.execute(self.Operations.TRAVERSE, '__meta__', depth, limit, keys=[
+      subject.urlsafe() if isinstance(subject, model.Key) else subject])
 
 
 adapter.concrete += [RedisWarehouse]  # install adapters
