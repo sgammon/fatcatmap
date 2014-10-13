@@ -13,23 +13,23 @@ local origin, depth, limit = KEYS[1], tonumber(ARGV[1]), tonumber(ARGV[2])
 
 -- prepare state
 local stack, perspectives, traversed, rel = 1, {{origin, 0}}, {}, 0;
-local neighbors, edges, relationships, rel_i, packed, seen = {}, {}, {}, {}, {}, {};
+local neighbors, edges, relationships, rel_i, packed = {}, {}, {}, {}, {};
 
 
 -- `encounter`: add a vertex to the stack waiting to be processed
 local encounter = function (source, target, steps_out)
   local edge = relationship(source, target);
 
+  -- allocate storage and file relationship
+  if (neighbors[source] == nil) then neighbors[source] = {} end
+  if (neighbors[target] == nil) then neighbors[target] = {} end
+  neighbors[edge.left][edge.right], neighbors[edge.right][edge.left] = true, true
+
   -- enqueue relationship key if it's new
   if (rel_i[edge.key] == nil) then
     rel = rel + 1
     rel_i[edge.key] = 1
     table.insert(relationships, graphkey(edge.key, "relationship"))
-
-    -- allocate storage and file relationship
-    if (neighbors[source] == nil) then neighbors[source] = {} end
-    if (neighbors[target] == nil) then neighbors[target] = {} end
-    neighbors[edge.left][edge.right], neighbors[edge.right][edge.left] = true, true
   end
 
   -- if we need to traverse, add vertex target to queue
@@ -68,10 +68,7 @@ for vertex, e in pairs(neighbors) do
   local bundle = {};
 
   for neighbor, relationship in pairs(e) do
-    if (seen[relationship] == nil) then
-      seen[relationship] = 1
-      table.insert(bundle, neighbor)
-    end
+    table.insert(bundle, neighbor)
   end
   table.insert(packed, {vertex, bundle})
 end
