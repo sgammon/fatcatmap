@@ -690,28 +690,54 @@ class FCM(cli.Tool):
       '''  '''
 
       arguments = (
-        ('--files', {'type': str, 'help': 'glob of CSV files to load'}),
+        ('--files', {'type': str, 'nargs': '*', 'help': 'glob of CSV files to load'}),
+        ('--json', {'action': 'store_true', 'help': 'decode CSV values as JSON'}),
         ('--buffer', {'type': int, 'help': 'number of lines to buffer'}),)
 
     @classmethod
-    def load_reader(cls, subcommand):
+    def load_reader(cls, arguments):
 
       '''  '''
 
       from fatcatmap.bindings.reader.base import BindingReader
-      return BindingReader.registry[subcommand.lower()]
+      config, tool = {},  BindingReader.registry[arguments.subcommand.lower()]
+
+      # update config with parents
+      for i in (i for i in cls.__bases__ if hasattr(i, 'params')):
+        config.update(i.params)
+
+      # update with class defaults
+      config.update(tool.params)
+
+      # inflate callables
+      _inflated = {}
+      for k, v in config.iteritems():
+        if callable(v): _inflated[k] = v()
+
+      # update with actual arguments and return
+      config.update(dict(((k, v) for k, v in arguments._get_kwargs() if (k in tool.params or k in config))))
+      return config, tool
 
     @classmethod
     def execute(cls, arguments):
 
       '''  '''
 
-      import pdb; pdb.set_trace()
-      tool = cls.load_reader(arguments.subcommand)
-      config = dict(((k, v) for k, v in arguments._get_kwargs() if k in tool.params))
+      if not arguments.quiet: logging.info('Preparing for bulk data ingest...')
 
-      with tool(**config) as reader:
-        pass
+      config, tool = cls.load_reader(arguments)
+      if not arguments.quiet: logging.info('Loading %s reader...' % tool.__name__)
+      base_reader = tool(**config)
+
+      for source in base_reader.sources:
+        if not arguments.quiet:
+          logging.info('--Processing source %s...' % source)
+
+        with tool(subject=source, **config) as reader:
+          for bundle in reader:
+
+            if arguments.verbose and not arguments.quiet:
+              logging.info('  -> %s' % repr(bundle))
 
       return
 
