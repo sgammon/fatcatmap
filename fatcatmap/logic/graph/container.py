@@ -7,9 +7,7 @@
 '''
 
 # stdlib
-import hashlib
-
-# collections
+from hashlib import sha1
 from collections import deque
 from collections import defaultdict
 
@@ -73,13 +71,14 @@ class Graph(object):
      ('traversed', set),  # holds (v, limit, depth) that have been traversed
 
      # ~~ storage ~~ #
-     ('keys', deque),  # positional key storage
+     ('keys', deque),  # positional storage
      ('kinds', set),  # model kinds encountered
      ('edges', set),  # unique set of edges encountered
      ('keybag', set),  # unique set of all keys encountered
      ('lookup', dict),  # translates keys to positional integers
-     ('objects', dict),  # objects, when they have been fulfilled
-     ('network', setdict),  # neighborship sets like source -> {target...}
+     ('window', sha1),  # hash function window for graph fingerprint
+     ('objects', dict),  # objects, when they have been fulfilled from keys
+     ('network', setdict),  # neighborship sets like source --> {target...}
      ('vertices', set),  # vertices as they are seen during graph traversal
      ('serialized', dict),  # serialized representations of objects and keys
 
@@ -152,6 +151,16 @@ class Graph(object):
     for key in (k for k in self.keys if k in self.objects):
       yield key
 
+  @property
+  def fingerprint(self):
+
+    ''' Calculate a string fingerprint that uniquely identifies the keys
+        held by this ``Graph`` instance.
+
+        :returns: ``str`` fingerprint for this ``Graph``. '''
+
+    return self.window.hexdigest()
+
   ## ~~ low-level ~~ ##
   @staticmethod
   def fragment(origin, options):
@@ -170,7 +179,7 @@ class Graph(object):
           instance. '''
 
     # generate fragment
-    return hashlib.sha1('.'.join((
+    return sha1('.'.join((
                 origin.flatten(True)[0],
                 options.token()))).hexdigest()
 
@@ -210,12 +219,11 @@ class Graph(object):
     # add to sets
     self.keybag.add(key)
     self.kinds.add(key.kind)
+    self.window.update(key.urlsafe())
 
     # add to keybag and objects
     self.keys.append(key)
     self.lookup[key] = len(self.keybag) - 1
-    if not self.options.keys_only: self.objects[key] = None
-
     return self
 
   def encounter(self, key):
@@ -237,7 +245,6 @@ class Graph(object):
         for ancestor in key.ancestry:
           if ancestor not in self.keybag:
             self.consider(ancestor)
-
       self.consider(key)
     return self
 
@@ -299,8 +306,6 @@ class Graph(object):
       self.encounter(edge)
       self.edges.add(edge)
 
-    import pdb; pdb.set_trace()
-
     self.traversed.add((origin, limit, depth))
     return self
 
@@ -314,16 +319,21 @@ class Graph(object):
 
         :returns: ``self``, once fulfillment operations are complete. '''
 
-    omit = omit or set()
-    import pdb; pdb.set_trace()
+    from fatcatmap import models
+
+    batch = [k for k in set(self.queued) if k not in (omit or set())]
+    for key, entity in zip(batch, models.BaseModel.get_multi(batch)):
+      self.objects[key] = entity
+    return self
 
   ## ~~ accessors ~~ ##
-  (keys, kinds, edges, lookup, keybag, origin, adapter, objects,
+  (keys, kinds, edges, lookup, window, keybag, origin, adapter, objects,
     network, vertices, traversed, serialized, options, defaults, options_class) = (
       property(lambda self: self.__keys__),
       property(lambda self: self.__kinds__),
       property(lambda self: self.__edges__),
       property(lambda self: self.__lookup__),
+      property(lambda self: self.__window__),
       property(lambda self: self.__keybag__),
       property(lambda self: self.__origin__),
       property(lambda self: self.__adapter__),

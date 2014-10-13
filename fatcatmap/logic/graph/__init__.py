@@ -21,6 +21,7 @@ class Grapher(logic.Logic):
 
   '''  '''
 
+  caching = False  # graph caching
   options = Options  # attach graph options
 
   def construct(self, session, origin, export=True, **options):
@@ -39,8 +40,8 @@ class Grapher(logic.Logic):
     graph = gstruct.Graph.get(model.Key(gstruct.GraphResponse, fragment),
                               adapter=models.BaseModel.__adapter__)
 
-    if graph and not caching: graph.delete()
-    elif graph and caching: return graph
+    if graph and not self.caching: graph.delete()
+    elif graph and self.caching: return graph
 
     # build graph & optionally fulfill
     graph = Graph(models.BaseModel.__adapter__, options=options).traverse(origin)
@@ -57,4 +58,4 @@ class Grapher(logic.Logic):
 
     '''  '''
 
-    pass
+    return

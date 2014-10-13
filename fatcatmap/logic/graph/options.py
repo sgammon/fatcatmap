@@ -80,7 +80,8 @@ class Options(object):
 
         :param collapsed: ``tuple`` generated from ``options.collapse()``. '''
 
-    return cls(**{prop: item for (prop, item) in zip(sorted(cls.params), collapsed)})
+    return cls(**(
+      {prop: item for (prop, item) in zip(sorted(cls.params), collapsed)}))
 
   def collapse(self, keys=False):
 
