@@ -46,8 +46,15 @@ from canteen.model.adapter import inmemory
 
 def load_script(script):
 
-  ''' Read a Lua script file so that it can be loaded into
-      Redis for later use. '''
+  ''' Read a Lua script file so that it can be loaded into Redis
+      for later use via ``EVALSHA``.
+
+      :param script: Path to the script to load, relative to the
+        application's configured DB scripts path.
+
+      :returns: Content of the ``script`` in question, with
+        newlines replaced as ``\n``, and any ``require``d
+        dependencies inlined. '''
 
   buf = []
   with open(script, 'r') as scriptfile:
@@ -89,43 +96,40 @@ def load_script(script):
 class WarehouseAdapter(abstract.DirectedGraphAdapter):
 
   ''' Specifies an abstract adapter that is capable of supporting proprietary,
-      ``fatcatmap``-related driver functionality. '''
+      ``fatcatmap``-related driver functionality.
 
-  # magic prefixes
-  _key_prefix = '__key__'
-  _kind_prefix = '__kind__'
-  _group_prefix = '__group__'
-  _index_prefix = '__index__'
-  _reverse_prefix = '__reverse__'
-
-  # graph/vertex/edge prefixes
-  _edge_prefix = '__edge__'
-  _graph_prefix = '__graph__'
-  _vertex_prefix = '__vertex__'
-
-  # extra prefixes
-  _topic_prefix = '__topic__'
-  _topics_prefix = '__topics__'
-  _abstract_prefix = '__abstract__'
-  _descriptor_postfix = '__descriptor__'
-
-  # universal tokens
-  _neighbors_token = 'neighbors'
-
-  # directed tokens
-  _in_token = 'in'
-  _out_token = 'out'
-  _directed_token = 'directed'
+      In particular, ``WarehouseAdapter``-compliant adapters support:
+        - Efficient graph traversal
+        - Efficient storage of object metadata
+        - Custom abstract indexes
+        - Custom database scripting '''
 
   # undirected tokens
-  _peers_token = 'peers'
-  _undirected_token = 'undirected'
+  _peers_token, _undirected_token = (
+    'peers', 'undirected')
 
-  # extra tokens
-  _type_token = 'type'
-  _types_token = 'types'
-  _relationship_token = 'relationship'
+  # directed tokens
+  _in_token, _out_token, _directed_token = (
+    'in', 'out', 'directed')
 
+  # graph/vertex/edge prefixes
+  _edge_prefix, _graph_prefix, _vertex_prefix = (
+    '__edge__', '__graph__', '__vertex__')
+
+  # separators
+  _path_separator, _chunk_separator, _magic_separator = (
+    '.', ':', '::')
+
+  _type_token, _types_token, _neighbors_token, _relationship_token = (
+    'type', 'types', 'neighbors', 'relationship')
+
+  # extra prefixes
+  _topic_prefix, _topics_prefix, _abstract_prefix, _descriptor_prefix = (
+    '__topic__', '__topics__', '__abstract__', '__descriptor__')
+
+  # magic prefixes
+  _key_prefix, _kind_prefix, _group_prefix, _index_prefix, _reverse_prefix = (
+    '__key__', '__kind__', '__group__', '__index__', '__reverse__')
 
   ## +=+=+ Internal Methods +=+=+ ##
   @classmethod
