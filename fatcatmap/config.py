@@ -121,7 +121,7 @@ config = cfg.Config(app={
     'tools': {
       'enabled': True},
 
-    'dataset': 'alpha-v8'
+    'dataset': 'alpha-v10'
 
   },
 

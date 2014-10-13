@@ -116,7 +116,7 @@ class ModelBinding(object):
       '''  '''
 
       item = next(base)
-      while item:
+      while item is not None:
         result = None  # result of the deferred call
 
         if isinstance(item, model.Model):
@@ -134,9 +134,9 @@ class ModelBinding(object):
               except (GeneratorExit, StopIteration):
                 pass
 
-        if result:
+        if result is not None:
           item = base.send(result)
-        if not item:
+        if item is None:
           item = next(base)
 
     return _rollup(binding)

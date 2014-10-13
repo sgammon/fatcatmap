@@ -60,6 +60,9 @@ class ExternalID(Descriptor):
     # @TODO(sgammon): descriptors are broken
     # @TODO(sgammon): trade MD5 for enum
 
+    if parent is None:
+      raise TypeError('Must pass valid Key instance as ExternalID parent.')
+
     fingerprint = cls.__hashfunc__('::'.join(map(str, (provider, content)))).hexdigest()
     parent = parent.key if isinstance(parent, model.Model) else parent
 

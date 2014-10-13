@@ -128,7 +128,7 @@ class Grapher(logic.Logic):
       graph.options.serialize(),
       graph.lookup[graph.origin])
 
-    keys, objects, structure = [], [], ''
+    keys, objects, structure = [], [], []
 
     # pack objects if not keys only
     if not graph.options.keys_only:
@@ -140,6 +140,9 @@ class Grapher(logic.Logic):
         if obj is struct.EMPTY:
           objects.append(None)
         else:
+
+          # empty objects
+          if obj is None: obj = {}
 
           # rollup `peers` and `source`/`target`
           if hasattr(obj, '__edge__'):
@@ -158,9 +161,28 @@ class Grapher(logic.Logic):
               if isinstance(obj.target, (basestring, model.Key)):
                 obj.target = graph.lookup[pk]
 
+          elif key in graph.vertices:
+
+            # pack relationships
+            _neighbors, seen, _source_i = [], set(), graph.lookup[key]
+            for neighbor in graph.network[key]:
+              _neighbor_i = graph.lookup[neighbor]
+
+              # only add unique relationships
+              if (_source_i, _neighbor_i) not in seen:
+                _neighbors.append(_neighbor_i)
+                seen.add((_source_i, _neighbor_i))
+
+            signature = tuple([_source_i] + _neighbors)
+            if signature not in seen:
+              seen.add(signature)
+              structure.append(",".join(map(unicode, [_source_i] + _neighbors)))
+
+          obj_dict = obj.to_dict() if not isinstance(obj, dict) else obj
+
           dsc, item = (
             graph.descriptors[key] if graph.options.descriptors else {},
-            messages.GraphObject(data=obj.to_dict()))
+            messages.GraphObject(data=obj_dict) if obj_dict else messages.GraphObject())
 
           # pack descriptors if we have any
           if dsc: item.descriptors = dsc
@@ -185,5 +207,5 @@ class Grapher(logic.Logic):
 
       'graph': messages.Graph(**{
         'origin': origin,
-        'structure': structure
+        'structure': ":".join(set(structure))
       })})

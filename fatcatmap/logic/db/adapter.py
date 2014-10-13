@@ -44,6 +44,10 @@ from canteen.model.adapter import abstract
 from canteen.model.adapter import inmemory
 
 
+## Globals
+get_peers = lambda x: x.peers if hasattr(x, 'peers') else (x.source, x.target[0])
+
+
 def load_script(script):
 
   ''' Read a Lua script file so that it can be loaded into Redis
@@ -123,8 +127,8 @@ class WarehouseAdapter(abstract.DirectedGraphAdapter):
   _type_token, _types_token, _neighbors_token, _relationship_token = (
     'type', 'types', 'neighbors', 'relationship')
 
-  # extra prefixes
-  _topic_prefix, _topics_prefix, _abstract_prefix, _descriptor_prefix = (
+  # extra pre/post-fixes
+  _topic_prefix, _topics_prefix, _abstract_prefix, _descriptor_postfix = (
     '__topic__', '__topics__', '__abstract__', '__descriptor__')
 
   # magic prefixes
@@ -365,8 +369,6 @@ class WarehouseAdapter(abstract.DirectedGraphAdapter):
   def generate_graph_indexes(cls, key, entity, meta, properties, graph):
 
     '''  '''
-
-    from fatcatmap.logic.graph import get_peers
 
     if hasattr(entity, '__graph__'):
 

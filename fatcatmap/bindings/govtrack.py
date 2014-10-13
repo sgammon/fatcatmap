@@ -60,9 +60,30 @@ class GovtrackPerson(ModelBinding):
     person.name.given, person.name.family = (
       data['firstname'], data.get('lastnameenc', data['lastname']))
 
+    _secondary = None
+    if '|' in data['firstname']:
+      # ASSHOLES: make an alternate name
+      firstnames = data['firstname'].split('|')
+      person.name.given = firstnames[0]
+
+      if data.get('lastnamealt'):
+        # DOUBLE ASSHOLES: add perms with other last name
+        for ln in (data['lastname'], data['lastnamealt']):
+          for fn in firstnames[1:]:
+            _secondary.append(" ".join((fn, ln)))
+
+      else:
+        _secondary = []
+        for fn in firstnames[1:]:
+          _secondary.append(" ".join((fn, data['lastname'])))
+
+    elif data.get('lastnamealt') and '|' not in data['firstname']:
+      _secondary = ('%s %s' % (data['firstname'], data['lastnamealt']))
+
+    if _secondary: person.name.secondary = _secondary
+
     if data.get('namemod'): person.name.postfix = (data['namemod'],)
     if data.get('nickname'): person.name.nickname = (data['nickname'],)
-    if data.get('lastnamealt'): person.name.secondary = ('%s %s' % (data['firstname'], data['lastnamealt']),)
     if data.get('gender'): person.gender = data['gender'].lower()
     if data.get('birthday'): person.birthdate = data['birthday']
 
