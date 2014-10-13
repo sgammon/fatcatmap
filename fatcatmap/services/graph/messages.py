@@ -44,7 +44,6 @@ class GraphObject(model.Model):
       object level. '''
 
   data = dict  # holds data for a single object
-  cached = bool  # marked `True` if data was/is cached
   descriptors = dict  # holds `key=>value` pairs from descriptors
 
 
@@ -113,7 +112,6 @@ class Graph(model.Model):
       vertices, connected by edges, via a datamodel. '''
 
   origin = int, {'required': True}
-  boundary = int, {'required': True}
   structure = str, {'required': True}
 
 

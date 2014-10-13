@@ -22,8 +22,10 @@ from canteen import decorators
 
 
 ## Globals
-keyify = lambda x: (isinstance(x, model.Key) and x) or x.key
+ddict = lambda: defaultdict(dict)
 setdict = lambda: defaultdict(set)
+keyify = lambda x: (isinstance(x, model.Key) and x) or x.key
+
 
 
 def keytype(key):
@@ -81,6 +83,7 @@ class Graph(object):
      ('network', setdict),  # neighborship sets like source --> {target...}
      ('vertices', set),  # vertices as they are seen during graph traversal
      ('serialized', dict),  # serialized representations of objects and keys
+     ('descriptors', ddict)  # holds descriptor dictionaries for each object
 
     ))))
 
@@ -328,7 +331,7 @@ class Graph(object):
 
   ## ~~ accessors ~~ ##
   (keys, kinds, edges, lookup, window, keybag, origin, adapter, objects,
-    network, vertices, traversed, serialized, options, defaults, options_class) = (
+    network, vertices, traversed, serialized, descriptors, options, defaults, options_class) = (
       property(lambda self: self.__keys__),
       property(lambda self: self.__kinds__),
       property(lambda self: self.__edges__),
@@ -342,6 +345,7 @@ class Graph(object):
       property(lambda self: self.__vertices__),
       property(lambda self: self.__traversed__),
       property(lambda self: self.__serialized__),
+      property(lambda self: self.__descriptors__),
       property(lambda self: self.__options__, set_options),
       decorators.classproperty(lambda cls: cls.__defaults__),
       decorators.classproperty(lambda cls: cls.__options_class__))
