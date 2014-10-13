@@ -65,16 +65,16 @@ class GraphRequest(model.Model):
     ''' Describes options that guide, from a high level, the
         traversal and query flow for graph structure. '''
 
-    depth = int, {'default': 2}
-    limit = int, {'default': 5}
-    cached = bool, {'default': True}
-    keys_only = bool, {'default': False}
-    descriptors = bool, {'default': True}
-    collections = bool, {'default': True}
+    depth = int
+    limit = int
+    cached = bool
+    keys_only = bool
+    descriptors = bool
+    collections = bool
 
   # -- base -- #
-  origin = str, {'default': None}
-  session = str, {'default': None}
+  origin = str
+  session = str
 
   # -- options -- #
   filters = Filter, {'repeated': True, 'embedded': True}
@@ -87,11 +87,15 @@ class Meta(model.Model):
   ''' Specifies a container for metadata describing the
       resulting ``Graph`` structure. '''
 
+  fragment = str
+
+  # -- sets --
   kinds = str, {'repeated': True}
   counts = int, {'repeated': True}
-  cached = bool, {'default': False}
-  options = dict, {'required': True}
-  fragment = str, {'required': True}
+
+  # -- flags --
+  cached = bool
+  options = dict
 
 
 class Data(model.Model):
@@ -100,7 +104,6 @@ class Data(model.Model):
       outgoing responses to ``GraphRequest``s. '''
 
   keys = str, {'repeated': True}
-  indexes = dict, {'required': False}
   objects = GraphObject, {'repeated': True, 'embedded': True}
 
 

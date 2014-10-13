@@ -38,10 +38,6 @@ class BaseModel(model.Model):
 
   __adapter__, __description__ = "RedisWarehouse", None
 
-  # created/modified  # @TODO(sgammon): created/modified stuff
-  #created = datetime, {'indexed': True, 'default': lambda _: datetime.now()}
-  #modified = datetime, {'indexed': True, 'validate': lambda _: datetime.now()}
-
   @classmethod
   def query(cls, *args, **kwargs):
 
@@ -578,6 +574,17 @@ def report_structure():  # pragma: no cover
       print('--- %s' % repr(subtype))
   print("================================================================")
   print("\n\n")
+
+
+def get_warehouse():
+
+  ''' Utility function for retrieving a valid ``WarehouseAdapter``
+      instance that can be used for model storage.
+
+      :returns: Instance of :py:class:`WarehouseAdapter`-compliant
+        active adapter class. '''
+
+  return BaseModel.__adapter__
 
 
 # bind model metadata
