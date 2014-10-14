@@ -107,7 +107,8 @@ services.graph = /** @lends {ServiceContext.prototype.graph} */ {
 
           v = /** @type {GraphData} */ (v.data);
 
-          v.data.keys = models.Key.unpack(v.data.keys, v.meta.kinds);
+          if (v.data.keys)
+            v.data.keys = models.Key.unpack(v.data.keys, v.meta.kinds);
 
           if (replace)
             graph.active = new models.graph.Graph();

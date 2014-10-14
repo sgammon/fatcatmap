@@ -19,14 +19,14 @@ GraphQueryOptions.depth;
 /** @type {number} */
 GraphQueryOptions.limit;
 
-/** @type {boolean} */
-GraphQueryOptions.cached;
-
-/** @type {boolean} */
-GraphQueryOptions.indexes;
+/** @type {?Object} */
+GraphQueryOptions.query;
 
 /** @type {boolean} */
 GraphQueryOptions.keys_only;
+
+/** @type {boolean} */
+GraphQueryOptions.descriptors;
 
 /** @type {boolean} */
 GraphQueryOptions.collections;
@@ -73,9 +73,6 @@ GraphData.graph;
 
 /** @type {number} */
 GraphData.graph.origin;
-
-/** @type {number} */
-GraphData.graph.boundary;
 
 /** @type {string} */
 GraphData.graph.structure;

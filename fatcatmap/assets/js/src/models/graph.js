@@ -329,52 +329,41 @@ Graph.prototype.unpack = function (packed) {
   var graph = this,
     keys = packed.data.keys,
     objects = packed.data.objects,
-    structure = packed.graph.structure.split(':'),
-    offset = packed.graph.boundary - 1,
-    edges = {},
-    edge, i, key;
+    i, key, data, edge, source, target;
 
   graph.nodes = new models.KeyIndexedList().merge(graph.nodes);
   graph.edges = new models.KeyIndexedList().merge(graph.edges);
 
-  for (i = 0; i < structure.length; i++) {
-    key = keys.get(i + offset);
+  for (i = 0; i < keys.length; i++) {
+    key = keys[i];
+    data = objects[i];
 
-    if (!key) {
-      console.warn('Graph.unpack() received ' + (structure.length - i + offset) +
-        'extra structures.');
+    if (!key || !data) {
+      console.warn('Graph.unpack() got empty key or data: ' + key + ', ' + data);
       break;
     }
 
-    if (!edges[key]) {
-      if (structure[i])
-        structure[i].split(',').forEach(function (edgeI) {
-          var edgeKey;
-          edgeI = +edgeI;
-          edgeKey = keys.get(edgeI);
+    data = data.data;
 
-          if (edgeKey && !edges[edgeKey])
-            edges[edgeKey] = objects[edgeI].data.peers.map(function (i) { return keys.get(i); });
-        });
-
-      if (key.parent)
-        graph.nodes.push(new models.graph.GraphNode(key).enrich(objects[i].data));
+    if (!data || !(data.hasOwnProperty('peers') || data.hasOwnProperty('source'))) {
+      graph.nodes.push(new GraphNode(key).enrich(data));
+      continue;
     }
-  }
 
-  for (key in edges) {
-    if (edges.hasOwnProperty(key)) {
-      edge = new models.graph.GraphEdge(key);
-      edge.link(graph.nodes.get(edges[key][0]));
-      edge.link(graph.nodes.get(edges[key][1]));
-
-      if (!edge.satisfied()) {
-        console.warn('Graph.unpack() built incomplete edge: ');
-        console.warn(edge);
-      } else {
-        graph.edges.push(edge);
-      }
+    if (data.peers) {
+      source = graph.nodes.get(keys[data.peers[0]]);
+      target = graph.nodes.get(keys[data.peers[1]]);
+    } else {
+      source = graph.nodes.get(keys[data.source]);
+      target = graph.nodes.get(keys[data.target]);
     }
+
+    edge = new GraphEdge(key);
+
+    edge.link(source);
+    edge.link(target);
+
+    graph.edges.push(edge);
   }
 
   graph.session = packed.session;
