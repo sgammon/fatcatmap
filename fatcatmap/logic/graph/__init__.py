@@ -176,7 +176,7 @@ class Grapher(logic.Logic):
             signature = tuple([_source_i] + _neighbors)
             if signature not in seen:
               seen.add(signature)
-              structure.append(",".join(map(unicode, [_source_i] + _neighbors)))
+              structure.append(",".join(map(unicode, _neighbors + [_source_i])))
 
           obj_dict = obj.to_dict() if not isinstance(obj, dict) else obj
 
