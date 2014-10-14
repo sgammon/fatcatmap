@@ -285,55 +285,56 @@ Vue.require = function(module) {};
  */
 Vue.use = function(plugin, args) {};
 
+
 /**
  * @typedef {Object}
  */
-var Directive = {
-  /**
-   * @param {*} value
-   * @this {Directive}
-   */
-  bind: function (value) {},
+var Directive = {};
 
-  /**
-   * @param {*} value
-   * @this {Directive}
-   */
-  update: function (value) {},
+/**
+ * @param {*} value
+ * @this {Directive}
+ */
+Directive.bind = function (value) {};
 
-  /**
-   * @param {*} value
-   * @this {Directive}
-   */
-  unbind: function (value) {},
+/**
+ * @param {*} value
+ * @this {Directive}
+ */
+Directive.update = function (value) {};
 
-  /**
-   * @type {?Node}
-   */
-  el: null,
+/**
+ * @param {*} value
+ * @this {Directive}
+ */
+Directive.unbind = function (value) {};
 
-  /**
-   * @type {string}
-   */
-  key: '',
+/**
+ * @type {?Node}
+ */
+Directive.el;
 
-  /**
-   * @type {string}
-   */
-  expression: '',
+/**
+ * @type {string}
+ */
+Directive.key;
 
-  /**
-   * @type {?string}
-   */
-  arg: null,
+/**
+ * @type {string}
+ */
+Directive.expression;
 
-  /**
-   * @type {?Vue}
-   */
-  vm: null,
+/**
+ * @type {?string}
+ */
+Directive.arg;
 
-  /**
-   * @type {*}
-   */
-  value: null
-};
+/**
+ * @type {?Vue}
+ */
+Directive.vm;
+
+/**
+ * @type {*}
+ */
+Directive.value;

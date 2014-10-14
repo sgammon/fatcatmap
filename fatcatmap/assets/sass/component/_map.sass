@@ -6,6 +6,7 @@
 
 $node-stroke-width: 5px
 $node-scale-factor: 1.6
+$leaf-opacity: 0.6
 
 #mapper
   +fillbox
@@ -55,6 +56,9 @@ svg svg, .node,
 
   &.selected
     stroke-width: $node-stroke-width * $node-scale-factor
+
+.leaf, .leaf-link
+  opacity: $leaf-opacity
 
 circle
   @each $type in $nodetypes

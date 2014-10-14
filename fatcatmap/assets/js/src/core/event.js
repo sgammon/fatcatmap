@@ -28,7 +28,7 @@ var Emitter = function (_events) {
   Object.defineProperty(this, 'events', {
     /**
      * @expose
-     * @return {Object.<string, Array.<function(...[*])>}
+     * @return {Object.<string, Array.<function(...[*])>>}
      */
     get: function () {
       return events;
@@ -61,7 +61,7 @@ util.object.mixin(Emitter, /** @lends {Emitter.prototype} */ {
   off: function (event, cb) {
     var i;
 
-    if (!callback) {
+    if (!cb) {
       this.events[event] = [];
     } else {
       i = this.events[event].indexOf(cb);
@@ -92,7 +92,7 @@ util.object.mixin(Emitter, /** @lends {Emitter.prototype} */ {
 
 /**
  * @expose
- * @type {Object.<string, Array.<function(...[*])>}
+ * @type {Object.<string, Array.<function(...[*])>>}
  */
 Emitter.prototype.events;
 

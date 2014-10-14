@@ -155,7 +155,7 @@ util.object = {
   /**
    * Prototypal mixins. Faster, use if you don't need <code>instanceof</code>.
    * @param {function(...[*])} constructor
-   * @param {(Object.<string, function>|function(...[*])} methods
+   * @param {(Object.<string, function(...[*])>|function(...[*])} methods
    * @return {function(...[*])}
    */
   mixin: function (constructor, methods) {

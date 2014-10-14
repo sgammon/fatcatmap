@@ -14,7 +14,7 @@ goog.require('models');
 
 goog.provide('models.data');
 
-var Entity;
+var KeyedData;
 
 /**
  * Represents a contextual data object.
@@ -23,19 +23,19 @@ var Entity;
  * @param {!(string|models.Key)} key
  * @param {Object=} data
  */
-Entity = function (key, data) {
+KeyedData = function (key, data) {
   models.KeyedItem.call(this, key);
 
   if (data)
     this.key.bind(data);
 };
 
-util.object.inherit(Entity, models.KeyedItem);
+util.object.inherit(KeyedData, models.KeyedItem);
 
-util.object.mixin(Entity, /** @lends {Entity.prototype} */{
+util.object.mixin(KeyedData, /** @lends {KeyedData.prototype} */{
   /**
-   * Persists the current Entity into the default Key store.
-   * @return {Entity}
+   * Persists the current KeyedData into the default Key store.
+   * @return {KeyedData}
    */
   put: function () {
     this.key.put();
@@ -48,9 +48,9 @@ util.object.mixin(Entity, /** @lends {Entity.prototype} */{
  * @expose
  * @type {?Object}
  */
-Entity.prototype.data;
+KeyedData.prototype.data;
 
-Object.defineProperty(Entity.prototype, 'data', {
+Object.defineProperty(KeyedData.prototype, 'data', {
   /**
    * @expose
    * @type {boolean}
@@ -60,7 +60,7 @@ Object.defineProperty(Entity.prototype, 'data', {
   /**
    * @expose
    * @return {*}
-   * @this {Entity}
+   * @this {KeyedData}
    */
   get: function () {
     return this.key.data()
@@ -69,10 +69,33 @@ Object.defineProperty(Entity.prototype, 'data', {
   /**
    * @expose
    * @param {*} data
-   * @this {Entity}
+   * @this {KeyedData}
    */
   set: function (data) {
     this.key.bind(data);
+  }
+});
+
+/**
+ * @expose
+ * @type {?KeyedData}
+ */
+KeyedData.prototype.parent;
+
+Object.defineProperty(KeyedData.prototype, 'parent', {
+  /**
+   * @expose
+   * @type {boolean}
+   */
+  enumerable: true,
+
+  /**
+   * @expose
+   * @return {*}
+   * @this {KeyedData}
+   */
+  get: function () {
+    return this.key.parent ? this.key.parent.data() : null;
   }
 });
 
@@ -85,5 +108,5 @@ models.data = {
    * @param {!(string|models.Key)} key
    * @param {Object=} data
    */
-  Entity: Entity
+  KeyedData: KeyedData
 };
