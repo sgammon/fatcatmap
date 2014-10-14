@@ -20,7 +20,7 @@ var routes = {
   '/': function (request) {
     var state = request.state || {},
       app = this.app,
-      graph = this.graph;
+      graph = this.services.graph;
 
     state.page = state.page || { active: true };
     state.modal = state.modal || null;
@@ -101,11 +101,11 @@ var routes = {
    * @this {ServiceContext}
    */
   '/detail/<key>': function (request) {
-    var data = this.data,
+    var data = this.services.data,
       app = this.app,
       state = request.state || {},
       graph = (!app.$.stage || !app.$.stage.$.map.active) ?
-        this.graph.active : null;
+        this.services.graph.active : null;
 
     state.page = state.page || { active: true };
     state.modal = state.modal || null;
@@ -135,13 +135,13 @@ var routes = {
    * @this {ServiceContext}
    */
   '/detail/<key1>/and/<key2>': function (request) {
-    var data = this.data,
+    var data = this.services.data,
       app = this.app,
       key1 = request.args.key1,
       key2 = request.args.key2,
       state = request.state || {},
       graph = (!app.$.stage || !app.$.stage.$.map.active) ?
-        this.graph.active : null;
+        this.services.graph.active : null;
 
     state.page = state.page || { active: true };
     state.modal = state.modal || null;

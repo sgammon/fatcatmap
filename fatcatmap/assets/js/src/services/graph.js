@@ -70,8 +70,8 @@ services.graph = /** @lends {ServiceContext.prototype.graph} */ {
    * @this {ServiceContext}
    */
   load: function (graph) {
-    if (this.graph.active)
-      return this.graph.active.unpack(graph);
+    if (this.services.graph.active)
+      return this.services.graph.active.unpack(graph);
   },
 
   /**
@@ -83,12 +83,12 @@ services.graph = /** @lends {ServiceContext.prototype.graph} */ {
    * @this {ServiceContext}
    */
   construct: function (origin, options, replace) {
-    var graph = this.graph,
+    var graph = this.services.graph,
       response = new Future();
 
     replace = !!replace;
 
-    if (!this.graph.active) {
+    if (!graph.active) {
       response.fulfill(false,
         new Error('No active graph to query. Call services.graph.init() first.'));
     } else {
@@ -133,9 +133,9 @@ services.graph = /** @lends {ServiceContext.prototype.graph} */ {
    * @this {ServiceContext}
    */
   init: function (graph, session, cb) {
-    this.graph.active = new models.graph.Graph(graph, session);
+    this.services.graph.active = new models.graph.Graph(graph, session);
 
     if (cb)
-      cb(this.graph.active);
+      cb(this.services.graph.active);
   }
 }.service('graph');

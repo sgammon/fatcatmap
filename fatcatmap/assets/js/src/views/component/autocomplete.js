@@ -30,7 +30,7 @@ views.component.Autocomplete = View.extend({
    * @expose
    * @type {boolean}
    */
-  replace: true,
+  replace: false,
 
   /**
    * @expose
@@ -59,7 +59,7 @@ views.component.Autocomplete = View.extend({
      * @expose
      * @param {string} term
      */
-    query: function (term) {
+    submit: function (term) {
       var autocomplete = this;
 
       services.search.autocomplete(term).then(function (response, error) {
@@ -69,7 +69,7 @@ views.component.Autocomplete = View.extend({
         if (response.data)
           response = response.data;
 
-        autocomplete.$set('results', response.results);
+        autocomplete.$set('results', response.results || []);
       });
     },
 
@@ -102,8 +102,11 @@ views.component.Autocomplete = View.extend({
     var autocomplete = this;
 
     this.$watch('query', function (query) {
-      if (query.length > 2)
-        autocomplete.query(query);
+      if (query.length > 2) {
+        autocomplete.submit(query);
+      } else {
+        autocomplete.$set('results', []);
+      }
     });
   }
 });

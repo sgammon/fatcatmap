@@ -80,8 +80,9 @@ RPCAPI = function (name, methods, config) {
 
 /**
  * @expose
+ * @type {Service}
  */
-services.rpc = /** @lends {ServiceContext.prototype.rpc} */{
+services.rpc = new Service('rpc', /** @lends {ServiceContext.prototype.rpc} */{
 
   /**
    * @param {Array} manifest
@@ -99,4 +100,4 @@ services.rpc = /** @lends {ServiceContext.prototype.rpc} */{
   init: function (manifests) {
     manifests.forEach(services.rpc.factory);
   }
-}.service('rpc');
+}, true);

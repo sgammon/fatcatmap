@@ -123,8 +123,9 @@ _parseResponse = function (response) {
 
 /**
  * @expose
+ * @type {Service}
  */
-services.http = /** @lends {ServiceContext.prototype.http} */{
+services.http = new Service('http', /** @lends {ServiceContext.prototype.http} */{
   /**
    * @param {Request} request
    * @param {PipelinedCallback=} handler If not passed, executes synchronously.
@@ -187,4 +188,4 @@ services.http = /** @lends {ServiceContext.prototype.http} */{
   options: function (request, handler) {
     return _dispatchRequest('OPTIONS', request, handler);
   }
-}.service('http');
+}, true);

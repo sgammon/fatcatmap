@@ -22,6 +22,7 @@ services.search = /** @lends {ServiceContext.prototype.search} */{
    * @expose
    * @param {string} term
    * @returns {Future}
+   * @this {ServiceContext}
    */
   autocomplete: function (term) {
     return this.rpc.search.query({

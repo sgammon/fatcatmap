@@ -29,8 +29,9 @@ Socket = function (url, listeners) {
 if (support.socket) {
   /**
    * @expose
+   * @type {Service}
    */
-  services.socket = /** @lends {ServiceContext.prototype.socket} */{
+  services.socket = new Service('socket', /** @lends {ServiceContext.prototype.socket} */{
     /**
      * @expose
      * @param {string} url
@@ -44,7 +45,7 @@ if (support.socket) {
 
       return socket;
     }
-  }.service('socket');
+  }, true);
 } else {
   services.socket = null;
 }

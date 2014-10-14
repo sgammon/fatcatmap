@@ -17,8 +17,9 @@ goog.provide('services.history');
 
 /**
  * @expose
+ * @type {Service}
  */
-services.history = /** @lends {ServiceContext.prototype.history} */ {
+services.history = new Service('history', /** @lends {ServiceContext.prototype.history} */{
   /**
    * @expose
    * @param {string} url
@@ -56,4 +57,4 @@ services.history = /** @lends {ServiceContext.prototype.history} */ {
       throw new Error('History already started');
     };
   }
-}.service('history');
+}, true);

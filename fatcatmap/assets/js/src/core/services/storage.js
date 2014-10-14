@@ -116,7 +116,7 @@ Store.storeCount = 0;
 /**
  * @expose
  */
-services.storage = /** @lends {ServiceContext.prototype.storage} */{
+services.storage = new Service('storage', /** @lends {ServiceContext.prototype.storage} */{
   /**
    * @expose
    * @constructor
@@ -125,20 +125,18 @@ services.storage = /** @lends {ServiceContext.prototype.storage} */{
    * @param {string=} provideAs
    */
   Store: Store
-};
+}, true);
 
-if (support.storage.local) {
-  /**
-   * @expose
-   * @type {?Store}
-   */
-  services.storage.local = new Store(window.localStorage, 'local', 'local');
-}
+/**
+ * @expose
+ * @type {?Store}
+ * @lends {ServiceContext.prototype.storage.local}
+ */
+services.storage.local = support.storage.local ? new Store(window.localStorage, 'local', 'local') : null;
 
-if (support.storage.session) {
-  /**
-   * @expose
-   * @type {?Store}
-   */
-  services.storage.session = new Store(window.sessionStorage, 'session', 'session');
-}
+/**
+ * @expose
+ * @type {?Store}
+ * @lends {ServiceContext.prototype.storage.session}
+ */
+services.storage.session = support.storage.session ? new Store(window.localStorage, 'session', 'session') : null;

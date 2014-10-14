@@ -1,6 +1,7 @@
 @import "var/font"
 @import "var/color"
 @import "var/layout"
+@import "component/autocomplete"
 
 #header
   div
@@ -35,6 +36,22 @@
       background-color: $link-color-hover
       border-color: $link-color-hover
       color: $grey-dark
+
+#graph_search
+
+  input
+    width: 15em
+    height: 32px
+    padding: 6px 8px
+
+    &:focus
+      color: $grey-light
+
+    &::-webkit-input-placeholder
+      font-weight: $font-weight-light
+
+  .autocomplete-wrap
+    margin: 1em 1em 0 0
 
 
 #logo_main

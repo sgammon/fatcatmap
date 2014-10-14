@@ -64,15 +64,15 @@ catnip = function (context, data, routes) {
     if (context.services && context.protocol.rpc.enabled) {
       fcm.rpc.init(context.services);
     } else {
-      services.rpc = null;
+      fcm.rpc = null;
     }
 
     if (context.template.manifest)
-      fcm.template.init(context.template.manifest);
+      fcm.services.template.init(context.template.manifest);
 
     if (data)
-      fcm.data.init(data, function (graph) {
-        fcm.graph.init(graph);
+      fcm.services.data.init(data, function (graph) {
+        fcm.services.graph.init(graph);
       });
 
     if (routes) {
@@ -86,14 +86,14 @@ catnip = function (context, data, routes) {
         });
       });
 
-      fcm.view.init('app', /** @this {views.App} */function () {
+      fcm.services.view.init('app', /** @this {views.App} */function () {
         var app = this;
 
         app.$set('active', true);
 
         app.nextTick(function () {
           app.$.stage.$set('active', true);
-          fcm.inject('app', app);
+          ServiceContext.inject('app', app);
           GO();
         });
       });

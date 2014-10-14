@@ -103,8 +103,9 @@ Route = function (path, handler) {
 
 /**
  * @expose
+ * @type {Service}
  */
-services.router = /** @lends {ServiceContext.prototype.router} */ {
+services.router = new Service('router', /** @lends {ServiceContext.prototype.router} */{
   /**
    * @param {string} path
    * @param {function(Object)} handler
@@ -224,4 +225,4 @@ services.router = /** @lends {ServiceContext.prototype.router} */ {
       handleInitial(window.location.pathname);
   }
 
-}.service('router');
+}, true);

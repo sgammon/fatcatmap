@@ -48,7 +48,7 @@ services.data = /** @lends {ServiceContext.prototype.data} */ {
    * @this {ServiceContext}
    */
   init: function (raw, cb) {
-    var data = this.data;
+    var data = this.services.data;
 
     data.cache = new models.KeyIndexedList();
 
@@ -79,7 +79,7 @@ services.data = /** @lends {ServiceContext.prototype.data} */ {
       data = new models.data.KeyedData(key, data.data);
 
     data.put();
-    this.data.cache.push(data);
+    this.services.data.cache.push(data);
 
     return data;
   },

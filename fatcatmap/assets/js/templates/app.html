@@ -1,34 +1,9 @@
 <div id="app" class="app container" v-on="click: route">
+
   <div v-component="layout.stage" v-if="page"></div>
+  <div v-component="layout.header"></div>
+  <div v-component="layout.footer"></div>
 
-  <header id="header">
-
-    <div id="default_action">
-      <h2 class="signup" href="/login" data-route>sign up &amp; login</h2>
-    </div>
-
-    <div id="logo_main">
-      <h1 class="logo" href="/" data-route>&#58880;</h1>
-      <h1 class="brand-title" href="/" data-route>fatcatmap</h1>
-    </div>
-
-  </header>
-
-  <footer id="footer">
-
-    <div id="version">
-      <h1>technology preview - INTERNAL USE ONLY</h1>
-    </div>
-
-    <nav id="page_nav">
-      <ul class="pages">
-        <li><h2 class="footer-nav" href="/terms">terms</h2></li>
-        <li><h2 class="footer-nav" href="/privacy">privacy</h2></li>
-        <li><h2 class="footer-nav" href="/contact">contact</h2></li>
-      </ul>
-    </nav>
-
-  </footer>
 </div>
 
 <div id="modal" v-component="modal" v-if="modal" v-transition></div>

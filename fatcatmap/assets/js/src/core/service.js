@@ -24,15 +24,7 @@ var ServiceContext, Service;
 ServiceContext = function () {};
 
 ServiceContext.prototype = {
-  /**
-   * @param {string} name
-   * @param {(Service|function(this: ServiceContext, ...[*]))} service
-   * @return {(Service|function(this: ServiceContext, ...[*]))}
-   */
-  inject: function (name, service) {
-    util.object.resolveAndSet(ServiceContext.prototype, name, service);
-    return service;
-  }
+
 };
 
 /**
@@ -41,7 +33,10 @@ ServiceContext.prototype = {
  * @param {(Service|function(this: ServiceContext, ...[*]))} service
  * @return {(Service|function(this: ServiceContext, ...[*]))}
  */
-ServiceContext.inject = ServiceContext.prototype.inject;
+ServiceContext.inject = function (name, service) {
+  util.object.resolveAndSet(ServiceContext.prototype, name, service);
+  return service;
+};
 
 /**
  * ServiceContext-injected class.
@@ -49,9 +44,10 @@ ServiceContext.inject = ServiceContext.prototype.inject;
  * @extends {event.Emitter}
  * @param {string} name
  * @param {Object.<string, function(...)>=} methods
+ * @param {boolean=} If service is core and should be exported at top level.
  * @throws {TypeError} If name is not a string.
  */
-Service = function (name, methods) {
+Service = function (name, methods, core) {
   if (typeof name !== 'string')
     throw new TypeError('Service() requires a service name to inject at.');
 
@@ -64,7 +60,7 @@ Service = function (name, methods) {
     }
   }
 
-  ServiceContext.inject(name, this);
+  ServiceContext.inject(core === true ? name : 'services.' + name, this);
 };
 
 Service.prototype = new ServiceContext();
@@ -139,7 +135,7 @@ Object.defineProperty(Function.prototype, 'service', {
    * @this {Function}
    */
    value: function (name) {
-    return ServiceContext.inject(name, this.inject());
+    return ServiceContext.inject('services.' + name, this.inject());
   }
 });
 
