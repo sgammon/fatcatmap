@@ -160,9 +160,9 @@ class Legislator(Vertex):
       special cases, appointed) member of a ``LegislativeBody``, occupying one
       of many ``LegislativeOffice``s. '''
 
-  election = Election, {'indexed': True}
-  seat = LegislativeOffice, {'indexed': True}
-  campaign = Campaign, {'indexed': True, 'embedded': True}
+  seat = LegislativeOffice, {'indexed': False, 'embedded': False}
+  election = Election, {'indexed': False, 'embedded': False}
+  campaign = Campaign, {'indexed': False, 'embedded': False}
 
 
 @describe(parent=Legislator, type=Role)
@@ -332,4 +332,4 @@ class CommitteeMember(Legislator > Committee):
     RANKING = 0x3  # second-in-command for majority or minority party
     EX_OFFICIO = 0x4  # holder of a seat on the committee because of another office
 
-  leadership = CommitteeLeadership, {'indexed': True, 'default': None}
+  leadership = CommitteeLeadership, {'indexed': True}

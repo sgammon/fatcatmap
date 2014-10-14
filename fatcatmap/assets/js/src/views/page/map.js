@@ -13,8 +13,73 @@ goog.require('$');
 goog.require('View');
 goog.require('views.Detail');
 goog.require('views.detail.Legislator');
+goog.require('models.graph');
+goog.require('services.graph');
 
 goog.provide('views.Map');
+
+var PI, _distributeNodeInsertion, _calculateLeafLinkAdjustment;
+
+PI = Math.PI;
+
+/**
+ * Given a bounding size, origin, radius & number of nodes, calculates graceful insertion positions.
+ * @param {Array.<number>} size Width & height of the viewable area.
+ * @param {Array.<number>} origin X and Y coordinates of the origin.
+ * @param {number} radius Radius of the enclosing circle, in pixels.
+ * @param {Array.<models.graph.GraphNode>} nodes Nodes to calculate.
+ * @param {boolean=} full If true, calculates nodes for full circle.
+ */
+_distributeNodeInsertion = function (size, origin, radius, nodes, full) {
+  var midX = size[0] / 2,
+    midY = size[1] / 2,
+    cx = origin[0],
+    cy = origin[1],
+    theta = 0,
+    offset = (full !== true ? PI / 2 : 2 * PI) / (nodes.length - 1),
+    node,
+    i;
+
+  if (cx < midX) {
+    theta = cy < midY ? PI : PI / 2;
+  } else if (cy < midY) {
+    theta = 1.5 * PI;
+  }
+
+  for (i = 0; i < nodes.length; i++) {
+    node = nodes[i];
+
+    node.x = Math.round(cx + radius * Math.cos(theta));
+    node.y = Math.round(cy + radius * Math.sin(theta));
+
+    theta += offset;
+  }
+};
+
+/**
+ * Given a bounding size, radius, & leaf and peer node, calculates (x, y) adjustment for leaf-side
+ * link position to align exactly with the outer edge of the node. Prevents ugly link/node overlap
+ * when alpha values are changed on nodes in the graph. Updates the edge object.
+ * @param {number} radius Leaf radius, in pixels.
+ * @param {models.graph.GraphNode} leaf Leaf node.
+ * @param {models.graph.GraphNode} peer Node at other end of the adjusted link.
+ * @return {Object.<{ x: number, y: number }>}
+ */
+_calculateLeafLinkAdjustment = function (radius, leaf, peer) {
+  var theta = Math.atan((leaf.y - peer.y) / (leaf.x - peer.x)),
+    diff = {
+      x: radius * Math.cos(theta),
+      y: radius * Math.sin(theta)
+    };
+
+  if (leaf.x > peer.x)
+    diff.x = -diff.x;
+
+  if (leaf.y > peer.y)
+    diff.y = -diff.y;
+
+  return diff;
+};
 
 /**
  * @constructor
@@ -113,7 +178,7 @@ views.Map = View.extend({
          * @expose
          * @type {number}
          */
-        alpha: 0.75,
+        alpha: 0.15,
 
         /**
          * @expose
@@ -125,7 +190,7 @@ views.Map = View.extend({
          * @expose
          * @type {number}
          */
-        friction: 0.9,
+        friction: 0.4,
 
         /**
          * @expose
@@ -137,19 +202,25 @@ views.Map = View.extend({
          * @expose
          * @type {number}
          */
-        gravity: 0.1,
+        gravity: 0.08,
 
         /**
          * @expose
          * @type {number}
          */
-        charge: -600,
+        charge: -3000,
 
         /**
          * @expose
          * @type {number}
          */
-        distance: 180
+        chargeDistance: 620,
+
+        /**
+         * @expose
+         * @type {number}
+         */
+        distance: 100
       },
 
       /**
@@ -263,6 +334,24 @@ views.Map = View.extend({
 
     /**
      * @expose
+     * @type {Object}
+     */
+    clicked: {
+      /**
+       * @expose
+       * @type {string}
+       */
+      key: '',
+
+      /**
+       * @expose
+       * @type {number}
+       */
+      timestamp: Date.now()
+    },
+
+    /**
+     * @expose
      * @type {boolean}
      */
     dragging: false,
@@ -315,6 +404,12 @@ views.Map = View.extend({
           key = target.getAttribute('id').split('-').pop();
           selected = this.$.detail.keys();
 
+          if (this.clicked.key === key && Date.now() - this.clicked.timestamp < 400)
+            return this.browseTo(key);
+
+          this.clicked.key = key;
+          this.clicked.timestamp = Date.now();
+
           if (target.classList.contains(this.$options.selectors.selected.slice(1))) {
             selectedI = selected.indexOf(key);
             
@@ -332,7 +427,7 @@ views.Map = View.extend({
           this.map.selected = selected;
           this.map.changed = true;
 
-          this.$root.$emit('route', '/' +
+          this.$root.$emit('route', '/detail/' +
             (selected.length > 1 ? selected.join('/and/') : selected[0] || ''));
         }
       }
@@ -340,11 +435,33 @@ views.Map = View.extend({
 
     /**
      * @expose
-     * @param {MouseEvent} e
+     * @param {string} key
      * @this {views.Map}
      */
-    browseTo: function (e) {
-      console.log('map.browseTo()');
+    browseTo: function (key) {
+      var map = this;
+
+      services.graph.construct(key, {
+        depth: 1,
+        keys_only: true
+      }).then(function (graph, error) {
+        var node, newPeers;
+
+        if (graph) {
+          node = graph.nodes.get(key);
+          newPeers = node.peers().filter(function (n) {
+            return n.edges.length === 1;
+          });
+
+          _distributeNodeInsertion(
+            [map.config.width, map.config.height],
+            [node.x, node.y],
+            map.config.force.distance / 2,
+            newPeers);
+
+          map.draw(graph);
+        }
+      });
     },
 
     /**
@@ -367,15 +484,14 @@ views.Map = View.extend({
 
     /**
      * @expose
-     * @param {Object=} graph
+     * @param {Graph=} graph
      * @this {views.Map}
      */
     draw: function (graph) {
       var view = this,
-        config, selectors, root, node, origin, edge, tick, force, update;
+        selectors, root, node, origin, edge, tick, force, update;
 
       if (graph && !view.map.root) {
-        config = view.config;
         selectors = view.$options.selectors;
 
         root = d3
@@ -387,65 +503,74 @@ views.Map = View.extend({
         edge = root.selectAll(selectors.edge);
 
         tick = function () {
+          var radius = view.config.node.radius;
 
-          if (view.config.origin.snap) {
-            graph.nodes[graph.origin].x = view.config.origin.position.x;
-            graph.nodes[graph.origin].y = view.config.origin.position.y;
-          } else {
-            view.config.origin.position = {
-              x: graph.nodes[graph.origin].x,
-              y: graph.nodes[graph.origin].y
-            };
+          // Start force first to ensure nodes have x/y values.
+          view.map.force.start();
+
+          if (graph.origin) {
+            // Sync origin position, handling snap if enabled.
+            if (view.config.origin.snap) {
+              graph.nodes.get(graph.origin.index).x = view.config.origin.position.x;
+              graph.nodes.get(graph.origin.index).y = view.config.origin.position.y;
+            } else {
+              view.config.origin.position = {
+                x: graph.nodes.get(graph.origin.index).x,
+                y: graph.nodes.get(graph.origin.index).y
+              };
+            }
           }
 
-          edge.attr('x1', function (e) { return e.source.x - view.config.node.radius; })
-              .attr('y1', function (e) { return e.source.y - view.config.node.radius; })
-              .attr('x2', function (e) { return e.target.x - view.config.node.radius; })
-              .attr('y2', function (e) { return e.target.y - view.config.node.radius; });
+          // Set edge & node positions for this tick.
+          edge.attr('x1', function (e) { return e.source.x - radius; })
+              .attr('y1', function (e) { return e.source.y - radius; })
+              .attr('x2', function (e) { return e.target.x - radius; })
+              .attr('y2', function (e) { return e.target.y - radius; });
 
-          node.attr('cx', function (n) { return n.x - view.config.node.radius; })
-              .attr('cy', function (n) { return n.y - view.config.node.radius; });
+          node.attr('cx', function (n) { return n.x - radius; })
+              .attr('cy', function (n) { return n.y - radius; });
 
           if (view.map.changed) {
+            // Apply transitions & update classes if node selection is changed.
             node.filter(selectors.selected)
                 .filter(function (n) { return view.map.selected.indexOf(n.key) === -1; })
                 .classed({'selected': false})
                 .transition()
                 .duration(150)
                 .ease('cubic')
-                .attr('r', config.node.radius);
+                .attr('r', radius);
 
             node.filter(function (n) { return view.map.selected.indexOf(n.key) > -1; })
                 .classed({'selected': true})
                 .transition()
                 .duration(150)
                 .ease('cubic')
-                .attr('r', config.node.radius * config.node.scaleFactor);
+                .attr('r', radius * view.config.node.scaleFactor);
 
             view.map.changed = false;
-            view.map.force.start();
           }
         };
 
         force = d3.layout
           .force()
-          .size([config.width, config.height])
-          .linkDistance(config.force.distance)
-          .linkStrength(config.force.strength)
-          .friction(config.force.friction)
-          .theta(config.force.theta)
-          .gravity(config.force.gravity)
-          .alpha(config.force.alpha)
+          .size([view.config.width, view.config.height])
+          .linkDistance(view.config.force.distance)
+          .linkStrength(view.config.force.strength)
+          .friction(view.config.force.friction)
+          .theta(view.config.force.theta)
+          .gravity(view.config.force.gravity)
+          .alpha(view.config.force.alpha)
+          .chargeDistance(view.config.force.chargeDistance)
           .charge(function (n) {
             if (view.map.selected.indexOf(n.key) > -1)
-              return config.force.charge * Math.pow(config.node.scaleFactor, 2);
+              return view.config.force.charge * Math.pow(view.config.node.scaleFactor, 2);
 
-            return config.force.charge;
+            return view.config.force.charge;
           })
           .on('tick', tick);
 
         update = function () {
-          var nodes = graph.nodes,
+          var nodes = graph.nodes.filter(function (n) { return n.edges.length; }),
             edges = graph.edges;
 
           force
@@ -453,7 +578,30 @@ views.Map = View.extend({
             .links(edges)
             .start();
 
-          edge = edge.data(edges, function (e) { return e.key; });
+          node = node.data(nodes, nodes.key);
+
+          node.exit().remove();
+
+          node.enter()
+              .append('svg:circle')
+              .attr('id', function (n) { return 'node-' + n.key; })
+              .attr('cx', function (n) { return n.x; })
+              .attr('cy', function (n) { return n.y; })
+              .attr('r', view.config.node.radius)
+              .attr('width', view.config.sprite.width)
+              .attr('height', view.config.sprite.height)
+              .attr('class', function (n) {
+                if (view.map.selected.indexOf(n.key) > -1)
+                  view.map.changed = true;
+
+                if (n.isLeaf())
+                  n.classes.push('leaf');
+
+                return n.classes.join(' ');
+              })
+              .call(force.drag);
+
+          edge = edge.data(edges, edges.key);
 
           edge.exit().remove();
 
@@ -464,32 +612,17 @@ views.Map = View.extend({
               .attr('y1', function (e) { return e.source.y; })
               .attr('x2', function (e) { return e.target.x; })
               .attr('y2', function (e) { return e.target.y; })
-              .attr('stroke-width', config.edge.width)
-              .attr('stroke', config.edge.stroke)
-              .attr('class', config.edge.classes);
+              .attr('stroke-width', view.config.edge.width)
+              .attr('stroke', view.config.edge.stroke)
+              .attr('class', function (e) {
+                if (e.source.isLeaf() || e.target.isLeaf())
+                  e.classes.push('leaf-link');
 
-          node = node.data(nodes, function (n) { return n.key; });
-
-          node.exit().remove();
-
-          node.enter()
-              .append('svg:circle')
-              .attr('id', function (n) { return 'node-' + n.key; })
-              .attr('cx', function (n) { return n.x; })
-              .attr('cy', function (n) { return n.y; })
-              .attr('r', config.node.radius)
-              .attr('width', config.sprite.width)
-              .attr('height', config.sprite.height)
-              .attr('class', function (n, i) {
-                if (view.map.selected.indexOf(n.key) > -1)
-                  view.map.changed = true;
-
-                return n.classes.join(' ');
-              })
-              .call(force.drag);
+                return e.classes.join(' ');
+              });
 
           origin = node.filter(function (n, i) {
-            return n.key === graph.origin_key;
+            return n.key.equals(graph.origin.key);
           });
 
           if (view.map.changed)
@@ -514,8 +647,8 @@ views.Map = View.extend({
      * @param {UIEvent} e
      */
     resize: function (e) {
-      var width = this.$el.clientWidth,
-        height = this.$el.clientHeight;
+      var width = $('#catnip').clientWidth,
+      height = $('#catnip').clientHeight;
 
       this.config.width = width;
       this.config.height = height;
@@ -565,12 +698,16 @@ views.Map = View.extend({
 
   /**
    * @expose
-   * @param {Object=} graph
+   * @param {Graph=} graph
    * @this {views.Map}
    */
   handler: function (graph) {
-    var width = this.$el.clientWidth,
-      height = this.$el.clientHeight;
+    var width = $('#catnip').clientWidth,
+      height = $('#catnip').clientHeight,
+      midX = width / 2,
+      midY = height / 2,
+      origin,
+      newNodes;
 
     this.config.width = width;
     this.config.height = height;
@@ -578,15 +715,32 @@ views.Map = View.extend({
     if (this.config.origin.snap) {
       this.config.origin.position = this.config.origin.position || {};
       this.config.origin.position = {
-          x: width / 2,
-          y: height / 2
-        };
+        x: midX,
+        y: midY
+      };
     }
 
     if (graph) {
       this.active = true;
+
+      origin = graph.nodes.get(graph.origin.index);
+
+      origin.x = midX;
+      origin.y = midY;
+
+      newNodes = graph.nodes.filter(function (node) {
+        return !(node.x && node.y);
+      });
+
+      _distributeNodeInsertion(
+        [width, height],
+        [midX / 2, midY / 2],
+        midY / 2,
+        newNodes,
+        true);
+
       this.draw(graph);
-    } else {
+    } else if (this.active) {
       this.map.changed = true;
 
       if (this.map.force)

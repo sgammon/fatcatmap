@@ -20,8 +20,7 @@ var routes = {
   '/': function (request) {
     var state = request.state || {},
       app = this.app,
-      graph = (!app.$.stage || !app.$.stage.$.map.active) ?
-        this.graph.construct() : null;
+      graph = this.graph;
 
     state.page = state.page || { active: true };
     state.modal = state.modal || null;
@@ -30,7 +29,16 @@ var routes = {
     app.$set('modal', state.modal);
 
     app.nextTick(function () {
-      app.$broadcast('page.map', graph);
+      if (!app.$.stage || !app.$.stage.$.map.active) {
+        if (graph.active) {
+          app.$broadcast('page.map', graph.active);
+        } else {
+          graph.construct().then(function (v, e) {
+            if (!e && v)
+              app.$broadcast('page.map', v);
+          });
+        }
+      }
       app.$broadcast('detail');
     });
 
@@ -84,11 +92,20 @@ var routes = {
    * @this {ServiceContext}
    */
   '/<key>': function (request) {
+    // display key at origin. preserve detail and/or allow choice?
+  },
+
+  /**
+   * @param {Object} request
+   * @return {?Object}
+   * @this {ServiceContext}
+   */
+  '/detail/<key>': function (request) {
     var data = this.data,
       app = this.app,
       state = request.state || {},
       graph = (!app.$.stage || !app.$.stage.$.map.active) ?
-        this.graph.construct() : null;
+        this.graph.active : null;
 
     state.page = state.page || { active: true };
     state.modal = state.modal || null;
@@ -101,6 +118,8 @@ var routes = {
     });
 
     data.get(request.args.key).then(function (data, err) {
+      debugger;
+
       if (err)
         return app.error(err);
 
@@ -115,14 +134,14 @@ var routes = {
    * @return {?Object}
    * @this {ServiceContext}
    */
-  '/<key1>/and/<key2>': function (request) {
+  '/detail/<key1>/and/<key2>': function (request) {
     var data = this.data,
       app = this.app,
       key1 = request.args.key1,
       key2 = request.args.key2,
       state = request.state || {},
       graph = (!app.$.stage || !app.$.stage.$.map.active) ?
-        this.graph.construct() : null;
+        this.graph.active : null;
 
     state.page = state.page || { active: true };
     state.modal = state.modal || null;

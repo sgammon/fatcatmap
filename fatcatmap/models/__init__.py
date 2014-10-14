@@ -25,8 +25,8 @@ from canteen.model import (Key,
 ## Globals
 fixtures = set()
 _spawn = lambda _t: defaultdict(_t)
-_ptree, _ttree, _models, _graph = (
-  _spawn(set), _spawn(set), {}, _spawn(lambda: _spawn(set)))
+_ptree, _ttree, _models, _graph, _descriptors = (
+  _spawn(set), _spawn(set), {}, _spawn(lambda: _spawn(set)), _spawn(set))
 tupleify = lambda subj, _def=None: (((subj,) if subj and not (
                                     isinstance(subj, tuple)) else subj) if (
                                     subj is not _def) else _def)
@@ -38,9 +38,29 @@ class BaseModel(model.Model):
 
   __adapter__, __description__ = "RedisWarehouse", None
 
-  # created/modified
-  created = datetime, {'indexed': True, 'default': lambda _: datetime.now()}
-  modified = datetime, {'indexed': True, 'validate': lambda _: datetime.now()}
+  @classmethod
+  def query(cls, *args, **kwargs):
+
+    ''' Forced passthrough to parent method, such that the model's kind
+        remains intact.
+
+        :param args: Positional arguments to pass to the ``Query``
+          constructor.
+
+        :param kwargs: Keyword arguments to pass to the ``Query``
+          constructor.
+
+        :returns: :py:class:`canteen.model.query.Query` instance. '''
+
+    kwargs['adapter'] = kwargs.get('adapter', cls.__adapter__)
+    return model.Model.query(*args, **kwargs) if cls is BaseModel else (
+      super(BaseModel, cls).query(*args, **kwargs))
+
+
+class BaseDescriptor(BaseModel):
+
+  ''' Base model for objects that describe other objects in some way
+      or another. '''
 
 
 class BaseVertex(BaseModel, model.Vertex):
@@ -136,6 +156,24 @@ class BaseVertex(BaseModel, model.Vertex):
 
     return cls(**kwargs)
 
+  @classmethod
+  def query(cls, *args, **kwargs):
+
+    ''' Forced passthrough to parent method, such that the model's kind
+        remains intact.
+
+        :param args: Positional arguments to pass to the ``Query``
+          constructor.
+
+        :param kwargs: Keyword arguments to pass to the ``Query``
+          constructor.
+
+        :returns: :py:class:`canteen.model.query.Query` instance. '''
+
+    kwargs['adapter'] = kwargs.get('adapter', cls.__adapter__)
+    return model.Vertex.query(*args, **kwargs) if cls is BaseVertex else (
+      super(BaseVertex, cls).query(*args, **kwargs))
+
 
 class BaseEdge(BaseModel, model.Edge):
 
@@ -143,6 +181,24 @@ class BaseEdge(BaseModel, model.Edge):
       functionality and driver support. '''
 
   native = Key, {'embedded': True, 'indexed': True, 'required': True}
+
+  @classmethod
+  def query(cls, *args, **kwargs):
+
+    ''' Forced passthrough to parent method, such that the model's kind
+        remains intact.
+
+        :param args: Positional arguments to pass to the ``Query``
+          constructor.
+
+        :param kwargs: Keyword arguments to pass to the ``Query``
+          constructor.
+
+        :returns: :py:class:`canteen.model.query.Query` instance. '''
+
+    kwargs['adapter'] = kwargs.get('adapter', cls.__adapter__)
+    return model.Edge.query(*args, **kwargs) if cls is BaseEdge else (
+      super(BaseVertex, cls).query(*args, **kwargs))
 
 
 class Spec(object):
@@ -158,7 +214,8 @@ class Spec(object):
                                   ('__keyname__', False),
                                   ('__graph_spec__', None),
                                   ('__topic__', None),
-                                  ('__reindex__', None)))
+                                  ('__reindex__', None),
+                                  ('__embedded__', None)))
 
   def __init__(self,
                root=False,
@@ -168,7 +225,8 @@ class Spec(object):
                descriptor=False,
                keyname=False,
                topic=None,
-               reindex=None):
+               reindex=None,
+               embedded=False):
 
     ''' Describe a catnip model class with extra, model-level schema. This
         includes any of the following:
@@ -215,11 +273,15 @@ class Spec(object):
 
         :param reindex: Flag indicating that this type should be indexed against
           when saving indexes for child types. Defaults to ``False``, unless this
-          type is ``abstract``, in which case it defaults to ``True``. '''
+          type is ``abstract``, in which case it defaults to ``True``.
+
+        :param embedded: Flag indicating that this model may be used as an embedded
+          entity, meaning it is allowed for storage beyond descriptor or abstract
+          requirements. '''
 
     # initialize
-    self.__root__, self.__parent__, self.__type__, self.__keyname__ = (
-      root, tupleify(parent, None), tupleify(type, None), keyname)
+    self.__root__, self.__parent__, self.__type__, self.__keyname__, self.__embedded__ = (
+      root, tupleify(parent, None), tupleify(type, None), keyname, embedded)
 
     # extended flags
     self.__abstract__, self.__descriptor__, self.__graph_spec__, self.__topic__ = (
@@ -304,7 +366,7 @@ class Spec(object):
 
         :returns: Original :py:class:`Model` subclass, post-inejction. '''
 
-    def injected_new(cls, *args, **kwargs):
+    def injected_new(klass, *args, **kwargs):
 
       ''' Default instance spawn method, overridden in subclasses to enforce
           schema. Just passes args and kwargs along to the model constructor.
@@ -318,12 +380,32 @@ class Spec(object):
           :returns: Spawned :py:class:`Model` instance with positional and
             keyword arguments ``args``/``kwargs``. '''
 
-      return cls(*args, **kwargs)
+      desc = klass.__description__
 
-    if not hasattr(target, 'new'):
-      target.new = classmethod(injected_new)
+      if desc.descriptor:
 
-    # unconditionally apply basemodel's adapter
+        if len(args) > 2 or not desc.embedded:
+          assert len(args) > 2, (
+            "descriptors must have at least a parent and keypath")
+
+          # make a descriptor-style key and construct
+          # @TODO(sgammon): full descriptor keys with classes and shit
+          parent, keypath = args[:2]
+          kwargs.update({'key': model.Key(klass, keypath, parent=parent)})
+          return klass(*args[2:], **kwargs)
+      return klass(*args, **kwargs)
+
+    injected_new.__default__ = True  # flag as default
+
+    # set constructor and unconditionally apply basemodel's adapter
+    if hasattr(target, 'new') and getattr(target.new, '__func__') and (
+          getattr(target.new.__func__, '__default__', False)) or not (
+          hasattr(target, 'new')):
+      setattr(target, 'new', classmethod(injected_new))
+
+    else:
+      setattr(target, 'new', getattr(target, 'new', classmethod(injected_new)))
+
     target.__adapter__ = BaseModel.__adapter__
     return target
 
@@ -440,7 +522,7 @@ class Spec(object):
     return _apply(target) if target else _apply
 
   # -- property accessors -- #
-  root, type, parent, keyname, descriptor, abstract, graph, topic, reindex = (
+  root, type, parent, keyname, descriptor, abstract, graph, topic, reindex, embedded = (
     property(lambda self: self.__root__),
     property(lambda self: self.__type__),
     property(lambda self: self.__parent__),
@@ -449,7 +531,8 @@ class Spec(object):
     property(lambda self: self.__abstract__),
     property(lambda self: self.__graph_spec__),
     property(lambda self: self.__topic__),
-    property(lambda self: self.__reindex__))
+    property(lambda self: self.__reindex__),
+    property(lambda self: self.__embedded__))
 
 
 def report_structure():  # pragma: no cover
@@ -493,6 +576,17 @@ def report_structure():  # pragma: no cover
   print("\n\n")
 
 
+def get_warehouse():
+
+  ''' Utility function for retrieving a valid ``WarehouseAdapter``
+      instance that can be used for model storage.
+
+      :returns: Instance of :py:class:`WarehouseAdapter`-compliant
+        active adapter class. '''
+
+  return BaseModel.__adapter__
+
+
 # bind model metadata
 meta = struct.ObjectProxy({
   'graph': _graph, 'tree': _ttree, 'hierarchy': _ptree})
@@ -500,9 +594,10 @@ all = struct.WritableObjectProxy()  # shortcut to all models
 
 # map aliases
 describe = Spec.describe
-Model, Vertex, Edge = (BaseModel,
-                       BaseVertex,
-                       BaseEdge)
+Model, Vertex, Edge, Descriptor = (BaseModel,
+                                   BaseVertex,
+                                   BaseEdge,
+                                   BaseDescriptor)
 
 
 __all__ = ('abstract',
@@ -519,4 +614,8 @@ __all__ = ('abstract',
            'graph',
            'person',
            'place',
-           'session')
+           'session',
+           'Model',
+           'Vertex',
+           'Edge',
+           'Descriptor')

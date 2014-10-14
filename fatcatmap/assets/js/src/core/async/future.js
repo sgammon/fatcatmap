@@ -6,11 +6,12 @@
  *          Sam Gammon <sam@momentum.io>,
  *          Alex Rosner <alex@momentum.io>,
  *          Ian Weisberger <ian@momentum.io>
- * 
+ *
  * copyright (c) momentum labs, 2014
  */
 
 goog.require('util.array');
+goog.require('util.object');
 goog.require('async.decorators');
 
 goog.provide('async.future');
@@ -97,7 +98,7 @@ Future.prototype.then = function (pending) {
   } else {
     cb = function (value, error) {
       if (error)
-        return next.fulfill(false, error);
+        return (pending(false, error), next.fulfill(false, error));
 
       try {
         next.fulfill(pending(value, error));
@@ -143,7 +144,7 @@ MultiFuture = function (futures) {
   this.all(futures);
 };
 
-MultiFuture.prototype = new Future();
+util.object.inherit(MultiFuture, Future);
 
 /**
  * Adds an additional unresolved value to the MultiFuture.

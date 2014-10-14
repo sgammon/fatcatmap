@@ -85,6 +85,10 @@ config = cfg.Config(app={
     'assets': os.path.join(app, 'assets'),
     'favicon': os.path.join(app, 'assets', 'img', 'favicon.ico'),
 
+    'scripts': {
+      'db': os.path.join(project, 'scripts', 'db'),
+      'instance': os.path.join(project, 'scripts', 'instance')},
+
     'templates': {
       'source': os.path.join(app, 'templates/source'),
       'compiled': 'fatcatmap.templates.compiled'}
@@ -117,7 +121,7 @@ config = cfg.Config(app={
     'tools': {
       'enabled': True},
 
-    'dataset': 'legacy-v4'
+    'dataset': 'alpha-v10'
 
   },
 
@@ -127,7 +131,8 @@ config = cfg.Config(app={
   'http': {
 
     # Default headers to add
-    'headers': {}
+    'headers': {} if not __debug__ else ({
+      'Catnip-Version': '-'.join(('.'.join(map(unicode, __version__[0])), __version__[1][1]))})
 
   },
 

@@ -9,9 +9,9 @@
  * copyright (c) momentum labs, 2014
  */
 
-goog.provide('supports');
+goog.provide('support');
 
-var supports = /** @struct */{
+var support = /** @struct */{
 
   /**
    * @type {boolean}

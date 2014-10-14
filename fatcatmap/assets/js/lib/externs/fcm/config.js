@@ -11,73 +11,73 @@
  */
 
 /** @typedef {Object} */
-var JSContext = {};
+var JSConfig = {};
 
 /** @type {boolean} */
-JSContext.pagedata;
+JSConfig.pagedata;
 
 /** @type {Object} */
-JSContext.protocol;
+JSConfig.protocol;
 
 /** @type {Object} */
-JSContext.protocol.rpc;
+JSConfig.protocol.rpc;
 
 /** @type {boolean} */
-JSContext.protocol.rpc.enabled;
+JSConfig.protocol.rpc.enabled;
 
 /** @type {boolean} */
-JSContext.protocol.rpc.secure;
+JSConfig.protocol.rpc.secure;
 
 /** @type {string} */
-JSContext.protocol.rpc.host;
+JSConfig.protocol.rpc.host;
 
 /** @type {number} */
-JSContext.protocol.rpc.version;
+JSConfig.protocol.rpc.version;
 
 /** @type {Object} */
-JSContext.protocol.realtime;
+JSConfig.protocol.realtime;
 
 /** @type {boolean} */
-JSContext.protocol.realtime.enabled;
+JSConfig.protocol.realtime.enabled;
 
 /** @type {boolean} */
-JSContext.protocol.realtime.secure;
+JSConfig.protocol.realtime.secure;
 
 /** @type {string} */
-JSContext.protocol.realtime.host;
+JSConfig.protocol.realtime.host;
 
 /** @type {number} */
-JSContext.protocol.realtime.version;
+JSConfig.protocol.realtime.version;
 
 /** @type {Object} */
-JSContext.session;
+JSConfig.session;
 
 /** @type {boolean} */
-JSContext.session.established;
+JSConfig.session.established;
 
 /** @type {Object} */
-JSContext.session.payload;
+JSConfig.session.payload;
 
 /** @type {Object} */
-JSContext.agent;
+JSConfig.agent;
 
 /** @type {Object} */
-JSContext.agent.capabilities;
+JSConfig.agent.capabilities;
 
 /** @type {boolean} */
-JSContext.agent.capabilities.webp;
+JSConfig.agent.capabilities.webp;
 
 /** @type {boolean} */
-JSContext.agent.capabilities.spdy;
+JSConfig.agent.capabilities.spdy;
 
 /** @type {boolean} */
-JSContext.agent.capabilities.webm;
+JSConfig.agent.capabilities.webm;
 
 /** @type {Array.<Array.<(string|Array.<string>|Object.<string, string>)>>} */
-JSContext.services;
+JSConfig.services;
 
 /** @type {Object} */
-JSContext.template;
+JSConfig.template;
 
 /** @type {Object.<string, string>} */
-JSContext.template.manifest;
+JSConfig.template.manifest;

@@ -59,7 +59,7 @@ var MessageCallbackMap;
 
 /**
  * Represents a pipelined callback.
- * @typedef {function(*=, Error=)}
+ * @typedef {function(*=, Error=):*}
  * @throws {Error} If uncaught.
  */
 var PipelinedCallback;

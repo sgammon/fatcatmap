@@ -9,7 +9,7 @@
  * copyright (c) momentum labs, 2014
  */
 
-goog.require('services');
+goog.require('service');
 goog.require('services.storage');
 
 goog.provide('services.auth');

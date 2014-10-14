@@ -8,14 +8,14 @@
  * copyright (c) momentum labs, 2014
  */
 
-goog.require('util.structs');
+goog.require('util.struct');
 
-describe('util.structs', function () {
+describe('util.struct', function () {
   var current, prev, next;
 
   beforeEach(function () {
-    prev = new util.structs.ListItem('prev');
-    next = new util.structs.ListItem('next');
+    prev = new util.struct.ListItem('prev');
+    next = new util.struct.ListItem('next');
   });
 
   afterEach(function () {
@@ -23,7 +23,7 @@ describe('util.structs', function () {
   });
 
   it('should instantiate a sole ListItem', function () {
-    current = new util.structs.ListItem('current');
+    current = new util.struct.ListItem('current');
 
     expect(current.data).toEqual('current');
     expect(current.previous).toEqual(null);
@@ -31,7 +31,7 @@ describe('util.structs', function () {
   });
 
   it('should instantiate a ListItem after an item', function () {
-    current = new util.structs.ListItem('current', prev);
+    current = new util.struct.ListItem('current', prev);
 
     expect(current.data).toEqual('current');
     expect(current.previous).toEqual(prev);
@@ -42,7 +42,7 @@ describe('util.structs', function () {
   });
 
   it('should instantiate a ListItem before an item', function () {
-    current = new util.structs.ListItem('current', null, next);
+    current = new util.struct.ListItem('current', null, next);
 
     expect(current.data).toEqual('current');
     expect(current.previous).toEqual(null);
@@ -53,7 +53,7 @@ describe('util.structs', function () {
   });
 
   it('should instantiate a ListItem between two items', function () {
-    current = new util.structs.ListItem('current', prev, next);
+    current = new util.struct.ListItem('current', prev, next);
 
     expect(current.data).toEqual('current');
     expect(current.previous).toEqual(prev);

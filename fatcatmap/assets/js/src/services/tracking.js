@@ -11,7 +11,7 @@
  */
 
 goog.require('util.url');
-goog.require('services');
+goog.require('service');
 goog.require('services.http');
 
 goog.provide('services.tracking');

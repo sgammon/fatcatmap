@@ -11,7 +11,7 @@
  */
 
 goog.require('async.future');
-goog.require('services');
+goog.require('service');
 goog.require('services.rpc');
 
 goog.provide('services.template');
@@ -45,7 +45,10 @@ services.template = /** @lends {ServiceContext.prototype.template} */ {
       throw new TypeError('template.get() requires a string filename.');
 
     if (TEMPLATES[filename]) {
-      template.fulfill(TEMPLATES[filename]);
+      template.fulfill({
+        path: filename,
+        source: TEMPLATES[filename]
+      });
     } else {
       this.rpc.content.template({
         data: {

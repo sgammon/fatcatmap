@@ -7,10 +7,12 @@
 '''
 
 # submodules
+from . import data
 from . import graph
 from . import content
 
 # sub-submodules
+from .data import *
 from .graph import *
 from .content import *
 
@@ -19,6 +21,7 @@ from .search import *
 
 
 __all__ = (
+  'data',
   'content',
   'graph',
   'search')

@@ -10,8 +10,8 @@
  */
 
 goog.require('util.url');
-goog.require('supports');
-goog.require('services');
+goog.require('support');
+goog.require('service');
 
 goog.provide('services.socket');
 
@@ -26,7 +26,7 @@ Socket = function (url, listeners) {
 
 };
 
-if (supports.socket) {
+if (support.socket) {
   /**
    * @expose
    */

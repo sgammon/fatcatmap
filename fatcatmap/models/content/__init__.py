@@ -8,9 +8,11 @@
 
 # submodules
 from . import text
+from . import images
 
 # symbols
 from .text import *
+from .images import *
 
 
-__all__ = ('text',)
+__all__ = ('text', 'images', 'video')

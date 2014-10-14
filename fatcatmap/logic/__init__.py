@@ -10,6 +10,10 @@
 from . import db
 from .db import *
 
+# data
+from . import data
+from .data import *
+
 # views
 from . import views
 from .views import *
@@ -18,15 +22,15 @@ from .views import *
 from . import search
 from .search import *
 
-# grapher
-from . import grapher
-from .grapher import *
+# graph
+from . import graph
+from .graph import *
 
 
 __all__ = ('db',
            'views',
            'search',
-           'grapher',
+           'graph',
            'Graph',
            'Grapher',
-           'GraphOptions')
+           'Options')

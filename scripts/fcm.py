@@ -367,7 +367,8 @@ class FCM(cli.Tool):
           'port': lambda v: ('p', v),
           'socket': lambda v: ('s', v),
           'password': lambda v: ('a', v),
-          'database': lambda v: ('n', v)}[item](value))
+          'database': lambda v: ('n', v),
+          'unix_socket_path': lambda v: ('s', v)}[item](value))
       return " ".join(map(lambda arg: "-%s %s" % arg, args))
 
     @classmethod

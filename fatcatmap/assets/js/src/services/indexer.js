@@ -11,8 +11,8 @@
 
 goog.require('async.task');
 goog.require('async.future');
-goog.require('supports');
-goog.require('services');
+goog.require('support');
+goog.require('service');
 goog.require('services.storage');
 
 goog.provide('services.indexer');

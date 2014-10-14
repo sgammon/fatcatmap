@@ -11,8 +11,9 @@
  */
 
 goog.require('util.object');
+goog.require('event');
 
-goog.provide('services');
+goog.provide('service');
 
 var ServiceContext, Service;
 
@@ -22,7 +23,17 @@ var ServiceContext, Service;
  */
 ServiceContext = function () {};
 
-ServiceContext.prototype = {};
+ServiceContext.prototype = {
+  /**
+   * @param {string} name
+   * @param {(Service|function(this: ServiceContext, ...[*]))} service
+   * @return {(Service|function(this: ServiceContext, ...[*]))}
+   */
+  inject: function (name, service) {
+    util.object.resolveAndSet(ServiceContext.prototype, name, service);
+    return service;
+  }
+};
 
 /**
  * @static
@@ -30,21 +41,21 @@ ServiceContext.prototype = {};
  * @param {(Service|function(this: ServiceContext, ...[*]))} service
  * @return {(Service|function(this: ServiceContext, ...[*]))}
  */
-ServiceContext.register = function (name, service) {
-  util.object.resolveAndSet(ServiceContext.prototype, name, service);
-  return service;
-};
+ServiceContext.inject = ServiceContext.prototype.inject;
 
 /**
  * ServiceContext-injected class.
  * @constructor
+ * @extends {event.Emitter}
  * @param {string} name
  * @param {Object.<string, function(...)>=} methods
  * @throws {TypeError} If name is not a string.
  */
 Service = function (name, methods) {
   if (typeof name !== 'string')
-    throw new TypeError('Service() requires a service name to register.');
+    throw new TypeError('Service() requires a service name to inject at.');
+
+  event.Emitter.call(this);
 
   if (methods) {
     for (var k in methods) {
@@ -53,11 +64,12 @@ Service = function (name, methods) {
     }
   }
 
-  ServiceContext.register(name, this);
+  ServiceContext.inject(name, this);
 };
 
 Service.prototype = new ServiceContext();
 
+util.object.mixin(Service, event.Emitter);
 
 Object.defineProperty(Function.prototype, 'inject', {
   /**
@@ -127,7 +139,7 @@ Object.defineProperty(Function.prototype, 'service', {
    * @this {Function}
    */
    value: function (name) {
-    return ServiceContext.register(name, this.inject());
+    return ServiceContext.inject(name, this.inject());
   }
 });
 

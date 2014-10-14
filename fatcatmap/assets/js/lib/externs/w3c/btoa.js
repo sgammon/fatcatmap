@@ -1,5 +1,5 @@
 /**
- * @fileoverview apptools.js type definitions.
+ * @fileoverview Base64 extern.
  *
  * @author  David Rekow <david@momentum.io>,
  *          Sam Gammon <sam@momentum.io>,
@@ -11,11 +11,13 @@
  */
 
 /**
- * @type {Object}
+ * @param {string} raw
+ * @return {string}
  */
-var apptools;
+window.btoa = function (raw) {};
 
 /**
- * @param {Object} data
+ * @param {string} encoded
+ * @return {string}
  */
-var receive = function (data) {};
+window.atob = function (encoded) {};
