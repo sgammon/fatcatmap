@@ -5,7 +5,7 @@
  *          Sam Gammon <sam@momentum.io>,
  *          Alex Rosner <alex@momentum.io>,
  *          Ian Weisberger <ian@momentum.io>
- * 
+ *
  * copyright (c) momentum labs, 2014
  */
 
@@ -17,6 +17,7 @@ goog.require('services.template');
 goog.require('services.data');
 goog.require('services.view');
 goog.require('services.graph');
+goog.require('services.search');
 goog.require('services.indexer');
 goog.require('views.App');
 
