@@ -18,7 +18,7 @@ goog.require('services.graph');
 
 goog.provide('views.Map');
 
-var PI, _distributeNodeInsertion;
+var PI, _distributeNodeInsertion, _calculateLeafLinkAdjustment;
 
 PI = Math.PI;
 
@@ -28,7 +28,7 @@ PI = Math.PI;
  * @param {Array.<number>} origin X and Y coordinates of the origin.
  * @param {number} radius Radius of the enclosing circle, in pixels.
  * @param {Array.<models.graph.GraphNode>} nodes Nodes to calculate.
- * @param {boolean} full If true, calculates circle rather than arc.
+ * @param {boolean=} full If true, calculates nodes for full circle.
  */
 _distributeNodeInsertion = function (size, origin, radius, nodes, full) {
   var midX = size[0] / 2,
@@ -54,6 +54,31 @@ _distributeNodeInsertion = function (size, origin, radius, nodes, full) {
 
     theta += offset;
   }
+};
+
+/**
+ * Given a bounding size, radius, & leaf and peer node, calculates (x, y) adjustment for leaf-side
+ * link position to align exactly with the outer edge of the node. Prevents ugly link/node overlap
+ * when alpha values are changed on nodes in the graph. Updates the edge object.
+ * @param {number} radius Leaf radius, in pixels.
+ * @param {models.graph.GraphNode} leaf Leaf node.
+ * @param {models.graph.GraphNode} peer Node at other end of the adjusted link.
+ * @return {Object.<{ x: number, y: number }>}
+ */
+_calculateLeafLinkAdjustment = function (radius, leaf, peer) {
+  var theta = Math.atan((leaf.y - peer.y) / (leaf.x - peer.x)),
+    diff = {
+      x: radius * Math.cos(theta),
+      y: radius * Math.sin(theta)
+    };
+
+  if (leaf.x > peer.x)
+    diff.x = -diff.x;
+
+  if (leaf.y > peer.y)
+    diff.y = -diff.y;
+
+  return diff;
 };
 
 /**
@@ -478,17 +503,16 @@ views.Map = View.extend({
         edge = root.selectAll(selectors.edge);
 
         tick = function () {
-          var config = view.config,
-            radius = config.node.radius;
+          var radius = view.config.node.radius;
 
           // Start force first to ensure nodes have x/y values.
           view.map.force.start();
 
           if (graph.origin) {
             // Sync origin position, handling snap if enabled.
-            if (config.origin.snap) {
-              graph.nodes.get(graph.origin.index).x = config.origin.position.x;
-              graph.nodes.get(graph.origin.index).y = config.origin.position.y;
+            if (view.config.origin.snap) {
+              graph.nodes.get(graph.origin.index).x = view.config.origin.position.x;
+              graph.nodes.get(graph.origin.index).y = view.config.origin.position.y;
             } else {
               view.config.origin.position = {
                 x: graph.nodes.get(graph.origin.index).x,
@@ -514,14 +538,14 @@ views.Map = View.extend({
                 .transition()
                 .duration(150)
                 .ease('cubic')
-                .attr('r', config.node.radius);
+                .attr('r', radius);
 
             node.filter(function (n) { return view.map.selected.indexOf(n.key) > -1; })
                 .classed({'selected': true})
                 .transition()
                 .duration(150)
                 .ease('cubic')
-                .attr('r', config.node.radius * config.node.scaleFactor);
+                .attr('r', radius * view.config.node.scaleFactor);
 
             view.map.changed = false;
           }
@@ -529,31 +553,53 @@ views.Map = View.extend({
 
         force = d3.layout
           .force()
-          .size([config.width, config.height])
-          .linkDistance(config.force.distance)
-          .linkStrength(config.force.strength)
-          .friction(config.force.friction)
-          .theta(config.force.theta)
-          .gravity(config.force.gravity)
-          .alpha(config.force.alpha)
-          .chargeDistance(config.force.chargeDistance)
+          .size([view.config.width, view.config.height])
+          .linkDistance(view.config.force.distance)
+          .linkStrength(view.config.force.strength)
+          .friction(view.config.force.friction)
+          .theta(view.config.force.theta)
+          .gravity(view.config.force.gravity)
+          .alpha(view.config.force.alpha)
+          .chargeDistance(view.config.force.chargeDistance)
           .charge(function (n) {
             if (view.map.selected.indexOf(n.key) > -1)
-              return config.force.charge * Math.pow(config.node.scaleFactor, 2);
+              return view.config.force.charge * Math.pow(view.config.node.scaleFactor, 2);
 
-            return config.force.charge;
+            return view.config.force.charge;
           })
           .on('tick', tick);
 
         update = function () {
-          var config = view.config,
-            nodes = graph.nodes.filter(function (n) { return n.edges.length; }),
+          var nodes = graph.nodes.filter(function (n) { return n.edges.length; }),
             edges = graph.edges;
 
           force
             .nodes(nodes)
             .links(edges)
             .start();
+
+          node = node.data(nodes, nodes.key);
+
+          node.exit().remove();
+
+          node.enter()
+              .append('svg:circle')
+              .attr('id', function (n) { return 'node-' + n.key; })
+              .attr('cx', function (n) { return n.x; })
+              .attr('cy', function (n) { return n.y; })
+              .attr('r', view.config.node.radius)
+              .attr('width', view.config.sprite.width)
+              .attr('height', view.config.sprite.height)
+              .attr('class', function (n) {
+                if (view.map.selected.indexOf(n.key) > -1)
+                  view.map.changed = true;
+
+                if (n.isLeaf())
+                  n.classes.push('leaf');
+
+                return n.classes.join(' ');
+              })
+              .call(force.drag);
 
           edge = edge.data(edges, edges.key);
 
@@ -566,29 +612,14 @@ views.Map = View.extend({
               .attr('y1', function (e) { return e.source.y; })
               .attr('x2', function (e) { return e.target.x; })
               .attr('y2', function (e) { return e.target.y; })
-              .attr('stroke-width', config.edge.width)
-              .attr('stroke', config.edge.stroke)
-              .attr('class', config.edge.classes);
+              .attr('stroke-width', view.config.edge.width)
+              .attr('stroke', view.config.edge.stroke)
+              .attr('class', function (e) {
+                if (e.source.isLeaf() || e.target.isLeaf())
+                  e.classes.push('leaf-link');
 
-          node = node.data(nodes, edges.key);
-
-          node.exit().remove();
-
-          node.enter()
-              .append('svg:circle')
-              .attr('id', function (n) { return 'node-' + n.key; })
-              .attr('cx', function (n) { return n.x; })
-              .attr('cy', function (n) { return n.y; })
-              .attr('r', config.node.radius)
-              .attr('width', config.sprite.width)
-              .attr('height', config.sprite.height)
-              .attr('class', function (n, i) {
-                if (view.map.selected.indexOf(n.key) > -1)
-                  view.map.changed = true;
-
-                return n.classes.join(' ');
-              })
-              .call(force.drag);
+                return e.classes.join(' ');
+              });
 
           origin = node.filter(function (n, i) {
             return n.key.equals(graph.origin.key);
@@ -671,20 +702,19 @@ views.Map = View.extend({
    * @this {views.Map}
    */
   handler: function (graph) {
-    var config = this.config,
-      width = $('#catnip').clientWidth,
+    var width = $('#catnip').clientWidth,
       height = $('#catnip').clientHeight,
       midX = width / 2,
       midY = height / 2,
       origin,
       newNodes;
 
-    config.width = width;
-    config.height = height;
+    this.config.width = width;
+    this.config.height = height;
 
-    if (config.origin.snap) {
-      config.origin.position = config.origin.position || {};
-      config.origin.position = {
+    if (this.config.origin.snap) {
+      this.config.origin.position = this.config.origin.position || {};
+      this.config.origin.position = {
         x: midX,
         y: midY
       };
@@ -699,7 +729,7 @@ views.Map = View.extend({
       origin.y = midY;
 
       newNodes = graph.nodes.filter(function (node) {
-        return !(node.x && node.y)
+        return !(node.x && node.y);
       });
 
       _distributeNodeInsertion(

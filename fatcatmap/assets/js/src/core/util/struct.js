@@ -165,4 +165,9 @@ BiLinkedList.prototype.rpop = function () {
   return tail.data;
 };
 
+/**
+ * @constructor
+ * @param {Array.<*>=} items
+ * @param {number=} limit
+ */
 util.struct.BiLinkedList = BiLinkedList;

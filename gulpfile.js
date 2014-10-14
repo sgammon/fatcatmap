@@ -122,12 +122,14 @@ config = {
       use_types_for_optimization: null,
       generate_exports: null,
       externs: [
+        ASSET_PREFIX + 'js/lib/externs/w3c/btoa.js',
         ASSET_PREFIX + 'js/lib/externs/w3c/EventSource.js',
         ASSET_PREFIX + 'js/lib/externs/w3c/pointer-events.js',
         ASSET_PREFIX + 'js/lib/externs/jasmine/jasmine.js',
-        ASSET_PREFIX + 'js/lib/externs/fcm/jsconfig.js',
-        ASSET_PREFIX + 'js/lib/externs/fcm/pagedata.js',
+        ASSET_PREFIX + 'js/lib/externs/fcm/config.js',
         ASSET_PREFIX + 'js/lib/externs/fcm/types.js',
+        ASSET_PREFIX + 'js/lib/externs/fcm/graph.js',
+        ASSET_PREFIX + 'js/lib/externs/fcm/data.js',
         ASSET_PREFIX + 'js/lib/externs/vue/vue.js',
         ASSET_PREFIX + 'js/lib/externs/d3/d3.js'
       ]
@@ -194,7 +196,7 @@ task('closure:min', function () {
   cfg.sourceRoot = '/assets/js/src';
   return src(inputs.js.app)
     .pipe(sourcemaps.init())
-    .pipe(closure(merge(config.closure.common, config.closure.min)))
+    .pipe(closure(merge(config.closure.app, config.closure.min)))
     .pipe(sourcemaps.write(
       path.relative(ASSET_PREFIX + 'js/src', outputs.sourcemaps + ASSET_PREFIX + 'js/'),
       cfg))
@@ -207,7 +209,7 @@ task('closure:debug', function () {
   cfg.sourceRoot = '/assets/js/src';
   return src(inputs.js.app)
     .pipe(sourcemaps.init())
-    .pipe(closure(merge(config.closure.common, config.closure.debug)))
+    .pipe(closure(merge(config.closure.app, config.closure.debug)))
     .pipe(sourcemaps.write(
       path.relative(ASSET_PREFIX + 'js/src', outputs.sourcemaps + ASSET_PREFIX + 'js/'),
       cfg))
@@ -220,7 +222,7 @@ task('closure:pretty', function () {
   cfg.sourceRoot = '/assets/js/src';
   return src(inputs.js.app)
     .pipe(sourcemaps.init())
-    .pipe(closure(merge(config.closure.common, config.closure.pretty)))
+    .pipe(closure(merge(config.closure.app, config.closure.pretty)))
     .pipe(sourcemaps.write(
       path.relative(ASSET_PREFIX + 'js/src', outputs.sourcemaps + ASSET_PREFIX + 'js/'),
       cfg))
@@ -232,7 +234,7 @@ task('closure:test', function (cb) {
   var sources = [],
     tests = [],
     run = function () {
-      var cfg = merge(config.closure.common, config.closure.test);
+      var cfg = merge(config.closure.app, config.closure.test);
 
       delete cfg.closure_entry_point;
       delete cfg.only_closure_dependencies;

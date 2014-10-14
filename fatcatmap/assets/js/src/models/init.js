@@ -227,7 +227,7 @@ util.object.extend(Key, /** @lends {Key} */{
     var keys, index;
 
     if (!(Array.isArray(packed) && Array.isArray(kinds)))
-      throw new TypeError('_inflateKeys expects a list of packed keys and list of kinds.');
+      throw new TypeError('Key.unpack() expects a list of packed keys and list of kinds.');
 
     keys = new KeyIndexedList().key(
       /**
@@ -245,7 +245,7 @@ util.object.extend(Key, /** @lends {Key} */{
         parent = parts.length ? keys[+parts.shift()] : null;
 
       if (!(kind && id))
-        throw new Error('Can\'t unpack malformed key: ' + key);
+        throw new Error('Key.unpack() can\'t unpack malformed key: ' + key);
 
       keys.push(new Key(kind, id, parent));
     });
@@ -260,7 +260,7 @@ util.object.extend(Key, /** @lends {Key} */{
    * @throws {TypeError} If <code>safe</code> is not a string.
    */
   encode: function (flat) {
-    return btoa(flat);
+    return window.btoa(flat);
   },
 
   /**
@@ -270,7 +270,7 @@ util.object.extend(Key, /** @lends {Key} */{
    * @throws {TypeError} If <code>safe</code> is not a string.
    */
   decode: function (flat) {
-    return atob(flat);
+    return window.atob(flat);
   },
 
   /**
@@ -380,9 +380,10 @@ Object.defineProperty(KeyedItem.prototype, 'kind', {
 /**
  * @constructor
  * @extends {Array}
- * @param {(number|...[models.KeyedItem])} item
+ * @param {(number|models.KeyedItem)} length
+ * @param {...[models.KeyedItem]} item
  */
-KeyIndexedList = function (item) {
+KeyIndexedList = function (length, item) {
   Array.apply(this, arguments);
 
   /**
@@ -423,15 +424,24 @@ util.object.mixin(KeyIndexedList, /** @lends {KeyIndexedList.prototype} */{
     if (typeof key === 'number')
       return this[key];
 
-    if (key instanceof Key)
-      key = key.urlsafe();
-
     i = this.index[key];
 
     if (i != null)
       i = this[i];
 
     return i;
+  },
+
+  /**
+   * @param {!(string|models.Key)} key
+   * @return {boolean}
+   * @throws {TypeError} If key is not a string or Key.
+   */
+  has: function (key) {
+    if (!(typeof key === 'string' || key instanceof Key))
+      throw new TypeError('KeyIndexedList.has() expects a string key or instance of Key.');
+
+    return typeof this.index[key] === 'number';
   },
 
   /**
@@ -600,7 +610,8 @@ models = {
   /**
    * @constructor
    * @extends {Array}
-   * @param {(number|...[models.KeyedItem])} item
+   * @param {(number|models.KeyedItem)} length
+   * @param {...[models.KeyedItem]} item
    */
   KeyIndexedList: KeyIndexedList
 };

@@ -18,6 +18,7 @@ goog.require('service');
 goog.require('services.rpc');
 goog.require('services.storage');
 goog.require('models');
+goog.require('models.data');
 
 goog.provide('services.data');
 
@@ -36,7 +37,7 @@ services.data = /** @lends {ServiceContext.prototype.data} */ {
 
   /**
    * @expose
-   * @type {?Object}
+   * @type {?models.KeyIndexedList}
    */
   cache: null,
 
@@ -49,7 +50,7 @@ services.data = /** @lends {ServiceContext.prototype.data} */ {
   init: function (raw, cb) {
     var data = this.data;
 
-    data.cache = {};
+    data.cache = new models.KeyIndexedList();
 
     raw.data.keys = models.Key.unpack(raw.data.keys, raw.meta.kinds);
     raw.data.keys.forEach(function (key, i) {
@@ -63,21 +64,24 @@ services.data = /** @lends {ServiceContext.prototype.data} */ {
   /**
    * @expose
    * @param {(string|models.Key)} key
-   * @param {DataObject} data
+   * @param {(DataObject|models.data.KeyedData)} data
    * @this {ServiceContext}
    * @throws {TypeError} If key is not a string or instance of Key.
    */
   receive: function (key, data) {
     if (typeof key === 'string')
-      key = models.Key.unpack(key);
+      key = models.Key.inflate(key);
 
     if (!(key instanceof models.Key))
       throw new TypeError('services.data.receive() expects a string or Key as the first param.');
 
-    this.data.cache[key] = data;
+    if (!(data instanceof models.data.KeyedData))
+      data = new models.data.KeyedData(key, data.data);
 
-    key.bind(data.data);
-    key.put();
+    data.put();
+    this.data.cache.push(data);
+
+    return data;
   },
 
 
@@ -89,31 +93,45 @@ services.data = /** @lends {ServiceContext.prototype.data} */ {
    * @throws {TypeError} If key is not a string or Key.
    */
   get: function (key) {
-    var result = new Future();
+    var data = this.data,
+      result = new Future(),
+      keys = [],
+      _key;
 
     if (typeof key === 'string')
-      key = models.Key.unpack(key);
+      key = models.Key.inflate(key);
 
     if (!(key instanceof models.Key))
       throw new TypeError('services.data.get() expects a string key or Key instance.');
 
+    keys.push(key);
+
+    _key = key.parent;
+
+    while (_key) {
+      keys.push(_key);
+      _key = _key.parent;
+    }
+
     this.rpc.data.fetch({
       /** @type {DataQuery} */
       data: {
-        keys: [key.urlsafe()]
+        keys: keys
       }
-    }).then(
-      /**
-       * @param {(Data|boolean)} data
-       * @param {Error=} error
-       */
-      function (data, error) {
-        if (!data && error)
-          return result.fulfill(false, error);
+    }).then(function (_data, error) {
+      if (!_data && error)
+        return result.fulfill(false, error);
 
-        key.bind(data.data);
-        result.fulfill(key.data());
+      _data = _data.data;
+
+      _data.objects.forEach(function (object, i) {
+        var k = models.Key.inflate(_data.keys.data[i].encoded),
+          d = data.receive(k, object);
+
+        if (key.equals(k))
+          result.fulfill(d);
       });
+    });
 
     return result;
   },
