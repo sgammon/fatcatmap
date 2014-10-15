@@ -160,6 +160,7 @@ services.router = new Service('router', /** @lends {ServiceContext.prototype.rou
       if (!(ROUTE_HISTORY.current && ROUTE_HISTORY.current.path === path))
         this.emit('routed', path, request, response);
     } else {
+      console.warn('Router could not match route: ' + path);
       this.emit('error', path, request, { status: 404 });
     }
 
