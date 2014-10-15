@@ -368,7 +368,19 @@ class WarehouseAdapter(abstract.DirectedGraphAdapter):
   @classmethod
   def generate_graph_indexes(cls, key, entity, meta, properties, graph):
 
-    '''  '''
+    ''' Generate proprietary graph-specific indexes. In particular,
+        add support for deriving edge keys from a compound relationship
+        key, produced by sorting two ``VertexKey`` instances, urlsafing
+        them, and hashing with ``SHA1``.
+
+        :param key:
+        :param entity:
+        :param meta:
+        :param properties:
+        :param graph:
+
+        :raises RuntimeError:
+        :returns: '''
 
     if hasattr(entity, '__graph__'):
 
@@ -379,7 +391,7 @@ class WarehouseAdapter(abstract.DirectedGraphAdapter):
         relationship = reduce(operator.add, sorted((k.urlsafe().replace('=', '') for k in get_peers(entity))))
         graph.append((
           cls._graph_prefix,
-          "::".join((reduce(operator.add, relationship), cls._relationship_token))))
+          "::".join((hashlib.sha1(reduce(operator.add, relationship)).hexdigest(), cls._relationship_token))))
 
       # add vertex indexes
       elif hasattr(entity, '__vertex__'):

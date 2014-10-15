@@ -93,7 +93,8 @@ class Grapher(logic.Logic):
 
     if graph and not self.caching: graph.delete()
     elif graph and self.caching:
-      return self.export(graph, session, gstruct.GraphResponse, cached=True)
+      graph.session = session or str(uuid.uuid4())
+      return graph
 
     # build graph & optionally fulfill
     graph = Graph(models.BaseModel.__adapter__, options=options).traverse(origin)
@@ -103,7 +104,12 @@ class Grapher(logic.Logic):
 
     response = self.export(graph, session, gstruct.GraphResponse)
     response.key = model.Key(gstruct.GraphResponse, fragment)
+
+    response.meta.options['cached'] = True
     if self.caching: response.put(adapter=models.BaseModel.__adapter__)
+
+    response.meta.options['cached'] = False
+    response.session = session or str(uuid.uuid4())
     return response
 
   def export(self, graph, session, message, cached=False):
@@ -187,7 +193,7 @@ class Grapher(logic.Logic):
         obj_dict = obj.to_dict() if not isinstance(obj, dict) else obj
 
         dsc, item = (
-          graph.descriptors[key] if graph.options.descriptors else {},
+          graph.descriptors[key] if (graph.options.media or graph.options.stats) else {},
           messages.GraphObject(data=obj_dict) if obj_dict else messages.GraphObject())
 
         # pack descriptors if we have any
@@ -197,8 +203,6 @@ class Grapher(logic.Logic):
     origin = plookup[graph.origin]
 
     return message(**{
-
-      'session': session or str(uuid.uuid4()),
 
       'meta': messages.Meta(**{
         'kinds': kinds,

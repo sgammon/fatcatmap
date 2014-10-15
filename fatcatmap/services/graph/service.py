@@ -42,12 +42,13 @@ class GraphService(Service):
     origin = (
       request.origin and model.Key.from_urlsafe(request.origin)) or request.origin
 
-    depth, limit, keys_only, collections, descriptors = (
+    depth, limit, keys_only, collections, media, stats = (
       (request.options and request.options.depth) or self.graph.options.defaults['depth'],
       (request.options and request.options.limit) or self.graph.options.defaults['limit'],
       (request.options.keys_only if (request.options and request.options.keys_only is not None) else self.graph.options.defaults['keys_only']),
       (request.options.collections if (request.options and request.options.collections is not None) else self.graph.options.defaults['collections']),
-      (request.options.descriptors if (request.options and request.options.descriptors is not None) else self.graph.options.defaults['descriptors']))
+      (request.options.media if (request.options and request.options.media is not None) else self.graph.options.defaults['media']),
+      (request.options.stats if (request.options and request.options.stats is not None) else self.graph.options.defaults['stats']))
 
     # construct graph
     return self.graph.construct(None, origin, **{
@@ -55,4 +56,5 @@ class GraphService(Service):
       'limit': limit,
       'keys_only': keys_only,
       'collections': collections,
-      'descriptors': descriptors})
+      'media': media,
+      'stats': stats})

@@ -66,7 +66,10 @@ class Landing(Page):
     self.staple_data(self.graph.construct(None, origin, **{
       'limit': self.request.args.get('limit', self.default_graph['limit']),
       'depth': self.request.args.get('depth', self.default_graph['depth']),
-      'keys_only': self.request.args.get('keys_only', self.default_graph['keys_only'])}).to_dict())
+      'keys_only': self.request.args.get('keys_only', self.default_graph['keys_only']),
+      'collections': True,
+      'media': True,
+      'stats': True}).to_dict())
 
     return self.render('landing.haml')
 

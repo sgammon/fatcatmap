@@ -308,11 +308,12 @@ class LegacyLegislator(ModelBinding):
 
       yield Portrait(key=Portrait.__keyclass__(
                         Portrait,
-                        'govtrack.congress.official.%s' % (
+                        'media.official.congress.%s' % (
                           {50: 'sm', 100: 'md', 200L: 'lg', 'l': 'hi'}.get(size[0] if size else 'l')),
                         parent=legislator),
                      size=size or (449, 558),
                      default=not size,
+                     provider=('govtrack', 'congress'),
                      location='raw/govtrack/photos/' + filename,
                      storage=Portrait.ImageStorage.PROXY,
                      formats=(

@@ -91,6 +91,7 @@ class Image(URI):
   ## -- content -- ##
   size = int, {'indexed': False, 'repeated': True}  # w,h tuple
   default = bool, {'indexed': False, 'default': False}
+  provider = str, {'indexed': False, 'repeated': True}
   location = str, {'indexed': False, 'required': True}
   formats = ImageFormat, {'indexed': False, 'repeated': True}
   storage = ImageStorage, {'indexed': False}
