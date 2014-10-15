@@ -82,7 +82,7 @@ class Grapher(logic.Logic):
 
     # check cache
     fragment = Graph.fragment(origin, options)
-    graph = gstruct.Graph.get(model.Key(gstruct.GraphResponse, fragment),
+    graph = gstruct.GraphResponse.get(model.Key(gstruct.GraphResponse, fragment),
                               adapter=models.BaseModel.__adapter__)
 
     if graph and not self.caching: graph.delete()
@@ -126,67 +126,64 @@ class Grapher(logic.Logic):
     kinds, options, origin = (
       [i for i in sorted(graph.kinds)],
       graph.options.serialize(),
-      graph.lookup[graph.origin])
+      None)
 
-    keys, objects, structure = [], [], []
+    keys, keypack, objects, opack, packed, plookup = [], [], [], [], set(), {}
 
     # pack objects if not keys only
     if not graph.options.keys_only:
       for key in graph.keys:
-        obj = graph.objects[key]
-        keys.append(pack_key(key, kinds, graph.lookup))
 
-        # handle empty objects
-        if obj is struct.EMPTY:
-          objects.append(None)
-        else:
+        if key not in packed:
 
-          # empty objects
-          if obj is None: obj = {}
+          packed.add(key)
+          obj = graph.objects[key]
+          keys.append(key)
+          plookup[key] = len(keys) - 1
 
-          # rollup `peers` and `source`/`target`
-          if hasattr(obj, '__edge__'):
-            if hasattr(obj, 'peers'):
-              if isinstance(obj.peers[0], (basestring, model.Key)):
-                _symbolic = []
-                for pk in obj.peers:
-                  _symbolic.append(graph.lookup[pk])
-                obj.peers = _symbolic
+          # we found the origin
+          if not origin and key == graph.origin:
+            origin = plookup[key]
 
-            elif hasattr(obj, 'source'):
-              if isinstance(obj.source, (basestring, model.Key)):
-                obj.source = graph.lookup[pk]
+          # handle empty objects
+          if obj is struct.EMPTY:
+            objects.append(None)
+          else:
 
-            elif hasattr(obj, 'target'):
-              if isinstance(obj.target, (basestring, model.Key)):
-                obj.target = graph.lookup[pk]
+            # empty objects
+            if obj is None: obj = {}
+            objects.append(obj)
 
-          elif key in graph.vertices:
+      for key, obj in zip(keys, objects):
 
-            # pack relationships
-            _neighbors, seen, _source_i = [], set(), graph.lookup[key]
-            for neighbor in graph.network[key]:
-              _neighbor_i = graph.lookup[neighbor]
+        keypack.append(pack_key(key, kinds, plookup))
 
-              # only add unique relationships
-              if (_source_i, _neighbor_i) not in seen:
-                _neighbors.append(_neighbor_i)
-                seen.add((_source_i, _neighbor_i))
+        # rollup `peers` and `source`/`target`
+        if hasattr(obj, '__edge__'):
+          if hasattr(obj, 'peers'):
+            if isinstance(obj.peers[0], (basestring, model.Key)):
+              _symbolic = []
+              for pk in obj.peers:
+                _symbolic.append(plookup[pk])
+              obj.peers = _symbolic
 
-            signature = tuple([_source_i] + _neighbors)
-            if signature not in seen:
-              seen.add(signature)
-              structure.append(",".join(map(unicode, _neighbors + [_source_i])))
+          elif hasattr(obj, 'source'):
+            if isinstance(obj.source, (basestring, model.Key)):
+              obj.source = plookup[pk]
 
-          obj_dict = obj.to_dict() if not isinstance(obj, dict) else obj
+          elif hasattr(obj, 'target'):
+            if isinstance(obj.target, (basestring, model.Key)):
+              obj.target = plookup[pk]
 
-          dsc, item = (
-            graph.descriptors[key] if graph.options.descriptors else {},
-            messages.GraphObject(data=obj_dict) if obj_dict else messages.GraphObject())
+        obj_dict = obj.to_dict() if not isinstance(obj, dict) else obj
 
-          # pack descriptors if we have any
-          if dsc: item.descriptors = dsc
-          objects.append(item)
+        dsc, item = (
+          graph.descriptors[key] if graph.options.descriptors else {},
+          messages.GraphObject(data=obj_dict) if obj_dict else messages.GraphObject())
+
+        # pack descriptors if we have any
+        if dsc: item.descriptors = dsc
+        opack.append(item)
 
     return message(**{
 
@@ -201,11 +198,8 @@ class Grapher(logic.Logic):
       }),
 
       'data': messages.Data(**{
-        'keys': keys,
-        'objects': objects
+        'keys': keypack,
+        'objects': opack
       }),
 
-      'graph': messages.Graph(**{
-        'origin': origin,
-        'structure': ":".join(set(structure))
-      })})
+      'origin': origin})
