@@ -21,7 +21,7 @@ from canteen import struct
 
 
 ## Globals
-_DEFAULT_ORIGIN = "OlBlcnNvbjoyMzQ0OkxlZ2lzbGF0b3I6NDAwMjYz"
+_DEFAULT_ORIGIN = "OlBlcnNvbjo0MjM1OkxlZ2lzbGF0b3I6MzAwMDQ4"
 
 
 def pack_key(key, kinds, lookup, graph):
@@ -193,11 +193,23 @@ class Grapher(logic.Logic):
         obj_dict = obj.to_dict() if not isinstance(obj, dict) else obj
 
         dsc, item = (
-          graph.descriptors[key] if (graph.options.media or graph.options.stats) else {},
+          graph.descriptors[obj.key] if (graph.options.media or graph.options.stats) else {},
           messages.GraphObject(data=obj_dict) if obj_dict else messages.GraphObject())
 
         # pack descriptors if we have any
-        if dsc: item.descriptors = dsc
+        if dsc:
+          dsc_flattened = {}
+
+          for keypath, descriptor in dsc.iteritems():
+
+            # flatten into known path
+            subpath = keypath.split('.')
+            if subpath[0] not in dsc_flattened:
+              dsc_flattened[subpath[0]] = {}
+            dsc_flattened[subpath[0]][subpath[-1]] = descriptor.to_dict()
+
+          item.descriptors = dsc_flattened
+
         opack.append(item)
 
     origin = plookup[graph.origin]

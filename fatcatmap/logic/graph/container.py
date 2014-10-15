@@ -319,9 +319,24 @@ class Graph(object):
 
     from fatcatmap import models
 
+    _queued_descriptors = set()
+
+    # fetch objects
     batch = [k for k in set(self.queued) if k not in (omit or set())]
     for key, entity in zip(batch, models.BaseModel.get_multi(batch)):
       self.objects[key] = entity
+
+      if self.options.media or self.options.stats:
+        if key in self.vertices:
+          if self.options.media: _queued_descriptors.add((key, 'media'))
+          if self.options.stats: _queued_descriptors.add((key, 'stats'))
+        elif self.options.stats and key in self.edges: _queued_descriptors.add((key, 'stats'))
+
+    # fetch descriptors, if so instructed
+    if self.options.media or self.options.stats:
+      for descriptor_base, prefix in _queued_descriptors:
+        self.descriptors[descriptor_base] = self.adapter.descriptors(descriptor_base, prefix=prefix+'.*')
+
     return self
 
   ## ~~ accessors ~~ ##

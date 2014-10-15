@@ -108,6 +108,8 @@ class WarehouseAdapter(abstract.DirectedGraphAdapter):
         - Custom abstract indexes
         - Custom database scripting '''
 
+  _descriptor_separator = '::'
+
   # undirected tokens
   _peers_token, _undirected_token = (
     'peers', 'undirected')
@@ -143,7 +145,7 @@ class WarehouseAdapter(abstract.DirectedGraphAdapter):
         child classes. '''
 
   @classmethod
-  def _descriptors(cls, subject, type=None, **kwargs):
+  def _descriptors(cls, subject, prefix=None, **kwargs):
 
     ''' Internal method that dispatches matching implementation ``descriptors``
         on child classes. '''
@@ -283,7 +285,7 @@ class WarehouseAdapter(abstract.DirectedGraphAdapter):
         self.Operations.HASH_SET,
         entity.__class__,
         '::'.join((subject.urlsafe(), self._descriptor_postfix)),
-        keypath,
+        self._descriptor_separator.join((keypath, entity.kind())),
         serialized), target=pipe)
 
       self.write_indexes((d_encoded, d_meta, d_prop), d_graph, pipeline=pipe, execute=True)
@@ -507,7 +509,7 @@ class WarehouseAdapter(abstract.DirectedGraphAdapter):
 
   ## +=+=+ Abstract Methods +=+=+ ##
   @abc.abstractmethod
-  def descriptors(self, subject, type=None, **kwargs):  # pragma: no cover
+  def descriptors(self, subject, prefix=None, **kwargs):  # pragma: no cover
 
     ''' Specifies an abstract interface for retrieving an object's
         ``Descriptor``s, which are tiny decorator objects attached to parent
@@ -652,13 +654,52 @@ class RedisWarehouse(WarehouseAdapter, redis.RedisAdapter):
     return _q.fetch() if execute else _q
 
   ## +=+=+ Proprietary Methods +=+=+ ##
-  def descriptors(self, subject, type=None, **kwargs):
+  def descriptors(self, subject, prefix=None, pipeline=None, **kwargs):
 
     ''' Retrieve attached ``Descriptor`` objects for a given ``subject`` key,
         optionally filtered by ``type``, from Redis. '''
 
-    raise NotImplemented('`Redis` graph support'
-                         ' not yet implemented.')  # pragma: no cover
+    from fatcatmap import models
+
+    pipeline = pipeline or self.channel('__descriptors__').pipeline(transaction=False)
+    dkey = self._magic_separator.join((subject.urlsafe(), self._descriptor_postfix))
+
+    data = {}
+    with pipeline as pipe:
+
+      if prefix:
+        self.execute(*(
+          self.Operations.HASH_SCAN, '__descriptors__', dkey, 0),
+          match=prefix,
+          target=pipe)
+      else:
+        self.execute(*(
+          self.Operations.HASH_GET_ALL, '__descriptors__', dkey),
+          target=pipe)
+
+      bundle = {}
+      for group in pipe.execute():
+
+        # it's a scan response
+        if isinstance(group, tuple) and isinstance(group[0], (int, long)):
+          group = group[1]
+
+        for rkey, descriptor in group.iteritems():
+
+          # @TODO(sgammon): hacky paths are hacky
+          keypath, kind = tuple(rkey.split('::'))
+          dmodel = self.registry[kind]
+
+          obj = self.get(None, None, _entity=descriptor)
+          if obj is not None:
+            obj = dmodel(
+              key=model.Key(dmodel, keypath, parent=subject, _persisted=True), **obj)
+
+          bundle[keypath] = obj
+
+      data.update(bundle)
+
+    return data
 
   def traverse(self, subject, limit, depth):
 
