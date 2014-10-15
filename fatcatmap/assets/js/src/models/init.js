@@ -14,7 +14,7 @@ goog.require('util.object');
 
 goog.provide('models');
 
-var Key, KeyedItem, KeyIndexedList;
+var Key, KeyedItem, KeyIndexedList, KeyList;
 
 /**
  * @constructor
@@ -25,11 +25,21 @@ var Key, KeyedItem, KeyIndexedList;
  */
 Key = function (kind, id, parent) {
   /*jshint eqnull:true */
+  var flat;
+
   if (kind == null || id == null)
     throw new TypeError('Key() requires a kind and id.');
 
   if (parent instanceof Key)
     parent = parent._flat;
+
+  if (typeof parent !== 'string')
+    parent = null;
+
+  flat = (parent || '') + ':' + kind + ':' + id;
+
+  if (Key.registry[flat])
+    return Key.registry[flat];
 
   /**
    * @expose
@@ -47,19 +57,19 @@ Key = function (kind, id, parent) {
    * @protected
    * @type {?string}
    */
-  this._parent = parent || null;
+  this._parent = parent;
 
   /**
    * @protected
    * @type {string}
    */
-  this._flat = (parent || '') + ':' + kind + ':' + id;
+  this._flat = flat;
 
   /**
    * @protected
    * @type {string}
    */
-  this._safe = Key.encode(this._flat);
+  this._safe = Key.encode(flat);
 
   /**
    * @private
@@ -67,10 +77,13 @@ Key = function (kind, id, parent) {
    */
   this.__data__ = null;
 
-  if (parent && !Key.registry[parent])
-    parent = Key.inflate(parent);
+  if (parent) {
+    parent = Key.registry[parent] || Key.inflate(parent);
+    Key.ancestry[parent._flat].push(this);
+  }
 
-  Key.registry[this._flat] = this;
+  Key.registry[flat] = this;
+  Key.ancestry[flat] = new KeyList();
 };
 
 util.object.mixin(Key, /** @lends {Key.prototype} */{
@@ -113,7 +126,7 @@ util.object.mixin(Key, /** @lends {Key.prototype} */{
    */
   equals: function (key) {
     if (typeof key === 'string')
-      return key === this._flat || key === this._safe;
+      return key === this._safe || key === this._flat;
 
     if (!(key instanceof Key))
       return false;
@@ -184,6 +197,29 @@ Object.defineProperty(Key.prototype, 'parent', {
   }
 });
 
+/**
+ * @expose
+ * @type {?Array.<models.Key>}
+ */
+Key.prototype.children;
+
+Object.defineProperty(Key.prototype, 'children', {
+  /**
+   * @expose
+   * @type {boolean}
+   */
+  enumerable: true,
+
+  /**
+   * @expose
+   * @return {?Array.<models.Key>}
+   * @this {models.Key}
+   */
+  get: function () {
+    return Key.ancestry[this._flat];
+  }
+});
+
 util.object.extend(Key, /** @lends {Key} */{
   /**
    * @static
@@ -219,7 +255,7 @@ util.object.extend(Key, /** @lends {Key} */{
    * @static
    * @param {!Array.<string>} packed
    * @param {!Array.<string>} kinds
-   * @return {models.KeyIndexedList.<models.Key>}
+   * @return {models.KeyList.<models.Key>}
    * @throws {(TypeError|Error)} If either packed or kinds is not an Array, or if a malformed packed
    *    key is encountered.
    */
@@ -229,14 +265,7 @@ util.object.extend(Key, /** @lends {Key} */{
     if (!(Array.isArray(packed) && Array.isArray(kinds)))
       throw new TypeError('Key.unpack() expects a list of packed keys and list of kinds.');
 
-    keys = new KeyIndexedList().key(
-      /**
-       * @param {models.Key} item
-       * @return {string}
-       */
-      function (item) {
-        return item._safe;
-      });
+    keys = new KeyList();
 
     packed.forEach(function (parts, i) {
       var kind = kinds[parts.shift()],
@@ -276,10 +305,15 @@ util.object.extend(Key, /** @lends {Key} */{
    * @static
    * @type {Object.<string, models.Key>}
    */
-  registry: {}
+  registry: {},
+
+  /**
+   * @static
+   * @type {Object.<string, string>}
+   */
+  ancestry: {}
 });
 
-window['Key'] = Key;
 
 /**
  * @constructor
@@ -296,9 +330,9 @@ KeyedItem = function (key) {
 
   /**
    * @private
-   * @type {!models.Key}
+   * @type {!string}
    */
-  this.__key__ = key;
+  this.__id__ = key.flat();
 };
 
 util.object.mixin(KeyedItem, /** @lends {KeyedItem.prototype} */{
@@ -315,7 +349,7 @@ util.object.mixin(KeyedItem, /** @lends {KeyedItem.prototype} */{
         obj[k] = this[k];
     }
 
-    obj['key'] = this.key.urlsafe();
+    obj['key'] = Key.encode(this.__id__);
 
     return obj;
   },
@@ -348,7 +382,7 @@ Object.defineProperty(KeyedItem.prototype, 'key', {
    * @this {models.KeyedItem}
    */
   get: function () {
-    return this.__key__;
+    return Key.registry[this.__id__];
   }
 });
 
@@ -371,7 +405,7 @@ Object.defineProperty(KeyedItem.prototype, 'kind', {
    * @this {models.KeyedItem}
    */
   get: function () {
-    return this.__key__.kind;
+    return this.key.kind;
   }
 });
 
@@ -405,7 +439,6 @@ util.object.mixin(KeyIndexedList, /** @lends {KeyIndexedList.prototype} */{
        * @return {string}
        */
       this.key = item;
-
       return this;
     }
 
@@ -581,6 +614,31 @@ util.object.mixin(KeyIndexedList, /** @lends {KeyIndexedList.prototype} */{
   }
 });
 
+
+/**
+ * @constructor
+ * @extends {KeyIndexedList}
+ * @param {(number|models.KeyedItem)} length
+ * @param {...[models.KeyedItem]} item
+ */
+KeyList = function (length, item) {
+  KeyIndexedList.apply(this, arguments);
+};
+
+util.object.inherit(KeyList, KeyIndexedList);
+
+util.object.mixin(KeyList, /** @lends {KeyList.prototype} */{
+  /**
+   * @override
+   * @param {(KeyedItem|function(*): string)} item
+   * @return {string|KeyIndexedList}
+   */
+  key: function (item) {
+    return String(item);
+  }
+});
+
+
 /**
  * @type {(Array.<(string|Object)>|models.KeyIndexedList)} */
 GraphData.data.keys;
@@ -612,5 +670,13 @@ models = {
    * @param {(number|models.KeyedItem)} length
    * @param {...[models.KeyedItem]} item
    */
-  KeyIndexedList: KeyIndexedList
+  KeyIndexedList: KeyIndexedList,
+
+  /**
+   * @constructor
+   * @extends {KeyIndexedList}
+   * @param {(number|models.KeyedItem)} length
+   * @param {...[models.KeyedItem]} item
+   */
+  KeyList: KeyList
 };

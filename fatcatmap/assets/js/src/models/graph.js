@@ -33,9 +33,9 @@ GraphItem = function (key) {
 
   /**
    * @expose
-   * @type {models.KeyIndexedList.<string>}
+   * @type {models.KeyList.<string>}
    */
-  this.classes = new models.KeyIndexedList().key(function (x) { return x; });
+  this.classes = new models.KeyList();
 };
 
 util.object.inherit(GraphItem, models.data.KeyedData);
@@ -311,11 +311,9 @@ Graph = function (graph) {
 
   /**
    * @private
-   * @type {models.KeyIndexedList.<string>}
+   * @type {models.KeyList.<string>}
    */
-  this._fragments = new models.KeyIndexedList().key(function (frag) {
-    return frag;
-  });
+  this._fragments = new models.KeyList();
 
   if (graph)
     this.unpack(graph);
