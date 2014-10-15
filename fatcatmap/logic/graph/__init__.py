@@ -24,7 +24,7 @@ from canteen import struct
 _DEFAULT_ORIGIN = "OlBlcnNvbjoyMzQ0OkxlZ2lzbGF0b3I6NDAwMjYz"
 
 
-def pack_key(key, kinds, lookup):
+def pack_key(key, kinds, lookup, graph):
 
   ''' Pack a key into an efficient structure that is
       efficient for transmission.
@@ -35,8 +35,14 @@ def pack_key(key, kinds, lookup):
 
       :returns: '''
 
-  if key.parent: return (kinds.index(key.kind), key.id, lookup[key.parent])
-  return (kinds.index(key.kind), key.id)
+  if key.parent:
+    if graph.options.collections:
+      packed = (kinds.index(key.kind), key.id, lookup[key.parent])
+    else:
+      packed = (kinds.index(key.kind), key.id, key.parent.urlsafe())
+  else:
+    packed = (kinds.index(key.kind), key.id)
+  return ":".join(map(unicode, packed))
 
 
 @bind('graph')
@@ -120,6 +126,7 @@ class Grapher(logic.Logic):
         :returns: ``GraphResponse`` instance, prepared with wrapped
           ``Graph`` instance. '''
 
+    from fatcatmap import models
     from fatcatmap.services.graph import messages
 
     # pack metadata
@@ -130,20 +137,16 @@ class Grapher(logic.Logic):
 
     keys, keypack, objects, opack, packed, plookup = [], [], [], [], set(), {}
 
-    # pack objects if not keys only
-    if not graph.options.keys_only:
-      for key in graph.keys:
+    for key in graph.keys:
 
-        if key not in packed:
+      if key not in packed:
 
-          packed.add(key)
+        packed.add(key)
+        keys.append(key)
+        plookup[key] = len(keys) - 1
+
+        if not graph.options.keys_only:
           obj = graph.objects[key]
-          keys.append(key)
-          plookup[key] = len(keys) - 1
-
-          # we found the origin
-          if not origin and key == graph.origin:
-            origin = plookup[key]
 
           # handle empty objects
           if obj is struct.EMPTY:
@@ -151,12 +154,18 @@ class Grapher(logic.Logic):
           else:
 
             # empty objects
-            if obj is None: obj = {}
+            if obj is None:
+              obj = graph.adapter.registry[key.kind](key=key)
             objects.append(obj)
 
-      for key, obj in zip(keys, objects):
+    # pack objects if not keys only
+    if graph.options.keys_only:
+      keypack = map(lambda x: pack_key(x, kinds, plookup, graph), keys)
 
-        keypack.append(pack_key(key, kinds, plookup))
+    else:
+      for obj in objects:
+
+        keypack.append(pack_key(obj.key, kinds, plookup, graph))
 
         # rollup `peers` and `source`/`target`
         if hasattr(obj, '__edge__'):
@@ -184,6 +193,8 @@ class Grapher(logic.Logic):
         # pack descriptors if we have any
         if dsc: item.descriptors = dsc
         opack.append(item)
+
+    origin = plookup[graph.origin]
 
     return message(**{
 

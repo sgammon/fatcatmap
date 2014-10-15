@@ -268,9 +268,13 @@ util.object.extend(Key, /** @lends {Key} */{
     keys = new KeyList();
 
     packed.forEach(function (parts, i) {
-      var kind = kinds[parts.shift()],
-        id = parts.shift(),
-        parent = parts.length ? keys[parts.shift()] : null;
+      var kind, id, parent;
+
+      parts = parts.split(':');
+
+      kind = kinds[+parts.shift()];
+      id = parts.shift();
+      parent = parts.length ? keys[+parts.shift()] : null;
 
       if (!(kind && id))
         throw new Error('Key.unpack() can\'t unpack malformed key: ' + parts);
