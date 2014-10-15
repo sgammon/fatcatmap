@@ -24,6 +24,26 @@ class SearchAPI(Service):
     "invalid_query": exceptions.InvalidQuery,
     "es_is_down": exceptions.ElasticsearchDown})
 
+
+  def exact_match(self,term,msg):
+
+    ''' Adds a bonus to `msg.score` in the case that one or more terms matches exactly '''
+    #import pdb; pdb.set_trace()
+    term = term.lower()
+    name = msg['label'].lower()
+    score = msg['score']
+    terms = term.split(' ')
+    if term in name:
+      score  += 2
+    else:
+      for t in terms:
+        if t in name:
+          score += 0.9
+    msg['score'] = score
+
+
+
+
   @remote.method(messages.Query, messages.Results)
   def query(self, request):
 
@@ -43,10 +63,14 @@ class SearchAPI(Service):
         msg = {'result': model.Key.from_raw(hit['_id']),
                   'score': hit['_score']}
         name = hit['_source'].get('name')
+
         if name:
           msg['label'] = name.get('primary')
+          self.exact_match(request.term,msg)
+
         msgs.append(messages.Result(**msg).to_message())
 
+      msgs.sort(key = lambda x: x.score, reverse = True)
       return messages.Results(count=res['hits']['total'], results=msgs)
 
     except RuntimeError:

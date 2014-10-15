@@ -6,27 +6,13 @@
 
 '''
 
+# submodules
+from . import csv
+from . import base
 
-class BindingReader(object):
+reader = base.reader
 
-  ''' binding reader base (WIP) '''
 
-  __config__ = None  # configuration for reader
-
-  def __init__(self, config):
-
-    '''  '''
-
-    self.__config__ = config
-
-  def __enter__(self):
-
-    '''  '''
-
-    pass
-
-  def __exit__(self, exc_type, exc, traceback):
-
-    '''  '''
-
-    pass
+__all__ = ('csv',
+           'base',
+           'reader')
