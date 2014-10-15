@@ -406,18 +406,18 @@ class FCM(cli.Tool):
       if not arguments.dataset:
         if arguments.verbose and not arguments.quiet:
           logging.info('Using latest AOF data package...')
-        data_file_name = '.'.join((dataset, 'aof', 'gz'))
+        data_file_name = '.'.join((dataset, 'aof', 'bz2'))
       else:
         if arguments.verbose and not arguments.quiet:
           logging.info('Using AOF data package "%s"...' % arguments.dataset)
-        data_file_name = '.'.join((arguments.dataset, 'aof', 'gz'))
+        data_file_name = '.'.join((arguments.dataset, 'aof', 'bz2'))
 
       if not arguments.quiet:
         logging.info('Starting dataset update...')
 
       command = ' | '.join((
         'curl --progress-bar https://storage.googleapis.com/fcm-dataset/%s' % data_file_name,
-        'gzip -cd',
+        'bzip2 -cd',
         'redis-cli %s --pipe' % FCM.Migrate.build_cli_args(arguments, target)))
 
       os.system(command)
