@@ -72,7 +72,7 @@ class RecipientStats(BQ):
   def step1(self):
     '''performs step 1 of recipent stats and returns when async bigquery job is finished
     '''
-    sql = self.load_file('data/finance/recipient_percentile.sql')
+    sql = self.load_file('data/finance_categories/recipient_percentile.sql')
     print sql
     response = self.execute(sql)
     while True:
@@ -86,7 +86,7 @@ class RecipientStats(BQ):
 
 
   def step2(self,source_table):
-    sql = self.load_file('data/finance/recipient_percentile_people.sql')
+    sql = self.load_file('data/finance_categories/recipient_percentile_people.sql')
     sql = sql.format(source_table=source_table)
     response = self.execute(sql)
     return response

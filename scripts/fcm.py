@@ -735,7 +735,6 @@ class FCM(cli.Tool):
 
         with tool(subject=source, **config) as reader:
           for bundle in reader:
-
             if arguments.verbose and not arguments.quiet:
               logging.info('  -> %s' % repr(bundle))
 

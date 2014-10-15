@@ -2,7 +2,7 @@
 
 '''
 
-  fcm: campaign finance models
+  fcm: campaign finance_categories models
 
 '''
 
@@ -39,18 +39,28 @@ class Contributor(Vertex):
   ## -- naming / categorization -- ##
   fec_category = str, {'indexed': True}
 
+class ContributionType(BidirectionalEnum):
+
+  ''' Maps FEC contribution type codes. '''
+
+  # @TODO(sgammon): fill out contribution types
+
+@describe(type=Transaction)
+class CampaignContributionTotal(Contributor >> Campaign):
+
+  ''' Describes a monetary contribution made from a ``Contributor`` to a
+      candidate's ``Campaign``. '''
+
+  ## -- contribution data -- ##
+  type = ContributionType, {'indexed': True, 'required': True}
+  count = int, {}
+
 
 @describe(type=Transaction)
 class CampaignContribution(Contributor >> Campaign):
 
   ''' Describes a monetary contribution made from a ``Contributor`` to a
       candidate's ``Campaign``. '''
-
-  class ContributionType(BidirectionalEnum):
-
-    ''' Maps FEC contribution type codes. '''
-
-    # @TODO(sgammon): fill out contribution types
 
   ## -- contribution data -- ##
   type = ContributionType, {'indexed': True, 'required': True}
@@ -72,7 +82,7 @@ class CampaignContribution(Contributor >> Campaign):
 @describe(type=Stat, descriptor=True, keyname=True)
 class ContributorStats(CategoricalStatValue):
 
-  ''' Describes campaign finance-related statistics for a
+  ''' Describes campaign finance_categories-related statistics for a
       ``Contributor`` record. Attached as a descriptor object. '''
 
   # keyname: transaction type
@@ -81,7 +91,7 @@ class ContributorStats(CategoricalStatValue):
 @describe(type=Stat, descriptor=True, keyname=True)
 class RecipientStats(CategoricalStatValue):
 
-  ''' Describes campaign finance-related statistics for a ``Campaign``
+  ''' Describes campaign finance_categories-related statistics for a ``Campaign``
       record. Attached as a descriptor object. '''
 
   # keyname: transaction type

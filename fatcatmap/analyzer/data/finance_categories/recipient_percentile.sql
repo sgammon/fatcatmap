@@ -14,8 +14,8 @@ select
   from (
     SELECT
            CASE
-              WHEN namespace = 'urn:fec:transaction' THEN 'f' # return f for fec
-              WHEN namespace = 'urn:nimsp:transaction' then 'n'
+              WHEN transaction_namespace = 'urn:fec:transaction' THEN 'f' # return f for fec
+              WHEN transaction_namespace = 'urn:nimsp:transaction' then 'n'
            END as source,
            recipient_type,
            committee_ext_id,

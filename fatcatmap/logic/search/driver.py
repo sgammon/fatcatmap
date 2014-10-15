@@ -63,6 +63,7 @@ with core.Library('elasticsearch') as (library, elasticsearch):
                 "fields" : fields,
                 "like_text" : query_string,
                 "ignore_tf": True,
+                "fuzziness": 0.4,
                 "max_query_terms" : 12}}}
         else:
           body = {

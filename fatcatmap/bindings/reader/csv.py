@@ -14,6 +14,7 @@ import json
 from .base import FileReader, reader
 
 
+
 @reader('csv', 'csv.gz')
 class CSV(FileReader):
 

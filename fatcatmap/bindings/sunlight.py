@@ -17,8 +17,8 @@ from fatcatmap.models.commercial.business import Corporation
 @bind('sunlight', 'Contributor', Contributor)
 class SunlightContributor(ModelBinding):
 
-  ''' Converts and resolves instances of Sunlight campaign
-  	  contributors. '''
+  ''' Creates the Vertexes needed for creating campaign finance edges
+   Currently Committees and People'''
 
   def convert(self, data):
 

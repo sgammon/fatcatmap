@@ -13,4 +13,4 @@ from . import finance
 from .finance import *
 
 
-__all__ = ('finance',)
+__all__ = ('finance_categories',)

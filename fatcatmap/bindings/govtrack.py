@@ -59,7 +59,6 @@ class GovtrackPerson(ModelBinding):
     person.name.primary = "%s %s" % (data['firstname'], data['lastname'])
     person.name.given, person.name.family = (
       data['firstname'], data.get('lastnameenc', data['lastname']))
-
     if data.get('namemod'): person.name.postfix = (data['namemod'],)
     if data.get('nickname'): person.name.nickname = (data['nickname'],)
     if data.get('lastnamealt'): person.name.secondary = ('%s %s' % (data['firstname'], data['lastnamealt']),)
