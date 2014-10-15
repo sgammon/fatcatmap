@@ -193,7 +193,7 @@ Object.defineProperty(Key.prototype, 'parent', {
    * @this {models.Key}
    */
   get: function () {
-    return this._parent ? Key.registry[this._parent] || null : null;
+    return this._parent ? Key.registry[this._parent] : null;
   }
 });
 
@@ -294,11 +294,11 @@ util.object.extend(Key, /** @lends {Key} */{
   /**
    * @static
    * @param {string} safe Base64-encoded, fully-unpacked flattened key string.
-   * @return {string}
+   * @return {string} Human-readable flattened key string.
    * @throws {TypeError} If <code>safe</code> is not a string.
    */
-  decode: function (flat) {
-    return window.atob(flat);
+  decode: function (safe) {
+    return window.atob(safe);
   },
 
   /**
@@ -309,7 +309,7 @@ util.object.extend(Key, /** @lends {Key} */{
 
   /**
    * @static
-   * @type {Object.<string, string>}
+   * @type {Object.<string, models.KeyList.<models.Key>}
    */
   ancestry: {}
 });
@@ -332,7 +332,7 @@ KeyedItem = function (key) {
    * @private
    * @type {!string}
    */
-  this.__id__ = key.flat();
+  this.__id__ = key.flatten();
 };
 
 util.object.mixin(KeyedItem, /** @lends {KeyedItem.prototype} */{
@@ -631,7 +631,7 @@ util.object.mixin(KeyList, /** @lends {KeyList.prototype} */{
   /**
    * @override
    * @param {(KeyedItem|function(*): string)} item
-   * @return {string|KeyIndexedList}
+   * @return {string}
    */
   key: function (item) {
     return String(item);
@@ -640,8 +640,9 @@ util.object.mixin(KeyList, /** @lends {KeyList.prototype} */{
 
 
 /**
- * @type {(Array.<(string|Object)>|models.KeyIndexedList)} */
+ * @type {(Array.<(string|Object)>|models.KeyList)} */
 GraphData.data.keys;
+
 
 /**
  * @expose
