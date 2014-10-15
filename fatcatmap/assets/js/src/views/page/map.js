@@ -402,33 +402,35 @@ views.Map = View.extend({
           e.stopPropagation();
 
           key = target.getAttribute('id').split('-').pop();
-          selected = this.$.detail.keys();
+          return this.browseTo(key);
 
-          if (this.clicked.key === key && Date.now() - this.clicked.timestamp < 400)
-            return this.browseTo(key);
+          // selected = this.$.detail.keys();
 
-          this.clicked.key = key;
-          this.clicked.timestamp = Date.now();
+          // if (this.clicked.key === key && Date.now() - this.clicked.timestamp < 400)
+          //   return this.browseTo(key);
 
-          if (target.classList.contains(this.$options.selectors.selected.slice(1))) {
-            selectedI = selected.indexOf(key);
+          // this.clicked.key = key;
+          // this.clicked.timestamp = Date.now();
+
+          // if (target.classList.contains(this.$options.selectors.selected.slice(1))) {
+          //   selectedI = selected.indexOf(key);
             
-            if (selectedI > -1)
-              selected.splice(selectedI, 1);
-          } else {
-            if (e.shiftKey) {
-              if (selected.length < 2)
-                selected.push(key);
-            } else {
-              selected = [key];
-            }
-          }
+          //   if (selectedI > -1)
+          //     selected.splice(selectedI, 1);
+          // } else {
+          //   if (e.shiftKey) {
+          //     if (selected.length < 2)
+          //       selected.push(key);
+          //   } else {
+          //     selected = [key];
+          //   }
+          // }
 
-          this.map.selected = selected;
-          this.map.changed = true;
+          // this.map.selected = selected;
+          // this.map.changed = true;
 
-          this.$root.$emit('route', '/detail/' +
-            (selected.length > 1 ? selected.join('/and/') : selected[0] || ''));
+          // this.$root.$emit('route', '/detail/' +
+          //   (selected.length > 1 ? selected.join('/and/') : selected[0] || ''));
         }
       }
     },

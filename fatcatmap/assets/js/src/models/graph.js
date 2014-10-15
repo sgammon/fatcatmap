@@ -368,8 +368,8 @@ Graph.prototype.unpack = function (packed) {
 
   graph.session = packed.session;
   graph.origin = {
-    key: keys[packed.graph.origin],
-    index: graph.nodes.index[keys[packed.graph.origin]]
+    key: keys[packed.origin],
+    index: graph.nodes.index[keys[packed.origin]]
   };
 
   graph._fragments.push(packed.meta.fragment);
