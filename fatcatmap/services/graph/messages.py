@@ -106,21 +106,12 @@ class Data(model.Model):
   objects = GraphObject, {'repeated': True, 'embedded': True}
 
 
-class Graph(model.Model):
-
-  ''' Specifies a structure for representing a graph with
-      vertices, connected by edges, via a datamodel. '''
-
-  origin = int, {'required': True}
-  structure = str, {'required': True}
-
-
 class GraphResponse(model.Model):
 
   ''' Specifies a response to a ``GraphRequest``, including
       metadata, raw data, and graph structure. '''
 
+  origin = int, {'required': True}
   session = str, {'indexed': False}
   data = Data, {'required': False, 'embedded': True, 'indexed': False}
   meta = Meta, {'required': True, 'embedded': True, 'indexed': False}
-  graph = Graph, {'required': False, 'embedded': True, 'indexed': False}

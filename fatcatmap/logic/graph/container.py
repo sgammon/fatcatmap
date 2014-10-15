@@ -226,7 +226,7 @@ class Graph(object):
 
     # add to keybag and objects
     self.keys.append(key)
-    self.lookup[key] = len(self.keybag) - 1
+    self.lookup[key] = len(self.keys) - 1
     return self
 
   def encounter(self, key):

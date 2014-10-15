@@ -11,6 +11,7 @@
 goog.require('util.object');
 goog.require('support');
 goog.require('services.storage');
+goog.require('services.search');
 goog.require('models');
 goog.require('models.data');
 goog.require('models.search');
@@ -33,9 +34,9 @@ GraphItem = function (key) {
 
   /**
    * @expose
-   * @type {models.KeyIndexedList.<string>}
+   * @type {models.KeyList.<string>}
    */
-  this.classes = new models.KeyIndexedList().key(function (x) { return x; });
+  this.classes = new models.KeyList();
 };
 
 util.object.inherit(GraphItem, models.data.KeyedData);
@@ -311,11 +312,9 @@ Graph = function (graph) {
 
   /**
    * @private
-   * @type {models.KeyIndexedList.<string>}
+   * @type {models.KeyList.<string>}
    */
-  this._fragments = new models.KeyIndexedList().key(function (frag) {
-    return frag;
-  });
+  this._fragments = new models.KeyList();
 
   if (graph)
     this.unpack(graph);
@@ -368,8 +367,8 @@ Graph.prototype.unpack = function (packed) {
 
   graph.session = packed.session;
   graph.origin = {
-    key: keys[packed.graph.origin],
-    index: graph.nodes.index[keys[packed.graph.origin]]
+    key: keys[packed.origin],
+    index: graph.nodes.index[keys[packed.origin]]
   };
 
   graph._fragments.push(packed.meta.fragment);
