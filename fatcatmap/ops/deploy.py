@@ -72,6 +72,10 @@ def bootstrap():
     print(colors.yellow('Installing fatcatmap...'))
     fatcatmap(node.environment)
 
+    # fix for 403 on image proxy
+    api.sudo("chmod 777 -R /base/data/warehouse")
+    api.sudo("chmod 777 /base/data")
+
     ## ~~ start k9 ~~ ##
     print(colors.yellow('Starting K9...'))
     api.sudo("/base/software/k9/sbin/k9"
