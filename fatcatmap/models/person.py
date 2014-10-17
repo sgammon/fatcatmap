@@ -25,6 +25,7 @@ class PersonName(Name):
   ## -- basic naming -- ##
   given = str, {'indexed': True}
   family = str, {'indexed': True}
+  middle = str
 
   ## -- extra naming -- ##
   prefix = str, {'indexed': True, 'repeated': True}

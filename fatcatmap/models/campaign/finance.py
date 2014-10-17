@@ -45,6 +45,16 @@ class ContributionType(BidirectionalEnum):
 
   # @TODO(sgammon): fill out contribution types
 
+
+@describe(type=Transaction)
+class GenericContributionTotal(Contributor >> (Contributor):
+  ''' Describes a series of summarized contributions from one
+      ``Contributor`` (child of ``Organization`` or ``Person``)
+        to another ``Contributor``(child of ``Organization``)
+        OR
+  '''
+
+
 @describe(type=Transaction)
 class CampaignContributionTotal(Contributor >> Campaign):
 
