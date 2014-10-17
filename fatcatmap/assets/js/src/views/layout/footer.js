@@ -11,14 +11,14 @@
 
 goog.require('View');
 
-goog.provide('views.Footer');
+goog.provide('views.layout.Footer');
 
 /**
  * @constructor
  * @extends {View}
  * @param {VueOptions} options
  */
-views.Footer = View.extend({
+views.layout.Footer = View.extend({
   /**
    * @expose
    * @type {string}

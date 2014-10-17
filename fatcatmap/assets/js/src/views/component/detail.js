@@ -1,5 +1,5 @@
 /**
- * @fileoverview Router for node detail view.
+ * @fileoverview Detail view router component.
  *
  * @author  David Rekow <david@momentum.io>,
  *          Sam Gammon <sam@momentum.io>,
@@ -11,19 +11,19 @@
 
 goog.require('View');
 
-goog.provide('views.Detail');
+goog.provide('views.component.Detail');
 
 /**
  * @constructor
  * @extends {View}
  * @param {VueOptions} options
  */
-views.Detail = View.extend({
+views.component.Detail = View.extend({
   /**
    * @expose
    * @type {string}
    */
-  viewname: 'detail',
+  viewname: 'component.detail',
 
   /**
    * @expose
@@ -171,3 +171,10 @@ views.Detail = View.extend({
     this.select(nodes); 
   }
 });
+
+
+/**
+ * @expose
+ * @type {views.component.Detail}
+ */
+View.prototype.$.detail;

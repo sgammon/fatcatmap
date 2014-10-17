@@ -11,12 +11,12 @@
 
 goog.require('services.router');
 goog.require('services.view');
-goog.require('views.Modal');
-goog.require('views.Stage');
-goog.require('views.Header');
-goog.require('views.Footer');
-goog.require('views.Map');
+goog.require('views.layout.Stage');
+goog.require('views.layout.Header');
+goog.require('views.layout.Footer');
+goog.require('views.component.Modal');
 goog.require('views.page.Login');
+goog.require('views.page.Map');
 
 goog.provide('views.App');
 
@@ -103,5 +103,24 @@ views.App = Vue.extend({
     });
   }
 });
+
+/**
+ * @expose
+ * @type {views.layout.Stage}
+ */
+views.App.prototype.$.stage;
+
+/**
+ * @expose
+ * @type {views.Modal}
+ */
+views.App.prototype.$.modal;
+
+/**
+ * @expose
+ * @type {views.page.Map}
+ */
+views.layout.Stage.prototype.$.map;
+
 
 services.view.put('app', views.App);

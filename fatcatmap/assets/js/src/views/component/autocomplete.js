@@ -110,3 +110,9 @@ views.component.Autocomplete = View.extend({
     });
   }
 });
+
+/**
+ * @expose
+ * @type {views.component.Autocomplete}
+ */
+View.prototype.$.autocomplete;

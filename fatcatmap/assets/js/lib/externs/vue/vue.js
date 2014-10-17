@@ -108,7 +108,7 @@ Vue.prototype.$data;
 Vue.prototype.$options;
 
 /**
- * @type {Vue}
+ * @type {Object.<string, Vue>}
  */
 Vue.prototype.$;
 

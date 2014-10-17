@@ -12,14 +12,14 @@
 goog.require('View');
 goog.require('views.component.Autocomplete');
 
-goog.provide('views.Header');
+goog.provide('views.layout.Header');
 
 /**
  * @constructor
  * @extends {View}
  * @param {VueOptions} options
  */
-views.Header = View.extend({
+views.layout.Header = View.extend({
   /**
    * @expose
    * @type {string}

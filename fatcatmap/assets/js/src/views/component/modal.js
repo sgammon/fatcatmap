@@ -1,5 +1,5 @@
 /**
- * @fileoverview Modal view.
+ * @fileoverview Modal component view.
  *
  * @author  David Rekow <david@momentum.io>,
  *          Sam Gammon <sam@momentum.io>,
@@ -12,19 +12,25 @@
 goog.require('View');
 goog.require('services.router');
 
-goog.provide('views.Modal');
+goog.provide('views.component.Modal');
 
 /**
  * @constructor
  * @extends {View}
  * @param {VueOptions} options
  */
-views.Modal = View.extend({
+views.component.Modal = View.extend({
   /**
    * @expose
    * @type {string}
    */
-  viewname: 'modal',
+  viewname: 'component.modal',
+
+  /**
+   * @expose
+   * @type {boolean}
+   */
+  replace: true,
 
   /**
    * @expose
@@ -45,3 +51,15 @@ views.Modal = View.extend({
     }
   }
 });
+
+/**
+ * @expose
+ * @type {views.component.Modal}
+ */
+View.prototype.$.modal;
+
+/**
+ * @expose
+ * @type {View}
+ */
+View.prototype.$.modal.$.content;

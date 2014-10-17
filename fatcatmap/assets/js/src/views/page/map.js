@@ -11,12 +11,12 @@
 
 goog.require('$');
 goog.require('View');
-goog.require('views.Detail');
+goog.require('views.component.Detail');
 goog.require('views.detail.Legislator');
 goog.require('models.graph');
 goog.require('services.graph');
 
-goog.provide('views.Map');
+goog.provide('views.page.Map');
 
 var PI, _distributeNodeInsertion, _calculateLeafLinkAdjustment;
 
