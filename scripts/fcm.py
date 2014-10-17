@@ -417,7 +417,7 @@ class FCM(cli.Tool):
 
       command = ' | '.join((
         'curl --progress-bar https://storage.googleapis.com/fcm-dataset/%s' % data_file_name,
-        'gzip -cd',
+        '%s -cd' % ('bzip2' if data_file_name.endswith('bz2') else 'gzip'),
         'redis-cli %s --pipe' % FCM.Migrate.build_cli_args(arguments, target)))
 
       os.system(command)

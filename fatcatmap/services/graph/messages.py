@@ -68,8 +68,9 @@ class GraphRequest(model.Model):
     limit = int
     cached = bool
     keys_only = bool
-    descriptors = bool
     collections = bool
+    stats = bool
+    media = bool
 
   # -- base -- #
   origin = str

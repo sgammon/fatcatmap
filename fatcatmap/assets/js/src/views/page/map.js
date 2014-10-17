@@ -445,7 +445,9 @@ views.Map = View.extend({
 
       services.graph.construct(key, {
         depth: 1,
-        keys_only: true
+        keys_only: false,
+        collections: true,
+        descriptors: true
       }).then(function (graph, error) {
         var node, newPeers;
 
@@ -498,8 +500,8 @@ views.Map = View.extend({
 
         root = d3
           .select(selectors.map)
-          .attr('width', config.width)
-          .attr('height', config.height);
+          .attr('width', view.config.width)
+          .attr('height', view.config.height);
 
         node = root.selectAll(selectors.node);
         edge = root.selectAll(selectors.edge);
@@ -596,8 +598,12 @@ views.Map = View.extend({
                 if (view.map.selected.indexOf(n.key) > -1)
                   view.map.changed = true;
 
-                if (n.isLeaf())
+                if (n.isLeaf()) {
                   n.classes.push('leaf');
+                } else {
+                  if (n.classes.has('leaf'))
+                    n.classes.splice(n.classes.index['leaf'], 1);
+                }
 
                 return n.classes.join(' ');
               })

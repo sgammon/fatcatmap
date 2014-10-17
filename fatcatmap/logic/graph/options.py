@@ -30,7 +30,8 @@ class Options(object):
      ('depth', _DEFAULT_DEPTH),  # limit of steps to go out from origin
      ('query', None),  # query object to apply during graph traversal
      ('keys_only', True),  # plz return only keys, no objects
-     ('descriptors', False),  # fetch descriptors (can be set to query as well)
+     ('media', True),  # fetch media descriptors along with vertices
+     ('stats', False),  # fetch stat descriptors along with vertices and edges
      ('collections', True)))))  # fetch complete collections of parents and children
 
   # seal slots, defaults and params
@@ -131,11 +132,12 @@ class Options(object):
     return base64.b64encode(':'.join(map(unicode, self.collapse()))).replace('=', '')
 
   ## ~~ accessors ~~ ##
-  limit, depth, query, keys_only, descriptors, collections, defaults = (
+  limit, depth, query, media, stats, keys_only, collections, defaults = (
     property(lambda self: self.__limit__),
     property(lambda self: self.__depth__),
     property(lambda self: self.__query__),
+    property(lambda self: self.__media__),
+    property(lambda self: self.__stats__),
     property(lambda self: self.__keys_only__),
-    property(lambda self: self.__descriptors__),
     property(lambda self: self.__collections__),
     decorators.classproperty(lambda cls: cls.__defaults__))

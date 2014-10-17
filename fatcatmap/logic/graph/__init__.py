@@ -21,10 +21,10 @@ from canteen import struct
 
 
 ## Globals
-_DEFAULT_ORIGIN = "OlBlcnNvbjoyMzQ0OkxlZ2lzbGF0b3I6NDAwMjYz"
+_DEFAULT_ORIGIN = "OlBlcnNvbjo0MjM1OkxlZ2lzbGF0b3I6MzAwMDQ4"
 
 
-def pack_key(key, kinds, lookup):
+def pack_key(key, kinds, lookup, graph):
 
   ''' Pack a key into an efficient structure that is
       efficient for transmission.
@@ -35,8 +35,14 @@ def pack_key(key, kinds, lookup):
 
       :returns: '''
 
-  if key.parent: return (kinds.index(key.kind), key.id, lookup[key.parent])
-  return (kinds.index(key.kind), key.id)
+  if key.parent:
+    if graph.options.collections:
+      packed = (kinds.index(key.kind), key.id, lookup[key.parent])
+    else:
+      packed = (kinds.index(key.kind), key.id, key.parent.urlsafe())
+  else:
+    packed = (kinds.index(key.kind), key.id)
+  return ":".join(map(unicode, packed))
 
 
 @bind('graph')
@@ -45,7 +51,7 @@ class Grapher(logic.Logic):
   ''' Provides logic that is capable of traversing and
       recursively exploring FCM's Redis-based graph. '''
 
-  caching = False  # graph caching
+  caching = True  # graph caching
   options = Options  # attach graph options
 
   def construct(self, session, origin, export=True, **options):
@@ -87,7 +93,8 @@ class Grapher(logic.Logic):
 
     if graph and not self.caching: graph.delete()
     elif graph and self.caching:
-      return self.export(graph, session, gstruct.GraphResponse, cached=True)
+      graph.session = session or str(uuid.uuid4())
+      return graph
 
     # build graph & optionally fulfill
     graph = Graph(models.BaseModel.__adapter__, options=options).traverse(origin)
@@ -97,7 +104,12 @@ class Grapher(logic.Logic):
 
     response = self.export(graph, session, gstruct.GraphResponse)
     response.key = model.Key(gstruct.GraphResponse, fragment)
+
+    response.meta.options['cached'] = True
     if self.caching: response.put(adapter=models.BaseModel.__adapter__)
+
+    response.meta.options['cached'] = False
+    response.session = session or str(uuid.uuid4())
     return response
 
   def export(self, graph, session, message, cached=False):
@@ -120,6 +132,7 @@ class Grapher(logic.Logic):
         :returns: ``GraphResponse`` instance, prepared with wrapped
           ``Graph`` instance. '''
 
+    from fatcatmap import models
     from fatcatmap.services.graph import messages
 
     # pack metadata
@@ -130,20 +143,16 @@ class Grapher(logic.Logic):
 
     keys, keypack, objects, opack, packed, plookup = [], [], [], [], set(), {}
 
-    # pack objects if not keys only
-    if not graph.options.keys_only:
-      for key in graph.keys:
+    for key in graph.keys:
 
-        if key not in packed:
+      if key not in packed:
 
-          packed.add(key)
+        packed.add(key)
+        keys.append(key)
+        plookup[key] = len(keys) - 1
+
+        if not graph.options.keys_only:
           obj = graph.objects[key]
-          keys.append(key)
-          plookup[key] = len(keys) - 1
-
-          # we found the origin
-          if not origin and key == graph.origin:
-            origin = plookup[key]
 
           # handle empty objects
           if obj is struct.EMPTY:
@@ -151,12 +160,18 @@ class Grapher(logic.Logic):
           else:
 
             # empty objects
-            if obj is None: obj = {}
+            if obj is None:
+              obj = graph.adapter.registry[key.kind](key=key)
             objects.append(obj)
 
-      for key, obj in zip(keys, objects):
+    # pack objects if not keys only
+    if graph.options.keys_only:
+      keypack = map(lambda x: pack_key(x, kinds, plookup, graph), keys)
 
-        keypack.append(pack_key(key, kinds, plookup))
+    else:
+      for obj in objects:
+
+        keypack.append(pack_key(obj.key, kinds, plookup, graph))
 
         # rollup `peers` and `source`/`target`
         if hasattr(obj, '__edge__'):
@@ -178,16 +193,28 @@ class Grapher(logic.Logic):
         obj_dict = obj.to_dict() if not isinstance(obj, dict) else obj
 
         dsc, item = (
-          graph.descriptors[key] if graph.options.descriptors else {},
+          graph.descriptors[obj.key] if (graph.options.media or graph.options.stats) else {},
           messages.GraphObject(data=obj_dict) if obj_dict else messages.GraphObject())
 
         # pack descriptors if we have any
-        if dsc: item.descriptors = dsc
+        if dsc:
+          dsc_flattened = {}
+
+          for keypath, descriptor in dsc.iteritems():
+
+            # flatten into known path
+            subpath = keypath.split('.')
+            if subpath[0] not in dsc_flattened:
+              dsc_flattened[subpath[0]] = {}
+            dsc_flattened[subpath[0]][subpath[-1]] = descriptor.to_dict()
+
+          item.descriptors = dsc_flattened
+
         opack.append(item)
 
-    return message(**{
+    origin = plookup[graph.origin]
 
-      'session': session or str(uuid.uuid4()),
+    return message(**{
 
       'meta': messages.Meta(**{
         'kinds': kinds,

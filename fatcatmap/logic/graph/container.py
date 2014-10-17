@@ -77,7 +77,6 @@ class Graph(object):
      ('kinds', set),  # model kinds encountered
      ('edges', set),  # unique set of edges encountered
      ('keybag', set),  # unique set of all keys encountered
-     ('lookup', dict),  # translates keys to positional integers
      ('window', sha1),  # hash function window for graph fingerprint
      ('objects', dict),  # objects, when they have been fulfilled from keys
      ('network', setdict),  # neighborship sets like source --> {target...}
@@ -226,7 +225,6 @@ class Graph(object):
 
     # add to keybag and objects
     self.keys.append(key)
-    self.lookup[key] = len(self.keys) - 1
     return self
 
   def encounter(self, key):
@@ -288,12 +286,9 @@ class Graph(object):
     graph, edges = (
       tuple(self.adapter.traverse(origin, limit, depth)))
 
-    network = {v: n for v, n in graph}
-    lookup = dict((k, i) for (i, k) in enumerate(sorted(network)))
-
     # inflate vertexes
     for vertex, relationships in (
-      (self.inflate(v), rset) for v, rset in network.iteritems()):
+      (self.inflate(v), rset) for v, rset in {v: n for v, n in graph}.iteritems()):
 
       if vertex not in self.vertices:
         self.encounter(vertex)
@@ -324,18 +319,32 @@ class Graph(object):
 
     from fatcatmap import models
 
+    _queued_descriptors = set()
+
+    # fetch objects
     batch = [k for k in set(self.queued) if k not in (omit or set())]
     for key, entity in zip(batch, models.BaseModel.get_multi(batch)):
       self.objects[key] = entity
+
+      if self.options.media or self.options.stats:
+        if key in self.vertices:
+          if self.options.media: _queued_descriptors.add((key, 'media'))
+          if self.options.stats: _queued_descriptors.add((key, 'stats'))
+        elif self.options.stats and key in self.edges: _queued_descriptors.add((key, 'stats'))
+
+    # fetch descriptors, if so instructed
+    if self.options.media or self.options.stats:
+      for descriptor_base, prefix in _queued_descriptors:
+        self.descriptors[descriptor_base] = self.adapter.descriptors(descriptor_base, prefix=prefix+'.*')
+
     return self
 
   ## ~~ accessors ~~ ##
-  (keys, kinds, edges, lookup, window, keybag, origin, adapter, objects,
+  (keys, kinds, edges, window, keybag, origin, adapter, objects,
     network, vertices, traversed, serialized, descriptors, options, defaults, options_class) = (
       property(lambda self: self.__keys__),
       property(lambda self: self.__kinds__),
       property(lambda self: self.__edges__),
-      property(lambda self: self.__lookup__),
       property(lambda self: self.__window__),
       property(lambda self: self.__keybag__),
       property(lambda self: self.__origin__),

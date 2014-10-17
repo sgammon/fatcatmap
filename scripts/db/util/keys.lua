@@ -31,5 +31,5 @@ local relationship = function (source, target)
     left, right = target, source
   end
 
-  return {left=left, right=right, key=trim(left) .. trim(right)}
+  return {left=left, right=right, key=redis.sha1hex(trim(left) .. trim(right))}
 end
