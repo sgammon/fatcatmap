@@ -10,7 +10,7 @@
 from .. import (Vertex,
                 describe)
 from ..abstract import Name
-from ..abstract.org import OrganizationName
+from ..abstract.org import OrganizationName, Organization
 
 
 
@@ -22,7 +22,7 @@ class PoliticalCommitteeName(OrganizationName):
 
 
 @describe(root=True)
-class PoliticalCommittee(Vertex):
+class PoliticalCommittee(Organization):
 
   '''  '''
 

@@ -41,7 +41,7 @@ class ModelBinding(object):
     self.__init__(chain, logging)
     return self
 
-  def get_by_ext(self, id, provider=None):
+  def get_by_ext(self, id, provider=None, strict=True):
 
     ''' Retrieve an entity by a unique external ID. '''
 
@@ -61,8 +61,10 @@ class ModelBinding(object):
 
       return result[0].parent  # things worked somehow
 
-    raise RuntimeError('Dependent foreign record at external ID'
-                       ' "%s::%s" could not be found.' % (provider, id))
+    if strict:
+      raise RuntimeError('Dependent foreign record at external ID'
+                         ' "%s::%s" could not be found.' % (provider, id))
+    return False
 
   def ext_id(self, parent, provider, name, content):
 
