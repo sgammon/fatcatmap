@@ -47,12 +47,11 @@ class ContributionType(BidirectionalEnum):
 
 
 @describe(type=Transaction)
-class GenericContributionTotal(Contributor >> (Contributor):
+class GenericContributionTotal(Contributor >> Contributor):
+
   ''' Describes a series of summarized contributions from one
       ``Contributor`` (child of ``Organization`` or ``Person``)
-        to another ``Contributor``(child of ``Organization``)
-        OR
-  '''
+        to another ``Contributor``(child of ``Organization``)'''
 
 
 @describe(type=Transaction)
