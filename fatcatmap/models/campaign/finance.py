@@ -48,7 +48,7 @@ class ContributionType(BidirectionalEnum):
 
 
 @describe(type=Transaction)
-class GenericContributionTotal(Contributor >> (Contributor,Legislator)):
+class GenericContributionTotal(Contributor >> Vertex):
   ''' Describes a series of summarized contributions from one
       ``Contributor`` (child of ``Organization`` or ``Person``)
         to another ``Contributor``(child of ``Organization``)

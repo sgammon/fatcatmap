@@ -53,7 +53,7 @@ class Contribution(ModelBinding):
 
       yield contribution
 
-      stat = ContributionStat(contribution)
+      stat = ContributionStat(contribution,amount=data['amount_rank'],count=data['count_rank'])
 
       yield stat
 
