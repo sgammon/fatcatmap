@@ -14,6 +14,8 @@ from . import ModelBinding, bind
 
 # models
 from fatcatmap.models.person import Person
+from fatcatmap.models.campaign.finance import GenericContributionTotal
+from fatcatmap.models.descriptors.stat  import ContributionStat
 
 
 
@@ -24,7 +26,7 @@ class Contribution(ModelBinding):
       bulk data from Influence Explorer  '''
 
   fields = [] # header on file, from hive
-  provider_mapping = {
+  contributor_mapping = {
     'C': 'crp',
     'I': 'donor'}
 
@@ -38,21 +40,23 @@ class Contribution(ModelBinding):
 
     contributor = self.get_by_ext(
       data['contributor_ext_id'],
-      provider=self.provider_mapping[data['contributor_type']], strict=False)
+      provider=self.contributor_mapping[data['contributor_type']], strict=False)
 
     recipient = self.get_by_ext(
-      data['recipient_ext_id'],
-      provider=self.provider_mapping[data['recipient_type']], strict=False)
+      data['recipient_ext_id'], strict=False)
 
     if contributor and recipient:
 
+      contribution = GenericContributionTotal(
+        contributor, recipient, amount=data['amount'],
+        count=data['count'])
 
-      committee = PoliticalCommittee.new()
-      contributor = Contributor.new(committee, fec_category=data['fec_category'])
+      yield contribution
 
-      committee.name.formal = data['name']
+      stat = ContributionStat(contribution)
 
-      yield committee
-      yield contributor
+      yield stat
 
-      yield self.ext_id(contributor, "fec", "id", data['ext_id'])
+
+
+

@@ -21,6 +21,7 @@ from ..abstract import (Role,
 # parent models
 from ..person import Person
 from ..politics.campaign import Campaign
+from ..government.legislative import Legislator
 
 # descriptors
 from ..descriptors.ext import URI
@@ -47,13 +48,15 @@ class ContributionType(BidirectionalEnum):
 
 
 @describe(type=Transaction)
-class GenericContributionTotal(Contributor >> (Contributor):
+class GenericContributionTotal(Contributor >> (Contributor,Legislator)):
   ''' Describes a series of summarized contributions from one
       ``Contributor`` (child of ``Organization`` or ``Person``)
         to another ``Contributor``(child of ``Organization``)
         OR
   '''
-
+  type = ContributionType, {'indexed': True, 'required': True}
+  count = int, {}
+  amount = int, {}
 
 @describe(type=Transaction)
 class CampaignContributionTotal(Contributor >> Campaign):
