@@ -89,8 +89,8 @@
       <script id="js-page" type="text/javascript" nonce="{{ nonce.script }}" src="{%- block page_js -%}{%- endblock -%}"></script>
 
       <!-- context -->
-      <script id="js-context" type="application/json">{{ js_context|json|safe }}</script><!-- end #js-context -->
-      {% if js_context.pagedata -%}<script id="js-data" type="application/json">{{ pagedata|json|safe }}</script><!-- end #js-data -->{%- endif %}
+      <script id="js-context" nonce="{{ nonce.script }}" type="application/json">{{ js_context|json|safe }}</script><!-- end #js-context -->
+      {% if js_context.pagedata -%}<script id="js-data" nonce="{{ nonce.script }}" type="application/json">{{ pagedata|json|safe }}</script><!-- end #js-data -->{%- endif %}
       {% if config.assets.config.serving_mode != "cdn" -%}
         <script type="text/javascript" nonce="{{ nonce.script }}" src="{{ asset.script("compiled/app.js") }}"></script>
       {%- endif %}

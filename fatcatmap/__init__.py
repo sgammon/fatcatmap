@@ -26,6 +26,7 @@ else:
 # exports
 from canteen import url
 from canteen import Page as RawPage
+from canteen.logic.session import ClientSession
 
 
 # @TODO(sgammon): in general this file needs massive cleanup
@@ -201,7 +202,10 @@ class Page(RawPage):
 
       ## == session data == ##
       'session': {
-        'established': None},
+        'id': self.session.id,
+        'auth': self.session.get('auth', False),
+        'token': None,
+        'scopes': tuple()},
 
       ## == agent capabilities == ##
       'agent': {

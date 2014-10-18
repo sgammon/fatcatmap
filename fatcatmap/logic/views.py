@@ -98,4 +98,5 @@ class ClientTemplate(Logic):
         :returns: Map of known ``filename -> template`` mappings, preloaded at
           server construction time. '''
 
-    return self.known_templates
+    return [
+      i.replace('.html', '').replace(template_path + '/', '') for i in self.known_templates.keys()]

@@ -123,11 +123,42 @@ config = cfg.Config(app={
 
   #### ==== CANTEEN CONFIGURATION ==== ####
 
+  ## - RPC APIs
+  'api': {
+    'rpc': {
+      'enabled': True,
+      'secure': (__debug__ and True) or False,
+      'host': 'api.fatcatmap.com' if not __debug__ else None,
+      'version': 1
+    },
+
+    'realtime': {
+      'enabled': False,
+      'secure': (__debug__ and True) or False,
+      'host': 'realtime.fatcatmap.com' if not __debug__ else None,
+      'version': 1
+    }
+  },
+
   ## - HTTP Semantics
   'http': {
 
     # Default headers to add
-    'headers': {}
+    'headers': {},
+
+    'sessions': {
+      'enable': True,
+      'engine': 'cookies',
+
+      'storage': {
+        'enable': True
+      },
+
+      'cookies': {
+        'key': 'fcm',
+        'domain': None
+      }
+    }
 
   },
 
