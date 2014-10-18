@@ -43,6 +43,7 @@ class SunlightContributor(ModelBinding):
 
   ''' Creates the Vertexes needed for creating campaign finance edges
    Currently Committees and People'''
+
   fields = ('ext_id', 'name', 'fec_code')
 
   def convert(self, data):
@@ -76,6 +77,7 @@ class SunlightOrganizationContributor(ModelBinding):
 
   ''' Creates the Vertexes needed for creating campaign finance edges
    Currently Committees and People'''
+
   fields = ('ext_id', 'name', 'fec_code')
 
   def convert(self, data):
@@ -99,5 +101,3 @@ class SunlightOrganizationContributor(ModelBinding):
       yield contributor
 
       yield self.ext_id(contributor, "fec", "id", data['ext_id'])
-
-

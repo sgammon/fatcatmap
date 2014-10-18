@@ -23,7 +23,8 @@ class CSV(FileReader):
   params = {
     'json': False,  # decode CSV values as JSON
     'files': set,  # all files in the current load
-    'buffer': 1000}  # how many lines should we buffer?
+    'buffer': 1000,
+    'fields': None}  # how many lines should we buffer?
 
   def open(self):
 
@@ -34,8 +35,11 @@ class CSV(FileReader):
     else:
       self.file = open(self.config.subject)
 
-    # get the header of the file
-    self.fields = [f.strip().replace('\n', '') for f in self.file.readline().split(',') if f]
+    if not self.config.fields:
+      # get the header of the file
+      self.fields = [f.strip().replace('\n', '') for f in self.file.readline().split(',') if f]
+    else:
+      self.fields = self.config.fields
 
   def buffer_lines(self):
 
