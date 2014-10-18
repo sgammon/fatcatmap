@@ -23,8 +23,10 @@ var VIEWS = {},
     services.template.get(filename).then(function (response, error) {
       var children, source, count;
 
-      if (error)
+      if (error) {
+        console.warn('[services.template] ' + error.message);
         return cb(false, error);
+      }
 
       if (response.data)
         response = response.data;

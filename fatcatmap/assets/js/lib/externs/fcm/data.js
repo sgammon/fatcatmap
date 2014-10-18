@@ -39,7 +39,7 @@ DataObject.data;
 /** @type {boolean} */
 DataObject.cached;
 
-/** @type {Object} */
+/** @type {Object.<string, Object>} */
 DataObject.descriptors;
 
 

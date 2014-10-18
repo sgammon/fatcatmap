@@ -14,11 +14,10 @@ goog.require('service');
 goog.require('services.router');
 goog.require('services.history');
 goog.require('services.template');
-goog.require('services.data');
 goog.require('services.view');
+goog.require('services.data');
 goog.require('services.graph');
 goog.require('services.search');
-goog.require('services.indexer');
 goog.require('views.App');
 
 goog.provide('catnip');
@@ -46,63 +45,64 @@ GO = function () {
  * @return {ServiceContext}
  */
 catnip = function (context, data, routes) {
-    var fcm = this;
 
-    /**
-     * @type {JSContext}
-     */
-    fcm._context = context;
+  var fcm = this;
 
-    /**
-     * @type {?Object}
-     */
-    fcm.session = null;
+  /**
+   * @type {JSContext}
+   */
+  fcm._context = context;
 
-    if (context.session && context.session.established)
-      fcm.session = context.session.payload;
+  /**
+   * @type {?Object}
+   */
+  fcm.session = null;
 
-    if (context.services && context.protocol.rpc.enabled) {
-      fcm.rpc.init(context.services);
-    } else {
-      fcm.rpc = null;
-    }
+  if (context.session && context.session.established)
+    fcm.session = context.session.payload;
 
-    if (context.template.manifest)
-      fcm.services.template.init(context.template.manifest);
+  if (context.services && context.protocol.rpc.enabled) {
+    fcm.rpc.init(context.services);
+  } else {
+    fcm.rpc = null;
+  }
 
-    if (data)
-      fcm.services.data.init(data, function (graph) {
-        fcm.services.graph.init(graph);
+  if (context.template.manifest)
+    fcm.services.template.init(context.template.manifest);
+
+  if (data)
+    fcm.services.data.init(data, function (graph) {
+      fcm.services.graph.init(graph);
+    });
+
+  if (routes) {
+
+    fcm.router.init(routes, function (initialRoute) {
+      catnip.ready(function () {
+        fcm.history.init();
+
+        if (initialRoute)
+          return fcm.router.route(initialRoute);
       });
+    });
 
-    if (routes) {
+    fcm.services.view.init('app', /** @this {views.App} */function () {
+      var app = this;
 
-      fcm.router.init(routes, function (initialRoute) {
-        catnip.ready(function () {
-          fcm.history.init();
+      app.$set('active', true);
 
-          if (initialRoute)
-            return fcm.router.route(initialRoute);
-        });
+      app.nextTick(function () {
+        app.$.stage.$set('active', true);
+        ServiceContext.inject('app', app);
+        GO();
       });
+    });
 
-      fcm.services.view.init('app', /** @this {views.App} */function () {
-        var app = this;
+  }
 
-        app.$set('active', true);
+  return this;
 
-        app.nextTick(function () {
-          app.$.stage.$set('active', true);
-          ServiceContext.inject('app', app);
-          GO();
-        });
-      });
-
-    }
-
-    return this;
-
-}.service('catnip');
+}.inject();
 
 /**
  * @param {function()=} cb
@@ -118,3 +118,9 @@ catnip.ready = function (cb) {
 
   READY.push(cb);
 };
+
+/**
+ * @expose
+ * @type {views.App}
+ */
+ServiceContext.prototype.app;

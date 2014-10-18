@@ -25,10 +25,10 @@ var routes = {
     state.page = state.page || { active: true };
     state.modal = state.modal || null;
 
-    app.$set('page', state.page);
-    app.$set('modal', state.modal);
+    this.app.$set('page', state.page);
+    this.app.$set('modal', state.modal);
 
-    app.nextTick(function () {
+    this.app.nextTick(function () {
       if (!app.$.stage || !app.$.stage.$.map.active) {
         if (graph.active) {
           app.$broadcast('page.map', graph.active);

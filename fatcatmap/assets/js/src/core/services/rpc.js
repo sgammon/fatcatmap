@@ -62,8 +62,8 @@ RPCAPI = function (name, methods, config) {
         if (error)
           return response.fulfill(false, error);
 
-        if (value.data && value.data.error_message)
-          return response.fulfill(false, new Error(value.data.error_message));
+        if (value.data && value.data['error_message'])
+          return response.fulfill(false, new Error(value.data['error_message']));
 
         response.fulfill(value);
       });

@@ -18,7 +18,7 @@ goog.require('services.graph');
 
 goog.provide('views.page.Map');
 
-var PI, _distributeNodeInsertion, _calculateLeafLinkAdjustment;
+var PI, _distributeNodeInsertion, _calculateLeafLinkAdjustment, ASSET_TYPES;
 
 PI = Math.PI;
 
@@ -80,6 +80,8 @@ _calculateLeafLinkAdjustment = function (radius, leaf, peer) {
 
   return diff;
 };
+
+ASSET_TYPES = ['gif', 'png', 'raw', 'jpeg', 'webp', 'tiff'];
 
 /**
  * @constructor
@@ -368,13 +370,116 @@ views.Map = View.extend({
    * @type {Object}
    */
   methods: /** @lends {views.Map.prototype} */{
+     /**
+     * @expose
+     * @param {MouseEvent} e
+     * @this {views.Map}
+     */
+    trim: function (e) {
+      var target = e.target,
+        cached;
+
+      if (target.classList.has('trim') || target.classList.has('untrim')) {
+        e.preventDefault();
+        e.stopPropagation();
+
+        if (target.classList.has('trim')) {
+          this.cached = this.graph.trim(true);
+          this.$emit('page.map', this.graph);
+        } else {
+          this.$emit('page.map', this.cached || this.graph);
+          this.cached = null;
+        }
+      }
+    },
+
+    /**
+     * @expose
+     * @param {string} key
+     * @param {MouseEvent} e
+     * @this {views.Map}
+     */
+    viewDetail: function (key, e) {
+      var target, selected, selectedI;
+
+      if (key && e) {
+        e.preventDefault();
+        e.stopPropagation();
+
+        target = e.target;
+        selected = this.$.detail.keys();
+
+        if (this.clicked.key === key && Date.now() - this.clicked.timestamp < 400)
+          return this.browseTo(key);
+
+        this.clicked.key = key;
+        this.clicked.timestamp = Date.now();
+
+        if (target.classList.contains(this.$options.selectors.selected.slice(1))) {
+          selectedI = selected.indexOf(key);
+          
+          if (selectedI > -1)
+            selected.splice(selectedI, 1);
+        } else {
+          if (e.shiftKey) {
+            if (selected.length < 2)
+              selected.push(key);
+          } else {
+            selected = [key];
+          }
+        }
+
+        this.map.selected = selected;
+        this.map.changed = true;
+
+        this.$root.$emit('route', '/detail/' +
+          (selected.length > 1 ? selected.join('/and/') : selected[0] || ''));
+      }
+    },
+
+    /**
+     * @expose
+     * @param {MouseEvent} e
+     * @this {views.Map}
+     */
+    startDrag: function (e) {
+      console.log('starting drag');
+      this.dragging = true;
+    },
+
+    /**
+     * @expose
+     * @param {models.graph.GraphNode} node
+     * @param {function()} tick
+     * @this {views.Map}
+     */
+    drag: function (node, tick) {
+      console.log('dragged (' + d3.event.dx + ', ' + d3.event.dy + ').');
+
+      node.x = d3.event.x;
+      node.y = d3.event.y;
+
+      tick();
+    },
+
+    /**
+     * @expose
+     * @param {MouseEvent} e
+     * @this {views.Map}
+     */
+    endDrag: function (e) {
+      console.log('stopped drag');
+      this.dragging = false;
+    },
+
     /**
      * @expose
      * @param {EventTarget} element
      * @return {boolean}
      */
     isNode: function (element) {
-      return element.classList.contains('node');
+      return element && element.classList.contains('node') ||
+        element.parentNode.classList.contains('node-group');
     },
 
     /**
@@ -383,56 +488,23 @@ views.Map = View.extend({
      * @return {boolean}
      */
     isEdge: function (element) {
-      return element.classList.contains('link');
+      return element && element.classList.contains('link');
     },
 
     /**
      * @expose
-     * @param {MouseEvent} e
-     * @this {views.Map}
+     * @param {EventTarget} element
+     * @return {string}
      */
-    viewDetail: function (e) {
-      var target, key, selected, selectedI;
-
-      if (!this.dragging) {
-        target = e.target;
-
-        if (this.isNode(target)) {
-          e.preventDefault();
-          e.stopPropagation();
-
-          key = target.getAttribute('id').split('-').pop();
-          return this.browseTo(key);
-
-          // selected = this.$.detail.keys();
-
-          // if (this.clicked.key === key && Date.now() - this.clicked.timestamp < 400)
-          //   return this.browseTo(key);
-
-          // this.clicked.key = key;
-          // this.clicked.timestamp = Date.now();
-
-          // if (target.classList.contains(this.$options.selectors.selected.slice(1))) {
-          //   selectedI = selected.indexOf(key);
-            
-          //   if (selectedI > -1)
-          //     selected.splice(selectedI, 1);
-          // } else {
-          //   if (e.shiftKey) {
-          //     if (selected.length < 2)
-          //       selected.push(key);
-          //   } else {
-          //     selected = [key];
-          //   }
-          // }
-
-          // this.map.selected = selected;
-          // this.map.changed = true;
-
-          // this.$root.$emit('route', '/detail/' +
-          //   (selected.length > 1 ? selected.join('/and/') : selected[0] || ''));
-        }
+    getNodeKey: function (element) {
+      if (!this.isNode(element)) {
+        return '';
       }
+
+      if (!element.classList.contains('node-group'))
+        element = element.parentNode;
+
+      return element.getAttribute('id').split('-').pop() || '';
     },
 
     /**
@@ -453,8 +525,9 @@ views.Map = View.extend({
 
         if (graph) {
           node = graph.nodes.get(key);
+
           newPeers = node.peers().filter(function (n) {
-            return n.edges.length === 1;
+            return n.isLeaf();
           });
 
           _distributeNodeInsertion(
@@ -463,27 +536,25 @@ views.Map = View.extend({
             map.config.force.distance / 2,
             newPeers);
 
-          map.draw(graph);
+          graph.origin.key = node.key;
+          graph.origin.index = graph.nodes.index[node.key];
+
+          map.$set('config.origin.snap', true);
+          map.$set('map.changed', true);
+
+          map.$emit('page.map', graph);
         }
       });
     },
 
     /**
      * @expose
-     * @param {MouseEvent} e
-     * @this {views.Map}
+     * @param {string} key
+     * @this {views.map}
      */
-    startDrag: function (e) {
-      this.dragging = true;
-    },
-
-    /**
-     * @expose
-     * @param {MouseEvent} e
-     * @this {views.Map}
-     */
-    endDrag: function (e) {
-      this.dragging = false;
+    prune: function (key) {
+      this.cached = this.graph.prune(key);
+      this.$emit('page.map', this.graph);
     },
 
     /**
@@ -493,7 +564,7 @@ views.Map = View.extend({
      */
     draw: function (graph) {
       var view = this,
-        selectors, root, node, origin, edge, tick, force, update;
+        selectors, root, node, edge, shape, origin, tick, force, update;
 
       if (graph && !view.map.root) {
         selectors = view.$options.selectors;
@@ -503,17 +574,17 @@ views.Map = View.extend({
           .attr('width', view.config.width)
           .attr('height', view.config.height);
 
-        node = root.selectAll(selectors.node);
+        node = root.selectAll('svg');
         edge = root.selectAll(selectors.edge);
+        shape = node.selectAll('circle');
 
         tick = function () {
-          var radius = view.config.node.radius;
+          var radius = view.config.node.radius,
+            i = 0;
 
-          // Start force first to ensure nodes have x/y values.
           view.map.force.start();
 
           if (graph.origin) {
-            // Sync origin position, handling snap if enabled.
             if (view.config.origin.snap) {
               graph.nodes.get(graph.origin.index).x = view.config.origin.position.x;
               graph.nodes.get(graph.origin.index).y = view.config.origin.position.y;
@@ -525,18 +596,16 @@ views.Map = View.extend({
             }
           }
 
-          // Set edge & node positions for this tick.
           edge.attr('x1', function (e) { return e.source.x - radius; })
               .attr('y1', function (e) { return e.source.y - radius; })
               .attr('x2', function (e) { return e.target.x - radius; })
               .attr('y2', function (e) { return e.target.y - radius; });
 
-          node.attr('cx', function (n) { return n.x - radius; })
-              .attr('cy', function (n) { return n.y - radius; });
+          node.attr('x', function (n) { return n.x - view.config.sprite.width; })
+              .attr('y', function (n) { return n.y - view.config.sprite.height; });
 
           if (view.map.changed) {
-            // Apply transitions & update classes if node selection is changed.
-            node.filter(selectors.selected)
+            shape.filter(selectors.selected)
                 .filter(function (n) { return view.map.selected.indexOf(n.key) === -1; })
                 .classed({'selected': false})
                 .transition()
@@ -544,7 +613,7 @@ views.Map = View.extend({
                 .ease('cubic')
                 .attr('r', radius);
 
-            node.filter(function (n) { return view.map.selected.indexOf(n.key) > -1; })
+            shape.filter(function (n) { return view.map.selected.indexOf(n.key) > -1; })
                 .classed({'selected': true})
                 .transition()
                 .duration(150)
@@ -580,20 +649,36 @@ views.Map = View.extend({
           force
             .nodes(nodes)
             .links(edges)
+            .on('start', function () {
+              setTimeout(function () { force.alpha(-1); }, 5000);
+            })
             .start();
 
           node = node.data(nodes, nodes.key);
 
           node.exit().remove();
 
-          node.enter()
-              .append('svg:circle')
+          node = node.enter()
+              .append('svg:svg')
               .attr('id', function (n) { return 'node-' + n.key; })
-              .attr('cx', function (n) { return n.x; })
-              .attr('cy', function (n) { return n.y; })
-              .attr('r', view.config.node.radius)
               .attr('width', view.config.sprite.width)
               .attr('height', view.config.sprite.height)
+              .attr('x', function (n) { return n.x - view.config.sprite.width; })
+              .attr('y', function (n) { return n.y - view.config.sprite.height; })
+              .attr('class', 'node-group')
+              .on('click', /** @param {GraphNode} n */function (n) {
+                if (!d3.event.defaultPrevented)
+                  view.viewDetail(n.key.urlsafe(), d3.event);
+              })
+              .call(force.drag);
+
+          shape = node
+              .append('svg:circle')
+              .attr('width', view.config.sprite.width)
+              .attr('height', view.config.sprite.height)
+              .attr('cx', function (n) { return view.config.sprite.width / 2; })
+              .attr('cy', function (n) { return view.config.sprite.height / 2; })
+              .attr('r', view.config.node.radius)
               .attr('class', function (n) {
                 if (view.map.selected.indexOf(n.key) > -1)
                   view.map.changed = true;
@@ -606,15 +691,41 @@ views.Map = View.extend({
                 }
 
                 return n.classes.join(' ');
+              });
+
+          node
+              .filter(function (n) {
+                var kind = n.kind.toLowerCase();
+                return !!n.media || /legislative/.test(kind) || /committee/.test(kind);
               })
-              .call(force.drag);
+              .append('svg:image')
+              .attr('width', view.config.sprite.width)
+              .attr('height', view.config.sprite.height)
+              // .attr('x', function (n) { return n.x; })
+              // .attr('y', function (n) { return n.y; })
+              .attr('clip-path', 'url(#node-circle-mask)')
+              .attr('xlink:href', function (n) {
+                var img;
+
+                if (n.media) {
+                  img = n.media['md'] || n.media['sm'];
+
+                  return 'https://fatcatmap.org/image-proxy/providence-clarity/warehouse/' +
+                    img['location'] + '.' + ASSET_TYPES[img['formats'][0]];
+                }
+
+                if (/legislative/.test(n.kind))
+                  return '/assets/img/icons/legislative.png';
+
+                return '/assets/img/icons/committee.png';
+              });
 
           edge = edge.data(edges, edges.key);
 
           edge.exit().remove();
 
           edge.enter()
-              .insert('line', '.node')
+              .insert('line', 'svg')
               .attr('id', function (e) { return 'edge-' + e.key; })
               .attr('x1', function (e) { return e.source.x; })
               .attr('y1', function (e) { return e.source.y; })
@@ -635,6 +746,10 @@ views.Map = View.extend({
 
           if (view.map.changed)
             force.start();
+
+          setTimeout(function () {
+            force.alpha(-1);
+          }, 5000);
         };
 
         view.map.root = root;
@@ -684,16 +799,17 @@ views.Map = View.extend({
    * @this {views.Map}
    */
   ready: function () {
-    var mapSelector = this.$options.selectors.map;
+    var map = this,
+      mapSelector = map.$options.selectors.map;
 
-    this.$watch('active', function (active) {
+    map.$watch('active', function (active) {
       if (active)
         $(mapSelector).classList.remove('transparent');
     });
 
-    this.resize = this.resize.bind(this);
+    map.resize = map.resize.bind(map);
 
-    window.addEventListener('resize', this.resize);
+    window.addEventListener('resize', map.resize);
   },
 
   /**
@@ -729,6 +845,8 @@ views.Map = View.extend({
     }
 
     if (graph) {
+      // graph = graph.trim();
+
       this.active = true;
 
       origin = graph.nodes.get(graph.origin.index);

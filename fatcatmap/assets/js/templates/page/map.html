@@ -4,20 +4,16 @@
           <filter id="blur-3p"><feGaussianBlur stdDeviation="3"/></filter>
           <filter id="blur-5p"><feGaussianBlur stdDeviation="5"/></filter>
           <filter id="blur-8p"><feGaussianBlur stdDeviation="8"/></filter>
-          <clipPath id="node-circle-mask" clipPathUnits="userSpaceOnUse"><circle r="20" cx="30" cy="30"></circle></clipPath>
+          <clipPath id="node-circle-mask" clipPathUnits="userSpaceOnUse"><circle r="23" cx="30" cy="30"></circle></clipPath>
       </defs>
 
-      <svg id="map" class="transparent" v-on="
-        click : viewDetail,
-        dragstart: startDrag,
-        dragend: endDrag
-      "></svg>
+      <svg id="map" class="transparent"></svg>
   </svg>
 
   <section v-component="component.detail"></section>
 </section>
 
-<section id="map_physics" class="hidden">
+<section id="map_physics" v-if="debug">
   <div class="gridrow-stretch">
 
       <div class="col1">
