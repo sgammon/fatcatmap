@@ -7,8 +7,8 @@
 
   h1, h2
     margin: 0
-    vertical-align: middle
     cursor: pointer
+    vertical-align: middle
     font-weight: $font-weight-light
 
 #version
@@ -18,7 +18,7 @@
 
   h1
     font-size: $font-size-base
-    color: $grey-lighter
+    color: $grey
 
 #page_nav
   position: fixed
@@ -36,5 +36,14 @@
       margin-right: 0.75em
 
   h2
+    color: $grey-lighter
     font-size: $font-size-small
-    color: $grey
+    +transition-property(opacity)
+    +transition-duration(0.2s)
+    +transition-ease(ease)
+    cursor: default
+    opacity: 0.65
+
+  h2[href]:hover
+    opacity: 1
+    cursor: pointer
