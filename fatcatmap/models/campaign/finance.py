@@ -58,6 +58,7 @@ class GenericContributionTotal(Contributor >> (Contributor,Legislator)):
   count = int, {}
   amount = int, {}
 
+
 @describe(type=Transaction)
 class CampaignContributionTotal(Contributor >> Campaign):
 
