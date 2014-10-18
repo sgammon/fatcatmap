@@ -80,12 +80,17 @@ class Data(Logic):
       [], [], hashlib.sha1(), datetime.datetime.now())
 
     # build hash and object structures as we go
-    for encoded, result in ((r.key.urlsafe(), r) for r in results):
-      fragment.update(encoded)
+    for r in results:
+      if r is not None:
+        encoded, result = r.key.urlsafe(), r
+        fragment.update(encoded)
 
-      # append to data, in tandem
-      objects.append(data.DataObject(data=result.to_dict()))
-      keys.append(data.KeyTimestampPair(encoded=encoded, timestamp=freshness))
+        # append to data, in tandem
+        objects.append(data.DataObject(data=result.to_dict()))
+        keys.append(data.KeyTimestampPair(encoded=encoded, timestamp=freshness))
+      else:
+        keys.append(data.KeyTimestampPair(encoded=''))
+        objects.append(data.DataObject())
 
     # construct and return
     return target(count=len(results),

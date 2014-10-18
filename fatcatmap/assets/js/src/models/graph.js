@@ -37,6 +37,12 @@ GraphItem = function (key) {
    * @type {models.KeyList.<string>}
    */
   this.classes = new models.KeyList();
+
+  /**
+   * @private
+   * @type {Object}
+   */
+  this.__descriptors__ = {};
 };
 
 util.object.inherit(GraphItem, models.data.KeyedData);
@@ -49,6 +55,52 @@ util.object.mixin(GraphItem, /** @lends {GraphItem.prototype} */{
    */
   enrich: function (context) {
     this.classes.push(this.key.kind.toLowerCase());
+    return this;
+  },
+
+  /**
+   * Adds a descriptor to the current graph item by name.
+   * @param {(string|Object.<string, *>)} property
+   * @param {*} value
+   * @return {GraphItem}
+   */
+  describe: function (property, value) {
+    if (typeof property === 'object') {
+      value = property;
+
+      for (property in value) {
+        if (value.hasOwnProperty(property))
+          this.describe(property, value[property]);
+      }
+    } else {
+      if (!this.hasOwnProperty(property))
+        Object.defineProperty(this, property, {
+          /**
+           * @expose
+           * @type {boolean}
+           */
+          enumerable: true,
+
+          /**
+           * @expose
+           * @return {*}
+           */
+          get: function () {
+            return value;
+          },
+
+          /**
+           * @expose
+           * @param {*} val
+           */
+          set: function (val) {
+            value = val;
+          }
+        });
+
+      this[property] = value;
+    }
+
     return this;
   },
 
@@ -320,61 +372,171 @@ Graph = function (graph) {
     this.unpack(graph);
 };
 
-/**
- * @param {GraphData} packed
- * @return {Graph}
- */
-Graph.prototype.unpack = function (packed) {
-  var graph = this,
-    keys = packed.data.keys,
-    objects = packed.data.objects,
-    i, key, data, edge, source, target;
+util.object.mixin(Graph, /** @lends {Graph.prototype} */{
+  /**
+   * @param {GraphData} packed
+   * @return {Graph}
+   */
+  unpack: function (packed) {
+    var graph = this,
+      keys = packed.data.keys,
+      objects = packed.data.objects,
+      i, key, data, node, edge, source, target;
 
-  graph.nodes = new models.KeyIndexedList().merge(graph.nodes);
-  graph.edges = new models.KeyIndexedList().merge(graph.edges);
+    graph.nodes = new models.KeyIndexedList().merge(graph.nodes);
+    graph.edges = new models.KeyIndexedList().merge(graph.edges);
 
-  for (i = 0; i < keys.length; i++) {
-    key = keys[i];
-    data = objects[i];
+    for (i = 0; i < keys.length; i++) {
+      key = keys[i];
+      data = objects[i];
 
-    if (!key || !data) {
-      console.warn('Graph.unpack() got empty key or data: ' + key + ', ' + data);
-      break;
+      if (!key || !data) {
+        console.warn('Graph.unpack() got empty key or data: ' + key + ', ' + data);
+        break;
+      }
+
+      if (!data || !data.data ||
+          !(data.data.hasOwnProperty('peers') || data.data.hasOwnProperty('source'))) {
+        node = new GraphNode(key);
+        
+        if (data.data)
+          node.enrich(data.data);
+
+        if (data.descriptors) {
+          node.describe(data.descriptors);
+        }
+
+        graph.nodes.push(node);
+        continue;
+      }
+
+      data = data.data;
+
+      if (data.peers) {
+        source = graph.nodes.get(keys[data.peers[0]]);
+        target = graph.nodes.get(keys[data.peers[1]]);
+      } else {
+        source = graph.nodes.get(keys[data.source]);
+        target = graph.nodes.get(keys[data.target]);
+      }
+
+      edge = new GraphEdge(key);
+
+      edge.link(source);
+      edge.link(target);
+
+      graph.edges.push(edge);
     }
 
-    data = data.data;
+    graph.session = packed.session;
+    graph.origin = {
+      key: keys[packed.origin],
+      index: graph.nodes.index[keys[packed.origin]]
+    };
 
-    if (!data || !(data.hasOwnProperty('peers') || data.hasOwnProperty('source'))) {
-      graph.nodes.push(new GraphNode(key).enrich(data));
-      continue;
+    graph._fragments.push(packed.meta.fragment);
+
+    return graph;
+  },
+
+  /**
+   * Removes all leaf nodes and their links.
+   * @param {boolean=} cache If true, will return the untrimmed node and edge lists.
+   * @return {(Graph|Object.<{nodes: KeyIndexedList, edges: KeyIndexedList}>)}
+   */
+  trim: function (cache) {
+    var nodes = new models.KeyIndexedList(),
+      edges = new models.KeyIndexedList(),
+      cached;
+
+    this.nodes.forEach(function (node) {
+      if (!node.isLeaf())
+        nodes.push(node);
+    });
+
+    this.edges.forEach(function (edge) {
+      if (edge.satisfied() && !(edge.source.isLeaf() || edge.target.isLeaf()))
+        edges.push(edge);
+    });
+
+    if (cache === true)
+      cached = {
+        nodes: this.nodes,
+        edges: this.edges,
+        origin: this.origin
+      };
+
+    this.nodes = nodes;
+    this.edges = edges;
+
+    return cached || this;
+  },
+
+  /**
+   * Removes a node from the graph, trimming any subsequently isolated subgraphs.
+   * @param {(string|models.Key|GraphNode)} node
+   * @param {boolean=} cache If true, will return the untrimmed node and edge lists.
+   * @return {(Graph|Object.<{nodes: KeyIndexedList, edges: KeyIndexedList}>)}
+   * @throws {TypeError} If node is not a GraphNode, Key or string key.
+   */
+  prune: function (node, cache) {
+    var nodes = new models.KeyIndexedList(),
+      edges = new models.KeyIndexedList(),
+      pruned = {
+        nodes: {},
+        edges: {}
+      },
+      peers, cached;
+
+    while (!(node instanceof GraphNode)) {
+      if (node instanceof Key || typeof node === 'string') {
+        node = this.nodes.get(node);
+      } else {
+        throw new TypeError('Graph.prune() accepts a GraphNode, node Key or string node key.');
+      }
     }
 
-    if (data.peers) {
-      source = graph.nodes.get(keys[data.peers[0]]);
-      target = graph.nodes.get(keys[data.peers[1]]);
+    if (cache === true)
+      cached = {
+        nodes: this.nodes,
+        edges: this.edges,
+        origin: this.origin
+      };
+
+    if (!node.key.equals(this.origin.key)) {
+      pruned.nodes[node.key] = true;
+
+      node.edges.forEach(function (edge) {
+        var peer = edge.peer(node);
+
+        pruned.edges[edge.key] = true;
+
+        if (peer.isLeaf()) {
+          pruned.nodes[peer.key] = true;
+        } else {
+          peer.edges.splice(peer.edges.index[edge.key], 1);
+        }
+      });
+
+      this.nodes.forEach(function (node) {
+        if (!pruned.nodes[node.key])
+          nodes.push(node);
+      });
+
+      this.edges.forEach(function (edge) {
+        if (!pruned.edges[edge.key])
+          edges.push(edge);
+      });
     } else {
-      source = graph.nodes.get(keys[data.source]);
-      target = graph.nodes.get(keys[data.target]);
+      this.origin = null;
     }
 
-    edge = new GraphEdge(key);
+    this.nodes = nodes;
+    this.edges = edges;
 
-    edge.link(source);
-    edge.link(target);
-
-    graph.edges.push(edge);
+    return cached || this;
   }
-
-  graph.session = packed.session;
-  graph.origin = {
-    key: keys[packed.origin],
-    index: graph.nodes.index[keys[packed.origin]]
-  };
-
-  graph._fragments.push(packed.meta.fragment);
-
-  return graph;
-};
+});
 
 /**
  * @expose

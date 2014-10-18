@@ -45,6 +45,10 @@ View.extend = function (options) {
     if (view.$options.handler)
       view.$on(view.$options.viewname, view.$options.handler.bind(view));
 
+    view.$on('debug', /** @this {View} */function () {
+      this.$set('debug', this.debug !== true);
+    });
+
     if (ready)
       ready.call(view);
   };

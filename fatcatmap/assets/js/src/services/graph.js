@@ -135,6 +135,9 @@ services.graph = /** @lends {ServiceContext.prototype.graph} */ {
   init: function (graph, session, cb) {
     this.services.graph.active = new models.graph.Graph(graph, session);
 
+    /** @expose */
+    window.graphdata = graph;
+
     if (cb)
       cb(this.services.graph.active);
   }
