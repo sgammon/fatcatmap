@@ -146,4 +146,4 @@ class ModelBinding(object):
 bind = ModelBinding.register  # alias
 
 
-__all__ = ('legacy', 'govtrack', 'bigquery')
+__all__ = ('legacy', 'govtrack', 'bigquery', 'finance', 'sunlight', 'legislators')

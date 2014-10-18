@@ -63,14 +63,18 @@ class ExternalID(Descriptor):
     if parent is None:
       raise TypeError('Must pass valid Key instance as ExternalID parent.')
 
-    fingerprint = cls.__hashfunc__('::'.join(map(str, (provider, content)))).hexdigest()
-    parent = parent.key if isinstance(parent, model.Model) else parent
+    try:
+      fingerprint = cls.__hashfunc__('::'.join(map(unicode, (provider, content))).encode('utf-8')).hexdigest()
+      parent = parent.key if isinstance(parent, model.Model) else parent
+    
+    except UnicodeEncodeError:
+      import pdb; pdb.set_trace()
 
     return cls(key=model.Key(cls, '.'.join(('ext', provider, name)), parent=parent),
                name=name, provider=provider,
                hash=fingerprint,
-               content=(str(content),) if not (
-                isinstance(content, (list, tuple))) else str(content))
+               content=(unicode(content),) if not (
+                isinstance(content, (list, tuple))) else unicode(content))
 
 
 class Protocols(struct.BidirectionalEnum):

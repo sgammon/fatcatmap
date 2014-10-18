@@ -51,7 +51,7 @@ class Grapher(logic.Logic):
   ''' Provides logic that is capable of traversing and
       recursively exploring FCM's Redis-based graph. '''
 
-  caching = True  # graph caching
+  caching = False  # graph caching
   options = Options  # attach graph options
 
   def construct(self, session, origin, export=True, **options):

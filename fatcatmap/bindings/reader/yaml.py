@@ -6,6 +6,8 @@
 
 '''
 
+from __future__ import absolute_import
+
 # stdlib
 import gzip
 import yaml
@@ -14,16 +16,10 @@ import yaml
 from .base import FileReader, reader
 
 
-
 @reader('yaml', 'yaml.gz')
 class YAML(FileReader):
 
-  ''' Manages reading of CSV-formatted files. '''
-
-  params = {
-    'json': False,  # decode CSV values as JSON
-    'files': set,  # all files in the current load
-    'buffer': 1000}  # how many lines should we buffer?
+  ''' Manages reading of YAML-formatted files. '''
 
   def open(self):
 
@@ -35,14 +31,11 @@ class YAML(FileReader):
       self.file = open(self.config.subject)
       self.yaml = yaml.load(self.file)
 
-
   def read(self):
 
     ''' Read the target source file and process it. '''
 
-    yaml = self.yaml
-
-    for obj in yaml:
+    for obj in self.yaml:
       yield obj
 
   def close(self):

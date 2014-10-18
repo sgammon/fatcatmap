@@ -15,9 +15,10 @@ from fatcatmap.models.politics.committee import PoliticalCommittee
 from fatcatmap.models.person import Person
 
 
-
-
 def parse_name(name):
+
+  '''  '''
+
   name = name.split(',')
   last = name[0]
   middle = None
@@ -37,14 +38,14 @@ def parse_name(name):
   return "", "", last, last
 
 
-
 @bind('sunlight', 'Contributor')
 class SunlightContributor(ModelBinding):
 
   ''' Creates the Vertexes needed for creating campaign finance edges
-   Currently Committees and People'''
+      Currently Committees and People'''
 
-  fields = ('ext_id', 'name', 'fec_code')
+  params = {
+   'fields': ('ext_id', 'name', 'fec_code')}
 
   def convert(self, data):
 
@@ -54,31 +55,28 @@ class SunlightContributor(ModelBinding):
       :returns: Instance of local target to inflate. '''
 
     try:
-
       contributor = self.get_by_ext(data['ext_id'], provider='donor')
 
     except RuntimeError:
-
       person = Person.new()
       contributor = Contributor.new(person, fec_category=data['fec_category'])
 
-      person.name.given, person.name.middle, \
-        person.name.family, person.name.primary = parse_name(data['name'])
+      (person.name.given, person.name.middle,
+        person.name.family, person.name.primary) = parse_name(data['name'])
 
       yield person
       yield contributor
-
       yield self.ext_id(contributor, "donor", "id", data['ext_id'])
-
 
 
 @bind('sunlight', 'ContributorOrganization')
 class SunlightOrganizationContributor(ModelBinding):
 
   ''' Creates the Vertexes needed for creating campaign finance edges
-   Currently Committees and People'''
+      Currently Committees and People'''
 
-  fields = ('ext_id', 'name', 'fec_code')
+  params = {
+   'fields': ('ext_id', 'name', 'fec_code')}
 
   def convert(self, data):
 
@@ -91,13 +89,10 @@ class SunlightOrganizationContributor(ModelBinding):
       contributor = self.get_by_ext(data['ext_id'], provider='fec')
 
     except RuntimeError:
-
       committee = PoliticalCommittee.new()
       contributor = Contributor.new(committee, fec_category=data['fec_category'])
-
       committee.name.formal = data['name']
 
       yield committee
       yield contributor
-
       yield self.ext_id(contributor, "fec", "id", data['ext_id'])

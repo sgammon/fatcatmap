@@ -686,7 +686,8 @@ class FCM(cli.Tool):
     arguments = (
       ('binding', {'type': str, 'help': 'binding category, to execute against data. add a colon and specific binding name if you are picky.'}),
       ('--dry', '-no', {'action': 'store_true', 'help': 'never actually store anything'}),
-      ('--target', '-t', {'type': str, 'help': 'target adapter to write to (defaults to RedisWarehouse)'}))
+      ('--target', '-t', {'type': str, 'help': 'target adapter to write to (defaults to RedisWarehouse)'}),
+      ('--clean', '-c', {'action': 'store_true', 'help': 'clean datastore before operating'}))
 
 
     class CSV(cli.Tool):
@@ -746,6 +747,15 @@ class FCM(cli.Tool):
       }[(arguments.target or 'RedisWarehouse').lower()]()
 
     @classmethod
+    def clean_data(cls, arguments, target):
+
+      '''  '''
+
+      assert arguments.clean
+      if not arguments.quiet: logging.info('Cleaning target "%s" storage...' % target)
+      target.execute(target.Operations.FLUSH_ALL, '__meta__')
+
+    @classmethod
     def write_object(cls, target, key, entity, pipeline=None):
 
       '''  '''
@@ -765,9 +775,14 @@ class FCM(cli.Tool):
       if not arguments.quiet: logging.info('Loading %s reader...' % tool.__name__)
       binding, base_reader = None, tool(**config)
 
-      if not arguments.quiet: logging.info('Loading "%s" as target...' % arguments.target or 'RedisWarehouse')
+      if not arguments.quiet:
+        logging.info('Loading "%s" as target...' % (arguments.target or 'RedisWarehouse'))
       target = cls.load_adapter(arguments)
 
+      if arguments.clean:
+        if not arguments.quiet:
+           logging.info('Cleaning datastore...')
+           cls.clean_data(arguments, target)
 
       def emit(entity):
 

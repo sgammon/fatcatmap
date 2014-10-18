@@ -186,8 +186,7 @@ class FileReader(BindingReader):
   ''' Base class for readers that read files. '''
 
   params = {
-    'files': None,  # all files for this job
-    'subject': None}  # the current file we're on
+    'files': None}  # the current file we're on
 
   @property
   def sources(self):
