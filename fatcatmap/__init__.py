@@ -118,18 +118,33 @@ class Page(RawPage):
         if 'HOSTNAME' in env_k: env_v = env_v.split('.')[0]  # grab leaf
         base[env_k.lower().split('_')[-1]] = env_v
 
-
     supercontext = super(Page, self).template_context
+
+    # @TODO: don't hardcode deliver domain
+    js_context = self._collapse_js_context()
+    js_context['k9'] = k9env  # mount K9 environment
+    hosts = {  # generate hosts
+        'api': js_context['protocol']['rpc']['host'],
+        'realtime': js_context['protocol']['realtime']['host'],
+        'deliver': 'deliver.fcm-static.org'}
+
+    # generate DNS prefetch list
+    dns_prefetch = set()
+    for i in (d for d in hosts.itervalues() if 'localhost' not in d):
+      dns_prefetch.add(i)
+
     return (supercontext.update({
       # javascript context variables
       'pagedata': self.__page_data__,
-      'js_context': self._collapse_js_context(),
+      'js_context': js_context,
       'k9': {
         'tools': self.request.args.get('tools') or config.config['fcm'].get('tools', {}).get('enabled', False),
         'metadata': k9env,
         'instance': k9env['instance']
       },
       'config': config,
+      'hosts': hosts,
+      'dns_prefetch': (i for i in dns_prefetch),
       'nonce': {
         'script': _script_nonce
       }}) or supercontext)
