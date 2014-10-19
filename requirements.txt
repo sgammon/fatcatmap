@@ -3,7 +3,6 @@ nose
 uwsgi
 fabtools
 fabric
-google-api-python-client
 msgpack-python
 python-snappy
 raven
@@ -16,3 +15,5 @@ hiredis
 elasticsearch
 thrift
 pyyaml
+slimmer
+google-api-python-client

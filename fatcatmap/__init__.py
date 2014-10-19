@@ -7,7 +7,7 @@
 '''
 
 # stdlib
-import os, sys, hashlib, random
+import os, sys, hashlib, random, operator
 
 # google appengine lib/ shim
 try:
@@ -143,6 +143,8 @@ class Page(RawPage):
         'metadata': k9env,
         'instance': k9env['instance']
       },
+      'frontend': {
+        'templates': ((k, v) for k, v in sorted(self.views.describe().iteritems(), key=operator.itemgetter(0)))},
       'config': config,
       'hosts': hosts,
       'dns_prefetch': (i for i in dns_prefetch),
@@ -233,7 +235,7 @@ class Page(RawPage):
       'services': ServiceHandler.describe(json=False, javascript=False),
 
       'template': {
-        'manifest': self.views.describe()}
+        'manifest': self.views.describe().keys()}
 
     }
 

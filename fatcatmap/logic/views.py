@@ -9,6 +9,9 @@
 # stdlib
 import os
 
+# 3rd party
+import slimmer
+
 # fatcatmap
 from fatcatmap import config as cfg
 
@@ -52,7 +55,7 @@ def _read_template(filename):
     for line in template.read():
       lines.append(line)
 
-    return u''.join((unicode(x, 'latin-1') for x in lines))
+    return slimmer.html_slimmer(u''.join((unicode(x, 'latin-1') for x in lines)))
 
 
 def _get_filename(path):
@@ -73,6 +76,8 @@ class ClientTemplate(Logic):
 
   known_templates = {
     _get_filename(path): _read_template(path) for path in _templates}
+
+  index = {k.replace('.html', '').replace(template_path + '/', ''): v for k, v in known_templates.iteritems()}
 
   def load_template(self, filename):
 
@@ -98,5 +103,4 @@ class ClientTemplate(Logic):
         :returns: Map of known ``filename -> template`` mappings, preloaded at
           server construction time. '''
 
-    return [
-      i.replace('.html', '').replace(template_path + '/', '') for i in self.known_templates.keys()]
+    return self.index
