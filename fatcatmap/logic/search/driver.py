@@ -49,11 +49,9 @@ with core.Library('elasticsearch') as (library, elasticsearch):
       self.es.indices.create(index=name)
 
     def search(self, doc_type, fields=[], query_string=None, fuzzy=True):
-      '''
-      searches using either the lucene query string syntax
-      or a text query with fuzzy matching
 
-      '''
+      ''' searches using either the lucene query string syntax
+          or a text query with fuzzy matching '''
 
       if query_string:
         if fuzzy:

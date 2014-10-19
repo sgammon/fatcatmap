@@ -24,10 +24,10 @@ class SearchAPI(Service):
     "invalid_query": exceptions.InvalidQuery,
     "es_is_down": exceptions.ElasticsearchDown})
 
-
   def exact_match(self,term,msg):
 
     ''' Adds a bonus to `msg.score` in the case that one or more terms matches exactly '''
+
     #import pdb; pdb.set_trace()
     term = term.lower()
     name = msg['label'].lower()
@@ -41,15 +41,10 @@ class SearchAPI(Service):
           score += 0.9
     msg['score'] = score
 
-
-
-
   @remote.method(messages.Query, messages.Results)
   def query(self, request):
 
     '''  '''
-
-
 
     if not isinstance(request.term, basestring):
       raise self.exceptions.invalid_query("Term must be a string")
