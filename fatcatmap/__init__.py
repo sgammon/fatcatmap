@@ -127,7 +127,8 @@ class Page(RawPage):
     hosts = {  # generate hosts
         'api': js_context['protocol']['rpc']['host'],
         'realtime': js_context['protocol']['realtime']['host'],
-        'deliver': 'deliver.fcm-static.org'}
+        'deliver': 'deliver.fcm-static.org',
+        'storage': 'storage.googleapis.com'}
 
     # generate DNS prefetch list
     dns_prefetch = set()
