@@ -54,7 +54,108 @@ views.component.Autocomplete = View.extend({
    * @expose
    * @type {Object}
    */
+  NO_RESULTS: /** @lends {views.component.Autocomplete.prototype.$options.NO_RESULTS} */{
+    /**
+     * @expose
+     * @type {string}
+     */
+    label: '',
+
+    /**
+     * @expose
+     * @type {Object}
+     */
+    result: {
+      /**
+       * @expose
+       * @type {string}
+       */
+      id: '',
+
+      /**
+       * @expose
+       * @type {string}
+       */
+      kind: '',
+
+      /**
+       * @expose
+       * @type {string}
+       */
+      encoded: ''
+    }
+  },
+
+  /**
+   * @expose
+   * @type {Object}
+   */
   methods: /** @lends {views.component.Autocomplete.prototype} */ {
+    /**
+     * @expose
+     */
+    clear: function () {
+      this.previous = this.results;
+      this.$set('results', []);
+    },
+
+    /**
+     * @expose
+     */
+    restore: function () {
+      this.$set('results', this.previous || []);
+    },
+
+    /**
+     * @expose
+     * @param {MouseEvent} e
+     */
+    pin: function (e) {
+      this.pinned = true;
+    },
+
+    /**
+     * @expose
+     * @param {MouseEvent} e
+     */
+    unpin: function (e) {
+      this.pinned = false;
+
+      if (this.blurred === true)
+        this.blur();
+    },
+
+    /**
+     * @expose
+     * @param {InputEvent=} e
+     */
+    blur: function (e) {
+      var autocomplete = this;
+
+      if (this.pinned === true) {
+        this.blurred = true;
+      } else {
+        this.blurred = false;
+        Vue.nextTick(function () {
+          autocomplete.input.classList.remove('focused');
+          autocomplete.clear();
+        });
+      }
+    },
+
+    /**
+     * @expose
+     * @param {InputEvent=} e
+     */
+    focus: function (e) {
+      var autocomplete = this;
+
+      Vue.nextTick(function () {
+        autocomplete.input.classList.add('focused');
+        autocomplete.restore();
+      });
+    },
+
     /**
      * @expose
      * @param {string} term
@@ -62,36 +163,22 @@ views.component.Autocomplete = View.extend({
     submit: function (term) {
       var autocomplete = this;
 
-      services.search.autocomplete(term).then(function (response, error) {
-        if (error)
-          response = { count: 0, results: [] };
+      services.search.autocomplete(term).then(function (results, error) {
+        if (error || !results.length)
+          results = [autocomplete.$options.NO_RESULTS];
 
-        if (response.data)
-          response = response.data;
-
-        autocomplete.$set('results', response.results || []);
+        autocomplete.$set('results', results);
       });
-    },
-
-    /**
-     * @expose
-     * @param {MouseEvent} e
-     */
-    select: function (e) {
-      var target = e.target,
-        key;
-
-      if (target) {
-        key = target.getAttribute('data-result-key');
-
-        if (key) {
-          e.preventDefault();
-          e.stopPropagation();
-
-          this.$root.$emit('route', '/' + key, { detail: true });
-        }
-      }
     }
+  },
+
+  /**
+   * @expose
+   * @this {views.componet.Autocomplete}
+   */
+  beforeDestroy: function () {
+    this.input.removeEventListener('blur', this.blur);
+    this.input.removeEventListener('focus', this.focus)
   },
 
   /**
@@ -101,13 +188,23 @@ views.component.Autocomplete = View.extend({
   ready: function () {
     var autocomplete = this;
 
-    this.$watch('query', function (query) {
+    autocomplete.input = autocomplete.$el.querySelector('input');
+
+    autocomplete.blur = autocomplete.blur.bind(autocomplete);
+    autocomplete.focus = autocomplete.focus.bind(autocomplete);
+
+    autocomplete.input.addEventListener('blur', autocomplete.blur);
+    autocomplete.input.addEventListener('focus', autocomplete.focus);
+
+    autocomplete.$watch('query', function (query) {
       if (query.length > 2) {
         autocomplete.submit(query);
       } else {
-        autocomplete.$set('results', []);
+        autocomplete.clear();
       }
     });
+
+    autocomplete.pinned = false;
   }
 });
 

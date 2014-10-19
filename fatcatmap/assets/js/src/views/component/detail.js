@@ -123,6 +123,8 @@ views.component.Detail = View.extend({
       var detail = this,
         left, right, keys;
 
+      debugger;
+
       if (nodes && nodes.length) {
         if (nodes.length > 2)
           nodes = nodes.slice(0, 2);

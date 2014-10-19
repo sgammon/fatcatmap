@@ -1,11 +1,21 @@
 <div class="autocomplete-wrap" v-ref="autocomplete">
 
-  <input type="text" class="input search autocomplete" v-model="query" placeholder="search the graph">
+  <input type="text" class="input search autocomplete" v-model="query" placeholder="y">
 
-  <div class="autocomplete-result-list" v-if="results.length">
+  <div class="autocomplete-result-list" v-if="results.length" v-on="
+    mouseover: pin,
+    mouseout: unpin
+  " v-transition>
 
-    <div class="autocomplete-result" v-repeat="results">
-      <span v-on="click: select" data-result-key="{{result.encoded}}">{{label}}</span>
+    <div v-repeat="results">
+      <div class="autocomplete-result" href="/view/{{result.encoded}}" data-route>
+        <span class="autocomplete-result-label" href="/view/{{result.encoded}}" data-route>
+          {{label}}
+        </span>
+        <span class="autocomplete-result-metadata" href="/view/{{result.encoded}}" data-route>
+          {{result.kind}}
+        </span>
+      </div>
     </div>
 
   </div>

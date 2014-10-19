@@ -74,16 +74,9 @@ var routes = {
    * @param {Object} request
    * @return {?Object}
    */
-  '/settings': function (request) {
-
-  },
-
-  /**
-   * @param {Object} request
-   * @return {?Object}
-   */
   '/404': function (request) {
-
+    console.warn('404');
+    console.warn(request);
   },
 
   /**
@@ -91,7 +84,7 @@ var routes = {
    * @return {?Object}
    * @this {ServiceContext}
    */
-  '/<key>': function (request) {
+  '/view/<key>': function (request) {
     // display key at origin. preserve detail and/or allow choice?
   },
 
@@ -154,6 +147,8 @@ var routes = {
     });
 
     data.getAll([key1, key2]).then(function (data, err) {
+      debugger;
+
       if (err)
         return app.error(err);
 

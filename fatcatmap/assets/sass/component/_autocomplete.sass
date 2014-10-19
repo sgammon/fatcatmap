@@ -1,11 +1,40 @@
 @import "var/color"
+@import "core/icon"
+@import "mixin/transition"
 
-.autocomplete-wrap
-  position: relative
+input.autocomplete
 
-.autocomplete-result-list
-  position: absolute
-  top: 95%
-  left: 0
-  right: 0
-  background-color: $grey
+.autocomplete
+  &::-webkit-input-placeholder
+    font-family: "fcm"
+    text-align: right
+
+  &-wrap
+    position: relative
+
+  &-result
+    height: 3em
+    line-height: 3em
+    vertical-align: middle
+    background-color: $grey
+    border-bottom: 1px solid $grey-dark
+    cursor: pointer
+
+    &:hover
+      background-color: $grey-light
+
+    &-list
+      position: absolute
+      top: 95%
+      left: 0
+      right: 0
+      background-color: $grey-dark
+
+    &-label
+      margin: 0 0.2em
+      color: $grey-darker
+
+    &-metadata
+      font-style: italic
+      font-weight: 100
+      color: $grey-dark

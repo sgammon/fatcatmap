@@ -93,7 +93,7 @@ services.data = /** @lends {ServiceContext.prototype.data} */ {
    * @throws {TypeError} If key is not a string or Key.
    */
   get: function (key) {
-    var data = this.data,
+    var data = this.services.data,
       result = new Future(),
       keys = [],
       _key;
@@ -125,12 +125,21 @@ services.data = /** @lends {ServiceContext.prototype.data} */ {
       _data = _data.data;
 
       _data.objects.forEach(function (object, i) {
-        var k = models.Key.inflate(_data.keys.data[i].encoded),
+        var k, d;
+
+        if (_data.keys.data[i].encoded) {
+          k = models.Key.inflate(_data.keys.data[i].encoded);
           d = data.receive(k, object);
 
-        if (key.equals(k))
-          result.fulfill(d);
+          if (key.equals(k))
+            result.fulfill(d);
+        }
       });
+
+      if (result.status === 'PENDING') {
+        key.bind({});
+        result.fulfill(key.data());
+      }
     });
 
     return result;

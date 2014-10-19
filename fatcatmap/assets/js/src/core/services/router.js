@@ -216,6 +216,8 @@ services.router = new Service('router', /** @lends {ServiceContext.prototype.rou
       if (ROUTE_HISTORY.current)
         ROUTE_HISTORY.back.rpush(ROUTE_HISTORY.current);
 
+      response = response || {};
+
       response.path = path;
       response.request = request;
 

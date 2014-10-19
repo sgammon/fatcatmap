@@ -97,11 +97,14 @@ Future.prototype.then = function (pending) {
     }
   } else {
     cb = function (value, error) {
+      var _value;
+
       if (error)
         return (pending(false, error), next.fulfill(false, error));
 
       try {
-        next.fulfill(pending(value, error));
+        _value = pending(value, error);
+        next.fulfill(_value || value);
       } catch (e) {
         next.fulfill(false, e);
       }
