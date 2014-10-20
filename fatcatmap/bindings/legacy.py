@@ -151,7 +151,6 @@ class LegacyCommittee(ModelBinding):
       'J': (us_congress, Committee.CommitteeType.JOINT),
       'S': (us_senate, Committee.CommitteeType.MAJOR),
       'H': (us_house, Committee.CommitteeType.MINOR)}
-
     # make committee and set type
     committee = self.target.new(
       chambers[code(data['id'])[0]][0], code(data['id']),

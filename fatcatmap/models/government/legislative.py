@@ -201,8 +201,8 @@ class Committee(Vertex):
 
     ''' Describes the available types of legislative ``Committee``s. '''
 
-    MINOR = 0x0  # for committees that are exclusively part of a minor house
-    MAJOR = 0x1  # for committees that are exclusively part of a major house
+    MINOR = 0x0  # for committees that are exclusively part of a minor house (house)
+    MAJOR = 0x1  # for committees that are exclusively part of a major house (senate)
     JOINT = 0x2  # for committees that are unexclusively part of both houses
 
   ## -- structure -- ##
@@ -212,6 +212,9 @@ class Committee(Vertex):
   ## -- naming and resources -- ##
   name = CommitteeName, {'embedded': True, 'indexed': True}
   website = URI, {'embedded': True, 'indexed': True}
+
+  jurisdiction = basestring, {}
+
 
 
 ## +=+=+=+=+ Legislation +=+=+=+=+ ##

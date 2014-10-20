@@ -49,19 +49,32 @@ class Legislators(ModelBinding):
       person = Person.new()
       legislator = Legislator.new(person, bioguideid)
 
-      (person.name.given, person.name.family, 
-        person.name.primary) = (data['name']['first'], 
-                                data['name']['last'], data['name']['official_full'])
-      bio = data['bio']
-      if bio.get('gender'): person.gender = bio['gender'].lower()
-      if bio.get('birthday'): person.birthdate = bio['birthday']
+      (person.name.given, person.name.family) = \
+        (data['name']['first'], data['name']['last'], )
 
-      yield person
-      yield legislator
+      if data['name'].get('official_full'):
+        person.name.primary = data['name'].get('official_full')
+      else:
+        person.name.primary = "%s %s" % (person.name.given, person.name.family)
 
-      for k,v in data['id'].iteritems():
-        if k == "fec": # 'fec' is a list of fecids
-          for fecid in v:
-            yield self.ext_id(legislator, k, "id", fecid)
-        else:
-          yield self.ext_id(legislator, k, "id", v)
+
+      bio = data.get('bio')
+      if bio: # if bio isn't present its a super old legislator
+
+        if bio.get('gender'): person.gender = bio['gender'].lower()
+        if bio.get('birthday'): person.birthdate = bio['birthday']
+
+        yield person
+        yield legislator
+
+        for k,v in data['id'].iteritems():
+          if k == "fec": # 'fec' is a list of fecids
+            for fecid in v:
+              yield self.ext_id(legislator, k, "id", fecid)
+          else:
+            yield self.ext_id(legislator, k, "id", v)
+      else:
+        print "skipping old legislator " + person.name.primary
+        pass
+
+

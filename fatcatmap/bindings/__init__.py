@@ -41,13 +41,13 @@ class ModelBinding(object):
     self.__init__(chain, logging)
     return self
 
-  def get_by_ext(self, id, provider=None, strict=True):
+  def get_by_ext(self, id, provider=None, strict=True, keys_only=True):
 
     ''' Retrieve an entity by a unique external ID. '''
 
     assert id, "ext ID lookup requires valid ID"
 
-    query = models.all.ExternalID.query(keys_only=True)
+    query = models.all.ExternalID.query(keys_only=keys_only)
     query.filter(models.all.ExternalID.content == str(id))
 
     if provider:
@@ -146,4 +146,4 @@ class ModelBinding(object):
 bind = ModelBinding.register  # alias
 
 
-__all__ = ('legacy', 'govtrack', 'bigquery', 'finance', 'sunlight', 'legislators')
+__all__ = ('legacy', 'govtrack', 'bigquery', 'finance', 'sunlight', 'legislators', 'committees')
