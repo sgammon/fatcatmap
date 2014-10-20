@@ -10,16 +10,16 @@
   position: absolute
   top: 0
   line-height: 1
-  color: $grey
+  color: $grey-dark
   cursor: pointer
   font-family: $sans-serif
   z-index: 9999
 
   &:hover
-    color: $grey-dark
+    color: $grey-darker
 
   &:active
-    color: $grey-darker
+    color: $grey-darkest
 
   & > span
     font-weight: $font-weight-lighter
@@ -76,3 +76,6 @@
     font-size: 2.2em
     text-align: center
     opacity: 0.75
+
+[data-route]
+  cursor: pointer !important

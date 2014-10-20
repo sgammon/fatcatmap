@@ -61,6 +61,12 @@ Key = function (kind, id, parent) {
 
   /**
    * @protected
+   * @type {?Key}
+   */
+  this._super = null;
+
+  /**
+   * @protected
    * @type {string}
    */
   this._flat = flat;
@@ -70,12 +76,6 @@ Key = function (kind, id, parent) {
    * @type {string}
    */
   this._safe = Key.encode(flat);
-
-  /**
-   * @private
-   * @type {?KeyedItem}
-   */
-  this.__data__ = null;
 
   if (parent) {
     parent = Key.registry[parent] || Key.inflate(parent);
@@ -132,38 +132,6 @@ util.object.mixin(Key, /** @lends {Key.prototype} */{
       return false;
 
     return key._safe === this._safe;
-  },
-
-  /**
-   * Binds a key to a data item.
-   * @expose
-   * @param {*} data
-   * @return {models.Key}
-   * @throws {Error} If data is keyed and key doesn't match current Key.
-   */
-  bind: function (data) {
-    /*jshint eqnull:true */
-    if (data != null) {
-
-      if (data.key && !this.equals(data.key))
-        throw new Error('Can\'t bind() data to a mismatched key: ' + this);
-
-      if (data['super'] && typeof data['super'] === 'string')
-        data['super'] = Key.inflate(data['super']);
-    }
-
-    this.__data__ = data;
-
-    return this;
-  },
-
-  /**
-   * Returns any bound data.
-   * @expose
-   * @return {*}
-   */
-  data: function () {
-    return this.__data__;
   }
 });
 
@@ -478,6 +446,21 @@ util.object.mixin(KeyIndexedList, /** @lends {KeyIndexedList.prototype} */{
       throw new TypeError('KeyIndexedList.has() expects a string key or instance of Key.');
 
     return typeof this.index[key] === 'number';
+  },
+
+  /**
+   * @param {function(models.KeyedItem): boolean} query
+   * @return {?models.KeyedItem}
+   */
+  find: function (query) {
+    var i;
+
+    for (i = 0; i < this.length; i++) {
+      if (query(this[i]) === true)
+        return this[i];
+    }
+
+    return null;
   },
 
   /**

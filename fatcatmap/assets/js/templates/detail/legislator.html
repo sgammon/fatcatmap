@@ -1,10 +1,9 @@
-<div id="detail-{{key}}" data-kind="{{kind | lowercase}}">
+<div class="detail-legislator" data-kind="{{kind | lowercase}}">
   <section class="byline">
-    <h2>{{firstname}} {{lastname}}</h2>
-    <span>{{node_key}}</span>
+    <h2>{{parent.name.primary}}</h2>
   </section>
 
   <section class="portrait">
-    <img class="{{kind | lowercase}} govtrack thumbnail" alt="{{firstname}} {{lastname}}" width="50" height="50"/>
+    <img class="{{kind | lowercase}} govtrack thumbnail" alt="{{parent.name.primary}}" width="50" height="50"/>
   </section>
 </div>

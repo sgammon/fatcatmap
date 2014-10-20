@@ -18,9 +18,22 @@ SearchQuery.term;
 
 
 /** @typedef {Object} */
-var SearchResult = {};
+var SearchKey = {};
 
 /** @type {string} */
+SearchKey.encoded;
+
+/** @type {string} */
+SearchKey.kind;
+
+/** @type {string} */
+SearchKey.id;
+
+
+/** @typedef {Object} */
+var SearchResult = {};
+
+/** @type {SearchKey} */
 SearchResult.result;
 
 /** @type {string} */

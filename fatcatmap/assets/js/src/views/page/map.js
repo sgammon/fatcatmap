@@ -356,12 +356,6 @@ views.Map = View.extend({
      * @expose
      * @type {boolean}
      */
-    dragging: false,
-
-    /**
-     * @expose
-     * @type {boolean}
-     */
     active: false
   },
 
@@ -370,6 +364,26 @@ views.Map = View.extend({
    * @type {Object}
    */
   methods: /** @lends {views.Map.prototype} */{
+
+    /**
+     * @expose
+     * @param {EventTarget} element
+     * @return {boolean}
+     */
+    isNode: function (element) {
+      return element && element.classList.contains('node') ||
+        element.parentNode.classList.contains('node-group');
+    },
+
+    /**
+     * @expose
+     * @param {EventTarget} element
+     * @return {boolean}
+     */
+    isEdge: function (element) {
+      return element && element.classList.contains('link');
+    },
+
      /**
      * @expose
      * @param {MouseEvent} e
@@ -391,6 +405,17 @@ views.Map = View.extend({
           this.cached = null;
         }
       }
+    },
+
+
+    /**
+     * @expose
+     * @param {string} key
+     * @this {views.map}
+     */
+    prune: function (key) {
+      this.cached = this.graph.prune(key);
+      this.$emit('page.map', this.graph);
     },
 
     /**
@@ -439,76 +464,6 @@ views.Map = View.extend({
 
     /**
      * @expose
-     * @param {MouseEvent} e
-     * @this {views.Map}
-     */
-    startDrag: function (e) {
-      console.log('starting drag');
-      this.dragging = true;
-    },
-
-    /**
-     * @expose
-     * @param {models.graph.GraphNode} node
-     * @param {function()} tick
-     * @this {views.Map}
-     */
-    drag: function (node, tick) {
-      console.log('dragged (' + d3.event.dx + ', ' + d3.event.dy + ').');
-
-      node.x = d3.event.x;
-      node.y = d3.event.y;
-
-      tick();
-    },
-
-    /**
-     * @expose
-     * @param {MouseEvent} e
-     * @this {views.Map}
-     */
-    endDrag: function (e) {
-      console.log('stopped drag');
-      this.dragging = false;
-    },
-
-    /**
-     * @expose
-     * @param {EventTarget} element
-     * @return {boolean}
-     */
-    isNode: function (element) {
-      return element && element.classList.contains('node') ||
-        element.parentNode.classList.contains('node-group');
-    },
-
-    /**
-     * @expose
-     * @param {EventTarget} element
-     * @return {boolean}
-     */
-    isEdge: function (element) {
-      return element && element.classList.contains('link');
-    },
-
-    /**
-     * @expose
-     * @param {EventTarget} element
-     * @return {string}
-     */
-    getNodeKey: function (element) {
-      if (!this.isNode(element)) {
-        return '';
-      }
-
-      if (!element.classList.contains('node-group'))
-        element = element.parentNode;
-
-      return element.getAttribute('id').split('-').pop() || '';
-    },
-
-    /**
-     * @expose
      * @param {string} key
      * @this {views.Map}
      */
@@ -549,16 +504,6 @@ views.Map = View.extend({
 
     /**
      * @expose
-     * @param {string} key
-     * @this {views.map}
-     */
-    prune: function (key) {
-      this.cached = this.graph.prune(key);
-      this.$emit('page.map', this.graph);
-    },
-
-    /**
-     * @expose
      * @param {Graph=} graph
      * @this {views.Map}
      */
@@ -580,18 +525,21 @@ views.Map = View.extend({
 
         tick = function () {
           var radius = view.config.node.radius,
-            i = 0;
+            i = 0,
+            origin;
 
           view.map.force.start();
 
           if (graph.origin) {
+            origin = graph.nodes.get(graph.origin.index);
+
             if (view.config.origin.snap) {
-              graph.nodes.get(graph.origin.index).x = view.config.origin.position.x;
-              graph.nodes.get(graph.origin.index).y = view.config.origin.position.y;
+              origin.x += (view.config.origin.position.x - origin.x) / 20;
+              origin.y += (view.config.origin.position.y - origin.y) / 20;
             } else {
               view.config.origin.position = {
-                x: graph.nodes.get(graph.origin.index).x,
-                y: graph.nodes.get(graph.origin.index).y
+                x: origin.x,
+                y: origin.y
               };
             }
           }
@@ -734,7 +682,7 @@ views.Map = View.extend({
               .attr('stroke-width', view.config.edge.width)
               .attr('stroke', view.config.edge.stroke)
               .attr('class', function (e) {
-                if (e.source.isLeaf() || e.target.isLeaf())
+                if ((e.source.isLeaf() || e.target.isLeaf()) && !e.classes.has('leaf-link'))
                   e.classes.push('leaf-link');
 
                 return e.classes.join(' ');
@@ -746,10 +694,6 @@ views.Map = View.extend({
 
           if (view.map.changed)
             force.start();
-
-          setTimeout(function () {
-            force.alpha(-1);
-          }, 5000);
         };
 
         view.map.root = root;
@@ -788,9 +732,10 @@ views.Map = View.extend({
         };
       }
 
-      this.map.force
-        .size([width, height])
-        .resume();
+      if (this.map.force)
+        this.map.force
+          .size([width, height])
+          .resume();
     }
   },
 
@@ -845,8 +790,6 @@ views.Map = View.extend({
     }
 
     if (graph) {
-      // graph = graph.trim();
-
       this.active = true;
 
       origin = graph.nodes.get(graph.origin.index);

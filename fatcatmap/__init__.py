@@ -7,7 +7,10 @@
 '''
 
 # stdlib
-import os, sys, hashlib, random
+import os, re, sys, hashlib, random, operator, itertools
+
+# 3rd party
+import slimmer
 
 # google appengine lib/ shim
 try:
@@ -26,6 +29,11 @@ else:
 # exports
 from canteen import url
 from canteen import Page as RawPage
+from canteen.logic.session import ClientSession
+
+
+## Globals
+_clean_markup = re.compile(' +')
 
 
 # @TODO(sgammon): in general this file needs massive cleanup
@@ -45,7 +53,8 @@ class Page(RawPage):
   __js_context__ = {}  # holds javascript context items
 
   # Content Security Policy
-  enable_csp = __debug__  # only enable CSP in debug
+  enable_csp = 'K9_ENVIRONMENT' in os.environ  # only enable CSP in debug
+  enable_slim = 'K9_ENVIRONMENT' in os.environ
   content_nonce = True
   content_security_report_only = True
   content_security_policy = {
@@ -118,18 +127,36 @@ class Page(RawPage):
         if 'HOSTNAME' in env_k: env_v = env_v.split('.')[0]  # grab leaf
         base[env_k.lower().split('_')[-1]] = env_v
 
-
     supercontext = super(Page, self).template_context
+
+    # @TODO: don't hardcode deliver domain
+    js_context = self._collapse_js_context()
+    js_context['k9'] = k9env  # mount K9 environment
+    hosts = {  # generate hosts
+        'api': js_context['protocol']['rpc']['host'],
+        'realtime': js_context['protocol']['realtime']['host'],
+        'deliver': 'deliver.fcm-static.org',
+        'storage': 'storage.googleapis.com'}
+
+    # generate DNS prefetch list
+    dns_prefetch = set()
+    for i in (d for d in hosts.itervalues() if 'localhost' not in d):
+      dns_prefetch.add(i)
+
     return (supercontext.update({
       # javascript context variables
       'pagedata': self.__page_data__,
-      'js_context': self._collapse_js_context(),
+      'js_context': js_context,
       'k9': {
         'tools': self.request.args.get('tools') or config.config['fcm'].get('tools', {}).get('enabled', False),
         'metadata': k9env,
         'instance': k9env['instance']
       },
+      'frontend': {
+        'templates': ((k, v) for k, v in sorted(self.views.describe().iteritems(), key=operator.itemgetter(0)))},
       'config': config,
+      'hosts': hosts,
+      'dns_prefetch': (i for i in dns_prefetch),
       'nonce': {
         'script': _script_nonce
       }}) or supercontext)
@@ -201,7 +228,10 @@ class Page(RawPage):
 
       ## == session data == ##
       'session': {
-        'established': None},
+        'id': self.session.id,
+        'auth': self.session.get('auth', False),
+        'token': None,
+        'scopes': tuple()},
 
       ## == agent capabilities == ##
       'agent': {
@@ -214,11 +244,83 @@ class Page(RawPage):
       'services': ServiceHandler.describe(json=False, javascript=False),
 
       'template': {
-        'manifest': self.views.describe()}
+        'manifest': self.views.describe().keys()}
 
     }
 
     return (context.update(self.__js_context__) or context)
+
+  def render(self, template,
+                   headers=None,
+                   content_type='text/html; charset=utf-8',
+                   context=None,
+                   _direct=False, **kwargs):
+
+    """ Render a source ``template`` for the purpose of responding to this
+        ``Handler``'s request, given ``context`` and proper ``headers`` for
+        return.
+
+        ``kwargs`` are taken as extra template context and overlayed onto
+        ``context`` before render.
+
+        :param template: Path to template file to serve. ``str`` or ``unicode``
+          file path.
+
+        :param headers: Extra headers to send with response. ``dict`` or iter of
+          ``(name, value)`` tuples.
+
+        :param content_type: Value to send for ``Content-Type`` header. ``str``,
+          defaults to ``text/html; charset=utf-8``.
+
+        :param context: Extra template context to include during render.
+          ``dict`` of items, with keys as names that values are bound to in the
+          resulting template context.
+
+        :param _direct: Flag indicating that ``self`` should be returned, rather
+          than ``self.response``. Bool, defaults to ``False`` as this
+          technically breaks WSGI.
+
+        :param kwargs: Additional items to add to the template context.
+          Overrides all other sources of context.
+
+        :returns: Rendered template content, added to ``self.response``. """
+
+    from canteen.util import config
+
+    # set mime type
+    if content_type: self.response.mimetype = content_type
+
+    # collapse and merge HTTP headers (base headers first)
+    self.response.headers.extend(itertools.chain(
+      iter(self.http.base_headers),
+      self.config.get('http', {}).get('headers', {}).iteritems(),
+      self.headers.iteritems(),
+      (headers or {}).iteritems()))
+
+    # merge template context
+    _merged_context = dict(itertools.chain(*(i.iteritems() for i in (
+      self.template.base_context,
+      self.template_context,
+      context or {},
+      kwargs))))
+
+    def chunk(content):
+
+      ''' Process a chunk of rendered template content. '''
+
+      if self.enable_slim:
+        return _clean_markup.sub(' ', content.replace("\n", ''))
+      return content
+
+    # render template and set as response data
+    self.response.response, self.response.direct_passthrough = (
+      (chunk(c) for c in self.template.render(
+        self,
+        getattr(self.runtime, 'config', None) or config.Config(),
+        template,
+        _merged_context))), True
+
+    return self.respond(direct=_direct)
 
   ## == Property Mappings == ##
   page_data = property(lambda self: self.__page_data__)

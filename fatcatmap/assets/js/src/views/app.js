@@ -81,6 +81,9 @@ views.App = Vue.extend({
      * @this {views.App}
      */
     error: function (e) {
+      if (this.debug)
+        console.error(e);
+
       this.$emit('route', '/404', { error: e });
     },
 

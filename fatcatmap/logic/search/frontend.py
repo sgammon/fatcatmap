@@ -30,7 +30,7 @@ with core.Library('elasticsearch') as (library, elasticsearch):
 
       super(logic.Logic, self).__init__(*args, **kwargs)
 
-    def name(self, qstr="jo bidn"):
+    def name(self, qstr):
 
       '''  '''
 
