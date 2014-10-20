@@ -4,7 +4,7 @@
     {%- block templates -%}
     {%- if frontend.templates -%}
     {% for path, template in frontend.templates %}
-      <script id='{{ path }}' type='application/template'>{{ template.strip()|safe }}</script><!-- end template: {{ path }} -->{% endfor -%}
+      <script id='{{ path.replace("/", ".") }}' type='application/template'>{{ template.strip()|safe }}</script><!-- end template: {{ path }} -->{% endfor -%}
     {%- endif -%}
     {%- endblock templates -%}
     </div>

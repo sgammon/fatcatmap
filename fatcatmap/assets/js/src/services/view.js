@@ -18,9 +18,7 @@ var VIEWS = {},
 
   getSelfAndChildren = function (viewname, cb) {
     /*jshint eqnull:true */
-    var filename = viewname.replace('.', '/') + '.html';
-
-    services.template.get(filename).then(function (response, error) {
+    services.template.get(viewname).then(function (response, error) {
       var children, source, count;
 
       if (error) {
@@ -43,7 +41,7 @@ var VIEWS = {},
       if (VIEWS[viewname])
         VIEWS[viewname].options.template = source;
 
-      services.template.put(filename, source);
+      services.template.put(viewname, source);
 
       if (count === 0)
         return cb(source);

@@ -110,9 +110,7 @@ var routes = {
       app.$broadcast('page.map', graph);
     });
 
-    data.get(request.args.key).then(function (data, err) {
-      debugger;
-
+    data.get(data.cache[+request.args.key].key).then(function (data, err) {
       if (err)
         return app.error(err);
 
@@ -130,8 +128,8 @@ var routes = {
   '/detail/<key1>/and/<key2>': function (request) {
     var data = this.services.data,
       app = this.app,
-      key1 = request.args.key1,
-      key2 = request.args.key2,
+      key1 = data.cache[+request.args.key1].key,
+      key2 = data.cache[+request.args.key2].key,
       state = request.state || {},
       graph = (!app.$.stage || !app.$.stage.$.map.active) ?
         this.services.graph.active : null;
@@ -147,8 +145,6 @@ var routes = {
     });
 
     data.getAll([key1, key2]).then(function (data, err) {
-      debugger;
-
       if (err)
         return app.error(err);
 

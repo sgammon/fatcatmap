@@ -43,14 +43,20 @@ services.data = /** @lends {ServiceContext.prototype.data} */ {
 
   /**
    * @expose
+   * @type {?string}
+   */
+  session: null,
+
+  /**
+   * @expose
    * @param {GraphData} raw Raw input.
    * @param {function(GraphData)=} cb
    * @this {ServiceContext}
    */
   init: function (raw, cb) {
-    var data = this.services.data;
+    var data = this;
 
-    data.cache = new models.KeyIndexedList();
+    this.cache = new models.KeyIndexedList();
 
     raw.data.keys = models.Key.unpack(raw.data.keys, raw.meta.kinds);
     raw.data.keys.forEach(function (key, i) {
@@ -93,10 +99,8 @@ services.data = /** @lends {ServiceContext.prototype.data} */ {
    * @throws {TypeError} If key is not a string or Key.
    */
   get: function (key) {
-    var data = this.services.data,
-      result = new Future(),
-      keys = [],
-      _key;
+    var data = this,
+      result = new Future();
 
     if (typeof key === 'string')
       key = models.Key.inflate(key);
@@ -104,25 +108,22 @@ services.data = /** @lends {ServiceContext.prototype.data} */ {
     if (!(key instanceof models.Key))
       throw new TypeError('services.data.get() expects a string key or Key instance.');
 
-    keys.push(key);
-
-    _key = key.parent;
-
-    while (_key) {
-      keys.push(_key);
-      _key = _key.parent;
-    }
-
     this.rpc.data.fetch({
       /** @type {DataQuery} */
       data: {
-        keys: keys
+        keys: [key],
+        session: this.session,
+        options: {
+          collections: true
+        }
       }
     }).then(function (_data, error) {
       if (!_data && error)
         return result.fulfill(false, error);
 
       _data = _data.data;
+
+      data.session = _data.session;
 
       _data.objects.forEach(function (object, i) {
         var k, d;
@@ -136,10 +137,8 @@ services.data = /** @lends {ServiceContext.prototype.data} */ {
         }
       });
 
-      if (result.status === 'PENDING') {
-        key.bind({});
-        result.fulfill(key.data());
-      }
+      if (result.status === 'PENDING')
+        result.fulfill(data.cache.get(key.bind({})));
     });
 
     return result;

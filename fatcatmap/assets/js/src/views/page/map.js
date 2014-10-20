@@ -14,6 +14,7 @@ goog.require('View');
 goog.require('views.component.Detail');
 goog.require('views.detail.Legislator');
 goog.require('models.graph');
+goog.require('services.data');
 goog.require('services.graph');
 
 goog.provide('views.page.Map');
@@ -425,7 +426,7 @@ views.Map = View.extend({
      * @this {views.Map}
      */
     viewDetail: function (key, e) {
-      var target, selected, selectedI;
+      var target, selected, keyI, selectedI;
 
       if (key && e) {
         e.preventDefault();
@@ -433,6 +434,7 @@ views.Map = View.extend({
 
         target = e.target;
         selected = this.$.detail.keys();
+        keyI = services.data.cache.index[key];
 
         if (this.clicked.key === key && Date.now() - this.clicked.timestamp < 400)
           return this.browseTo(key);
@@ -457,8 +459,7 @@ views.Map = View.extend({
         this.map.selected = selected;
         this.map.changed = true;
 
-        this.$root.$emit('route', '/detail/' +
-          (selected.length > 1 ? selected.join('/and/') : selected[0] || ''));
+        this.$root.$emit('route', '/detail/' + keyI);
       }
     },
 
@@ -665,7 +666,7 @@ views.Map = View.extend({
                 if (/legislative/.test(n.kind))
                   return '/assets/img/icons/legislative.png';
 
-                return '/assets/img/icons/committee.png';
+                return '/assets/img/icons/committee_2.png';
               });
 
           edge = edge.data(edges, edges.key);

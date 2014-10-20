@@ -33,3 +33,8 @@ var $ = function (query, bound) {
   }
   throw new TypeError('Invalid document query string.');
 };
+
+/**
+ * @expose
+ */
+window.$ = $;

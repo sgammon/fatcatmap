@@ -10,6 +10,7 @@
  * @todo batched requests
  */
 
+goog.require('$');
 goog.require('async.future');
 goog.require('service');
 goog.require('services.rpc');
@@ -52,7 +53,7 @@ services.template = /** @lends {ServiceContext.prototype.template} */ {
     } else {
       this.rpc.content.template({
         data: {
-          path: filename
+          path: filename.replace('.', '/') + '.html'
         }
       }).then(function (tpl, err) {
         if (err)
@@ -75,13 +76,21 @@ services.template = /** @lends {ServiceContext.prototype.template} */ {
   },
 
   /**
-   * @param {Object.<string, string>} manifest
+   * @param {Array.<string>} manifest
    * @this {ServiceContext}
    */
   init: function (manifest) {
-    for (var k in manifest) {
-      if (manifest.hasOwnProperty(k) && typeof manifest[k] === 'string')
-        services.template.put(k, manifest[k]);
+    var embedded = $('#templates'),
+      i, name, source;
+
+    if (embedded) {
+      for (i = 0; i < manifest.length; i++) {
+        name = manifest[i].replace('/', '.');
+        source = $('#' + name, embedded);
+
+        if (source)
+          this.put(name, source.textContent);
+      }
     }
   }
 }.service('template');
