@@ -207,13 +207,13 @@ class Committee(Vertex):
 
   ## -- structure -- ##
   super = Key, {'indexed': True}
-  type = CommitteeType, {'indexed': True, 'required': True}
+  type = int, {'indexed': True, 'required': True}
 
   ## -- naming and resources -- ##
   name = CommitteeName, {'embedded': True, 'indexed': True}
   website = URI, {'embedded': True, 'indexed': True}
 
-  jurisdiction = basestring, {}
+  jurisdiction = str, {}
 
 
 

@@ -21,7 +21,7 @@ from canteen import struct
 
 
 ## Globals
-_DEFAULT_ORIGIN = "OlBlcnNvbjo0MjM1OkxlZ2lzbGF0b3I6MzAwMDQ4"
+_DEFAULT_ORIGIN = "OlBlcnNvbjozMTY6TGVnaXNsYXRvcjpQMDAwMTk3"
 
 
 def pack_key(key, kinds, lookup, graph):

@@ -35,8 +35,20 @@ class YAML(FileReader):
 
     ''' Read the target source file and process it. '''
 
-    for obj in self.yaml:
-      yield obj
+    if type(self.yaml) in (list,tuple):
+      print "running yaml list"
+      for obj in self.yaml:
+        yield obj
+
+    elif type(self.yaml) in (dict,):
+      print "running yaml dict"
+      # assumes the YAML file is a dictionary of lists
+      for key,value in self.yaml.iteritems():
+        for obj in value:
+          yield dict([('key',key)] + obj.items())
+
+
+
 
   def close(self):
 
@@ -44,3 +56,7 @@ class YAML(FileReader):
 
     self.file.close()
     self.yaml, self.file = None, None
+
+
+
+

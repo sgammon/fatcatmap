@@ -20,6 +20,12 @@ from fatcatmap.models.government.legislative import (us_house,
                                                      Legislator,
                                                      us_congress,
                                                      CommitteeMember)
+# descriptor models
+from fatcatmap.models.descriptors.ext import URI
+from fatcatmap.models.descriptors.ext import Protocols
+
+# content models
+from fatcatmap.models.content.images import Portrait
 
 
 @bind('legislators', 'Legislators')
@@ -47,7 +53,6 @@ class Legislators(ModelBinding):
     if not legislator:
 
       person = Person.new()
-      legislator = Legislator.new(person, bioguideid)
 
       (person.name.given, person.name.family) = \
         (data['name']['first'], data['name']['last'], )
@@ -57,24 +62,45 @@ class Legislators(ModelBinding):
       else:
         person.name.primary = "%s %s" % (person.name.given, person.name.family)
 
-
       bio = data.get('bio')
-      if bio: # if bio isn't present its a super old legislator
+      if bio:  # if bio isn't present its a super old legislator
 
         if bio.get('gender'): person.gender = bio['gender'].lower()
         if bio.get('birthday'): person.birthdate = bio['birthday']
 
         yield person
+
+        legislator = Legislator.new(person, bioguideid)
         yield legislator
 
         for k,v in data['id'].iteritems():
-          if k == "fec": # 'fec' is a list of fecids
+          if k == "fec":  # 'fec' is a list of fecids
             for fecid in v:
               yield self.ext_id(legislator, k, "id", fecid)
           else:
             yield self.ext_id(legislator, k, "id", v)
+
       else:
-        print "skipping old legislator " + person.name.primary
-        pass
+        self.logging.info('Skipping old legislator: "%s"...' % person.name.primary)
 
+      if data['id'].get('govtrack'):
+        for size in ((50, 61), (100, 122), (200, 244), None):
+          filename = ('%s%s' % (str(data['id'].get('govtrack')),
+                                  '-%spx' % str(size[0]) if size else ''))
 
+          yield Portrait(key=Portrait.__keyclass__(
+                            Portrait,
+                            'media.official.congress.%s' % (
+                              {50: 'sm', 100: 'md', 200L: 'lg', 'l': 'hi'}.get(size[0] if size else 'l')),
+                            parent=legislator),
+                         size=size or (449, 558),
+                         default=not size,
+                         provider=('govtrack', 'congress'),
+                         location='raw/govtrack/photos/' + filename,
+                         storage=Portrait.ImageStorage.PROXY,
+                         formats=(
+                           Portrait.ImageFormat.JPEG,
+                           Portrait.ImageFormat.WEBP),
+                         protocol=(
+                          Protocols.HTTP,
+                          Protocols.HTTPS))

@@ -10,10 +10,13 @@ fcm --verbose load legislators:Legislators yaml --files legislators-current.yaml
 
 
 echo "--Loading historical Legislators...";
-fcm --verbose load legislators:Legislators yaml --files legislators-historical.yaml
+#fcm --verbose load legislators:Legislators yaml --files legislators-historical.yaml
 
 echo "--Loading current committees...";
 fcm --verbose load committees:Committees yaml --files committees-current.yaml
 
 echo "--Loading historical committees...";
-fcm --verbose load committees:Committees yaml --files committees-historical.yaml
+#fcm --verbose load committees:Committees yaml --files committees-historical.yaml
+
+echo "--Loading committee memberships...";
+fcm --verbose load committees:CommitteeMembers yaml --files committee-membership-current.yaml
