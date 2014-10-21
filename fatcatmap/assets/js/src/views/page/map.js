@@ -82,7 +82,7 @@ _calculateLeafLinkAdjustment = function (radius, leaf, peer) {
   return diff;
 };
 
-ASSET_TYPES = ['gif', 'png', 'raw', 'jpeg', 'webp', 'tiff'];
+ASSET_TYPES = ['gif', 'png', 'raw', 'jpg', 'webp', 'tiff'];
 
 /**
  * @constructor
