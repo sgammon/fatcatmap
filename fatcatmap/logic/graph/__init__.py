@@ -52,7 +52,7 @@ class Grapher(logic.Logic):
   ''' Provides logic that is capable of traversing and
       recursively exploring FCM's Redis-based graph. '''
 
-  caching = True  # graph caching
+  caching = False  # graph caching
   options = Options  # attach graph options
 
   def construct(self, session, origin, export=True, **options):
@@ -193,9 +193,10 @@ class Grapher(logic.Logic):
 
         obj_dict = obj.to_dict() if not isinstance(obj, dict) else obj
 
-        dsc, item = (
-          graph.descriptors[obj.key] if (graph.options.media or graph.options.stats) else {},
-          messages.GraphObject(data=obj_dict) if obj_dict else messages.GraphObject())
+        dsc, item = {}, messages.GraphObject(data=obj_dict) if obj_dict else messages.GraphObject()
+
+        if (graph.options.media or graph.options.stats) and obj.key in graph.descriptors:
+          dsc = graph.descriptors[obj.key]
 
         # pack descriptors if we have any
         if dsc:

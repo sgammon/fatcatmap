@@ -83,24 +83,25 @@ class Legislators(ModelBinding):
       else:
         self.logging.info('Skipping old legislator: "%s"...' % person.name.primary)
 
-      if data['id'].get('govtrack'):
-        for size in ((50, 61), (100, 122), (200, 244), None):
-          filename = ('%s%s' % (str(data['id'].get('govtrack')),
-                                  '-%spx' % str(size[0]) if size else ''))
 
-          yield Portrait(key=Portrait.__keyclass__(
-                            Portrait,
-                            'media.official.congress.%s' % (
-                              {50: 'sm', 100: 'md', 200L: 'lg', 'l': 'hi'}.get(size[0] if size else 'l')),
-                            parent=legislator),
-                         size=size or (449, 558),
-                         default=not size,
-                         provider=('govtrack', 'congress'),
-                         location='raw/govtrack/photos/' + filename,
-                         storage=Portrait.ImageStorage.PROXY,
-                         formats=(
-                           Portrait.ImageFormat.JPEG,
-                           Portrait.ImageFormat.WEBP),
-                         protocol=(
-                          Protocols.HTTP,
-                          Protocols.HTTPS))
+
+      # Add image descriptors keyed on bioguide
+      for size in ((50, 61), (225, 275), (450, 550)):
+        filename = "{w}x{h}/{bio}".format(w=size[0], h=size[1], bio=bioguideid)
+
+        yield Portrait(key=Portrait.__keyclass__(
+                          Portrait,
+                          'media.official.congress.%s' % (
+                            {50: 'sm', 225: 'md', 450: 'lg', 'l': 'hi'}.get(size[0] if size else 'l')),
+                          parent=legislator),
+                       size=size or (449, 558),
+                       default=not size,
+                       provider=('bioguideimg', 'congress'),
+                       location='raw/congress/' + filename,
+                       storage=Portrait.ImageStorage.PROXY,
+                       formats=(
+                         Portrait.ImageFormat.JPEG,),
+                         #Portrait.ImageFormat.WEBP),
+                       protocol=(
+                        Protocols.HTTP,
+                        Protocols.HTTPS))

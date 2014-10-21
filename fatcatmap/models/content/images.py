@@ -111,7 +111,7 @@ IMAGE_PREFIXES = {
 IMAGE_FORMAT_EXTENSIONS = {
   Image.ImageFormat.WEBP: 'webp',
   Image.ImageFormat.PNG: 'png',
-  Image.ImageFormat.JPEG: 'jpeg',
+  Image.ImageFormat.JPEG: 'jpg',
   Image.ImageFormat.GIF: 'gif'}
 
 IMAGE_FORMAT_PRECEDENCE = (

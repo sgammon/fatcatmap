@@ -178,8 +178,8 @@ class WarehouseAdapter(abstract.DirectedGraphAdapter):
         # only process `BaseModel` subclasses
         for prop, val in ((model.__dict__[name], val) for name, val in entity):
           # enforce property-level validators
-          if 'validate' in prop._options:
-            value = updates[prop.name] = prop._options['validate'](val)
+          if 'validate' in prop.options:
+            value = updates[prop.name] = prop.options['validate'](val)
 
         # apply updates
         if updates and len(entity):  # entity must have some properties
@@ -667,15 +667,9 @@ class RedisWarehouse(WarehouseAdapter, redis.RedisAdapter):
     data = {}
     with pipeline as pipe:
 
-      if prefix:
-        self.execute(*(
-          self.Operations.HASH_SCAN, '__descriptors__', dkey, 0),
-          match=prefix,
-          target=pipe)
-      else:
-        self.execute(*(
-          self.Operations.HASH_GET_ALL, '__descriptors__', dkey),
-          target=pipe)
+      self.execute(*(
+        self.Operations.HASH_GET_ALL, '__descriptors__', dkey),
+        target=pipe)
 
       bundle = {}
       for group in pipe.execute():
@@ -688,14 +682,19 @@ class RedisWarehouse(WarehouseAdapter, redis.RedisAdapter):
 
           # @TODO(sgammon): hacky paths are hacky
           keypath, kind = tuple(rkey.split('::'))
-          dmodel = self.registry[kind]
 
-          obj = self.get(None, None, _entity=descriptor)
-          if obj is not None:
-            obj = dmodel(
-              key=model.Key(dmodel, keypath, parent=subject, _persisted=True), **obj)
+          if (prefix and prefix in keypath) or not prefix:
 
-          bundle[keypath] = obj
+            dmodel = self.registry[kind]
+
+            obj = self.get(None, None, _entity=descriptor)
+            if obj is not None:
+              obj = dmodel(
+                key=model.Key(dmodel, keypath, parent=subject, _persisted=True), **obj)
+
+            bundle[keypath] = obj
+
+          # non-prefix-matches are dropped
 
       data.update(bundle)
 

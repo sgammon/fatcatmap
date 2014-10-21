@@ -82,7 +82,7 @@ class Graph(object):
      ('network', setdict),  # neighborship sets like source --> {target...}
      ('vertices', set),  # vertices as they are seen during graph traversal
      ('serialized', dict),  # serialized representations of objects and keys
-     ('descriptors', ddict)  # holds descriptor dictionaries for each object
+     ('descriptors', dict)  # holds descriptor dictionaries for each object
 
     ))))
 
@@ -335,7 +335,15 @@ class Graph(object):
     # fetch descriptors, if so instructed
     if self.options.media or self.options.stats:
       for descriptor_base, prefix in _queued_descriptors:
-        self.descriptors[descriptor_base] = self.adapter.descriptors(descriptor_base, prefix=prefix+'.*')
+
+        batch = self.adapter.descriptors(descriptor_base, prefix=prefix)
+
+        if descriptor_base not in self.descriptors:
+          self.descriptors[descriptor_base] = batch
+        else:
+          existing = self.descriptors[descriptor_base]
+          existing.update(batch)
+          self.descriptors[descriptor_base] = existing
 
     return self
 
