@@ -19,7 +19,8 @@ from ..abstract import (Role,
                         Seat,
                         Group,
                         Event,
-                        OrganizationName)
+                        OrganizationName,
+                        term)
 
 # fcm models
 from ..geo import Geobounds
@@ -148,6 +149,19 @@ class LegislativeOffice(Model):
   type = SeatType, {'indexed': True, 'required': True}
 
 
+# @TODO(sgammon): make these key references
+# @TODO(sgammon): fix inheritance and inflation of subentities (ambiguous keys)
+@describe(abstract=False)
+class LegislativeTerm(term.Term):
+
+  ''' Base model for legislative term models'''
+
+  state = str, {'indexed': True}
+  party = str, {'indexed': True}
+  district = int, {'indexed': True}
+  seniority = int, {'indexed': True}
+  chamber = str, {'indexed': True, 'choices': frozenset(('minor', 'joint', 'major'))}
+
 
 ## +=+=+=+=+=+=+=+=+ Vertexes +=+=+=+=+=+=+=+=+ ##
 
@@ -163,6 +177,7 @@ class Legislator(Vertex):
   seat = LegislativeOffice, {'indexed': False, 'embedded': False}
   election = Election, {'indexed': False, 'embedded': False}
   campaign = Campaign, {'indexed': False, 'embedded': False}
+  term = LegislativeTerm, {'embedded': True}
 
 
 @describe(parent=Legislator, type=Role)
@@ -235,6 +250,10 @@ class Legislation(Vertex):
     code = str, {'indexed': True, 'required': True}
     longtitle = str, {'indexed': True, 'repeated': True}
     shorttitle = str, {'indexed': True, 'repeated': True}
+
+
+  # @TODO(sgammon): enums are fucking broken
+  # @TODO(sgammon): unify enums for MINOR/MAJOR across all classes etc
 
   class BillOrigin(BidirectionalEnum):
 

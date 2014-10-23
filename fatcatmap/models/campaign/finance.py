@@ -21,17 +21,18 @@ from ..abstract import (Role,
 # parent models
 from ..person import Person
 from ..politics.campaign import Campaign
-from ..government.legislative import Legislator
+from ..politics.committee import PoliticalCommittee
 
 # descriptors
 from ..descriptors.ext import URI
-from ..descriptors.stat import CategoricalStatValue
+from ..descriptors.stat import (RankedStatValue,
+                                CategoricalStatValue)
 
 # canteen structs
 from canteen.util.struct import BidirectionalEnum
 
 
-@describe(parent=(Person, Organization), type=Role)
+@describe(parent=Vertex, type=Role)
 class Contributor(Vertex):
 
   ''' Represents a financial support role that a ``Person`` or
@@ -39,6 +40,7 @@ class Contributor(Vertex):
 
   ## -- naming / categorization -- ##
   fec_category = str, {'indexed': True}
+
 
 class ContributionType(BidirectionalEnum):
 
@@ -48,19 +50,20 @@ class ContributionType(BidirectionalEnum):
 
 
 @describe(type=Transaction)
-class GenericContributionTotal(Contributor >> Vertex):
+class GenericContributionTotal(Contributor > Vertex):
+
   ''' Describes a series of summarized contributions from one
       ``Contributor`` (child of ``Organization`` or ``Person``)
-        to another ``Contributor``(child of ``Organization``)
-        OR
-  '''
-  type = ContributionType, {'indexed': True, 'required': True}
+        to another ``Contributor``(child of ``Organization``) '''
+
+  #type = ContributionType, {'indexed': True, 'required': True}
+  type = str, {'indexed': True, 'required': True}
   count = int, {}
   amount = int, {}
 
 
 @describe(type=Transaction)
-class CampaignContributionTotal(Contributor >> Campaign):
+class CampaignContributionTotal(Contributor > Campaign):
 
   ''' Describes a monetary contribution made from a ``Contributor`` to a
       candidate's ``Campaign``. '''
@@ -71,7 +74,7 @@ class CampaignContributionTotal(Contributor >> Campaign):
 
 
 @describe(type=Transaction)
-class CampaignContribution(Contributor >> Campaign):
+class CampaignContribution(Contributor > Campaign):
 
   ''' Describes a monetary contribution made from a ``Contributor`` to a
       candidate's ``Campaign``. '''
@@ -94,7 +97,7 @@ class CampaignContribution(Contributor >> Campaign):
 
 
 @describe(type=Stat, descriptor=True, keyname=True)
-class ContributorStats(CategoricalStatValue):
+class ContributorStat(CategoricalStatValue):
 
   ''' Describes campaign finance_categories-related statistics for a
       ``Contributor`` record. Attached as a descriptor object. '''
@@ -109,3 +112,12 @@ class RecipientStats(CategoricalStatValue):
       record. Attached as a descriptor object. '''
 
   # keyname: transaction type
+
+
+@describe(descriptor=True, type=Stat)
+class ContributionStat(RankedStatValue):
+
+  '''  '''
+
+  count = float, {'indexed': True, 'repeated': True}
+  amount = float, {'indexed': True, 'repeated': True}

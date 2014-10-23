@@ -22,9 +22,9 @@ from canteen import struct
 
 ## Globals
 #_DEFAULT_ORIGIN = "OlBlcnNvbjozMTY6TGVnaXNsYXRvcjpQMDAwMTk3"
-_DEFAULT_ORIGIN = "OlBlcnNvbjo0NTQ6TGVnaXNsYXRvcjpIMDAxMDY4"
-
-
+#_DEFAULT_ORIGIN = "OlBlcnNvbjo0NTQ6TGVnaXNsYXRvcjpIMDAxMDY4"
+#_DEFAULT_ORIGIN = "OlBlcnNvbjoyOTI6TGVnaXNsYXRvcjpNMDAwOTM0"
+_DEFAULT_ORIGIN = "OkxlZ2lzbGF0dXJlOnVzLWNvbmdyZXNzOkxlZ2lzbGF0aXZlSG91c2U6c2VuYXRlOkNvbW1pdHRlZTpTU0ZJ" # senate committee on finance
 def pack_key(key, kinds, lookup, graph):
 
   ''' Pack a key into an efficient structure that is
@@ -176,7 +176,8 @@ class Grapher(logic.Logic):
 
         # rollup `peers` and `source`/`target`
         if hasattr(obj, '__edge__'):
-          if hasattr(obj, 'peers'):
+          #import pdb; pdb.set_trace()
+          if hasattr(obj, 'peers') and obj.peers:
             if isinstance(obj.peers[0], (basestring, model.Key)):
               _symbolic = []
               for pk in obj.peers:
@@ -185,11 +186,13 @@ class Grapher(logic.Logic):
 
           elif hasattr(obj, 'source'):
             if isinstance(obj.source, (basestring, model.Key)):
-              obj.source = plookup[pk]
+              obj.source = plookup[obj.source]
 
           elif hasattr(obj, 'target'):
+
             if isinstance(obj.target, (basestring, model.Key)):
-              obj.target = plookup[pk]
+              obj.target = plookup[obj.target[0]]
+
 
         obj_dict = obj.to_dict() if not isinstance(obj, dict) else obj
 
@@ -213,6 +216,8 @@ class Grapher(logic.Logic):
           item.descriptors = dsc_flattened
 
         opack.append(item)
+
+
 
     origin = plookup[graph.origin]
 

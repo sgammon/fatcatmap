@@ -45,7 +45,7 @@ class SunlightContributor(ModelBinding):
       Currently Committees and People'''
 
   params = {
-   'fields': ('ext_id', 'name', 'fec_code')}
+   'fields': ('ext_id', 'name', 'fec_category')}
 
   def convert(self, data):
 
@@ -59,12 +59,15 @@ class SunlightContributor(ModelBinding):
 
     except RuntimeError:
       person = Person.new()
-      contributor = Contributor.new(person, fec_category=data['fec_category'])
+
 
       (person.name.given, person.name.middle,
         person.name.family, person.name.primary) = parse_name(data['name'])
 
       yield person
+
+      contributor = Contributor.new(person, fec_category=data['fec_category'])
+
       yield contributor
       yield self.ext_id(contributor, "donor", "id", data['ext_id'])
 
@@ -76,7 +79,7 @@ class SunlightOrganizationContributor(ModelBinding):
       Currently Committees and People'''
 
   params = {
-   'fields': ('ext_id', 'name', 'fec_code')}
+   'fields': ('ext_id', 'name', 'fec_category')}
 
   def convert(self, data):
 
@@ -86,13 +89,17 @@ class SunlightOrganizationContributor(ModelBinding):
       :returns: Instance of local target to inflate. '''
 
     try:
-      contributor = self.get_by_ext(data['ext_id'], provider='fec')
+      contributor = self.get_by_ext(data['ext_id'], provider='crp')
 
     except RuntimeError:
-      committee = PoliticalCommittee.new()
-      contributor = Contributor.new(committee, fec_category=data['fec_category'])
-      committee.name.formal = data['name']
 
+      committee = PoliticalCommittee.new()
+      committee.name.formal = data['name']
       yield committee
-      yield contributor
-      yield self.ext_id(contributor, "fec", "id", data['ext_id'])
+
+      contributor = Contributor(
+        key=Contributor.__keyclass__(Contributor, data['ext_id'], parent=committee),
+        fec_category=data['fec_category'])
+      contributor = yield contributor
+
+      yield self.ext_id(contributor.key, "crp", "id", data['ext_id'])

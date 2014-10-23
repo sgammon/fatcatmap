@@ -6,9 +6,12 @@
 
 '''
 
+from __future__ import absolute_import
+
 # stdlib
 import gzip
 import json
+import csv
 
 # binding readers
 from .base import FileReader, reader
@@ -37,7 +40,8 @@ class CSV(FileReader):
 
     if not self.config.fields:
       # get the header of the file
-      self.fields = [f.strip().replace('\n', '') for f in self.file.readline().split(',') if f]
+      first_line = csv.reader([self.file.readline()]).next()
+      self.fields = [f.strip().replace('\n', '') for f in first_line if f]
     else:
       self.fields = self.config.fields
 
@@ -61,10 +65,22 @@ class CSV(FileReader):
 
     ''' Read the target source file and process it. '''
 
-    inflate = lambda x: json.loads(x) if self.config.json else x
+    def inflate(val):
 
+      ''' Inflate a value, maybe with JSON. '''
+
+      if self.config.json:
+        try:
+          return json.loads(val)
+        except ValueError:
+          pass
+      return val
+
+    #for line in self.buffer_lines():
+    #  yield {self.fields[idx]: inflate(value) for idx, value in enumerate(line.split(','))}
     for line in self.buffer_lines():
-      yield {self.fields[idx]: inflate(value) for idx, value in enumerate(line.split(','))}
+      row = csv.reader([line]).next()
+      yield {self.fields[idx]: inflate(value) for idx, value in enumerate(row)}
 
   def close(self):
 

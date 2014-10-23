@@ -45,7 +45,7 @@ from canteen.model.adapter import inmemory
 
 
 ## Globals
-get_peers = lambda x: x.peers if hasattr(x, 'peers') else (x.source, x.target[0])
+get_peers = lambda x: x.peers if (hasattr(x, 'peers') and x.peers) else (x.source, x.target[0])
 
 
 def load_script(script):

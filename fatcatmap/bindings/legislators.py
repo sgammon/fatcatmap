@@ -6,12 +6,18 @@
 
 '''
 
+# canteen
+from canteen import model
+
 # bindings
 from . import ModelBinding, bind
 
 # models
 from fatcatmap.models.politics.committee import PoliticalCommittee
 from fatcatmap.models.person import Person
+from fatcatmap.models.politics.party import (democrats,
+                                            republicans,
+                                            libertarians)
 
 # legislative models
 from fatcatmap.models.government.legislative import (us_house,
@@ -19,7 +25,8 @@ from fatcatmap.models.government.legislative import (us_house,
                                                      Committee,
                                                      Legislator,
                                                      us_congress,
-                                                     CommitteeMember)
+                                                     CommitteeMember,
+                                                     LegislativeTerm)
 # descriptor models
 from fatcatmap.models.descriptors.ext import URI
 from fatcatmap.models.descriptors.ext import Protocols
@@ -33,6 +40,30 @@ class Legislators(ModelBinding):
 
   ''' Creates legislators out of legislators-current.yaml
       and legislators-historical.yaml '''
+
+  @staticmethod
+  def term_to_model(term, parent):
+
+    ''' Parses congress-legislator format term dictionaries into term models
+
+        :param term: term dictionary to parse into model
+        :param parent:
+        :return: '''
+
+    data = {'state': term.get('state'),
+            'start': term['start'], 'end': term['end'],
+            'party': term.get('party')}
+
+    if term.get('type') == "sen":
+      data['seniority'] = term.get('class')
+      data['chamber'] = "major"
+    elif term.get('type') == "rep":
+      data['district'] = term.get('district')
+      data['chamber'] = "minor"
+
+    data['key'] = model.Key(LegislativeTerm, parent=parent)
+    return LegislativeTerm(**data)
+
 
   def convert(self, data):
 
@@ -62,16 +93,28 @@ class Legislators(ModelBinding):
       else:
         person.name.primary = "%s %s" % (person.name.given, person.name.family)
 
+      # get terms
+      terms = None
+      if data.get('terms'):
+        terms = sorted(data.get('terms'), key=lambda x: x['end'], reverse=True)
+
       bio = data.get('bio')
       if bio:  # if bio isn't present its a super old legislator
-
         if bio.get('gender'): person.gender = bio['gender'].lower()
         if bio.get('birthday'): person.birthdate = bio['birthday']
 
         yield person
-
         legislator = Legislator.new(person, bioguideid)
-        yield legislator
+
+        # create term child entities
+        if terms:
+          legislator.term = self.term_to_model(terms[0], parent=legislator) # add most recent term to legislator
+          yield legislator
+          for term in terms:
+            yield self.term_to_model(term, parent=legislator)
+
+        else:
+          yield legislator
 
         for k,v in data['id'].iteritems():
           if k == "fec":  # 'fec' is a list of fecids

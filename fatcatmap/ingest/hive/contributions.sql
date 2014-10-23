@@ -9,19 +9,15 @@ SELECT
            Count(amount)      AS count,
            Round(Sum(amount)) AS amount
 
-    FROM   raw.contributions_new
+    FROM   contributions_federal
     where
         recipient_ext_id != '' and contributor_ext_id != ''
-        and transaction_namespace contains 'fec'
+        and cycle >= 2012
 
-    GROUP EACH BY
+    GROUP BY
            recipient_type,
            contributor_type,
            committee_ext_id,
            recipient_ext_id,
            contributor_ext_id,
            transaction_type
-
-
-
-

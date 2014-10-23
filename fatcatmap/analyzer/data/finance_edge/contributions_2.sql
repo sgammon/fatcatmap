@@ -16,4 +16,6 @@ SELECT
 
 from contributions_orc
 
-where contributor_ext_id != '' and recipient_ext_id != '' and transaction_type = '15';
+where contributor_ext_id != ''
+    and recipient_ext_id != ''
+    #and transaction_type = '15';

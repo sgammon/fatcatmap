@@ -6,16 +6,12 @@
 
 '''
 
-# stdlib
-import datetime
-
 # bindings
 from . import ModelBinding, bind
 
 # models
-from fatcatmap.models.person import Person
+from fatcatmap.models.campaign.finance import ContributionStat
 from fatcatmap.models.campaign.finance import GenericContributionTotal
-from fatcatmap.models.descriptors.stat  import ContributionStat
 
 
 
@@ -34,9 +30,10 @@ class Contribution(ModelBinding):
 
     ''' Convert legacy data into the target entity.
 
-      :param data: ``dict`` of data to convert.
-      :returns: Instance of local target to inflate. '''
+        :param data: ``dict`` of data to convert.
+        :returns: Instance of local target to inflate. '''
 
+    from canteen import model
 
     contributor = self.get_by_ext(
       data['contributor_ext_id'],
@@ -46,17 +43,13 @@ class Contribution(ModelBinding):
       data['recipient_ext_id'], strict=False)
 
     if contributor and recipient:
+      #import pdb; pdb.set_trace()
 
-      contribution = GenericContributionTotal(
-        contributor, recipient, amount=data['amount'],
-        count=data['count'])
+      contribution = GenericContributionTotal.new(
+        contributor, recipient, amount=int(data['amount']),
+        count=int(data['count']), type=data['transaction_type'])
 
       yield contribution
-
-      stat = ContributionStat(contribution,amount=data['amount_rank'],count=data['count_rank'])
-
-      yield stat
-
-
-
-
+      #yield ContributionStat(key=model.Key(ContributionStat, 'stats.campaign.contributions', parent=contribution),
+      #                          amount=float(data['amount_rank']),
+      #                          count=float(data['count_rank']))

@@ -43,8 +43,3 @@ class CategoricalStatValue(RankedStatValue):
 
   # category is repeated string of nested categories
   category = str, {'indexed': True, 'repeated': True}
-
-@describe(descriptor=True, type=Stat)
-class ContributionStat(RankedStatValue):
-  amount = float, {'indexed': True, 'repeated': True}
-  count = float, {'indexed': True, 'repeated': True}
