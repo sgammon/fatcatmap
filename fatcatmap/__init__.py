@@ -9,9 +9,6 @@
 # stdlib
 import os, re, sys, hashlib, random, operator, itertools
 
-# 3rd party
-import slimmer
-
 # google appengine lib/ shim
 try:
   from google import appengine
