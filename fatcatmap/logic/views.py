@@ -9,9 +9,6 @@
 # stdlib
 import os
 
-# 3rd party
-import slimmer
-
 # fatcatmap
 from fatcatmap import config as cfg
 
@@ -44,6 +41,11 @@ def _read_template(filename):
       :returns: Contents of the file at ``template_path + filename``, joined
         into a single string. '''
 
+  try:
+    import slimmer
+  except ImportError:
+    slimmer = None
+
   full_path = (filename if filename.startswith(template_path) else (
         os.path.join(template_path, *(x for x in filename.split('/') if x))))
 
@@ -55,7 +57,9 @@ def _read_template(filename):
     for line in template.read():
       lines.append(line)
 
-    return slimmer.html_slimmer(u''.join((unicode(x, 'latin-1') for x in lines)))
+    if slimmer:
+      return slimmer.html_slimmer(u''.join((unicode(x, 'latin-1') for x in lines)))
+    return u''.join((unicode(x, 'latin-1') for x in lines))
 
 
 def _get_filename(path):
