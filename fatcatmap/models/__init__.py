@@ -600,11 +600,13 @@ Model, Vertex, Edge, Descriptor = (BaseModel,
                                    BaseDescriptor)
 
 
-__all__ = ('abstract',
+__all__ = ('account',
+           'abstract',
            'campaign',
            'commercial',
            'content',
            'descriptors',
+           'domain',
            'government',
            'politics',
            'social',
