@@ -121,7 +121,7 @@ config = cfg.Config(app={
     'tools': {
       'enabled': True},
 
-    'dataset': 'beta-v1'
+    'dataset': 'beta-v2'
 
   },
 
