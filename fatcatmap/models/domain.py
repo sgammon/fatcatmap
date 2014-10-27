@@ -7,8 +7,8 @@
 '''
 
 # base
-from .. import (Model,
-        describe)
+from . import (Model,
+               describe)
 
 
 
