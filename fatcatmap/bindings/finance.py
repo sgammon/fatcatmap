@@ -46,7 +46,7 @@ class Contribution(ModelBinding):
       #import pdb; pdb.set_trace()
 
       contribution = GenericContributionTotal.new(
-        contributor, recipient, amount=int(data['amount']),
+        contributor, recipient, amount=int(float(data['amount'])),
         count=int(data['count']), type=data['transaction_type'])
 
       yield contribution

@@ -62,4 +62,4 @@ echo "--Loading PACs...";
 fcm load sunlight:ContributorOrganization csv --files $VERTEX_CSV/organizations.csv/part-*
 
 echo "--Loading PAC to Politician contributions...";
-fcm load finance:Contribution csv --files  $EDGE_CSV/pac_to_politician.csv
+fcm load finance:Contribution csv --files  $EDGE_CSV/pac_to_politician_2012.csv

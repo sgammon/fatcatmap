@@ -1,4 +1,4 @@
-create table pac_to_politician  as
+create table pac_to_politician_2012  as
 SELECT
 
    recipient_type,
