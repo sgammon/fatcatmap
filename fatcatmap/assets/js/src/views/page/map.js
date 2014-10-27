@@ -603,6 +603,8 @@ views.Map = View.extend({
             })
             .start();
 
+          setTimeout(function () { force.alpha(-1); }, 5000);
+
           node = node.data(nodes, nodes.key);
 
           node.exit().remove();

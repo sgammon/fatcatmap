@@ -31,6 +31,10 @@
         position: fixed;
       }
 
+      #graph_search {
+        display: none;
+      }
+
     </style>
     {% endif %}
 
@@ -64,7 +68,7 @@
       {% block south -%}
       <script type="text/javascript" defer nonce="{{ nonce.script }}" src="{{ asset.script("lib/d3/d3.js") }}"></script>
       <script type="text/javascript" defer nonce="{{ nonce.script }}" src="{{ asset.script("lib/vue/vue.js") }}"></script>
-      {% if config.assets.config.serving_mode != "cdn" -%}<script type="text/javascript" defer nonce="{{ nonce.script }}" src="{{ asset.script("compiled/app.debug.js") }}"></script>{%- endif %}
+      <script type="text/javascript" defer nonce="{{ nonce.script }}" src="{{ asset.script("compiled/app.min.js") }}"></script>
       <script id="js-context" nonce="{{ nonce.script }}" type="application/json">{{ js_context|json|safe }}</script><!-- end #js-context -->
       {% if js_context.pagedata -%}<script id="js-data" nonce="{{ nonce.script }}" type="application/json">{{ pagedata|json|safe }}</script><!-- end #js-data -->{%- endif %}
       {%- endblock south %}
