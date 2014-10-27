@@ -71,7 +71,7 @@ class Landing(Page):
       'media': True,
       'stats': True}).to_dict())
 
-    return self.render('landing.haml')
+    return self.render('landing.haml', agent=self.request.args.get('agent', 'browser'))
 
 
 @url('terms', '/terms')

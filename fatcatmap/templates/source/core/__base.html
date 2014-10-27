@@ -12,15 +12,43 @@
     <link rel="dns-prefetch" href="{{ item }}">
     {%- endfor %}
     <link rel="icon" href="/assets/img/favicon.png" type="image/png">
-    <link rel="icon" href="/assets/img/favicon.ico" type="image/x-icon">
     <link rel="stylesheet" href="/assets/style/catnip.css" type="text/css">
     <link rel="stylesheet" href="/assets/ext/fonts/232792/0E2030883D1235809.css" type="text/css">
+    {% if agent and agent == 'demo' %}
+    <!-- demo CSS -->
+    <style>
+
+      #app {
+        top: 2.5em;
+        left: 0;
+        right: 10px;
+        bottom: 0;
+        position: fixed;
+      }
+
+      #logo_main {
+        top: 2em;
+        position: fixed;
+      }
+
+    </style>
+    {% endif %}
 
     <!-- info -->
     <meta name="author" content="momentum labs">
     <meta name="keywords" content="politics, transparency, lobbying, open, government">
     <meta name="viewport" content="width=device-width, initial-scale=1, minimal-ui">
+
+    <!-- opengraph -->
+    <meta name="og:type" content="website">
+    <meta name="og:title" content="fatcatmap">
+    <meta name="og:description" content="map and visualize politics in realtime">
+    <meta name="og:locale" content="en_US">
+    <meta name="og:site_name" content="fatcatmap">
+    <meta name="og:url" content="https://fatcatmap.org">
+    <meta name="og:image" content="/assets/img/branding/avatar/fullres-square.png">
     {%- if getattr(handler, 'agent', {}).mobile %}
+
     <!-- mobile -->
     {%- block mobile %}
     <meta name="MobileOptimized" content="640">
@@ -32,9 +60,7 @@
   </head>
 
   <body class="{{ theme|default('fcm-dark') }} alpha">
-    {%- block body %}{% endblock body %}
-    <!-- JS -->
-    <div id="js-south" class="hidden">
+    <div class="hidden" style="display:none;position:fixed;">
       {% block south -%}
       <script type="text/javascript" defer nonce="{{ nonce.script }}" src="{{ asset.script("lib/d3/d3.js") }}"></script>
       <script type="text/javascript" defer nonce="{{ nonce.script }}" src="{{ asset.script("lib/vue/vue.js") }}"></script>
@@ -42,6 +68,8 @@
       <script id="js-context" nonce="{{ nonce.script }}" type="application/json">{{ js_context|json|safe }}</script><!-- end #js-context -->
       {% if js_context.pagedata -%}<script id="js-data" nonce="{{ nonce.script }}" type="application/json">{{ pagedata|json|safe }}</script><!-- end #js-data -->{%- endif %}
       {%- endblock south %}
-    </div><!-- end #js-south -->
+    </div>
+
+    {%- block body %}{% endblock body %}
   </body>
 </html>
