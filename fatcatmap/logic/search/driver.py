@@ -23,7 +23,7 @@ with core.Library('elasticsearch') as (library, elasticsearch):
 
     host = (
       {'host': '146.148.67.170', 'port': 9500} if __debug__ else (
-        {}))
+        {'host': '146.148.67.170', 'port': 9500})) #@todo ian setup multiple ES environments
 
     def __init__(self, index='fcm'):
 
