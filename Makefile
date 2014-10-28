@@ -273,10 +273,9 @@ $(DEVROOT)/.env: canteen npm
 	@bin/pip install --upgrade -r lib/canteen/dev_requirements.txt
 
 	$(call say,"Installing Pip dependencies...")
-	@bin/pip install "git+https://github.com/sgammon/libcloud.git#egg=libcloud-0.15.1"
 	@-bin/pip install --upgrade -r ./requirements.txt
 	@-mkdir -p .develop
-	@-mkdir -p .develop/maps/fatcatmap/assets/{js,less,style,coffee}/site
+	@-mkdir -p .develop/maps/fatcatmap/assets/{js,sass,style}/site
 	@-chmod -R 775 .develop
 
 	$(call say,"Building Canteen...")

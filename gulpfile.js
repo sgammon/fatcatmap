@@ -307,13 +307,15 @@ task('run', function (cb) {
     if (sh)
       sh.kill();
   },
-  sh = spawn('bin/fcm', ['run', '--simple'], {stdio: 'inherit'})
+  sh = spawn('bin/python', ['bin/fcm', 'run', '--simple'], {stdio: 'inherit'})
     .on('error', killSh)
     .on('exit', function () {
       sh = null;
     });
+
   process.on('exit', killSh)
     .on('error', killSh);
+
   cb();
 });
 

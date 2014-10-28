@@ -11,9 +11,9 @@
 
 goog.require('util.object');
 goog.require('support');
-goog.require('service');
-goog.require('models');
+goog.require('model');
 goog.require('models.graph');
+goog.require('service');
 goog.require('services.rpc');
 goog.require('services.data');
 
@@ -33,6 +33,8 @@ models.graph.GraphQuery.prototype.execute = function (options) {
   options.limit = options.limit || this.limit;
   options.cached = options.cached || this.cached;
   options.keys_only = options.keys_only || this.keys_only;
+  options.collections = options.collections || this.collections;
+  options.descriptors = options.descriptors || this.descriptors;
 
   request.options = options;
   request.origin = this.origin;
@@ -83,7 +85,7 @@ services.graph = /** @lends {ServiceContext.prototype.graph} */ {
    * @this {ServiceContext}
    */
   construct: function (origin, options, replace) {
-    var graph = this.services.graph,
+    var graph = this,
       response = new Future();
 
     replace = !!replace;
@@ -108,9 +110,9 @@ services.graph = /** @lends {ServiceContext.prototype.graph} */ {
           v = /** @type {GraphData} */ (v.data);
 
           if (v.data.keys)
-            v.data.keys = models.Key.unpack(v.data.keys, v.meta.kinds);
+            v.data.keys = model.Key.unpack(v.data.keys, v.meta.kinds);
 
-          if (replace)
+          if (replace === true)
             graph.active = new models.graph.Graph();
 
           try {
@@ -128,17 +130,16 @@ services.graph = /** @lends {ServiceContext.prototype.graph} */ {
   /**
    * @expose
    * @param {GraphData=} graph
-   * @param {string=} session
    * @param {function()=} cb
    * @this {ServiceContext}
    */
-  init: function (graph, session, cb) {
-    this.services.graph.active = new models.graph.Graph(graph, session);
+  init: function (graph, cb) {
+    this.active = new models.graph.Graph(graph);
 
     /** @expose */
     window.graphdata = graph;
 
     if (cb)
-      cb(this.services.graph.active);
+      cb(this.active);
   }
 }.service('graph');

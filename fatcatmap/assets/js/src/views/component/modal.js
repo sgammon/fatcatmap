@@ -9,17 +9,17 @@
  * copyright (c) momentum labs, 2014
  */
 
-goog.require('View');
+goog.require('view');
 goog.require('services.router');
 
 goog.provide('views.component.Modal');
 
 /**
  * @constructor
- * @extends {View}
+ * @extends {view.View}
  * @param {VueOptions} options
  */
-views.component.Modal = View.extend({
+views.component.Modal = view.View.extend({
   /**
    * @expose
    * @type {string}
@@ -56,10 +56,10 @@ views.component.Modal = View.extend({
  * @expose
  * @type {views.component.Modal}
  */
-View.prototype.$.modal;
+view.View.prototype.$.modal;
 
 /**
  * @expose
- * @type {View}
+ * @type {view.View}
  */
-View.prototype.$.modal.$.content;
+view.View.prototype.$.modal.$.content;

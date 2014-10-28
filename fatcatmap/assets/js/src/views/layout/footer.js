@@ -1,5 +1,5 @@
 /**
- * @fileoverview View for the fcm footer.
+ * @fileoverview view.View for the fcm footer.
  *
  * @author  David Rekow <david@momentum.io>,
  *          Sam Gammon <sam@momentum.io>,
@@ -9,16 +9,16 @@
  * copyright (c) momentum labs, 2014
  */
 
-goog.require('View');
+goog.require('view');
 
 goog.provide('views.layout.Footer');
 
 /**
  * @constructor
- * @extends {View}
+ * @extends {view.View}
  * @param {VueOptions} options
  */
-views.layout.Footer = View.extend({
+views.layout.Footer = view.View.extend({
   /**
    * @expose
    * @type {string}

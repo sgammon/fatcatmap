@@ -176,19 +176,19 @@ Vue.prototype.$emit = function(event, args) {};
 
 /**
  * @param {string} event
- * @param {function(...)} callback
+ * @param {function(this:Vue, ...[*])} callback
  */
 Vue.prototype.$on = function(event, callback) {};
 
 /**
  * @param {string} event
- * @param {function(...)} callback
+ * @param {function(this:Vue, ...[*])} callback
  */
 Vue.prototype.$once = function(event, callback) {};
 
 /**
  * @param {string=} event
- * @param {function(...)=} callback
+ * @param {function(this:Vue, ...[*])=} callback
  */
 Vue.prototype.$off = function(event, callback) {};
 

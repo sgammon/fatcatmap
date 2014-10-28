@@ -1,5 +1,5 @@
 /**
- * @fileoverview Catnip route declarations.
+ * @fileoverview Catnip route handlers. Updates history and view state, via service if necessary.
  *
  * @author  David Rekow <david@momentum.io>,
  *          Sam Gammon <sam@momentum.io>,
@@ -9,60 +9,74 @@
  * copyright (c) momentum labs, 2014
  */
 
+goog.require('model');
+goog.require('services.data');
+goog.require('services.graph');
+goog.require('views.App');
+
 goog.provide('routes');
 
-var routes = {
+var _DEFAULT_STATE, routes;
+
+_DEFAULT_STATE = {
   /**
-   * @param {Object} request
+   * @type {{active: boolean}}
+   */
+  'page.active': true,
+
+  /**
+   * @type {?Object.<{
+   *   viewname: string,
+   *   data: Object.<{session: ?string}>
+   * }>}
+   */
+  'modal': null
+};
+
+routes = {
+  /**
+   * @param {Request} request
    * @return {?Object}
    * @this {ServiceContext}
    */
   '/': function (request) {
-    var state = request.state || {},
-      app = this.app,
-      graph = this.services.graph;
+    var graph = this.services.graph,
+      state = request.state || _DEFAULT_STATE;
 
-    state.page = state.page || { active: true };
-    state.modal = state.modal || null;
+    this.app.setState(state);
 
-    this.app.$set('page', state.page);
-    this.app.$set('modal', state.modal);
-
-    this.app.nextTick(function () {
-      if (!app.$.stage || !app.$.stage.$.map.active) {
-        if (graph.active) {
-          app.$broadcast('page.map', graph.active);
-        } else {
-          graph.construct().then(function (v, e) {
-            if (!e && v)
-              app.$broadcast('page.map', v);
-          });
-        }
+    this.app.nextTick(/** @this {views.App} */function () {
+      if (graph.active) {
+        this.$broadcast('page.map', graph.active);
+        this.$broadcast('page.map:origin')
+      } else {
+        graph.construct().then(function (graph, err) {
+          if (err)
+            return this.error(err);
+          
+          this.$broadcast('page.map', graph);
+        });
       }
-      app.$broadcast('detail');
+
+      this.$broadcast('component.detail');
     });
 
     return state;
   },
 
   /**
-   * @param {Object} request
+   * @param {Request} request
    * @return {?Object}
    * @this {ServiceContext}
    */
   '/login': function (request) {
-    var state = request.state || {};
-
-    state.page = null;
-    state.modal = state.modal || {
-      viewname: 'page.login',
-      data: {
-        session: this.catnip.session
-      }
+    var state = request.state || {
+      'page': null,
+      'modal.viewname': 'page.login',
+      'modal.data.session': null
     };
 
-    this.app.$set('modal', state.modal);
-    this.app.$set('page', state.page);
+    this.app.setState(state);
 
     if (this.app.$.stage)
       this.app.$.stage.$.map.active = false;
@@ -71,85 +85,112 @@ var routes = {
   },
 
   /**
-   * @param {Object} request
+   * @param {Request} request
    * @return {?Object}
    */
   '/404': function (request) {
-    console.warn('404');
+    console.warn('404 :(');
     console.warn(request);
   },
 
   /**
-   * @param {Object} request
+   * Displays a graph with origin(s) specified by kind and ID (e.g. '/person/123').
+   * For now, we assume one origin.
+   * @param {Request} request
    * @return {?Object}
    * @this {ServiceContext}
    */
-  '/view/<key>': function (request) {
-    // display key at origin. preserve detail and/or allow choice?
-  },
+  'origin:/<kind>/<id>[/and/<kind2>/<id2>]': function (request) {
+    var app = this.app,
+      kind = request.args.kind,
+      key = new model.Key(kind.charAt(0).toUpperCase() + kind.slice(1), request.args.id),
+      state = request.state || _DEFAULT_STATE;
 
-  /**
-   * @param {Object} request
-   * @return {?Object}
-   * @this {ServiceContext}
-   */
-  '/detail/<key>': function (request) {
-    var data = this.services.data,
-      app = this.app,
-      state = request.state || {},
-      graph = (!app.$.stage || !app.$.stage.$.map.active) ?
-        this.services.graph.active : null;
+    app.setState(state);
 
-    state.page = state.page || { active: true };
-    state.modal = state.modal || null;
+    this.services.graph.construct(key, null, !this.services.graph.active.nodes.has(key))
+      .then(function (graph, err) {
+        if (err)
+          return app.error(err);
 
-    app.$set('page', state.page);
-    app.$set('modal', state.modal);
-
-    app.nextTick(function () {
-      app.$broadcast('page.map', graph);
-    });
-
-    data.get(data.cache[+request.args.key].key).then(function (data, err) {
-      if (err)
-        return app.error(err);
-
-      app.$broadcast('detail', [data]);
-    });
-
+        app.$broadcast('page.map', graph);
+        app.$broadcast('page.map:origin', key);
+      });
+    
     return state;
   },
 
   /**
-   * @param {Object} request
+   * Displays a graph at origin(s), with origin(s) shown in detail.
+   * @param {Request} request
    * @return {?Object}
-   * @this {ServiceContext}
    */
-  '/detail/<key1>/and/<key2>': function (request) {
-    var data = this.services.data,
-      app = this.app,
-      key1 = data.cache[+request.args.key1].key,
-      key2 = data.cache[+request.args.key2].key,
-      state = request.state || {},
-      graph = (!app.$.stage || !app.$.stage.$.map.active) ?
-        this.services.graph.active : null;
+  'detail:/{origin}/detail': function (request) {
+    var app = this.app,
+      kind = request.args.kind,
+      key = new model.Key(kind.charAt(0).toUpperCase() + kind.slice(1), request.args.id),
+      state = request.state || _DEFAULT_STATE;
 
-    state.page = state.page || { active: true };
-    state.modal = state.modal || null;
+    app.setState(state);
 
-    app.$set('page', state.page);
-    app.$set('modal', state.modal);
+    this.services.graph.construct(key, null, !this.services.graph.active.nodes.has(key))
+      .then(function (graph, err) {
+        if (err)
+          return app.error(err);
 
-    app.nextTick(function () {
-      app.$broadcast('page.map', graph);
-    });
+        app.$broadcast('page.map', graph);
+        app.$broadcast('page.map:origin', key);
+      });
 
-    data.getAll([key1, key2]).then(function (data, err) {
-      if (err)
-        return app.error(err);
+    this.services.data.get(key)
+      .then(function (data, err) {
+        if (err)
+          return app.error(err);
 
-      app.$broadcast('detail', data);
-    });
+        app.$broadcast('component.detail', [data]);
+      });
+    
+    return state;
+  },
+
+  /**
+   * Displays a graph at origin(s), with additional key(s) shown in detail.
+   * @param {Request} 
+   * @return {?Object}
+   */
+  '/{detail}/<kind3>/<id3>[/and/<kind4>/<id4>]': function (request) {
+    var app = this.app,
+      kind = request.args.kind,
+      key = new model.Key(kind.charAt(0).toUpperCase() + kind.slice(1), request.args.id),
+      state = request.state || _DEFAULT_STATE,
+      details = [];
+
+    app.setState(state);
+
+    kind = request.args['kind3'];
+    details.push(new model.Key(kind.charAt(0).toUpperCase() + kind.slice(1), request.args['id3']));
+
+    kind = request.args['kind4'];
+    if (kind)
+      details.push(
+        new model.Key(kind.charAt(0).toUpperCase() + kind.slice(1), request.args['id4']));
+
+    this.services.graph.construct(key, null, !this.services.graph.active.nodes.has(key))
+      .then(function (graph, err) {
+        if (err)
+          return app.error(err);
+
+        app.$broadcast('page.map', graph);
+        app.$broadcast('page.map:origin', key);
+      });
+
+    this.services.data.getAll(details)
+      .then(function (data, err) {
+        if (err)
+          return app.error(err);
+
+        app.$broadcast('component.detail', [data]);
+      });
 
     return state;
   }

@@ -58,6 +58,25 @@ util.object = {
   },
 
   /**
+   * Takes a flat object of dot-separated namespaces and expands into a full object.
+   * @param {Object.<string, *>} obj
+   * @return {Object}
+   */
+  expand: function (obj) {
+    var expanded = {},
+      key;
+
+    obj = obj || {};
+
+    for (key in obj) {
+      if (obj.hasOwnProperty(key))
+        util.object.resolveAndSet(expanded, key, obj[key]);
+    }
+
+    return expanded;
+  },
+
+  /**
    * Returns a data-safe copy of a passed object.
    * @param {?Object} obj
    * @return {?Object}

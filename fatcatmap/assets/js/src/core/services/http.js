@@ -70,7 +70,7 @@ _prepareRequest = function (method, request, response, async) {
 /**
  * @param {string} method
  * @param {Request} request
- * @param {PipelinedCallback} handler
+ * @param {PipelinedCallback=} handler
  * @return {Future|Response}
  */
 _dispatchRequest = function (method, request, handler) {

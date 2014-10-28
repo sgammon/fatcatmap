@@ -92,7 +92,7 @@ util.object.mixin(Emitter, /** @lends {Emitter.prototype} */ {
 
 /**
  * @expose
- * @type {Object.<string, Array.<function(...[*])>>}
+ * @type {Object.<string, Array.<function(this: Emitter, ...[*])>>}
  */
 Emitter.prototype.events;
 

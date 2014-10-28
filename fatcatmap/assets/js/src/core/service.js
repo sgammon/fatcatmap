@@ -1,6 +1,6 @@
 /*jshint -W030 */
 /**
- * @fileoverview Core service injection methods.
+ * @fileoverview Core service injection classes & decorators.
  *
  * @author  David Rekow <david@momentum.io>,
  *          Sam Gammon <sam@momentum.io>,
@@ -77,7 +77,7 @@ Object.defineProperty(Function.prototype, 'inject', {
   value: /** @this {Function} */ function (_services) {
     var fn = this,
       inject,
-      injected,
+      scope,
       injector,
       ctor;
 
@@ -105,12 +105,12 @@ Object.defineProperty(Function.prototype, 'inject', {
     /**
      * @constructor
      */
-    injected = function () {};
-    injected.prototype = inject || new ServiceContext();
+    scope = function () {};
+    scope.prototype = inject || new ServiceContext();
 
     injector = function () {
       /*jshint newcap:false */
-      return fn.apply(new injected(), arguments);
+      return fn.apply(new scope(), arguments);
     };
 
     injector.__injected__ = services.length ? services : true;

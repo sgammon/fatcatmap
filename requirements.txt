@@ -1,3 +1,4 @@
+git+https://github.com/sgammon/libcloud.git#egg=libcloud-0.15.1
 redis
 nose
 uwsgi
@@ -9,7 +10,6 @@ raven
 fakeredis
 eventlet
 gevent
-git+https://github.com/sgammon/libcloud.git#egg=libcloud
 dogapi
 hiredis
 elasticsearch

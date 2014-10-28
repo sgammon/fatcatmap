@@ -9,17 +9,17 @@
  * copyright (c) momentum labs, 2014
  */
 
-goog.require('View');
+goog.require('view');
 goog.require('views.component.Detail');
 
 goog.provide('views.detail.Legislator');
 
 /**
  * @constructor
- * @extends {View}
+ * @extends {view.View}
  * @param {VueOptions} options
  */
-views.detail.Legislator = View.extend({
+views.detail.Legislator = view.View.extend({
   /**
    * @expose
    * @type {string}
@@ -31,145 +31,6 @@ views.detail.Legislator = View.extend({
    * @type {boolean}
    */
   replace: true,
-
-  /**
-   * @expose
-   * @type {Object}
-   */
-  data: {
-    /**
-     * @expose
-     * @type {?string}
-     */
-    key: null,
-
-    /**
-     * @expose
-     * @type {?string}
-     */
-    kind: null,
-
-    /**
-     * @expose
-     * @type {?string}
-     */
-    fec_id: '',
-
-    /**
-     * @expose
-     * @type {?string}
-     */
-    bioguideid: '',
-
-    /**
-     * @expose
-     * @type {?string}
-     */
-    govtrack_id: '',
-
-    /**
-     * @expose
-     * @type {?string}
-     */
-    thomas_id: '',
-
-    /**
-     * @expose
-     * @type {?string}
-     */
-    osid: '',
-
-    /**
-     * @expose
-     * @type {?string}
-     */
-    lismemberid: null,
-
-    /**
-     * @expose
-     * @type {?string}
-     */
-    icpsrid: null,
-
-    /**
-     * @expose
-     * @type {?string}
-     */
-    fbid: null,
-
-    /**
-     * @expose
-     * @type {?string}
-     */
-    twitterid: null,
-
-    /**
-     * @expose
-     * @type {?string}
-     */
-    metavidid: null,
-
-    /**
-     * @expose
-     * @type {?string}
-     */
-    pvsid: null,
-
-    /**
-     * @expose
-     * @type {?string}
-     */
-    firstname: '',
-
-    /**
-     * @expose
-     * @type {?string}
-     */
-    lastname: '',
-
-    /**
-     * @expose
-     * @type {?string}
-     */
-    gender: '',
-
-    /**
-     * @expose
-     * @type {?string}
-     */
-    birthday: '',
-
-    /**
-     * @expose
-     * @type {?string}
-     */
-    lastnameenc: '',
-
-    /**
-     * @expose
-     * @type {?string}
-     */
-    lastnamealt: null,
-
-    /**
-     * @expose
-     * @type {?string}
-     */
-    namemod: null,
-
-    /**
-     * @expose
-     * @type {?string}
-     */
-    nickname: null,
-
-    /**
-     * @expose
-     * @type {?string}
-     */
-    religion: null
-
-  },
 
   /**
    * @expose

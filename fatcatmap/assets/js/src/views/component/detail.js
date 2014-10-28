@@ -9,16 +9,17 @@
  * copyright (c) momentum labs, 2014
  */
 
-goog.require('View');
+goog.require('view');
+goog.require('model');
 
 goog.provide('views.component.Detail');
 
 /**
  * @constructor
- * @extends {View}
+ * @extends {view.View}
  * @param {VueOptions} options
  */
-views.component.Detail = View.extend({
+views.component.Detail = view.View.extend({
   /**
    * @expose
    * @type {string}
@@ -38,38 +39,50 @@ views.component.Detail = View.extend({
   data: {
     /**
      * @expose
-     * @type {?Object}
+     * @type {Object}
      */
-    left: null,
+    left: {
+      /**
+       * @expose
+       * @type {string}
+       */
+      view: '',
+
+      /**
+       * @expose
+       * @type {?Object}
+       */
+      data: null
+    },
 
     /**
      * @expose
-     * @type {?Object}
+     * @type {Object}
      */
-    right: null,
+    right: {
+      /**
+       * @expose
+       * @type {string}
+       */
+      view: '',
 
-    /**
-     * @expose
-     * @type {string}
-     */
-    leftview: '',
-
-    /**
-     * @expose
-     * @type {string}
-     */
-    rightview: ''
+      /**
+       * @expose
+       * @type {?Object}
+       */
+      data: null
+    }
   },
 
   /**
    * @expose
    * @type {Object.<string, function(...[*])>}
    */
-  methods: {
+  methods: /** @lends {views.component.Detail.prototype} */{
     /**
      * @expose
      * @param {MouseEvent=} e
-     * @this {views.Detail}
+     * @this {views.component.Detail}
      */
     close: function (e) {
       var target = e.target,
@@ -81,93 +94,67 @@ views.component.Detail = View.extend({
         e.preventDefault();
         e.stopPropagation();
 
-        key = this[parent.parentNode.getAttribute('id').split('_').pop()].key;
         keys = this.keys();
-        keyI = keys.indexOf(key);
+        key = this[parent.parentNode.getAttribute('id').split('_').pop()].data;
+        
+        if (key) {
+          keyI = keys.indexOf(key.key);
 
-        if (keyI > -1) {
-          keyI = Math.abs(keyI - 1);
-          keys = keys[keyI] ? [keys[keyI]] : [];
+          if (keyI > -1) {
+            keyI = Math.abs(keyI - 1);
+            keys = keys[keyI] ? [keys[keyI]] : [];
+          }
         }
 
         parent.classList.add('transparent');
 
-        this.$root.$emit('route', '/detail/' +
-          (keys.length > 1 ? keys.join('/and/') : keys[0] || ''));
+        this.$dispatch('route', keys.length ? '/detail/' + keys[0] : '/');
       }
     },
 
     /**
      * @expose
-     * @return {Array.<string>}
-     * @this {views.Detail}
+     * @return {Array.<?string>}
+     * @this {views.component.Detail}
      */
     keys: function () {
-      var keys = [];
-
-      if (this.left)
-        keys.push(this.left.key);
-
-      if (this.right)
-        keys.push(this.right.key);
-
-      return keys;
+      return [
+        this.left.data ? services.data.cache.index[this.left.data.key] : null,
+        this.right.data ? services.data.cache.index[this.right.data.key] : null
+      ];
     },
 
     /**
      * @expose
-     * @param {?Array.<Object>} nodes
-     * @this {views.Detail}
+     * @param {?Array.<model.Model>} nodes
+     * @this {views.component.Detail}
      */
     select: function (nodes) {
-      var detail = this,
-        left, right, keys;
+      var left, right;
 
-      debugger;
+      nodes = nodes && nodes.length ? nodes : [];
+      
+      if (nodes.length > 2)
+        nodes = nodes.slice(0, 2);
 
-      if (nodes && nodes.length) {
-        if (nodes.length > 2)
-          nodes = nodes.slice(0, 2);
+      left = nodes[0];
+      right = nodes[1];
 
-        nodes.forEach(function (node) {
-          if (detail.left && detail.left.key === node.key) {
-            left = node;
-          } else if (detail.right && detail.right.key === node.key) {
-            right = node;
-          } else {
-            if (left) {
-              right = node;
-            } else {
-              left = node;
-            }
-          }
-        });
-      }
+      if (left)
+        this.$set('left.view', 'detail.' + left.kind.toLowerCase());
 
-      keys = [];
+      if (right)
+        this.$set('right.view', 'detail.' + right.kind.toLowerCase());
 
-      if (left) {
-        detail.$set('leftview', 'detail.' + left.kind.toLowerCase());
-        keys.push(left.key);
-      }
-
-      if (right) {
-        detail.$set('rightview', 'detail.' + right.kind.toLowerCase());
-        keys.push(right.key);
-      }
-
-      detail.$set('left', left);
-      detail.$set('right', right);
-
-      detail.$parent.$set('map.selected', keys);
-      detail.$parent.$set('map.changed', true);
+      this.$set('left.data', left ? left.toJSON() : null);
+      this.$set('right.data', right ? right.toJSON() : null);
     }
   },
 
   /**
    * @expose
-   * @param {Array.<Object>} nodes
-   * @this {views.Detail}
+   * @param {Array.<model.Model>} nodes
+   * @this {views.component.Detail}
    */
   handler: function (nodes) {
     this.select(nodes); 
@@ -179,4 +166,4 @@ views.component.Detail = View.extend({
  * @expose
  * @type {views.component.Detail}
  */
-View.prototype.$.detail;
+view.View.prototype.$.detail;

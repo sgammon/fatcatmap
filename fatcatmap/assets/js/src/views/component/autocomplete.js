@@ -9,17 +9,18 @@
  * copyright (c) momentum labs, 2014
  */
 
-goog.require('View');
+goog.require('view');
+goog.require('model');
 goog.require('services.search');
 
 goog.provide('views.component.Autocomplete');
 
 /**
  * @constructor
- * @extends {View}
+ * @extends {view.View}
  * @param {VueOptions} options
  */
-views.component.Autocomplete = View.extend({
+views.component.Autocomplete = view.View.extend({
   /**
    * @expose
    * @type {string}
@@ -48,42 +49,6 @@ views.component.Autocomplete = View.extend({
      * @type {?Array.<SearchResult>}
      */
     results: null
-  },
-
-  /**
-   * @expose
-   * @type {Object}
-   */
-  NO_RESULTS: /** @lends {views.component.Autocomplete.prototype.$options.NO_RESULTS} */{
-    /**
-     * @expose
-     * @type {string}
-     */
-    label: '',
-
-    /**
-     * @expose
-     * @type {Object}
-     */
-    result: {
-      /**
-       * @expose
-       * @type {string}
-       */
-      id: '',
-
-      /**
-       * @expose
-       * @type {string}
-       */
-      kind: '',
-
-      /**
-       * @expose
-       * @type {string}
-       */
-      encoded: ''
-    }
   },
 
   /**
@@ -127,7 +92,7 @@ views.component.Autocomplete = View.extend({
 
     /**
      * @expose
-     * @param {InputEvent=} e
+     * @param {Event=} e
      */
     blur: function (e) {
       var autocomplete = this;
@@ -145,7 +110,7 @@ views.component.Autocomplete = View.extend({
 
     /**
      * @expose
-     * @param {InputEvent=} e
+     * @param {Event=} e
      */
     focus: function (e) {
       var autocomplete = this;
@@ -165,16 +130,39 @@ views.component.Autocomplete = View.extend({
 
       services.search.autocomplete(term).then(function (results, error) {
         if (error || !results.length)
-          results = [autocomplete.$options.NO_RESULTS];
+          results = [views.component.Autocomplete.NO_RESULTS];
 
         autocomplete.$set('results', results);
       });
+    },
+
+    /**
+     * @expose
+     * @param {MouseEvent} e
+     */
+    select: function (e) {
+      var target = e.target,
+        key;
+
+      e.preventDefault();
+      e.stopPropagation();
+
+      while (target && !target.classList.contains('autocomplete-result')) {
+        target = target.parentNode;
+      }
+
+      key = target.getAttribute('data-key');
+
+      if (key) {
+        key = model.Key.inflate(key);
+        this.$dispatch('route', key.path() + '/detail');
+      }
     }
   },
 
   /**
    * @expose
-   * @this {views.componet.Autocomplete}
+   * @this {views.component.Autocomplete}
    */
   beforeDestroy: function () {
     this.input.removeEventListener('blur', this.blur);
@@ -210,6 +198,43 @@ views.component.Autocomplete = View.extend({
 
 /**
  * @expose
+ * @const
+ * @type {Object}
+ */
+views.component.Autocomplete.NO_RESULTS = {
+  /**
+   * @expose
+   * @type {string}
+   */
+  label: '',
+
+  /**
+   * @expose
+   * @type {Object}
+   */
+  result: {
+    /**
+     * @expose
+     * @type {string}
+     */
+    id: '',
+
+    /**
+     * @expose
+     * @type {string}
+     */
+    kind: '',
+
+    /**
+     * @expose
+     * @type {string}
+     */
+    encoded: ''
+  }
+};
+
+/**
+ * @expose
  * @type {views.component.Autocomplete}
  */
-View.prototype.$.autocomplete;
+view.View.prototype.$.autocomplete;

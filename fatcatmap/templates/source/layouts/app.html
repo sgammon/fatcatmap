@@ -1,6 +1,6 @@
 {% extends "core/__base.html" %}
 {% block body %}
-    <div id='templates' class='hidden' style='position:fixed;display:none;'>
+    <div id='templates' class='hidden'>
     {%- block templates -%}
     {%- if frontend.templates -%}
     {% for path, template in frontend.templates %}

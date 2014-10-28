@@ -2,17 +2,17 @@
 
   <input type="text" class="input search autocomplete" v-model="query" placeholder="y">
 
-  <div class="autocomplete-result-list" v-if="results.length" v-on="
+  <div class="autocomplete-result-list" v-show="results.length" v-on="
     mouseover: pin,
     mouseout: unpin
   " v-transition>
 
     <div v-repeat="results">
-      <div class="autocomplete-result" href="/view/{{result.encoded}}" data-route>
-        <span class="autocomplete-result-label" href="/view/{{result.encoded}}" data-route>
+      <div class="autocomplete-result" v-on="click: select" data-key="{{result.encoded}}">
+        <span class="autocomplete-result-label">
           {{label}}
         </span>
-        <span class="autocomplete-result-metadata" href="/view/{{result.encoded}}" data-route>
+        <span class="autocomplete-result-metadata">
           {{result.kind}}
         </span>
       </div>

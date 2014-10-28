@@ -16,6 +16,11 @@ goog.require('services.router');
 goog.provide('services.history');
 
 /**
+ * @type {Object}
+ */
+Request.state;
+
+/**
  * @expose
  * @type {Service}
  */

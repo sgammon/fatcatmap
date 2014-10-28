@@ -13,7 +13,7 @@ goog.require('async.future');
 goog.require('service');
 goog.require('services.rpc');
 goog.require('services.data');
-goog.require('models');
+goog.require('model');
 
 goog.provide('services.search');
 
@@ -52,7 +52,7 @@ services.search = /** @lends {ServiceContext.prototype.search} */{
            * @param {SearchResult} result
            */
           function (result) {
-            result.data = models.Key.inflate(result.result.encoded).data() || {};
+            result.data = model.Key.inflate(result.result.encoded).data() || {};
             return result;
           }));
       });

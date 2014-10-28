@@ -26,10 +26,10 @@ GraphQueryOptions.query;
 GraphQueryOptions.keys_only;
 
 /** @type {boolean} */
-GraphQueryOptions.descriptors;
+GraphQueryOptions.collections;
 
 /** @type {boolean} */
-GraphQueryOptions.collections;
+GraphQueryOptions.descriptors;
 
 
 /** @typedef {Object} */

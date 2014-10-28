@@ -10,16 +10,17 @@
  */
 
 goog.require('$');
-goog.require('View');
+goog.require('view');
 goog.require('views.component.Detail');
 goog.require('views.detail.Legislator');
+goog.require('model');
 goog.require('models.graph');
 goog.require('services.data');
 goog.require('services.graph');
 
 goog.provide('views.page.Map');
 
-var PI, _distributeNodeInsertion, _calculateLeafLinkAdjustment, ASSET_TYPES;
+var PI, _distributeNodeInsertion, _calculateLeafLinkAdjustment, MAP_ASSET_BASE, MAP_ASSET_TYPES;
 
 PI = Math.PI;
 
@@ -60,7 +61,7 @@ _distributeNodeInsertion = function (size, origin, radius, nodes, full) {
 /**
  * Given a bounding size, radius, & leaf and peer node, calculates (x, y) adjustment for leaf-side
  * link position to align exactly with the outer edge of the node. Prevents ugly link/node overlap
- * when alpha values are changed on nodes in the graph. Updates the edge object.
+ * when alpha values are changed on nodes in the graph.
  * @param {number} radius Leaf radius, in pixels.
  * @param {models.graph.GraphNode} leaf Leaf node.
  * @param {models.graph.GraphNode} peer Node at other end of the adjusted link.
@@ -82,14 +83,15 @@ _calculateLeafLinkAdjustment = function (radius, leaf, peer) {
   return diff;
 };
 
-ASSET_TYPES = ['gif', 'png', 'raw', 'jpg', 'webp', 'tiff'];
+MAP_ASSET_BASE = 'https://fatcatmap.org/image-proxy/providence-clarity/warehouse/';
+MAP_ASSET_TYPES = ['gif', 'png', 'raw', 'jpg', 'webp', 'tiff'];
 
 /**
  * @constructor
- * @extends {View}
+ * @extends {view.View}
  * @param {VueOptions} options
  */
-views.Map = View.extend({
+views.page.Map = view.View.extend({
   /**
    * @expose
    * @type {string}
@@ -101,6 +103,30 @@ views.Map = View.extend({
    * @type {boolean}
    */
   replace: true,
+
+  /**
+   * @expose
+   * @type {Object.<string, function(...[*])>}
+   */
+  events: {
+    /**
+     * @expose
+     * @param {model.Key} key
+     * @this {views.page.Map}
+     */
+    origin: function (key) {
+      if (key instanceof model.Key)
+        this.browseTo(key);
+    },
+
+    /**
+     * @expose
+     * @this {views.page.Map}
+     */
+    change: function () {
+      this.map.changed = true;
+    }
+  },
 
   /**
    * @expose
@@ -136,7 +162,7 @@ views.Map = View.extend({
    * @expose
    * @type {Object}
    */
-  data: /** @lends {views.Map.prototype} */{
+  data: /** @lends {views.page.Map.prototype} */{
     /**
      * @expose
      * @type {Object}
@@ -147,6 +173,12 @@ views.Map = View.extend({
        * @type {Array.<string>}
        */
       selected: [],
+
+      /**
+       * @expose
+       * @type {?string}
+       */
+      origin: null,
 
       /**
        * @expose
@@ -364,7 +396,7 @@ views.Map = View.extend({
    * @expose
    * @type {Object}
    */
-  methods: /** @lends {views.Map.prototype} */{
+  methods: /** @lends {views.page.Map.prototype} */{
 
     /**
      * @expose
@@ -388,7 +420,7 @@ views.Map = View.extend({
      /**
      * @expose
      * @param {MouseEvent} e
-     * @this {views.Map}
+     * @this {views.page.Map}
      */
     trim: function (e) {
       var target = e.target,
@@ -412,7 +444,7 @@ views.Map = View.extend({
     /**
      * @expose
      * @param {string} key
-     * @this {views.map}
+     * @this {views.page.Map}
      */
     prune: function (key) {
       this.cached = this.graph.prune(key);
@@ -421,36 +453,37 @@ views.Map = View.extend({
 
     /**
      * @expose
-     * @param {string} key
+     * @param {model.Key} key
      * @param {MouseEvent} e
-     * @this {views.Map}
+     * @this {views.page.Map}
      */
     viewDetail: function (key, e) {
-      var target, selected, keyI, selectedI;
+      var target, selected, selectedI;
 
       if (key && e) {
         e.preventDefault();
         e.stopPropagation();
 
-        target = e.target;
-        selected = this.$.detail.keys();
-        keyI = services.data.cache.index[key];
+        if (key.equals(this.clicked.key) && Date.now() - this.clicked.timestamp < 400)
+          return this.$dispatch('route', key.path() + '/detail');
 
-        if (this.clicked.key === key && Date.now() - this.clicked.timestamp < 400)
-          return this.browseTo(key);
-
-        this.clicked.key = key;
+        this.clicked.key = key.urlsafe();
         this.clicked.timestamp = Date.now();
 
+        target = e.target;
+        selected = this.$.detail.keys();
+        key = key.path();
+
         if (target.classList.contains(this.$options.selectors.selected.slice(1))) {
-          selectedI = selected.indexOf(key);
-          
-          if (selectedI > -1)
+          if ((selectedI = selected.indexOf(key) > -1))
             selected.splice(selectedI, 1);
         } else {
           if (e.shiftKey) {
-            if (selected.length < 2)
-              selected.push(key);
+            if ((selectedI = selected.indexOf(null)) > -1) {
+              selected[selectedI] = key;
+            } else {
+              selected[1] = key;
+            }
           } else {
             selected = [key];
           }
@@ -459,54 +492,53 @@ views.Map = View.extend({
         this.map.selected = selected;
         this.map.changed = true;
 
-        this.$root.$emit('route', '/detail/' + keyI);
+        this.$dispatch('route', services.graph.active.origin.key.path() + '/detail' +
+          (selected.length > 1 ? selected.join('/and/') : key));
       }
     },
 
     /**
      * @expose
-     * @param {string} key
-     * @this {views.Map}
+     * @param {model.Key=} key
+     * @this {views.page.Map}
      */
     browseTo: function (key) {
-      var map = this;
+      var graph, node, newPeers;
 
-      services.graph.construct(key, {
-        depth: 1,
-        keys_only: false,
-        collections: true,
-        descriptors: true
-      }).then(function (graph, error) {
-        var node, newPeers;
+      if (key) {
+        graph = services.graph.active;
+        node = graph.nodes.get(key)
 
-        if (graph) {
-          node = graph.nodes.get(key);
-
+        if (node) {
           newPeers = node.peers().filter(function (n) {
             return n.isLeaf();
           });
 
-          _distributeNodeInsertion(
-            [map.config.width, map.config.height],
-            [node.x, node.y],
-            map.config.force.distance / 2,
-            newPeers);
+          if (newPeers.length)
+            _distributeNodeInsertion(
+              [this.config.width, this.config.height],
+              [node.x, node.y],
+              this.config.force.distance / 2,
+              newPeers);
 
-          graph.origin.key = node.key;
-          graph.origin.index = graph.nodes.index[node.key];
+          if (!node.key.equals(graph.origin.key)) {
+            graph.origin.key = node.key;
+            graph.origin.index = graph.nodes.index[node.key];
+          }
 
-          map.$set('config.origin.snap', true);
-          map.$set('map.changed', true);
-
-          map.$emit('page.map', graph);
+          this.$set('config.origin.snap', true);
         }
-      });
+      } else {
+        this.$set('config.origin.snap', false);
+      }
+
+      this.$set('map.changed', true);
     },
 
     /**
      * @expose
-     * @param {Graph=} graph
-     * @this {views.Map}
+     * @param {models.graph.Graph=} graph
+     * @this {views.page.Map}
      */
     draw: function (graph) {
       var view = this,
@@ -617,9 +649,9 @@ views.Map = View.extend({
               .attr('x', function (n) { return n.x - view.config.sprite.width; })
               .attr('y', function (n) { return n.y - view.config.sprite.height; })
               .attr('class', 'node-group')
-              .on('click', /** @param {GraphNode} n */function (n) {
+              .on('click', /** @param {models.graph.GraphNode} n */function (n) {
                 if (!d3.event.defaultPrevented)
-                  view.viewDetail(n.key.urlsafe(), d3.event);
+                  view.viewDetail(n.key, d3.event);
               })
               .call(force.drag);
 
@@ -652,17 +684,13 @@ views.Map = View.extend({
               .append('svg:image')
               .attr('width', view.config.sprite.width)
               .attr('height', view.config.sprite.height)
-              // .attr('x', function (n) { return n.x; })
-              // .attr('y', function (n) { return n.y; })
               .attr('clip-path', 'url(#node-circle-mask)')
               .attr('xlink:href', function (n) {
-                var img;
-
                 if (n.media) {
-                  img = n.media['md'] || n.media['sm'];
+                  var img = n.media['md'] || n.media['sm'];
 
-                  return 'https://fatcatmap.org/image-proxy/providence-clarity/warehouse/' +
-                    img['location'] + '.' + ASSET_TYPES[img['formats'][0]];
+                  return MAP_ASSET_BASE + img['location'] + '.' +
+                         MAP_ASSET_TYPES[img['formats'][0]];
                 }
 
                 if (/legislative/.test(n.kind))
@@ -702,9 +730,7 @@ views.Map = View.extend({
         view.map.root = root;
         view.map.force = force;
 
-        this.$root.nextTick(function () {
-          update();
-        });
+        update.async();
       } else {
         view.map.root = null;
         $(view.$options.selectors.map).innerHTML = '';
@@ -744,7 +770,7 @@ views.Map = View.extend({
 
   /**
    * @expose
-   * @this {views.Map}
+   * @this {views.page.Map}
    */
   ready: function () {
     var map = this,
@@ -762,7 +788,7 @@ views.Map = View.extend({
 
   /**
    * @expose
-   * @this {views.Map}
+   * @this {views.page.Map}
    */
   beforeDestroy: function () {
     window.removeEventListener('resize', this.resize);
@@ -770,8 +796,8 @@ views.Map = View.extend({
 
   /**
    * @expose
-   * @param {Graph=} graph
-   * @this {views.Map}
+   * @param {models.graph.Graph=} graph
+   * @this {views.page.Map}
    */
   handler: function (graph) {
     var width = $('#catnip').clientWidth,

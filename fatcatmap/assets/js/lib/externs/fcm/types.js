@@ -42,6 +42,7 @@ var CallbackMap;
 /**
  * Represents a structured message to be passed.
  * @typedef {Object.<{
+ *    type: string,
  *    content: *,
  *    meta: ?Object
  * }>}

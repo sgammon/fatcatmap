@@ -11,6 +11,7 @@
 
 goog.require('services.router');
 goog.require('services.view');
+goog.require('view');
 goog.require('views.layout.Stage');
 goog.require('views.layout.Header');
 goog.require('views.layout.Footer');
@@ -30,7 +31,7 @@ views.App = Vue.extend({
    * @expose
    * @type {Object}
    */
-  data: {
+  data: /** @lends {views.App.prototype} */{
 
     /**
      * @expose
@@ -55,11 +56,25 @@ views.App = Vue.extend({
    * @expose
    * @type {Object}
    */
-  methods: /** @lends {View.prototype.$root} */{
+  methods: /** @lends {views.App.prototype} */{
+    /**
+     * @expose
+     * @param {{page: Object.<{active: boolean}>, modal: ?Object}} state
+     */
+    setState: function (state) {
+      var key;
+
+      state = state || {};
+
+      for (key in state) {
+        if (state.hasOwnProperty(key))
+          this.$set(key, state[key]);
+      }
+    },
+
     /**
      * @expose
      * @param {MouseEvent} e
-     * @this {views.App}
      */
     route: function (e) {
       var route;
@@ -78,7 +93,6 @@ views.App = Vue.extend({
     /**
      * @expose
      * @param {Error} e
-     * @this {views.App}
      */
     error: function (e) {
       if (this.debug)
@@ -89,10 +103,10 @@ views.App = Vue.extend({
 
     /**
      * @expose
-     * @param {function()} cb
+     * @param {function(this:views.App)} cb
      */
     nextTick: function (cb) {
-      return Vue.nextTick(cb);
+      return Vue.nextTick(cb.bind(this));
     }
   },
 
@@ -109,15 +123,21 @@ views.App = Vue.extend({
 
 /**
  * @expose
- * @type {views.layout.Stage}
+ * @type {views.App}
  */
-views.App.prototype.$.stage;
+view.View.prototype.$options.$root;
 
 /**
  * @expose
- * @type {views.Modal}
+ * @type {views.component.Modal}
  */
 views.App.prototype.$.modal;
+
+/**
+ * @expose
+ * @type {views.layout.Stage}
+ */
+views.App.prototype.$.stage;
 
 /**
  * @expose
