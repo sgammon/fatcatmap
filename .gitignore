@@ -32,3 +32,8 @@ fatcatmap/assets/js/compiled/test/*.js
 fatcatmap.ipr
 fatcatmap.iws
 .gcloud/*
+apps/ios/Podfile.lock
+apps/ios/Pods
+apps/ios/fatcatmap.xcworkspace/xcuserdata
+apps/ios/fatcatmap.xcodeproj/xcuserdata
+apps/ios/fatcatmap.xcodeproj/project.xcworkspace/xcuserdata
