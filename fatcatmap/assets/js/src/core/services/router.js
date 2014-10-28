@@ -5,14 +5,14 @@
  *          Sam Gammon <sam@momentum.io>,
  *          Alex Rosner <alex@momentum.io>,
  *          Ian Weisberger <ian@momentum.io>
- * 
+ *
  * copyright (c) momentum labs, 2014
  */
 
 goog.require('util.url');
-goog.require('util.structs');
-goog.require('supports');
-goog.require('services');
+goog.require('util.struct');
+goog.require('support');
+goog.require('service');
 
 goog.provide('services.router');
 
@@ -21,26 +21,9 @@ var ROUTES = {
     dynamic: []
   },
 
-  ROUTE_EVENTS = {
-    /**
-     * @expose
-     */
-    route: [],
-
-    /**
-     * @expose
-     */
-    routed: [],
-
-    /**
-     * @expose
-     */
-    error: []
-  },
-
   ROUTE_HISTORY = {
-    back: new util.structs.BiLinkedList(null, 10),
-    forward: new util.structs.BiLinkedList(null, 10),
+    back: new util.struct.BiLinkedList(null, 10),
+    forward: new util.struct.BiLinkedList(null, 10),
     current: null
   },
 
@@ -99,7 +82,7 @@ Route = function (path, handler) {
    */
   rt.id = path.replace(/\/<(\w+)>/g, function (_, key) {
     rt.keys.push(key);
-    return '/(\\w+)';
+    return '/([^\/]+)';
   });
 
   /**
@@ -120,8 +103,9 @@ Route = function (path, handler) {
 
 /**
  * @expose
+ * @type {Service}
  */
-services.router = /** @lends {ServiceContext.prototype.router} */ {
+services.router = new Service('router', /** @lends {ServiceContext.prototype.router} */{
   /**
    * @param {string} path
    * @param {function(Object)} handler
@@ -145,11 +129,11 @@ services.router = /** @lends {ServiceContext.prototype.router} */ {
   /**
    * @param {string} path
    * @param {Object=} request
+   * @this {ServiceContext}
    */
   route: function (path, request) {
     var matched = false,
       params, param, findRoute, response;
-
 
     request = request || {};
     request.args = {};
@@ -163,9 +147,7 @@ services.router = /** @lends {ServiceContext.prototype.router} */ {
       }
     }
 
-    ROUTE_EVENTS.route.forEach(function (fn) {
-      fn(path, request);
-    });
+    this.emit('route', path, request);
 
     response = _dispatchRoute(path, request, ROUTES.resolved);
 
@@ -176,17 +158,10 @@ services.router = /** @lends {ServiceContext.prototype.router} */ {
       response = response.response;
 
       if (!(ROUTE_HISTORY.current && ROUTE_HISTORY.current.path === path))
-        ROUTE_EVENTS.routed.forEach(function (fn) {
-          fn(path, request, response);
-        });
+        this.emit('routed', path, request, response);
     } else {
-      response = {
-        status: 404
-      };
-
-      ROUTE_EVENTS.error.forEach(function (fn) {
-        fn(path, request, response);
-      });
+      console.warn('Router could not match route: ' + path);
+      this.emit('error', path, request, { status: 404 });
     }
 
     return response;
@@ -226,34 +201,6 @@ services.router = /** @lends {ServiceContext.prototype.router} */ {
   },
 
   /**
-   * @expose
-   * @param {string} event
-   * @param {function(string, Object=, Object=)} callback
-   */
-  on: function (event, callback) {
-    if (!ROUTE_EVENTS[event])
-      ROUTE_EVENTS[event] = [];
-
-    ROUTE_EVENTS[event].push(callback);
-  },
-
-  /**
-   * @expose
-   * @param {string} event
-   * @param {function (string, Object=, Object=)=} callback
-   */
-  off: function (event, callback) {
-    var i;
-    if (!callback) {
-      ROUTE_EVENTS[event] = [];
-    } else {
-      i = ROUTE_EVENTS[event].indexOf(callback);
-      if (i > -1)
-        ROUTE_EVENTS[event].splice(i, 1);
-    }
-  },
-
-  /**
    * @param {Object.<string, function(Object)>} _routes
    * @param {function(string=)=} handleInitial
    * @this {ServiceContext}
@@ -269,6 +216,8 @@ services.router = /** @lends {ServiceContext.prototype.router} */ {
       if (ROUTE_HISTORY.current)
         ROUTE_HISTORY.back.rpush(ROUTE_HISTORY.current);
 
+      response = response || {};
+
       response.path = path;
       response.request = request;
 
@@ -279,4 +228,4 @@ services.router = /** @lends {ServiceContext.prototype.router} */ {
       handleInitial(window.location.pathname);
   }
 
-}.service('router');
+}, true);

@@ -10,7 +10,7 @@
 from . import adapter
 
 # logic
-from fatcatmap.logic import grapher
+from fatcatmap.logic import graph
 
 # models
 from fatcatmap.models import (Edge,
@@ -61,7 +61,7 @@ class DataWarehouse(Logic):
         :return: ``GraphOptions`` instance, prepared with the specified
           parameters. '''
 
-    return grapher.GraphOptions(depth=depth, limit=limit)
+    return graph.GraphOptions(depth=depth, limit=limit)
 
   def graph(self, origin, **options):
 
@@ -76,4 +76,4 @@ class DataWarehouse(Logic):
 
         :returns: Assembled ``grapher.Graph`` object. '''
 
-    return grapher.Graph(origin, self.options(**options))
+    return graph.Graph(origin, self.options(**options))

@@ -31,8 +31,7 @@ if __debug__:
   from fatcatmap.config import config as appconfig
 
   # builtin adapter
-  from fatcatmap.logic.db.adapter import (InMemoryWarehouse,
-                                          RedisWarehouse)
+  from fatcatmap.logic.db.adapter import RedisWarehouse
 
 
   # allow logging
@@ -42,17 +41,6 @@ if __debug__:
   test.BaseTest.set_config(appconfig)
   BaseModel.__adapter__ = RedisWarehouse.acquire(*(
     'BaseModel', BaseModel.__bases__, {}))
-
-  # load fixtures and set adapter
-  try:
-    ## open and read fixture data
-    with open(os.path.join(root, '.fixtures.json')) as fixture_data:
-      fixtures = json.loads(fixture_data.read())
-
-    InMemoryWarehouse.load_fixtures(**fixtures)
-
-  except:
-    logger.error('Failed to read fixture data for testing.')
 
 
   class SampleTest(test.AppTest):

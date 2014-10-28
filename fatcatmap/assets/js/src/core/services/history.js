@@ -5,27 +5,28 @@
  *          Sam Gammon <sam@momentum.io>,
  *          Alex Rosner <alex@momentum.io>,
  *          Ian Weisberger <ian@momentum.io>
- * 
+ *
  * copyright (c) momentum labs, 2014
  */
 
-goog.require('supports');
-goog.require('services');
+goog.require('support');
+goog.require('service');
 goog.require('services.router');
 
 goog.provide('services.history');
 
 /**
  * @expose
+ * @type {Service}
  */
-services.history = /** @lends {ServiceContext.prototype.history} */ {
+services.history = new Service('history', /** @lends {ServiceContext.prototype.history} */{
   /**
    * @expose
    * @param {string} url
    * @param {Object} state
    */
   push: function (url, state) {
-    if (supports.history.html5)
+    if (support.history.html5)
       window.history.pushState(state, '', url);
   },
 
@@ -41,7 +42,7 @@ services.history = /** @lends {ServiceContext.prototype.history} */ {
         services.history.push(url, response);
     });
 
-    if (supports.history.html5) {
+    if (support.history.html5) {
       window.onpopstate = function (event) {
         var request = {
           source: 'history',
@@ -56,4 +57,4 @@ services.history = /** @lends {ServiceContext.prototype.history} */ {
       throw new Error('History already started');
     };
   }
-}.service('history');
+}, true);

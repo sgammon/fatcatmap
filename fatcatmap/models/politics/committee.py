@@ -7,11 +7,19 @@
 '''
 
 # graph models
-from .. import (Vertex,
-                describe)
+from .. import describe, Vertex
+from ..abstract.org import OrganizationName, Organization
 
 
-@describe(root=True)
+@describe(type=OrganizationName)
+class PoliticalCommitteeName(OrganizationName):
+
+  ''' '''
+
+
+@describe(root=True, type=Organization)
 class PoliticalCommittee(Vertex):
 
   '''  '''
+
+  name = PoliticalCommitteeName, {'indexed': True, 'required': True, 'embedded': True}

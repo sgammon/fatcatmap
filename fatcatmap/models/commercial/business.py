@@ -78,7 +78,7 @@ class Ownership(Vertex >> Corporation):
   ''' Describes a relationship where a ``Person`` or ``Corporation``
       owns some calculable piece of another ``Corporation``. '''
 
-  effective = float, {'indexed': True}
+  effective = float, {'indexed': False}
 
 
 @describe(type=Role)

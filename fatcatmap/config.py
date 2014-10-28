@@ -6,7 +6,7 @@
 
 '''
 
-__version__ = ((0, 0, 1), (20140927, 'alpha'))
+__version__ = ((0, 0, 1), (20141019, 'alpha'))
 
 
 import os, sys, logging
@@ -85,6 +85,10 @@ config = cfg.Config(app={
     'assets': os.path.join(app, 'assets'),
     'favicon': os.path.join(app, 'assets', 'img', 'favicon.ico'),
 
+    'scripts': {
+      'db': os.path.join(project, 'scripts', 'db'),
+      'instance': os.path.join(project, 'scripts', 'instance')},
+
     'templates': {
       'source': os.path.join(app, 'templates/source'),
       'compiled': 'fatcatmap.templates.compiled'}
@@ -117,17 +121,52 @@ config = cfg.Config(app={
     'tools': {
       'enabled': True},
 
-    'dataset': 'legacy-v4'
+    'dataset': 'beta-v2'
 
   },
 
   #### ==== CANTEEN CONFIGURATION ==== ####
 
+  ## - RPC APIs
+  'api': {
+    'rpc': {
+      'enabled': True,
+      'secure': (__debug__ and True) or False,
+      'host': 'api.fatcatmap.com' if not __debug__ else None,
+      'version': 1
+    },
+
+    'realtime': {
+      'enabled': False,
+      'secure': (__debug__ and True) or False,
+      'host': 'realtime.fatcatmap.com' if not __debug__ else None,
+      'version': 1
+    }
+  },
+
   ## - HTTP Semantics
   'http': {
 
     # Default headers to add
-    'headers': {}
+    'headers': ({} if not __debug__ else ({
+      'Catnip-Version': '-'.join(('.'.join(map(unicode, __version__[0])), __version__[1][1]))})),
+
+    'sessions': {
+      'enable': True,
+      'engine': 'cookies',
+
+      'storage': {
+        'enable': True
+      },
+
+      'cookies': {
+        'key': 'fcm',
+        'domain': None,
+        'path': '/',
+        'secure': (not __debug__),  # only in prod, force HTTPS
+        'httponly': True  # session is provided to JS explicitly
+      }
+    }
 
   },
 

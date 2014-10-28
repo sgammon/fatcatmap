@@ -41,6 +41,11 @@ def _read_template(filename):
       :returns: Contents of the file at ``template_path + filename``, joined
         into a single string. '''
 
+  try:
+    import slimmer
+  except ImportError:
+    slimmer = None
+
   full_path = (filename if filename.startswith(template_path) else (
         os.path.join(template_path, *(x for x in filename.split('/') if x))))
 
@@ -52,7 +57,19 @@ def _read_template(filename):
     for line in template.read():
       lines.append(line)
 
+    if slimmer:
+      return slimmer.html_slimmer(u''.join((unicode(x, 'latin-1') for x in lines)))
     return u''.join((unicode(x, 'latin-1') for x in lines))
+
+
+def _get_filename(path):
+
+  ''' Extract the filename portion from a full path to a template file.
+
+      :param path: Full path to the template file to extract from.
+      :returns: Extracted filename from full template path. '''
+
+  return path.replace(template_path + '/', '')
 
 
 @decorators.bind('views')
@@ -62,17 +79,9 @@ class ClientTemplate(Logic):
       string-paths based on their filenames. '''
 
   known_templates = {
-    path: _read_template(path) for path in _templates}
+    _get_filename(path): _read_template(path) for path in _templates}
 
-  @staticmethod
-  def _get_filename(self, path):
-
-    ''' Extract the filename portion from a full path to a template file.
-
-        :param path: Full path to the template file to extract from.
-        :returns: Extracted filename from full template path. '''
-
-    return path.replace(template_path, '')
+  index = {k.replace('.html', '').replace(template_path + '/', ''): v for k, v in known_templates.iteritems()}
 
   def load_template(self, filename):
 
@@ -98,4 +107,4 @@ class ClientTemplate(Logic):
         :returns: Map of known ``filename -> template`` mappings, preloaded at
           server construction time. '''
 
-    return self.known_templates
+    return self.index

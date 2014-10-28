@@ -5,12 +5,12 @@
  *          Sam Gammon <sam@momentum.io>,
  *          Alex Rosner <alex@momentum.io>,
  *          Ian Weisberger <ian@momentum.io>
- * 
+ *
  * copyright (c) momentum labs, 2014
  */
 
 goog.require('View');
-goog.require('views.Detail');
+goog.require('views.component.Detail');
 
 goog.provide('views.detail.Legislator');
 

@@ -24,7 +24,7 @@ class JurisdictionName(PlaceName):
   ''' Describes a name for a ``Jurisdiction``, including official
       abbreviations or names as they exist in statute. '''
 
-  statute = str, {'indexed': True}
+  statute = str, {'indexed': False}
   abbreviation = str, {'indexed': True}
 
 
@@ -35,5 +35,5 @@ class Jurisdiction(Model):
       or make decisions and judgements. Usually accompanies a system
       of law, including courts, which would be judicatures. '''
 
-  higher_authority = Key, {'indexed': True}
+  higher_authority = Key, {'indexed': False}
   name = JurisdictionName, {'indexed': True, 'embedded': True}

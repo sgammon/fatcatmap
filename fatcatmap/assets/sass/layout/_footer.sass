@@ -1,0 +1,49 @@
+@import "var/font"
+@import "var/color"
+@import "mixin/transition"
+
+#footer
+  div, nav
+    line-height: normal
+
+  h1, h2
+    margin: 0
+    vertical-align: middle
+    color: $grey-dark
+    font:
+      size: $font-size-small
+      weight: $font-weight-light
+
+  h1:last-child
+    margin-top: 0.2em
+
+#version
+  position: fixed
+  bottom: 1em
+  left: 1em
+
+  h1:first-child
+    color: $grey
+
+#page_nav
+  position: fixed
+  bottom: 1em
+  right: 1em
+
+  ul
+    margin: 0
+    padding: 0
+    -webkit-padding-start: 0
+    text-align: right
+    list-style-type: none
+
+    li
+      display: inline-block
+      margin-left: 0.75em
+
+  h2[href]
+    color: $grey
+    +transition(color 0.15s ease)
+
+    &:hover
+      color: $grey-lighter

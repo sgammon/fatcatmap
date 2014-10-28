@@ -6,6 +6,7 @@
 
 $node-stroke-width: 5px
 $node-scale-factor: 1.6
+$leaf-opacity: 0.6
 
 #mapper
   +fillbox
@@ -15,14 +16,29 @@ $node-scale-factor: 1.6
 
 #map
   z-index: 500
+  +fillbox
   +transition(opacity 0.5s ease)
 
-// Nodes/edges
-circle
-  stroke-linecap: butt
-  stroke-rendering: crispEdges
+#map_physics
+  position: fixed
+  left: 5%
+  right: 5%
+  bottom: 5%
+  text-align: center
+  background-color: $grey-dark
 
-svg svg, .node,
+  label
+    margin: 0.5em auto
+
+  input
+    width: 80%
+    margin: 0 auto
+
+  & > div > div
+    padding-top: 20px
+
+// Nodes/edges
+svg svg, .node, .link
   cursor: pointer
 
 .node
@@ -37,7 +53,13 @@ svg svg, .node,
   &.selected
     stroke-width: $node-stroke-width * $node-scale-factor
 
+.leaf, .leaf-link
+  opacity: $leaf-opacity
+
 circle
+  stroke-linecap: butt
+  stroke-rendering: crispEdges
+
   @each $type in $nodetypes
     &.#{nth($type, 1)}
       stroke: nth($type, 2)
@@ -51,7 +73,6 @@ circle
       stroke-width: $node-stroke-width * $node-scale-factor * $node-scale-factor
 
 .link
-  cursor: pointer
   stroke-opacity: .6
 
 

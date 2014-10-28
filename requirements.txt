@@ -3,7 +3,6 @@ nose
 uwsgi
 fabtools
 fabric
-google-api-python-client
 msgpack-python
 python-snappy
 raven
@@ -13,3 +12,8 @@ gevent
 git+https://github.com/sgammon/libcloud.git#egg=libcloud
 dogapi
 hiredis
+elasticsearch
+thrift
+slimmer
+pyyaml
+google-api-python-client

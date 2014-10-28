@@ -32,7 +32,7 @@ USER?=`whoami`
 CANTEEN?=0
 CANTEEN_BRANCH?=master
 SANDBOX_GIT?=$(USER)@sandbox
-BREWDEPS=openssl python haproxy redis pypy snappy hiredis elixir scala
+BREWDEPS=openssl python haproxy redis pypy snappy hiredis elixir scala lua luajit node npm
 TEST_FLAGS?=
 
 ## == optionals == ##

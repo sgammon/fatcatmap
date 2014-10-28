@@ -1,0 +1,17 @@
+<section id="detail" v-ref="detail">
+
+  <div id="detail_left" class="detail" v-if="left" v-transition>
+    <div class="close close-right">
+      <span v-on="click: close">x</span>
+    </div>
+    <div class="view" v-view="leftview" v-with="left.data" v-transition></div>
+  </div>
+
+  <div id="detail_right" class="detail" v-if="right" v-transition>
+    <div class="close close-left">
+      <span v-on="click: close">x</span>
+    </div>
+    <div class="view" v-view="rightview" v-with="right.data" v-transition></div>
+  </div>
+
+</section>

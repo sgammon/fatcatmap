@@ -5,7 +5,7 @@
  *          Sam Gammon <sam@momentum.io>,
  *          Alex Rosner <alex@momentum.io>,
  *          Ian Weisberger <ian@momentum.io>
- * 
+ *
  * copyright (c) momentum labs, 2014
  */
 
@@ -20,17 +20,25 @@ var routes = {
   '/': function (request) {
     var state = request.state || {},
       app = this.app,
-      graph = (!app.$.stage || !app.$.stage.$.map.active) ?
-        this.graph.construct() : null;
+      graph = this.services.graph;
 
     state.page = state.page || { active: true };
     state.modal = state.modal || null;
 
-    app.$set('page', state.page);
-    app.$set('modal', state.modal);
+    this.app.$set('page', state.page);
+    this.app.$set('modal', state.modal);
 
-    app.nextTick(function () {
-      app.$broadcast('page.map', graph);
+    this.app.nextTick(function () {
+      if (!app.$.stage || !app.$.stage.$.map.active) {
+        if (graph.active) {
+          app.$broadcast('page.map', graph.active);
+        } else {
+          graph.construct().then(function (v, e) {
+            if (!e && v)
+              app.$broadcast('page.map', v);
+          });
+        }
+      }
       app.$broadcast('detail');
     });
 
@@ -66,16 +74,9 @@ var routes = {
    * @param {Object} request
    * @return {?Object}
    */
-  '/settings': function (request) {
-
-  },
-
-  /**
-   * @param {Object} request
-   * @return {?Object}
-   */
   '/404': function (request) {
-
+    console.warn('404');
+    console.warn(request);
   },
 
   /**
@@ -83,12 +84,21 @@ var routes = {
    * @return {?Object}
    * @this {ServiceContext}
    */
-  '/<key>': function (request) {
-    var data = this.data,
+  '/view/<key>': function (request) {
+    // display key at origin. preserve detail and/or allow choice?
+  },
+
+  /**
+   * @param {Object} request
+   * @return {?Object}
+   * @this {ServiceContext}
+   */
+  '/detail/<key>': function (request) {
+    var data = this.services.data,
       app = this.app,
       state = request.state || {},
       graph = (!app.$.stage || !app.$.stage.$.map.active) ?
-        this.graph.construct() : null;
+        this.services.graph.active : null;
 
     state.page = state.page || { active: true };
     state.modal = state.modal || null;
@@ -100,7 +110,7 @@ var routes = {
       app.$broadcast('page.map', graph);
     });
 
-    data.get(request.args.key).then(function (data, err) {
+    data.get(data.cache[+request.args.key].key).then(function (data, err) {
       if (err)
         return app.error(err);
 
@@ -115,14 +125,14 @@ var routes = {
    * @return {?Object}
    * @this {ServiceContext}
    */
-  '/<key1>/and/<key2>': function (request) {
-    var data = this.data,
+  '/detail/<key1>/and/<key2>': function (request) {
+    var data = this.services.data,
       app = this.app,
-      key1 = request.args.key1,
-      key2 = request.args.key2,
+      key1 = data.cache[+request.args.key1].key,
+      key2 = data.cache[+request.args.key2].key,
       state = request.state || {},
       graph = (!app.$.stage || !app.$.stage.$.map.active) ?
-        this.graph.construct() : null;
+        this.services.graph.active : null;
 
     state.page = state.page || { active: true };
     state.modal = state.modal || null;

@@ -19,7 +19,8 @@ from ..abstract import (Role,
                         Seat,
                         Group,
                         Event,
-                        OrganizationName)
+                        OrganizationName,
+                        term)
 
 # fcm models
 from ..geo import Geobounds
@@ -148,6 +149,19 @@ class LegislativeOffice(Model):
   type = SeatType, {'indexed': True, 'required': True}
 
 
+# @TODO(sgammon): make these key references
+# @TODO(sgammon): fix inheritance and inflation of subentities (ambiguous keys)
+@describe(abstract=False)
+class LegislativeTerm(term.Term):
+
+  ''' Base model for legislative term models'''
+
+  state = str, {'indexed': True}
+  party = str, {'indexed': True}
+  district = int, {'indexed': True}
+  seniority = int, {'indexed': True}
+  chamber = str, {'indexed': True, 'choices': frozenset(('minor', 'joint', 'major'))}
+
 
 ## +=+=+=+=+=+=+=+=+ Vertexes +=+=+=+=+=+=+=+=+ ##
 
@@ -160,9 +174,10 @@ class Legislator(Vertex):
       special cases, appointed) member of a ``LegislativeBody``, occupying one
       of many ``LegislativeOffice``s. '''
 
-  election = Election, {'indexed': True}
-  seat = LegislativeOffice, {'indexed': True}
-  campaign = Campaign, {'indexed': True, 'embedded': True}
+  seat = LegislativeOffice, {'indexed': False, 'embedded': False}
+  election = Election, {'indexed': False, 'embedded': False}
+  campaign = Campaign, {'indexed': False, 'embedded': False}
+  term = LegislativeTerm, {'embedded': True}
 
 
 @describe(parent=Legislator, type=Role)
@@ -201,17 +216,20 @@ class Committee(Vertex):
 
     ''' Describes the available types of legislative ``Committee``s. '''
 
-    MINOR = 0x0  # for committees that are exclusively part of a minor house
-    MAJOR = 0x1  # for committees that are exclusively part of a major house
+    MINOR = 0x0  # for committees that are exclusively part of a minor house (house)
+    MAJOR = 0x1  # for committees that are exclusively part of a major house (senate)
     JOINT = 0x2  # for committees that are unexclusively part of both houses
 
   ## -- structure -- ##
   super = Key, {'indexed': True}
-  type = CommitteeType, {'indexed': True, 'required': True}
+  type = int, {'indexed': True, 'required': True}
 
   ## -- naming and resources -- ##
   name = CommitteeName, {'embedded': True, 'indexed': True}
   website = URI, {'embedded': True, 'indexed': True}
+
+  jurisdiction = str, {}
+
 
 
 ## +=+=+=+=+ Legislation +=+=+=+=+ ##
@@ -232,6 +250,10 @@ class Legislation(Vertex):
     code = str, {'indexed': True, 'required': True}
     longtitle = str, {'indexed': True, 'repeated': True}
     shorttitle = str, {'indexed': True, 'repeated': True}
+
+
+  # @TODO(sgammon): enums are fucking broken
+  # @TODO(sgammon): unify enums for MINOR/MAJOR across all classes etc
 
   class BillOrigin(BidirectionalEnum):
 
@@ -332,4 +354,4 @@ class CommitteeMember(Legislator > Committee):
     RANKING = 0x3  # second-in-command for majority or minority party
     EX_OFFICIO = 0x4  # holder of a seat on the committee because of another office
 
-  leadership = CommitteeLeadership, {'indexed': True, 'default': None}
+  leadership = CommitteeLeadership, {'indexed': True}

@@ -72,6 +72,10 @@ def bootstrap():
     print(colors.yellow('Installing fatcatmap...'))
     fatcatmap(node.environment)
 
+    # fix for 403 on image proxy
+    api.sudo("chmod 777 -R /base/data/warehouse")
+    api.sudo("chmod 777 /base/data")
+
     ## ~~ start k9 ~~ ##
     print(colors.yellow('Starting K9...'))
     api.sudo("/base/software/k9/sbin/k9"
@@ -80,6 +84,10 @@ def bootstrap():
   ## ~~ install services-n-stuff ~~ ##
   print(colors.yellow('Installing services for group %s...' % node.group))
   support.setup_for_group(group=node.group)
+
+  print(colors.yellow('Fixing permissions...'))
+  api.sudo("chown %s:%s -R /base" % (
+    settings.USER, settings.GROUP))
 
   print(colors.green('Deploy succeeded.'))
 
@@ -104,6 +112,10 @@ def update():
     print(colors.yellow('Activating...'))
     helpers.pause()
     activate()
+
+  print(colors.yellow('Fixing permissions...'))
+  api.sudo("chown %s:%s -R /base" % (
+    settings.USER, settings.GROUP))
 
   print(colors.green('Update complete.'))
 

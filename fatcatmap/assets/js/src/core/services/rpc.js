@@ -5,12 +5,13 @@
  *          Sam Gammon <sam@momentum.io>,
  *          Alex Rosner <alex@momentum.io>,
  *          Ian Weisberger <ian@momentum.io>
- * 
+ *
  * copyright (c) momentum labs, 2014
  */
 
 goog.require('util.url');
-goog.require('services');
+goog.require('async.future');
+goog.require('service');
 goog.require('services.http');
 
 goog.provide('services.rpc');
@@ -42,6 +43,8 @@ RPCAPI = function (name, methods, config) {
      * @this {ServiceContext}
      */
     api[method] = function (request, handler) {
+      var response = new Future();
+
       request = {
         url: endpoint,
         data: request.data || {},
@@ -53,10 +56,22 @@ RPCAPI = function (name, methods, config) {
        * @expose
        */
       request.headers.Accept = 'application/json';
-
       request.headers['Content-Type'] = 'application/json';
 
-      return this.http.post(request, handler);
+      this.http.post(request, function (value, error) {
+        if (error)
+          return response.fulfill(false, error);
+
+        if (value.data && value.data['error_message'])
+          return response.fulfill(false, new Error(value.data['error_message']));
+
+        response.fulfill(value);
+      });
+
+      if (handler)
+        response.then(handler);
+
+      return response;
     }.inject('http');
 
   });
@@ -65,8 +80,9 @@ RPCAPI = function (name, methods, config) {
 
 /**
  * @expose
+ * @type {Service}
  */
-services.rpc = /** @lends {ServiceContext.prototype.rpc} */{
+services.rpc = new Service('rpc', /** @lends {ServiceContext.prototype.rpc} */{
 
   /**
    * @param {Array} manifest
@@ -84,4 +100,4 @@ services.rpc = /** @lends {ServiceContext.prototype.rpc} */{
   init: function (manifests) {
     manifests.forEach(services.rpc.factory);
   }
-}.service('rpc');
+}, true);

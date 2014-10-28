@@ -1,26 +1,28 @@
 @import "var/font"
+@import "var/form"
 @import "var/color"
 @import "var/layout"
+@import "mixin/transition"
+@import "component/autocomplete"
 
 #header
-  height: $header-height
-  position: absolute
-  top: 0
-  left:0
-  right: 0
-
-  div
-    line-height: $header-height
+  & > div
+    line-height: normal
 
   h1, h2
+    margin: 0;
     display: inline-block
     vertical-align: middle
     cursor: pointer
-    z-index: 1000
 
-#header_action
+#default_action
+  position: fixed
+  top: 10px
+  right: 0
+  z-index: 9999
+
   h2
-    margin: 0 1.5em 0 0
+    margin-right: 1.5em
     width: 9em
     height: 1.75em
     text-align: center
@@ -35,12 +37,50 @@
     &.signup:hover, &.signup:active
       background-color: $link-color-hover
       border-color: $link-color-hover
-      color: $grey-dark
+      color: $grey-darker
+
+#graph_search
+  margin: 0.5em 0.5em 0 0
+
+  input
+    width: 15em
+    height: 32px
+    padding: 6px 8px
+    color: $input-focus-text-color
+    background-color: rgba(255, 255, 255, 0.05)
+    border-bottom-color: $transparent
+    +transition-property(color, background-color, border-bottom-color)
+    +transition-duration(0.15s)
+    +transition-ease(ease)
+
+    &::-webkit-input-placeholder
+      color: $input-focus-text-color
+      font-family: "fcm"
+      text-align: right
+      +transition(color 0.15s ease)
+
+    &:focus, &.focused
+      color: $input-text-color
+      background-color: $input-background-color
+      border-bottom-color: $input-border-color
+
+      &::-webkit-input-placeholder
+        color: $input-text-color
 
 
 #logo_main
+  position: fixed
+  top: 10px
+  left: 0
+  z-index: 9999
+
+  svg
+    width: 1em
+
   h1
-    margin: 0 0 0 0.3em
+    margin-left: 12px
+    display: inline-block
+    vertical-align: middle
     color: transparent
     background: linear-gradient($logo-slant, $logo-gradient-start, $logo-gradient-end)
     text-rendering: geometricPrecision

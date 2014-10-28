@@ -1,12 +1,11 @@
 var fs = require('fs'),
   path = require('path'),
+  del = require('del'),
   sass = require('sass-stream'),
   closure = require('closure-compiler-stream'),
   gulp = require('gulp'),
   tap = require('gulp-tap'),
-  rmrf = require('gulp-rimraf'),
   svgmin = require('gulp-svgmin'),
-  concat = require('gulp-concat'),
   imagemin = require('gulp-imagemin'),
   sourcemaps = require('gulp-sourcemaps'),
   karma = require('karma').server,
@@ -60,7 +59,10 @@ inputs = {
     externs: ASSET_PREFIX + 'js/externs/*.js',
     test: 'fatcatmap_tests/js/spec/unit/**/*.spec.js'
   },
-  templates: 'fatcatmap/templates/source/**/*',
+  templates: {
+    html: 'fatcatmap/templates/source/**/*',
+    js: ASSET_PREFIX + 'js/templates'
+  }
 };
 
 // Asset compilation target directories.
@@ -122,12 +124,15 @@ config = {
       use_types_for_optimization: null,
       generate_exports: null,
       externs: [
+        ASSET_PREFIX + 'js/lib/externs/w3c/btoa.js',
         ASSET_PREFIX + 'js/lib/externs/w3c/EventSource.js',
         ASSET_PREFIX + 'js/lib/externs/w3c/pointer-events.js',
         ASSET_PREFIX + 'js/lib/externs/jasmine/jasmine.js',
-        ASSET_PREFIX + 'js/lib/externs/fcm/jsconfig.js',
-        ASSET_PREFIX + 'js/lib/externs/fcm/pagedata.js',
+        ASSET_PREFIX + 'js/lib/externs/fcm/config.js',
+        ASSET_PREFIX + 'js/lib/externs/fcm/search.js',
         ASSET_PREFIX + 'js/lib/externs/fcm/types.js',
+        ASSET_PREFIX + 'js/lib/externs/fcm/graph.js',
+        ASSET_PREFIX + 'js/lib/externs/fcm/data.js',
         ASSET_PREFIX + 'js/lib/externs/vue/vue.js',
         ASSET_PREFIX + 'js/lib/externs/d3/d3.js'
       ]
@@ -146,7 +151,7 @@ config = {
       js_output_file: outputs.js.app + 'app.debug.js',
       debug: true,
       formatting: 'PRETTY_PRINT',
-      compilation_level: 'SIMPLE_OPTIMIZATIONS',
+      compilation_level: 'ADVANCED_OPTIMIZATIONS',
       output_wrapper: '(function() {\n%output%\n})();'
     },
 
@@ -183,9 +188,8 @@ task('sass', function (cb) {
 task('style', ['sass']);
 
 // Clean compiled css files
-task('style:clean', function () {
-  return src(outputs.css + '/*')
-    .pipe(rmrf());
+task('style:clean', function (cb) {
+  del([outputs.css + '/*'], cb);
 });
 
 // Compile JS with Closure Compiler in production mode
@@ -194,7 +198,7 @@ task('closure:min', function () {
   cfg.sourceRoot = '/assets/js/src';
   return src(inputs.js.app)
     .pipe(sourcemaps.init())
-    .pipe(closure(merge(config.closure.common, config.closure.min)))
+    .pipe(closure(merge(config.closure.app, config.closure.min)))
     .pipe(sourcemaps.write(
       path.relative(ASSET_PREFIX + 'js/src', outputs.sourcemaps + ASSET_PREFIX + 'js/'),
       cfg))
@@ -207,7 +211,7 @@ task('closure:debug', function () {
   cfg.sourceRoot = '/assets/js/src';
   return src(inputs.js.app)
     .pipe(sourcemaps.init())
-    .pipe(closure(merge(config.closure.common, config.closure.debug)))
+    .pipe(closure(merge(config.closure.app, config.closure.debug)))
     .pipe(sourcemaps.write(
       path.relative(ASSET_PREFIX + 'js/src', outputs.sourcemaps + ASSET_PREFIX + 'js/'),
       cfg))
@@ -220,7 +224,7 @@ task('closure:pretty', function () {
   cfg.sourceRoot = '/assets/js/src';
   return src(inputs.js.app)
     .pipe(sourcemaps.init())
-    .pipe(closure(merge(config.closure.common, config.closure.pretty)))
+    .pipe(closure(merge(config.closure.app, config.closure.pretty)))
     .pipe(sourcemaps.write(
       path.relative(ASSET_PREFIX + 'js/src', outputs.sourcemaps + ASSET_PREFIX + 'js/'),
       cfg))
@@ -232,15 +236,15 @@ task('closure:test', function (cb) {
   var sources = [],
     tests = [],
     run = function () {
-      var cfg = merge(config.closure.common, config.closure.test);
+      var cfg = merge(config.closure.app, config.closure.test);
 
       delete cfg.closure_entry_point;
       delete cfg.only_closure_dependencies;
 
       cfg.module_output_path_prefix = ASSET_PREFIX + 'js/compiled/test/';
       cfg.module = [
-        ['app:' + sources.length + ':'].concat(sources),
-        ['test:' + tests.length + ':app:'].concat(tests)
+        ['app:' + sources.length].concat(sources),
+        ['test:' + tests.length + ':app'].concat(tests)
       ];
 
       src(inputs.js.app)
@@ -269,12 +273,11 @@ task('closure:test', function (cb) {
 });
 
 // Clean compiled JS files
-task('closure:clean', function () {
-  return src([outputs.js.app + '/*.js', ASSET_PREFIX + 'js/*.js'])
-    .pipe(rmrf());
+task('closure:clean', function (cb) {
+  del([outputs.js.app + '/*.js', ASSET_PREFIX + 'js/*.js'], cb);
 });
 
-task('closure', ['closure:pretty']);
+task('closure', ['closure:debug']);
 task('closure:all', ['closure:min', 'closure:debug', 'closure:pretty', 'closure:test']);
 
 // Build templates
@@ -291,18 +294,20 @@ task('templates', function (cb) {
 });
 
 // Clean templates
-task('templates:clean', function () {
-  return src(outputs.templates + '/*')
-    .pipe(rmrf());
+task('templates:clean', function (cb) {
+  del([
+    outputs.templates.html + '/*',
+    outputs.templates.js + '/*'
+  ], cb);
 });
 
 // Run dev server
-task('serve', function (cb) {
+task('run', function (cb) {
   var killSh = function () {
     if (sh)
       sh.kill();
   },
-  sh = spawn('fcm', ['run'], {stdio: 'inherit'})
+  sh = spawn('bin/fcm', ['run', '--simple'], {stdio: 'inherit'})
     .on('error', killSh)
     .on('exit', function () {
       sh = null;
@@ -314,9 +319,12 @@ task('serve', function (cb) {
 
 // Watch assets & recompile on change
 task('watch', function (cb) {
-  watch(inputs.sass, ['sass']);
-  watch(inputs.templates, ['templates']);
-  // watch(inputs.js.app, ['closure:pretty'])
+  watch(ASSET_PREFIX + 'sass/**/*.sass', ['sass']);
+  watch([
+    inputs.templates.html + '/**/*.html',
+    inputs.templates.js + '/**/*.html'
+  ], ['templates']);
+  watch(inputs.js.app, ['closure']);
   cb();
 });
 
@@ -330,18 +338,16 @@ task('test:release', ['test:clean', 'closure:test'], function (cb) {
 });
 
 // Clean JS test output
-task('test:clean', function () {
-  return src([
+task('test:clean', function (cb) {
+  del([
     '.develop/coverage/js/**/*',
     '.develop/test-reports/js/**/*'
-  ])
-    .pipe(rmrf());
+  ], cb);
 });
 
 // Default task - runs with bare 'gulp'.
 task('default', [
   'sass',
-  'templates',
   'test'
 ]);
 
@@ -349,9 +355,9 @@ task('default', [
 task('dev', [
   'sass',
   'templates',
-  'closure:pretty',
+  'closure',
   'watch',
-  'serve'
+  'run'
 ]);
 
 // Release task
@@ -363,11 +369,10 @@ task('release', [
 
 // Clean task
 task('clean', [
+  'test:clean',
   'style:clean',
   'closure:clean',
-  'templates:clean',
-  'test:clean'
-], function () {
-  return src(outputs.sourcemaps + '/*')
-    .pipe(rmrf());
+  'templates:clean'
+], function (cb) {
+  del([outputs.sourcemaps + '/*'], cb);
 });

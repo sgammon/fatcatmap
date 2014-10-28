@@ -5,7 +5,7 @@
  *          Sam Gammon <sam@momentum.io>,
  *          Alex Rosner <alex@momentum.io>,
  *          Ian Weisberger <ian@momentum.io>
- * 
+ *
  * copyright (c) momentum labs, 2014
  * @externs
  */
@@ -59,7 +59,7 @@ var MessageCallbackMap;
 
 /**
  * Represents a pipelined callback.
- * @typedef {function(*=, Error=)}
+ * @typedef {function(*=, Error=):*}
  * @throws {Error} If uncaught.
  */
 var PipelinedCallback;

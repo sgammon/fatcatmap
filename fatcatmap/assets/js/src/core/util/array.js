@@ -5,14 +5,23 @@
  *          Sam Gammon <sam@momentum.io>,
  *          Alex Rosner <alex@momentum.io>,
  *          Ian Weisberger <ian@momentum.io>
- * 
+ *
  * copyright (c) momentum labs, 2014
  */
+
+goog.require('type');
 
 goog.provide('util.array');
 
 util.array = {
   /**
+   * @param {*} arr
+   * @return {boolean}
+   */
+  isArray: Array.isArray,
+
+  /**
+   * Converts a list-like (numeric-index iterable) object to an Array.
    * @param {Object.<number,*>} list List of items to convert to array.
    * @return {Array.<*>}
    */
@@ -23,11 +32,13 @@ util.array = {
   },
 
   /**
+   * Normalizes passed parameters to an array. Handles splats and converts passed Arguments.
    * @param {...[*]} items Items to normalize to an array of non-arrays.
    * @return {Array.<*>}
    */
   normalize: function (items) {
     return items ? arguments[1] ? util.array.toArray(arguments) :
+      type(items) === 'arguments' ? util.array.toArray(items) :
       Array.isArray(items) ? items : [items] : [];
   },
 
@@ -39,9 +50,6 @@ util.array = {
   flatten: function (arrays, deep) {
     var flattened = [],
       i, array;
-
-    if (arguments[1])
-      arrays = util.array.normalize(arguments);
 
     for (i = 0; i < arrays.length; i++) {
       array = arrays[i];
