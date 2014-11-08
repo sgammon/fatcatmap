@@ -10,7 +10,6 @@
  */
 
 goog.require('view');
-goog.require('model');
 goog.require('services.search');
 
 goog.provide('views.component.Autocomplete');
@@ -153,10 +152,8 @@ views.component.Autocomplete = view.View.extend({
 
       key = target.getAttribute('data-key');
 
-      if (key) {
-        key = model.Key.inflate(key);
-        this.$dispatch('route', key.path() + '/detail');
-      }
+      if (key)
+        this.$emit('select', key);
     }
   },
 
