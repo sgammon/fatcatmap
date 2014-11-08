@@ -23,7 +23,7 @@ goog.provide('services.data');
 
 /**
  * @expose
- * @type {(Array.<(string|Object)>|model.KeyList.<model.Key>)}
+ * @type {(Array.<(string|model.Key)>|model.KeyList.<model.Key>)}
  */
 GraphData.data.keys;
 
@@ -60,16 +60,13 @@ services.data = /** @lends {ServiceContext.prototype.data} */ {
    * @this {ServiceContext}
    */
   init: function (raw, cb) {
-    var data = this;
+    var received;
 
     this.cache = new model.KeyIndexedList();
 
     raw.data.keys = model.Key.unpack(raw.data.keys, raw.meta.kinds);
-    raw.data.keys.forEach(function (key, i) {
-      data.receive(key, raw.data.objects[i]);
-    });
 
-    raw.data.objects = this.cache.slice();
+    raw.data = this.receiveAll(raw.data);
 
     if (cb)
       cb(raw);
@@ -97,6 +94,22 @@ services.data = /** @lends {ServiceContext.prototype.data} */ {
     return data;
   },
 
+  /**
+   * @expose
+   * @param {GraphData#data} rawdata
+   * @this {ServiceContext}
+   * @throws {TypeError} If any keys are not strings or instances of Key.
+   */
+  receiveAll: function (rawdata) {
+    var data = this,
+      objects = rawdata.objects;
+
+    rawdata.keys.forEach(function (key, i) {
+      rawdata.objects[i] = data.receive(key, rawdata.objects[i]);
+    });
+
+    return rawdata;
+  },
 
   /**
    * @expose

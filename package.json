@@ -4,7 +4,19 @@
   "version": "1.0.0",
   "keywords": ["politics", "transparency", "opendata", "opensource"],
   "homepage": "https://fatcatmap.org",
-  "author": "momentum labs",
+  "contributors": [{
+    "name": "Sam Gammon",
+    "email": "sam@momentum.io"
+  }, {
+    "name": "David Rekow",
+    "email": "david@momentum.io"
+  }, {
+    "name": "Ian Weisberger",
+    "email": "ian@momentum.io"
+  }, {
+    "name": "Alex Rosner",
+    "email": "alex@momentum.io"
+  }],
   "private": true,
   "scripts": {},
   "repository": {

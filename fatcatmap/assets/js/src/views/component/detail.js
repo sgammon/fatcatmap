@@ -89,16 +89,15 @@ views.component.Detail = view.View.extend({
         parent = target.parentNode,
         key, keys, keyI;
 
-      
       if (parent.classList.contains('close')) {
         e.preventDefault();
         e.stopPropagation();
 
         keys = this.keys();
-        key = this[parent.parentNode.getAttribute('id').split('_').pop()].data;
+        key = this[parent.parentNode.getAttribute('id').split('_').pop()].data.key;
         
         if (key) {
-          keyI = keys.indexOf(key.key);
+          keyI = keys.indexOf(key);
 
           if (keyI > -1) {
             keyI = Math.abs(keyI - 1);
@@ -108,19 +107,19 @@ views.component.Detail = view.View.extend({
 
         parent.classList.add('transparent');
 
-        this.$dispatch('route', keys.length ? '/detail/' + keys[0] : '/');
+        this.$parent.setDetail(keys.length ? keys[0] : null);
       }
     },
 
     /**
      * @expose
-     * @return {Array.<?string>}
+     * @return {Array.<?model.Key>}
      * @this {views.component.Detail}
      */
     keys: function () {
       return [
-        this.left.data ? services.data.cache.index[this.left.data.key] : null,
-        this.right.data ? services.data.cache.index[this.right.data.key] : null
+        this.left.data ? this.left.data.key : null,
+        this.right.data ? this.right.data.key : null
       ];
     },
 

@@ -621,7 +621,7 @@ models.graph.GraphQuery = function (graph, origin, options) {
   /**
    * @type {boolean}
    */
-  this.keys_only = typeof options.keys_only === 'boolean' ? options.keys_only : true;
+  this.keys_only = typeof options.keys_only === 'boolean' ? options.keys_only : false;
 
   /**
    * @type {boolean}

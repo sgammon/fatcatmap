@@ -13,6 +13,7 @@ goog.require('$');
 goog.require('view');
 goog.require('views.component.Detail');
 goog.require('views.detail.Legislator');
+goog.require('views.detail.Contributor');
 goog.require('model');
 goog.require('models.graph');
 goog.require('services.data');
@@ -447,8 +448,18 @@ views.page.Map = view.View.extend({
      * @this {views.page.Map}
      */
     prune: function (key) {
-      this.cached = this.graph.prune(key);
-      this.$emit('page.map', this.graph);
+      this.cached = services.graph.active.prune(key);
+      this.$emit('page.map', services.graph.active);
+    },
+
+    /**
+     * @expose
+     * @param {?string} key
+     * @this {views.page.Map}
+     */
+    setDetail: function (key) {
+      this.$dispatch('route', '/' + services.graph.active.origin.key +
+        (key ? '/detail/' + key : ''));
     },
 
     /**
@@ -465,14 +476,14 @@ views.page.Map = view.View.extend({
         e.stopPropagation();
 
         if (key.equals(this.clicked.key) && Date.now() - this.clicked.timestamp < 400)
-          return this.$dispatch('route', key.path() + '/detail');
+          return this.$dispatch('route', '/' + key.path() + '/detail');
 
         this.clicked.key = key.urlsafe();
         this.clicked.timestamp = Date.now();
 
         target = e.target;
         selected = this.$.detail.keys();
-        key = key.path();
+        key = key.urlsafe();
 
         if (target.classList.contains(this.$options.selectors.selected.slice(1))) {
           if ((selectedI = selected.indexOf(key) > -1))
@@ -492,7 +503,7 @@ views.page.Map = view.View.extend({
         this.map.selected = selected;
         this.map.changed = true;
 
-        this.$dispatch('route', services.graph.active.origin.key.path() + '/detail' +
+        this.$dispatch('route', '/' + services.graph.active.origin.key + '/detail/' +
           (selected.length > 1 ? selected.join('/and/') : key));
       }
     },

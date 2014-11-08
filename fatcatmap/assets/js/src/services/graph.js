@@ -107,10 +107,7 @@ services.graph = /** @lends {ServiceContext.prototype.graph} */ {
 
           graph.emit('response', v);
 
-          v = /** @type {GraphData} */ (v.data);
-
-          if (v.data.keys)
-            v.data.keys = model.Key.unpack(v.data.keys, v.meta.kinds);
+          v = /** @type {GraphData#data} */ (graph.services.data.receiveAll(v.data));
 
           if (replace === true)
             graph.active = new models.graph.Graph();

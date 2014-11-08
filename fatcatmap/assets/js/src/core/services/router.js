@@ -168,6 +168,7 @@ services.router = new Service('router', /** @lends {ServiceContext.prototype.rou
   },
 
   /**
+   * Routes a path and request object.
    * @param {string} path
    * @param {Request=} request
    * @this {ServiceContext}
@@ -241,43 +242,6 @@ services.router = new Service('router', /** @lends {ServiceContext.prototype.rou
     } else {
       this.router.route('/');
     }
-  },
-
-  /**
-   * @expose
-   * @return {Array.<string>}
-   */
-  manifest: function () {
-    var manifest = ROUTES.manifest,
-      resolved = ROUTES.resolved,
-      dynamic = ROUTES.dynamic,
-      resolvedI, dynamicI;
-
-    if (manifest.length === resolved.length + dynamic.length)
-      return manifest;
-
-    manifest = [];
-
-    resolvedI = dynamicI = 0;
-
-    while (resolvedI < resolved.length || dynamicI < dynamic.length) {
-      if (resolvedI === resolved.length) {
-        manifest.push(dynamic[dynamicI++].id);
-        continue;
-      }
-
-      if (dynamicI === dynamic.length) {
-        manifest.push(resolved[resolvedI++].id);
-        continue;
-      }
-
-      manifest.push(resolved[resolvedI].id <= dynamic[dynamicI].id ?
-        resolved[resolvedI++].id : dynamic[dynamicI++].id);
-    }
-
-    ROUTES.manifest = manifest;
-
-    return manifest;
   },
 
   /**
