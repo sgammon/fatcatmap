@@ -49,6 +49,12 @@ views.App = Vue.extend({
        * @type {boolean}
        */
       search: true,
+
+      /**
+       * @expose
+       * @type {string}
+       */
+      name: ''
     },
 
     /**

@@ -23,9 +23,7 @@ var ServiceContext, Service;
  */
 ServiceContext = function () {};
 
-ServiceContext.prototype = {
-
-};
+ServiceContext.prototype = {};
 
 /**
  * @static

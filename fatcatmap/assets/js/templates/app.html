@@ -1,6 +1,6 @@
 <div id="app" class="app container" v-on="click: route">
 
-  <div v-component="layout.stage" v-if="page"></div>
+  <div v-component="layout.stage" v-if="page.active"></div>
   <div v-component="layout.header"></div>
   <div v-component="layout.footer"></div>
 

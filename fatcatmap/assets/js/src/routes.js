@@ -21,14 +21,19 @@ var _DEFAULT_STATE, routes;
 
 _DEFAULT_STATE = {
   /**
-   * @type {{active: boolean}}
+   * @type {boolean}
    */
   'page.active': true,
 
   /**
-   * @type {{active: boolean}}
+   * @type {boolean}
    */
   'page.search': true,
+
+  /**
+   * @type {boolean}
+   */
+  'page.name': 'page.map',
 
   /**
    * @type {?Object.<{

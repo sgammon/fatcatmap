@@ -14,6 +14,7 @@ goog.require('view');
 goog.require('views.component.Detail');
 goog.require('views.detail.Legislator');
 goog.require('views.detail.Contributor');
+goog.require('views.detail.Committee');
 goog.require('model');
 goog.require('models.graph');
 goog.require('services.data');

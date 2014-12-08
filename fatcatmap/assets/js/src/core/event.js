@@ -25,19 +25,15 @@ var Emitter = function (_events) {
   if (typeof _events !== 'string')
     _events = '';
 
-  Object.defineProperty(this, 'events', {
-    /**
-     * @expose
-     * @return {Object.<string, Array.<function(...[*])>>}
-     */
-    get: function () {
-      return events;
-    }
-  });
-
   _events.split(' ').forEach(function (event) {
     events[event] = [];
   });
+
+  /**
+   * @private
+   * @type {Object.<string, Array.<function(...[*])>>}
+   */
+  this.events = events;
 };
 
 util.object.mixin(Emitter, /** @lends {Emitter.prototype} */ {
