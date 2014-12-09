@@ -23,4 +23,4 @@ class Name(Model):
       identifies it amongst other concepts or entities. '''
 
   primary = str, {'indexed': True}
-  secondary = str, {'indexed': True, 'repeated': True}
+  secondary = str, {'indexed': False, 'repeated': True}

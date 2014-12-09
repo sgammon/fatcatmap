@@ -5,13 +5,14 @@
  *          Sam Gammon <sam@momentum.io>,
  *          Alex Rosner <alex@momentum.io>,
  *          Ian Weisberger <ian@momentum.io>
- * 
+ *
  * copyright (c) momentum labs, 2014
  * @todo batched requests
  */
 
+goog.require('$');
 goog.require('async.future');
-goog.require('services');
+goog.require('service');
 goog.require('services.rpc');
 
 goog.provide('services.template');
@@ -45,11 +46,14 @@ services.template = /** @lends {ServiceContext.prototype.template} */ {
       throw new TypeError('template.get() requires a string filename.');
 
     if (TEMPLATES[filename]) {
-      template.fulfill(TEMPLATES[filename]);
+      template.fulfill({
+        path: filename,
+        source: TEMPLATES[filename]
+      });
     } else {
       this.rpc.content.template({
         data: {
-          path: filename
+          path: filename.replace('.', '/') + '.html'
         }
       }).then(function (tpl, err) {
         if (err)
@@ -72,13 +76,21 @@ services.template = /** @lends {ServiceContext.prototype.template} */ {
   },
 
   /**
-   * @param {Object.<string, string>} manifest
+   * @param {Array.<string>} manifest
    * @this {ServiceContext}
    */
   init: function (manifest) {
-    for (var k in manifest) {
-      if (manifest.hasOwnProperty(k) && typeof manifest[k] === 'string')
-        services.template.put(k, manifest[k]);
+    var embedded = $('#templates'),
+      i, name, source;
+
+    if (embedded) {
+      for (i = 0; i < manifest.length; i++) {
+        name = manifest[i].replace('/', '.');
+        source = $('#' + name, embedded);
+
+        if (source)
+          this.put(name, source.textContent);
+      }
     }
   }
 }.service('template');

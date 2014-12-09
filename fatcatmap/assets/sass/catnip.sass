@@ -8,9 +8,14 @@
 @import "component/login"
 @import "layout/grid"
 @import "layout/header"
+@import "layout/footer"
+
+html
+  -webkit-font-smoothing: subpixel-antialiased
 
 body
-  background-color: $grey-dark
+  background-color: $grey-darker
+  background-attachment: fixed
   line-height: $line-height
   font:
     family: $font-family
@@ -30,9 +35,5 @@ a
 .content
   padding: 10px
 
-#header
-  position: fixed
-  top: 0
-  left: 0
-  width: 100%
-  z-index: 9999
+#default_action
+  display: none

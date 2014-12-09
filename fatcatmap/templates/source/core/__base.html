@@ -1,36 +1,35 @@
 <!doctype html>
 <html class="no-js" lang="en" prefix="og: http://ogp.me/ns# fb: http://ogp.me/ns/fb fcm: http://ogp.me/ns/fb/fatcatmap#">
   <head>
-    {% block head %}
+    {%- block head %}
     {%- block meta %}
     <!-- meta -->
     <meta charset="utf-8">
     <meta http-equiv="x-dns-prefetch-control" content="on">
     <title>{%- block title -%}fatcatmap ^.^{%- endblock title -%}</title>
-
-    <!-- DNS prefetch -->
-    <link rel="dns-prefetch" href="deliver.fcm-static.com">
-    <link rel="dns-prefetch" href="cloud.typography.com">
-    <link rel="dns-prefetch" href="api.fatcatmap.org">
+    {%- endblock meta %}
+    {%- for item in dns_prefetch %}
+    <link rel="dns-prefetch" href="{{ item }}">
+    {%- endfor %}
+    <link rel="icon" href="/assets/img/favicon.png" type="image/png">
+    <link rel="stylesheet" href="/assets/style/catnip.css" type="text/css">
+    <link rel="stylesheet" href="/assets/ext/fonts/232792/0E2030883D1235809.css" type="text/css">
 
     <!-- info -->
     <meta name="author" content="momentum labs">
     <meta name="keywords" content="politics, transparency, lobbying, open, government">
     <meta name="viewport" content="width=device-width, initial-scale=1, minimal-ui">
-    {%- endblock meta %}
 
-    <!-- icons -->
-    <link rel="icon" href="/assets/img/favicon.png" type="image/png">
-    <link rel="icon" href="/assets/img/favicon.ico" type="image/x-icon">
-
-    <!-- stylesheets -->
-    {%- block stylesheets %}
-<!--     <link rel="stylesheet" href="/assets/style/themes/scaffold/home.css" type="text/css"> -->
-    <link rel="stylesheet" href="/assets/style/catnip.css" type="text/css">
-    <link rel="stylesheet" href="//cloud.typography.com/6717292/775624/css/fonts.css" type="text/css">
-    {% endblock %}
-
+    <!-- opengraph -->
+    <meta name="og:type" content="website">
+    <meta name="og:title" content="fatcatmap">
+    <meta name="og:description" content="map and visualize politics in realtime">
+    <meta name="og:locale" content="en_US">
+    <meta name="og:site_name" content="fatcatmap">
+    <meta name="og:url" content="https://fatcatmap.org">
+    <meta name="og:image" content="/assets/img/branding/avatar/fullres-square.png">
     {%- if getattr(handler, 'agent', {}).mobile %}
+
     <!-- mobile -->
     {%- block mobile %}
     <meta name="MobileOptimized" content="640">
@@ -38,64 +37,20 @@
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     {%- endblock -%}{%- endif %}
-    <!-- north async -->
-    <div id="js-async-north" style="display:none;"></div>
     {% endblock head %}
   </head>
+
   <body class="{{ theme|default('fcm-dark') }} alpha">
-
-    <!-- resources -->
-    <div id="resources" class="hidden">
-
-      <!-- app templates -->
-      <div id="templates">{% block templates -%}{%- endblock templates %}</div><!-- end #templates -->
-
-    </div><!-- end #resources -->
-
-    <!-- appframe -->
-    <div id="appframe">
-        {% block appframe %}<h1>appframe</h1>{%- endblock %}
-    </div><!-- end #appframe -->
-
-    <!-- appstage -->
-    <div id="appstage" class="container-fluid">
-      {% block appstage %}<h2>appstage</h2>{% endblock %}
-    </div><!-- end #appstage -->
-
-    {% if k9.tools %}
-    <section class="debug tools">
-      <h2>debug tools</h2>
-      <ul> <!-- buncha metadata -->
-          <li><h5>env</h5><span>{{ k9.metadata.environment }}</span></li>
-          <li><h5>group</h5><span>{{ k9.metadata.group }}</span></li>
-          <li><h5>instance</h5>
-              <ul>  <!-- buncha instance stuff -->
-                  <li><h5>id</h5><span>{{ k9.instance.id }}</span></li>
-                  <li><h5>zone</h5><span>{{ k9.instance.zone }}</span></li>
-                  <li><h5>host</h5><span>{{ k9.instance.hostname }}</span></li>
-              </ul>
-          </li>
-      </ul>
-    </section><!-- end section.debug.tools -->
-    {% endif %}
-
-    <!-- JS -->
-    <div id="js-south" class="hidden">
-
+    <div class="hidden" style="display:none;position:fixed;">
       {% block south -%}
-      <!-- bundle/page JS -->
-      <script type="text/javascript" nonce="{{ nonce.script }}" src="{{ asset.script("lib/d3/d3-v3.js") }}"></script>
-      <script type="text/javascript" nonce="{{ nonce.script }}" src="{{ asset.script("lib/vue/vue.js") }}"></script>
-      <script id="js-page" type="text/javascript" nonce="{{ nonce.script }}" src="{%- block page_js -%}{%- endblock -%}"></script>
-
-      <!-- context -->
-      <script id="js-context" type="application/json">{{ js_context|json|safe }}</script><!-- end #js-context -->
-      {% if js_context.pagedata -%}<script id="js-data" type="application/json">{{ pagedata|json|safe }}</script><!-- end #js-data -->{%- endif %}
-      {% if config.assets.config.serving_mode != "cdn" -%}
-        <script type="text/javascript" nonce="{{ nonce.script }}" src="{{ asset.script("compiled/app.js") }}"></script>
-      {%- endif %}
+      <script type="text/javascript" defer nonce="{{ nonce.script }}" src="{{ asset.script("lib/d3/d3.js") }}"></script>
+      <script type="text/javascript" defer nonce="{{ nonce.script }}" src="{{ asset.script("lib/vue/vue.js") }}"></script>
+      <script type="text/javascript" defer nonce="{{ nonce.script }}" src="{{ asset.script("compiled/app.debug.js") }}"></script>
+      <script id="js-context" nonce="{{ nonce.script }}" type="application/json">{{ js_context|json|safe }}</script><!-- end #js-context -->
+      {% if js_context.pagedata -%}<script id="js-data" nonce="{{ nonce.script }}" type="application/json">{{ pagedata|json|safe }}</script><!-- end #js-data -->{%- endif %}
       {%- endblock south %}
+    </div>
 
-    </div><!-- end #js-south -->
+    {%- block body %}{% endblock body %}
   </body>
 </html>

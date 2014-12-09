@@ -7,8 +7,8 @@
 '''
 
 # messages and RPC
-from . import messages
-from canteen import remote, Service, model
+from . import messages, exceptions
+from canteen import rpc, remote, Service, model
 
 # models
 from fatcatmap.models import Vertex
@@ -17,25 +17,44 @@ from fatcatmap.models import Vertex
 @remote.service('graph')
 class GraphService(Service):
 
-  ''' '''
+  ''' Provides an API service to retrieve graph structures,
+      given an origin node (or ``None``, which resolves a)
+      good node to start from) and a set of options to guide
+      the query/traversal process. '''
 
-  @remote.method(messages.GraphRequest, messages.CompiledGraph)
+  exceptions = rpc.Exceptions(**{})
+
+  @remote.method(messages.GraphRequest, messages.GraphResponse)
   def construct(self, request):
 
-    ''' '''
+    ''' Construct a graph structure, by reading from available
+        data sources (potentially caches) to discover vertex
+        neighbors linked by edges and report them in an
+        efficient way to the caller.
 
-    origin = (request.origin and Vertex.get(model.Key(urlsafe=request.origin))) or None
+        :param request: Always an instance of
+          :py:class:`messages.GraphRequest`.
+
+        :returns: Always an instance of
+          :py:class:`messages.GraphResponse`. '''
+
+    # convert origin to key
+    origin = (
+      request.origin and model.Key.from_urlsafe(request.origin)) or request.origin
+
+    depth, limit, keys_only, collections, media, stats = (
+      (request.options and request.options.depth) or self.graph.options.defaults['depth'],
+      (request.options and request.options.limit) or self.graph.options.defaults['limit'],
+      (request.options.keys_only if (request.options and request.options.keys_only is not None) else self.graph.options.defaults['keys_only']),
+      (request.options.collections if (request.options and request.options.collections is not None) else self.graph.options.defaults['collections']),
+      (request.options.media if (request.options and request.options.media is not None) else self.graph.options.defaults['media']),
+      (request.options.stats if (request.options and request.options.stats is not None) else self.graph.options.defaults['stats']))
 
     # construct graph
-    meta, data, graph = self.graph.construct(origin, **{
-      'fulfill': (request.options.natives or True) if request.options else True,
-      'depth': (request.options.depth or 1) if request.options else 1,
-      'limit': (request.options.limit or 5) if request.options else 5
-    }).extract(flatten=True)
-
-    # then optionally fulfill, then extract
-    return messages.CompiledGraph(**{
-      'meta': messages.Metadata(**meta).to_message(),
-      'data': messages.RawData(**data).to_message(),
-      'graph': messages.GraphData(**graph).to_message()
-    }).to_message()
+    return self.graph.construct(None, origin, **{
+      'depth': depth,
+      'limit': limit,
+      'keys_only': keys_only,
+      'collections': collections,
+      'media': media,
+      'stats': stats})

@@ -41,13 +41,13 @@ class ModelBinding(object):
     self.__init__(chain, logging)
     return self
 
-  def get_by_ext(self, id, provider=None):
+  def get_by_ext(self, id, provider=None, strict=True, keys_only=True):
 
     ''' Retrieve an entity by a unique external ID. '''
 
     assert id, "ext ID lookup requires valid ID"
 
-    query = models.all.ExternalID.query(keys_only=True)
+    query = models.all.ExternalID.query(keys_only=keys_only)
     query.filter(models.all.ExternalID.content == str(id))
 
     if provider:
@@ -61,8 +61,10 @@ class ModelBinding(object):
 
       return result[0].parent  # things worked somehow
 
-    raise RuntimeError('Dependent foreign record at external ID'
-                       ' "%s::%s" could not be found.' % (provider, id))
+    if strict:
+      raise RuntimeError('Dependent foreign record at external ID'
+                         ' "%s::%s" could not be found.' % (provider, id))
+    return False
 
   def ext_id(self, parent, provider, name, content):
 
@@ -116,7 +118,7 @@ class ModelBinding(object):
       '''  '''
 
       item = next(base)
-      while item:
+      while item is not None:
         result = None  # result of the deferred call
 
         if isinstance(item, model.Model):
@@ -134,9 +136,9 @@ class ModelBinding(object):
               except (GeneratorExit, StopIteration):
                 pass
 
-        if result:
+        if result is not None:
           item = base.send(result)
-        if not item:
+        if item is None:
           item = next(base)
 
     return _rollup(binding)
@@ -144,4 +146,4 @@ class ModelBinding(object):
 bind = ModelBinding.register  # alias
 
 
-__all__ = ('legacy', 'govtrack', 'bigquery')
+__all__ = ('legacy', 'govtrack', 'bigquery', 'finance', 'sunlight', 'legislators', 'committees')

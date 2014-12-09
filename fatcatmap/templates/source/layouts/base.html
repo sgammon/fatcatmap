@@ -1,37 +1,18 @@
 {% extends "core/__base.html" %}
 
 {% block appframe %}
-        {%- block spinner %}
-        <!-- spinner -->
-        <div id='appspinner' class='fcm-pre loading spinner'>S</div>
-        {%- endblock spinner %}
-
         <!-- header -->
         <header id='appheader'>
-
-            {% block logo -%}
-                <a href="{{ link('landing') }}">
-                    <div id='logowrap'>
-                        <div id='cathead'></div>
-                        <h1 id="logo">fatcatmap</h1>
-                    </div>
-                </a>
-            {%- endblock %}
-            {% block appheader %}{% endblock %}
         </header><!-- end header -->
 
         <!-- footer -->
         <footer id='appfooter' class='{%- block appfooter_fade -%}transparent{%- endblock appfooter_fade -%}'>
-            {% block footer -%}
-            <small class="brand">momentum labs - fatcatmap - <a href="{{ link('privacy') }}">privacy</a>, <a href="{{ link('terms') }}">terms</a></small>
-            <small id="copyright" class="rs-small rs-medium rs-large">copyright (&copy; 2014) - technology preview</small>
-            {%- endblock footer %}
         </footer><!-- end footer -->
         {% block frame %}{% endblock frame %}
 {% endblock -%}
 
 {% block appstage %}
     <section class="content container-fluid framepad">
-        {% block content %}<b>content</b>{% endblock %}
+        {% block content %}{% endblock %}
     </section><!-- end section.content -->
 {% endblock %}

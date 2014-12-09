@@ -1,24 +1,24 @@
 /**
- * @fileoverview View for the fcm stage.
+ * @fileoverview view.View for the fcm stage.
  *
  * @author  David Rekow <david@momentum.io>,
  *          Sam Gammon <sam@momentum.io>,
  *          Alex Rosner <alex@momentum.io>,
  *          Ian Weisberger <ian@momentum.io>
- * 
+ *
  * copyright (c) momentum labs, 2014
  */
 
-goog.require('View');
+goog.require('view');
 
-goog.provide('views.Stage');
+goog.provide('views.layout.Stage');
 
 /**
  * @constructor
- * @extends {View}
+ * @extends {view.View}
  * @param {VueOptions} options
  */
-views.Stage = View.extend({
+views.layout.Stage = view.View.extend({
   /**
    * @expose
    * @type {string}

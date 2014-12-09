@@ -5,22 +5,22 @@
  *          Sam Gammon <sam@momentum.io>,
  *          Alex Rosner <alex@momentum.io>,
  *          Ian Weisberger <ian@momentum.io>
- * 
+ *
  * copyright (c) momentum labs, 2014
  */
 
 goog.require('$');
 goog.require('validation');
-goog.require('View');
+goog.require('view');
 
 goog.provide('views.page.Login');
 
 /**
  * @constructor
- * @extends {View}
+ * @extends {view.View}
  * @param {VueOptions} options
  */
-views.page.Login = View.extend({
+views.page.Login = view.View.extend({
   /**
    * @expose
    * @type {string}

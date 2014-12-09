@@ -5,27 +5,28 @@
  *          Sam Gammon <sam@momentum.io>,
  *          Alex Rosner <alex@momentum.io>,
  *          Ian Weisberger <ian@momentum.io>
- * 
+ *
  * copyright (c) momentum labs, 2014
  */
 
 goog.require('util.object');
 goog.require('async.task');
 goog.require('async.future');
-goog.require('supports');
-goog.require('services');
+goog.require('cache');
+goog.require('support');
+goog.require('model');
+goog.require('service');
+goog.require('services.rpc');
 goog.require('services.storage');
 
 goog.provide('services.data');
 
-var _dataCache, _dataStore, watchers;
+/**
+ * @expose
+ * @type {(Array.<(string|model.Key)>|model.KeyList.<model.Key>)}
+ */
+GraphData.data.keys;
 
-_dataCache = {};
-
-if (supports.storage.local)
-  _dataStore = new Store(window.localStorage, 'data', 'data');
-
-watchers = {};
 
 /**
  * @expose
@@ -33,154 +34,219 @@ watchers = {};
 services.data = /** @lends {ServiceContext.prototype.data} */ {
   /**
    * @expose
-   * @param {string|Object} raw Raw input.
-   * @param {function((string|Object))} cb
+   * @type {?services.storage.Store}
+   */
+  storage: (
+    support.storage.local ?
+    new services.storage.Store(window.localStorage, 'data', 'data') :
+    null),
+
+  /**
+   * @expose
+   * @type {?model.KeyIndexedList.<model.Model>}
+   */
+  cache: null,
+
+  /**
+   * @expose
+   * @type {?string}
+   */
+  session: null,
+
+  /**
+   * @expose
+   * @param {GraphData} raw Raw input.
+   * @param {function(GraphData)=} cb
    * @this {ServiceContext}
    */
   init: function (raw, cb) {
-    var data = this.data.normalize(raw),
-      keys = data.data.keys,
-      objects = data.data.objects,
-      key, object, i;
+    var received;
 
-    for (i = 0; keys && i < keys.length; i++) {
-      key = keys[i];
-      object = objects[i];
+    this.cache = new model.KeyIndexedList();
 
-      if (!object.key)
-        object.key = key;
+    raw.data.keys = model.Key.unpack(raw.data.keys, raw.meta.kinds);
 
-      if (!object.native) {
-        object.kind = object.govtrack_id ? 'legislator' : 'contributor';
-      }
+    raw.data = this.receiveAll(raw.data);
 
-      _dataCache[key] = object;
-    }
-
-    cb(data);
+    if (cb)
+      cb(raw);
   },
 
   /**
    * @expose
-   * @param {string|Object|*} raw Raw input.
-   * @return {Object|*} Normalized data.
+   * @param {(string|model.Key)} key
+   * @param {(DataObject|model.Model)} data
+   * @this {ServiceContext}
+   * @throws {TypeError} If key is not a string or instance of Key.
    */
-  normalize: function (raw) {
-    if (typeof raw === 'string') {
-      try {
-        raw = JSON.parse(raw);
-      } catch (e) {
-        console.warn('[service.data] Couldn\'t parse raw data: ');
-        console.warn(raw);
-        raw = {};
-      }
-    }
-    return raw;
+  receive: function (key, data) {
+    if (typeof key === 'string')
+      key = model.Key.inflate(key);
+
+    if (!(key instanceof model.Key))
+      throw new TypeError('services.data.receive() expects a string or Key as the first param.');
+
+    data = key.bind(data);
+    data.put();
+
+    this.cache.push(data);
+
+    return data;
   },
 
   /**
    * @expose
-   * @param {(string|Array.<string>)} key
+   * @param {GraphData#data} rawdata
+   * @this {ServiceContext}
+   * @throws {TypeError} If any keys are not strings or instances of Key.
+   */
+  receiveAll: function (rawdata) {
+    var data = this,
+      objects = rawdata.objects;
+
+    rawdata.keys.forEach(function (key, i) {
+      rawdata.objects[i] = data.receive(key, rawdata.objects[i]);
+    });
+
+    return rawdata;
+  },
+
+  /**
+   * @expose
+   * @param {(string|model.Key)} key
    * @return {Future}
    * @this {ServiceContext}
+   * @throws {TypeError} If key is not a string or Key.
    */
   get: function (key) {
-    var result, item;
+    var data = this,
+      result = new Future(),
+      /**
+       * @param {Data=} d
+       */
+      handleResponse = function (d) {
+        data.session = d.session;
 
-    if (Array.isArray(key)) {
-      return this.data.getAll(key);
-    } else {
-      item = _dataCache[key];
-      result = new Future();
-
-      if (item) {
-        result.fulfill(item);
-      } else {
-        // Retrieve from localStorage & server.
-      }
-      return result;
-    }
-  },
-
-  /**
-   * @expose
-   * @param {Array.<string>} keys
-   * @return {Future}
-   * @this {ServiceContext}
-   */
-  getAll: function (keys) {
-    var result = new Future(),
-      items = [],
-      shouldErr;
-
-    keys.forEach(function (key, i) {
-      services.data.get(key).then(function (data, err) {
-        if (err) {
-          if (shouldErr) {
-            shouldErr = false;
-            result.fulfill(false, err);
+        d.objects.forEach(function (object, i) {
+          if (d.keys.data[i].encoded)
+            data.receive(model.Key.inflate(d.keys.data[i].encoded), object);
+        });
+      },
+      request = /** @type {Request} */{
+        /** @type {DataQuery} */
+        data: {
+          keys: [key],
+          session: this.session,
+          options: {
+            collections: true
           }
-          return;
         }
+      },
+      local;
 
-        items[i] = data;
+    if (typeof key !== 'string') {
+      if (!(key instanceof model.Key))
+        throw new TypeError('services.data.get() expects a string key or Key instance.');
 
-        if (items.length === keys.length)
-          result.fulfill(items);
+      key = String(key);
+    }
+
+    local = this.cache.get(key)
+
+    if (local) {
+      result.fulfill(local);
+
+      (function () {
+        data.rpc.data.fetch(request).then(function (_data, error) {
+          if (_data)
+            handleResponse(_data.data);
+        });
+      }).async();
+    } else {
+      this.rpc.data.fetch(request).then(function (_data, error) {
+        if (!_data && error)
+          return result.fulfill(false, error);
+
+        handleResponse(_data.data);
+
+        result.fulfill(data.cache.get(key));
       });
-    });
+    }
 
     return result;
   },
 
   /**
    * @expose
-   * @param {string} key
-   * @param {*} data
+   * @param {(Array.<(string|model.Key)>|model.KeyIndexedList<(string|model.Key)>)} keys
+   * @return {Future}
    * @this {ServiceContext}
    */
-  set: function (key, data) {
-    var _watchers = watchers[key];
+  getAll: function (keys) {
+    var data = this,
+      result = new Future(),
+      /**
+       * @param {Data=} d
+       */
+      handleResponse = function (d) {
+        data.session = d.session;
 
-    util.object.resolveAndSet(_dataCache, key, data);
+        d.objects.forEach(function (object, i) {
+          if (d.keys.data[i].encoded)
+            data.receive(model.Key.inflate(d.keys.data[i].encoded), object);
+        });
+      };
 
-    if (_watchers && _watchers.length) {
-      _watchers.forEach(function (watcher) {
-        watcher(data);
+    this.rpc.data.fetch({
+      /** @type {DataQuery} */
+      data: {
+        keys: keys.filter(function (key) { return data.cache.has(key); })
+      }
+    }).then(
+      /**
+       * @param {Data=} _data
+       * @param {Error=} error
+       */
+      function (_data, error) {
+        if (!_data && error)
+          return result.fulfill(false, error);
+
+        handleResponse(_data.data);
+
+        result.fulfill(keys.map(function (key) { return data.cache.get(key); }));
       });
-    }
-  },
 
-  /**
-   * @expose
-   * @param {string} key
-   * @param {function(*)} watcher
-   * @this {ServiceContext}
-   */
-  watch: function (key, watcher) {
-    if (!watchers[key])
-      watchers[key] = [];
-
-    watchers[key].push(watcher);
-  },
-
-  /**
-   * @expose
-   * @param {string} key
-   * @param {function(*)=} watcher
-   * @return {(function(*)|Array.<function(*)>)}
-   * @this {ServiceContext}
-   */
-  unwatch: function (key, watcher) {
-    var _watchers = watcher;
-    if (watcher && typeof watcher === 'function') {
-      watchers[key] = watchers[key].filter(function (w) {
-        return w === watcher;
-      });
-    } else {
-      _watchers = watchers[key];
-      watchers[key] = [];
-    }
-    return _watchers;
+    return result;
   }
 }.service('data');
+
+/**
+ * @expose
+ * @return {*}
+ */
+model.Key.prototype.get = function () {
+  return services.data.receive(this, this.bind(services.storage.data.get(this)));
+};
+
+/**
+ * @expose
+ */
+model.Key.prototype.put = function () {
+  services.storage.data.put(this, this.data());
+};
+
+/**
+ * @expose
+ * @return {Future}
+ */
+model.Key.prototype.fetch = function () {
+  return services.data.get(this);
+};
+
+/**
+ * @expose
+ * @return {Future}
+ */
+model.KeyIndexedList.prototype.fetch = function () {
+  return services.data.getAll(this);
+};

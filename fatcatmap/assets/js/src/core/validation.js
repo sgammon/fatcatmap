@@ -5,7 +5,7 @@
  *          Sam Gammon <sam@momentum.io>,
  *          Alex Rosner <alex@momentum.io>,
  *          Ian Weisberger <ian@momentum.io>
- * 
+ *
  * copyright (c) momentum labs, 2014
  */
 
@@ -101,6 +101,7 @@ Vue.directive('validate', {
   /**
    * @expose
    * @param {*} value
+   * @this {Directive}
    */
   bind: function (value) {
     var key = this.arg ? this.arg : this.key,
@@ -131,6 +132,7 @@ Vue.directive('validate', {
   /**
    * @expose
    * @param {*} value
+   * @this {Directive}
    */
   unbind: function (value) {
     this.el.removeEventListener('blur', _validateInput);

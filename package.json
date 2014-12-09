@@ -4,7 +4,19 @@
   "version": "1.0.0",
   "keywords": ["politics", "transparency", "opendata", "opensource"],
   "homepage": "https://fatcatmap.org",
-  "author": "momentum labs",
+  "contributors": [{
+    "name": "Sam Gammon",
+    "email": "sam@momentum.io"
+  }, {
+    "name": "David Rekow",
+    "email": "david@momentum.io"
+  }, {
+    "name": "Ian Weisberger",
+    "email": "ian@momentum.io"
+  }, {
+    "name": "Alex Rosner",
+    "email": "alex@momentum.io"
+  }],
   "private": true,
   "scripts": {},
   "repository": {
@@ -19,6 +31,7 @@
     }
   ],
   "devDependencies": {
+    "del": "~0.1.3",
     "btoa": "~1.1.1",
     "wrench": "~1.5.4",
     "webp-bin": "~0.1.4",
@@ -33,8 +46,6 @@
     "gulp": "~3.8.5",
     "gulp-tap": "~0.1.1",
     "gulp-svgmin": "~0.4.6",
-    "gulp-rimraf": "~0.1.0",
-    "gulp-concat": "~2.3.4",
     "gulp-imagemin": "~0.6.1",
     "gulp-sourcemaps": "~0.4.4"
   }

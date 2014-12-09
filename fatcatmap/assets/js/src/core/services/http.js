@@ -5,13 +5,13 @@
  *          Sam Gammon <sam@momentum.io>,
  *          Alex Rosner <alex@momentum.io>,
  *          Ian Weisberger <ian@momentum.io>
- * 
+ *
  * copyright (c) momentum labs, 2014
  */
 
 goog.require('util.url');
 goog.require('async.future');
-goog.require('services');
+goog.require('service');
 
 goog.provide('services.http');
 
@@ -34,7 +34,7 @@ _prepareRequest = function (method, request, response, async) {
     url = request.url;
   }
 
-  xhr.open(method.toUpperCase(), url, async);
+  xhr.open(method.toUpperCase(), url, !!async);
 
   if (request.headers) {
     headers = request.headers;
@@ -70,7 +70,7 @@ _prepareRequest = function (method, request, response, async) {
 /**
  * @param {string} method
  * @param {Request} request
- * @param {PipelinedCallback} handler
+ * @param {PipelinedCallback=} handler
  * @return {Future|Response}
  */
 _dispatchRequest = function (method, request, handler) {
@@ -82,10 +82,13 @@ _dispatchRequest = function (method, request, handler) {
 
   request = _prepareRequest(method, request, response, !!handler);
 
-  if (handler)
-    response = response.then(handler);
-
   request.send(data);
+
+  if (handler) {
+    response = response.then(handler);
+  } else {
+    response = request.responseJSON;
+  }
 
   return response;
 };
@@ -120,8 +123,9 @@ _parseResponse = function (response) {
 
 /**
  * @expose
+ * @type {Service}
  */
-services.http = /** @lends {ServiceContext.prototype.http} */{
+services.http = new Service('http', /** @lends {ServiceContext.prototype.http} */{
   /**
    * @param {Request} request
    * @param {PipelinedCallback=} handler If not passed, executes synchronously.
@@ -136,7 +140,7 @@ services.http = /** @lends {ServiceContext.prototype.http} */{
    * @param {PipelinedCallback=} handler If not passed, executes synchronously.
    * @return {Future|Response} Future response, or response if no handler was passed. 
    */
-  delete: function (request, handler) {
+  'delete': function (request, handler) {
     return _dispatchRequest('DELETE', request, handler);
   },
 
@@ -184,4 +188,4 @@ services.http = /** @lends {ServiceContext.prototype.http} */{
   options: function (request, handler) {
     return _dispatchRequest('OPTIONS', request, handler);
   }
-}.service('http');
+}, true);
