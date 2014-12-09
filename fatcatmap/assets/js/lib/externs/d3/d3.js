@@ -17,6 +17,10 @@
 // 
 // Code:
 
+/**
+ * @externs
+ */
+
 var d3 = {
     "version": {},
     "map": function () {},
@@ -227,6 +231,8 @@ var d3 = {
         "scale": function () {}
     }
 };
+d3.event.dx = function () {};
+d3.event.dy = function () {};
 d3.map.prototype = function () {};
 d3.map.prototype = {
     "has": function () {},
@@ -342,6 +348,7 @@ d3.select.prototype = function () {};
 d3.selectAll.prototype = function () {};
 d3.selection.prototype = {
     "enter": function () {},
+    "exit": function () {},
     "select": function () {},
     "selectAll": function () {},
     "attr": function () {},
@@ -365,6 +372,8 @@ d3.selection.prototype = {
     "node": function () {},
     "transition": function () {}
 };
+d3.selection.prototype.enter.prototype = function () {};
+d3.selection.prototype.exit.prototype = function () {};
 d3.selection.prototype.select.prototype = function () {};
 d3.selection.prototype.selectAll.prototype = function () {};
 d3.selection.prototype.attr.prototype = function () {};

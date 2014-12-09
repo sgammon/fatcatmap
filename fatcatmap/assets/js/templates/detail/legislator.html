@@ -1,10 +1,10 @@
-<div id="detail-{{key}}" data-kind="{{kind | lowercase}}">
+<div class="detail-{{kind | lowercase}}" data-kind="{{kind | lowercase}}">
   <section class="byline">
-    <h2>{{firstname}} {{lastname}}</h2>
-    <span>{{node_key}}</span>
+    <h2>{{parent.name.primary}}</h2>
   </section>
 
   <section class="portrait">
-    <img class="{{kind | lowercase}} govtrack thumbnail" alt="{{firstname}} {{lastname}}" width="50" height="50"/>
+    <img class="{{kind | lowercase}} bioguide portrait" alt="{{parent.name.primary}}" v-attr="
+      src: 'https://fatcatmap.org/image-proxy/providence-clarity/warehouse/' + media.md + '.jpg'"/>
   </section>
 </div>

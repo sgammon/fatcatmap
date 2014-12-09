@@ -5,59 +5,86 @@
   fcm: CSV binding reader
 
 '''
+
+from __future__ import absolute_import
+
+# stdlib
 import gzip
-from . import BindingReader
+import json
+import csv
+
+# binding readers
+from .base import FileReader, reader
 
 
-class CSVReader(BindingReader):
 
-  '''  '''
+@reader('csv', 'csv.gz')
+class CSV(FileReader):
 
-  __config__ = {
-    'has_header': True, # is the first line field names?
-    'header': None,
-    'buffer': 1000
-  }
+  ''' Manages reading of CSV-formatted files. '''
+
+  params = {
+    'json': False,  # decode CSV values as JSON
+    'files': set,  # all files in the current load
+    'buffer': 1000,
+    'fields': None}  # how many lines should we buffer?
 
   def open(self):
 
-    '''  '''
-    self.filename = self.__config__.get('file')
-    filename = self.filename.split('.')
-    if filename[-1] == "gz":
-      self.file = gzip.open(self.filename)
+    ''' Open the target file and prepare it for use. '''
+
+    if self.config.subject.split('.')[-1] == "gz":
+      self.file = gzip.open(self.config.subject)
     else:
-      self.file = open(self.filename)
+      self.file = open(self.config.subject)
 
-
+    if not self.config.fields:
+      # get the header of the file
+      first_line = csv.reader([self.file.readline()]).next()
+      self.fields = [f.strip().replace('\n', '') for f in first_line if f]
+    else:
+      self.fields = self.config.fields
 
   def buffer_lines(self):
-    ''' used to buffer lines when reading the file'''
 
-    num = self.__config__.get('buffer') or 1000
-    lines = self.file.readlines(num)
-    for line in lines:
-      yield line
+    ''' Used to buffer lines when reading the file. '''
+
+    while True:
+      lines = self.file.readlines(self.config.buffer)
+      if not lines: break
+      for line in lines: yield line
+
+  def get_lines(self):
+
+    ''' Fetch a batch of lines. '''
+
+    for line in self.buffer_lines():
+      yield tuple(line.split(','))
 
   def read(self):
 
-    '''  '''
+    ''' Read the target source file and process it. '''
 
-    filename = self.filename.split('.')[0]
+    def inflate(val):
 
-    if self.__config__.get('has_header'):
-      header = [f for f in self.file.readline().split(',') if f] # get the header of the file
-    else:
-      header = self.__config__.get('header')
+      ''' Inflate a value, maybe with JSON. '''
 
-    lines = self.buffer_lines()
-    for line in lines:
-      row = line.split(',')
-      yield (filename,{header[idx]:value for idx,value in enumerate(row)})
+      if self.config.json:
+        try:
+          return json.loads(val)
+        except ValueError:
+          pass
+      return val
 
+    #for line in self.buffer_lines():
+    #  yield {self.fields[idx]: inflate(value) for idx, value in enumerate(line.split(','))}
+    for line in self.buffer_lines():
+      row = csv.reader([line]).next()
+      yield {self.fields[idx]: inflate(value) for idx, value in enumerate(row)}
 
   def close(self):
 
-    '''  '''
+    ''' Close the target source file once we're done. '''
 
     self.file.close()
+    self.fields, self.file = None, None

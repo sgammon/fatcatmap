@@ -5,7 +5,7 @@
  *          Sam Gammon <sam@momentum.io>,
  *          Alex Rosner <alex@momentum.io>,
  *          Ian Weisberger <ian@momentum.io>
- * 
+ *
  * copyright (c) momentum labs, 2014
  */
 
@@ -33,3 +33,8 @@ var $ = function (query, bound) {
   }
   throw new TypeError('Invalid document query string.');
 };
+
+/**
+ * @expose
+ */
+window.$ = $;

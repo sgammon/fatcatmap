@@ -5,12 +5,12 @@
  *          Sam Gammon <sam@momentum.io>,
  *          Alex Rosner <alex@momentum.io>,
  *          Ian Weisberger <ian@momentum.io>
- * 
+ *
  * copyright (c) momentum labs, 2014
  */
 
-goog.require('supports');
-goog.require('services');
+goog.require('support');
+goog.require('service');
 
 goog.provide('services.storage');
 
@@ -22,17 +22,22 @@ goog.provide('services.storage');
  */
 var Store = function (backend, namespace, provideAs) {
   /**
+   * @private
    * @type {string}
    */
-  this.ns = (namespace || 'store' + Store.storeCount++) + '::';
+  this._ns = (namespace || 'store' + Store.storeCount++) + '::';
 
   /**
+   * @private
    * @type {Storage}
    */
   this._backend = backend;
 
-  if (typeof provideAs === 'string')
-    ServiceContext.register('storage.' + provideAs, this);
+  if (typeof provideAs === 'string') {
+    ServiceContext.inject('storage.' + provideAs, this);
+    services.storage[provideAs] = this;
+  }
+
 };
 
 Store.prototype = {
@@ -59,12 +64,14 @@ Store.prototype = {
    * @return {*}
    */
   deserialize: function (item) {
-    var char1 = item.charAt(0);
-    if (char1 === '{' || char1 === '[')
-      return JSON.parse(item);
+    var char1;
 
     if (!item)
       return item === '' ? item : null;
+
+    char1 = item.charAt(0);
+    if (char1 === '{' || char1 === '[')
+      return JSON.parse(item);
 
     if (item === 'true' || item === 'false')
       return Boolean(item);
@@ -80,7 +87,7 @@ Store.prototype = {
    * @return {*}
    */
   get: function (key) {
-    return this.deserialize(this._backend.getItem(this.ns + key));
+    return this.deserialize(this._backend.getItem(this._ns + key));
   },
 
   /**
@@ -88,14 +95,14 @@ Store.prototype = {
    * @param {*} value
    */
   put: function (key, value) {
-    this._backend.setItem(this.ns + key, this.serialize(value));
+    this._backend.setItem(this._ns + key, this.serialize(value));
   },
 
   /**
    * @param {string} key
    */
   del: function (key) {
-    this._backend.removeItem(this.ns + key);
+    this._backend.removeItem(this._ns + key);
   }
 };
 
@@ -109,20 +116,27 @@ Store.storeCount = 0;
 /**
  * @expose
  */
-services.storage = /** @lends {ServiceContext.prototype.storage} */{};
-
-if (supports.storage.local) {
+services.storage = new Service('storage', /** @lends {ServiceContext.prototype.storage} */{
   /**
    * @expose
-   * @type {?Store}
+   * @constructor
+   * @param {Storage} backend
+   * @param {string=} namespace
+   * @param {string=} provideAs
    */
-  services.storage.local = new Store(window.localStorage, 'service', 'storage.local');
-}
+  Store: Store
+}, true);
 
-if (supports.storage.session) {
-  /**
-   * @expose
-   * @type {?Store}
-   */
-  services.storage.session = new Store(window.sessionStorage, 'service', 'storage.session');
-}
+/**
+ * @expose
+ * @type {?Store}
+ * @lends {ServiceContext.prototype.storage.local}
+ */
+services.storage.local = support.storage.local ? new Store(window.localStorage, 'local', 'local') : null;
+
+/**
+ * @expose
+ * @type {?Store}
+ * @lends {ServiceContext.prototype.storage.session}
+ */
+services.storage.session = support.storage.session ? new Store(window.localStorage, 'session', 'session') : null;

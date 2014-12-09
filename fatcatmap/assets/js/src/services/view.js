@@ -5,11 +5,11 @@
  *          Sam Gammon <sam@momentum.io>,
  *          Alex Rosner <alex@momentum.io>,
  *          Ian Weisberger <ian@momentum.io>
- * 
+ *
  * copyright (c) momentum labs, 2014
  */
 
-goog.require('services');
+goog.require('service');
 goog.require('services.template');
 
 goog.provide('services.view');
@@ -17,20 +17,21 @@ goog.provide('services.view');
 var VIEWS = {},
 
   getSelfAndChildren = function (viewname, cb) {
-    var filename = viewname.replace('.', '/') + '.html';
-
-    services.template.get(filename).then(function (response, error) {
+    /*jshint eqnull:true */
+    services.template.get(viewname).then(function (response, error) {
       var children, source, count;
 
-      if (error)
+      if (error) {
+        console.warn('[services.template] ' + error.message);
         return cb(false, error);
+      }
 
-      if (typeof response.data !== 'string')
-        return cb(false, response);
+      if (response.data)
+        response = response.data;
 
       children = [];
 
-      source = response.data.replace(/v-component=("|')([\w\.\-]+)\1/g, function (_, __, childname) {
+      source = response.source.replace(/v-component=("|')([\w\.\-]+)\1/g, function (_, __, childname) {
         children.push(childname);
         return _;
       });
@@ -40,7 +41,7 @@ var VIEWS = {},
       if (VIEWS[viewname])
         VIEWS[viewname].options.template = source;
 
-      services.template.put(filename, source);
+      services.template.put(viewname, source);
 
       if (count === 0)
         return cb(source);
@@ -95,7 +96,9 @@ services.view = /** @lends {ServiceContext.prototype.view} */{
     if (!Root)
       throw new Error('view.init() cannot be called with unregistered view ' + rootname);
 
-    getSelfAndChildren(rootname, function (template) {
+    getSelfAndChildren(rootname, function (template, error) {
+      if (error)
+        return console.warn(error);
 
       var viewname, view;
 

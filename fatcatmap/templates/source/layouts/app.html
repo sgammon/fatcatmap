@@ -1,0 +1,11 @@
+{% extends "core/__base.html" %}
+{% block body %}
+    <div id='templates' class='hidden'>
+    {%- block templates -%}
+    {%- if frontend.templates -%}
+    {% for path, template in frontend.templates %}
+      <script id='{{ path.replace("/", ".") }}' type='application/template'>{{ template.strip()|safe }}</script><!-- end template: {{ path }} -->{% endfor -%}
+    {%- endif -%}
+    {%- endblock templates -%}
+    </div>
+{% endblock body %}

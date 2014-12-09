@@ -367,7 +367,8 @@ class FCM(cli.Tool):
           'port': lambda v: ('p', v),
           'socket': lambda v: ('s', v),
           'password': lambda v: ('a', v),
-          'database': lambda v: ('n', v)}[item](value))
+          'database': lambda v: ('n', v),
+          'unix_socket_path': lambda v: ('s', v)}[item](value))
       return " ".join(map(lambda arg: "-%s %s" % arg, args))
 
     @classmethod
@@ -377,8 +378,8 @@ class FCM(cli.Tool):
 
       if not arguments.quiet:
         logging.info('Resolving adapters for migration...')
-      source = arguments.source and FCM.Migrate.adapters[arguments.source]
-      target = FCM.Migrate.adapters[arguments.target or 'RedisWarehouse']
+      source = arguments.source and cls.adapters[arguments.source]
+      target = cls.adapters[arguments.target or 'RedisWarehouse']
 
       if source and not arguments.quiet:
         logging.info('Selected source adapter %s...' % source.__name__)
@@ -416,8 +417,8 @@ class FCM(cli.Tool):
 
       command = ' | '.join((
         'curl --progress-bar https://storage.googleapis.com/fcm-dataset/%s' % data_file_name,
-        'gzip -cd',
-        'redis-cli %s --pipe' % FCM.Migrate.build_cli_args(arguments, target)))
+        '%s -cd' % ('bzip2' if data_file_name.endswith('bz2') else 'gzip'),
+        'redis-cli %s --pipe' % cls.build_cli_args(arguments, target)))
 
       os.system(command)
 
@@ -591,7 +592,7 @@ class FCM(cli.Tool):
 
           ''' Emit a key/entity for storage. '''
 
-          wkey = FCM.Migrate.write_object(target, entity.key, entity, pipeline=pipeline)
+          wkey = cls.write_object(target, entity.key, entity, pipeline=pipeline)
           
           if arguments.debug or arguments.verbose:
             logging.info('------ Emitted object of type "%s" at key "%s"...' % (
@@ -602,7 +603,7 @@ class FCM(cli.Tool):
           return wkey, entity
 
         ## 1) read sources
-        for key, entity in FCM.Migrate.read_sources(arguments, source):
+        for key, entity in cls.read_sources(arguments, source):
           kind = model.Key.from_urlsafe(key).kind
 
           ## 2) apply bindings
@@ -620,7 +621,7 @@ class FCM(cli.Tool):
 
             if arguments.verbose:
               logging.info('---> Using binding "%s"...' % binding.__name__)
-            entity_generator = binding(logging=logging)(FCM.Migrate.expand_entity(arguments, source, key, entity))
+            entity_generator = binding(logging=logging)(cls.expand_entity(arguments, source, key, entity))
 
             for result in entity_generator:
 
@@ -676,6 +677,189 @@ class FCM(cli.Tool):
       if source and target: cls.apply_migration(arguments, source, target)
 
       if not arguments.quiet: logging.info('~~~ Data operations finished. ~~~')
+
+
+  class Load(cli.Tool):
+
+    '''  '''
+
+    arguments = (
+      ('binding', {'type': str, 'help': 'binding category, to execute against data. add a colon and specific binding name if you are picky.'}),
+      ('--dry', '-no', {'action': 'store_true', 'help': 'never actually store anything'}),
+      ('--target', '-t', {'type': str, 'help': 'target adapter to write to (defaults to RedisWarehouse)'}),
+      ('--clean', '-c', {'action': 'store_true', 'help': 'clean datastore before operating'}))
+
+
+    class CSV(cli.Tool):
+
+      '''  '''
+
+      arguments = (
+        ('--files', {'type': str, 'nargs': '*', 'help': 'globs of CSV files to load'}),
+        ('--json', {'action': 'store_true', 'help': 'decode CSV values as JSON'}),
+        ('--buffer', {'type': int, 'help': 'number of lines to buffer'}),)
+
+
+    class YAML(cli.Tool):
+
+      '''  '''
+
+      arguments = (
+        ('--files', {'type': str, 'nargs': '*', 'help': 'globs of YAML files to load'}),)
+
+
+    @classmethod
+    def load_reader(cls, arguments):
+
+      '''  '''
+
+      from fatcatmap.bindings.reader.base import BindingReader
+      config, tool = {},  BindingReader.registry[arguments.subcommand.lower()]
+
+      # update config with parents
+      for i in (i for i in cls.__bases__ if hasattr(i, 'params')):
+        config.update(i.params)
+
+      # update with class defaults
+      config.update(tool.params)
+
+      # inflate callables
+      _inflated = {}
+      for k, v in config.iteritems():
+        if callable(v): _inflated[k] = v()
+
+      # update with actual arguments and return
+      config.update(dict(((k, v) for k, v in arguments._get_kwargs() if ((k in tool.params or k in config) and v is not None))))
+      return config, tool
+
+    @classmethod
+    def load_adapter(cls, arguments):
+
+      '''  '''
+
+      from fatcatmap.logic.db.adapter import RedisWarehouse
+
+      return {
+
+        ## available adapter choices
+        'rediswarehouse': RedisWarehouse
+
+      }[(arguments.target or 'RedisWarehouse').lower()]()
+
+    @classmethod
+    def clean_data(cls, arguments, target):
+
+      '''  '''
+
+      assert arguments.clean
+      if not arguments.quiet: logging.info('Cleaning target "%s" storage...' % target)
+      target.execute(target.Operations.FLUSH_ALL, '__meta__')
+
+    @classmethod
+    def write_object(cls, target, key, entity, pipeline=None):
+
+      '''  '''
+
+      if isinstance(entity, dict):
+        return target.put(key.flatten(True), entity, key.kind, pipeline=pipeline)
+      return target._put(entity, pipeline=pipeline)
+
+    @classmethod
+    def execute(cls, arguments):
+
+      '''  '''
+
+      if not arguments.quiet: logging.info('Preparing for bulk data ingest...')
+
+      config, tool = cls.load_reader(arguments)
+      if not arguments.quiet: logging.info('Loading %s reader...' % tool.__name__)
+      binding, base_reader = None, tool(**config)
+
+      if not arguments.quiet:
+        logging.info('Loading "%s" as target...' % (arguments.target or 'RedisWarehouse'))
+      target = cls.load_adapter(arguments)
+
+      if arguments.clean:
+        if not arguments.quiet:
+           logging.info('Cleaning datastore...')
+           cls.clean_data(arguments, target)
+
+      def emit(entity):
+
+        ''' Emit a key/entity for storage. '''
+
+        wkey = cls.write_object(target, entity.key, entity, pipeline=pipeline)
+        
+        if arguments.debug or arguments.verbose:
+          logging.info('------ Emitted object of type "%s" at key "%s"...' % (
+            wkey.kind, wkey.urlsafe()))
+
+        assert wkey.id, "found key without ID: %s" % wkey
+        return wkey, entity
+
+
+      for source in base_reader.sources:
+        if not arguments.quiet:
+          logging.info('--Processing source %s...' % source)
+          logging.info('Loading bindings...')
+
+        # resolve explicit bindings
+        if ':' not in arguments.binding:
+          if not arguments.quiet: logging.info('Using bindings from package "%s"...' % arguments.binding)
+          assert bindings.ModelBinding.resolve(arguments.binding)
+
+        else:
+          category, exp = tuple(arguments.binding.split(':'))
+
+          if not arguments.quiet: logging.info('Using binding %s...' % '.'.join((category, exp)))
+
+          assert bindings.ModelBinding.resolve(category), "failed to locate binding category: %s" % category
+
+          binding = bindings.ModelBinding.resolve(category, exp)
+          assert binding, "failed to locate explicit binding: %s" % exp
+
+          if hasattr(binding, 'params'):
+            # apply configuration to reader because it's explcit and we fucking CAN
+            config.update(binding.params)
+
+        # open reader session and database channel
+        with tool(subject=source, **config) as reader:
+          with target.channel('__meta__').pipeline(transaction=False) as pipeline:
+            _written, _by_kind = 0, collections.defaultdict(lambda: 0)
+
+            for bundle in reader:
+              if arguments.verbose and not arguments.quiet:
+                logging.info('  -> %s' % repr(bundle))
+
+              # resolve binding if we don't have an explicit one
+              if not binding and isinstance(bundle, tuple):
+                binding = bindings.ModelBinding.resolve(category, bundle[0])
+                assert binding, "failed to match token-resolved binding: %s" % binding
+
+              entity_generator = binding(logging=logging)(bundle)
+
+              for result in entity_generator:
+
+                _written += 1
+                _by_kind[result.key.kind] += 1
+                wkey, wentity = emit(result)
+                try:
+                  entity_generator.send(wentity)
+                except (GeneratorExit, StopIteration):
+                  pass
+
+            ## 3) write results
+            pipeline.execute()  # go
+
+            # report results
+            if not arguments.quiet:
+              logging.info('Finished processing source "%s".' % source)
+              if arguments.verbose:
+                logging.info('Written entity report:')
+                for kind in _by_kind:
+                  logging.info('-- %s: %s entities written' % (kind, str(_by_kind[kind])))
+
+      return
 
 
 if __name__ == '__main__': FCM(autorun=True)  # initialize and run :)

@@ -23,7 +23,8 @@ describe('util.object', function () {
       },
       e: {
         f: 'F'
-      }
+      },
+      k: 'K'
     };
   });
 
@@ -31,7 +32,7 @@ describe('util.object', function () {
     obj = null;
   });
 
-  it('should identify an object', function () {
+  it('should identify a raw object', function () {
     expect(util.object.isObject(obj)).toBe(true);
     expect(util.object.isObject([])).toBe(false);
     expect(util.object.isObject(true)).toBe(false);
@@ -44,6 +45,7 @@ describe('util.object', function () {
     expect(util.object.resolve(obj, 'a.b')).toEqual('B');
     expect(util.object.resolve(obj, 'a.c.d')).toEqual('D');
     expect(util.object.resolve(obj, 'e.f')).toEqual('F');
+    expect(util.object.resolve(obj, 'k')).toEqual('K');
   });
 
   it('should resolve and set deeply nested key paths', function () {
