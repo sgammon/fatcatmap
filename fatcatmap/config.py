@@ -6,7 +6,7 @@
 
 '''
 
-__version__ = ((0, 0, 1), (20141019, 'alpha'))
+__version__ = ((0, 0, 2), (20141208, 'alpha'))
 
 
 import os, sys, logging
